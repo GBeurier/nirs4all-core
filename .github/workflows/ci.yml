@@ -14,6 +14,10 @@ jobs:
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
       - run: cargo package -p nirs4all
+      - uses: actions/upload-artifact@v7
+        with:
+          name: rust-crate
+          path: target/package/*.crate
 
   python:
     runs-on: ubuntu-latest
@@ -29,6 +33,10 @@ jobs:
       - run: PYTHONPATH=bindings/python/src python -m unittest discover -s bindings/python/tests
       - run: python -m build bindings/python --outdir dist/python
       - run: python -m twine check dist/python/*
+      - uses: actions/upload-artifact@v7
+        with:
+          name: python-${{ matrix.python-version }}
+          path: dist/python/*
 
   npm:
     runs-on: ubuntu-latest
@@ -39,6 +47,10 @@ jobs:
           node-version: "22"
       - run: npm test --prefix bindings/wasm
       - run: mkdir -p dist/npm && npm pack ./bindings/wasm --pack-destination dist/npm
+      - uses: actions/upload-artifact@v7
+        with:
+          name: npm-wasm
+          path: dist/npm/*
 
   r:
     runs-on: ubuntu-latest
@@ -48,6 +60,10 @@ jobs:
       - run: mkdir -p dist/r
       - run: cd dist/r && R CMD build ../../bindings/r
       - run: R CMD check --no-manual dist/r/nirs4all_*.tar.gz
+      - uses: actions/upload-artifact@v7
+        with:
+          name: r-source
+          path: dist/r/nirs4all_*.tar.gz
 
   matlab-octave:
     runs-on: ubuntu-latest
@@ -56,3 +72,7 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y octave zip
       - run: octave --quiet --eval "run('bindings/matlab/tests/smoke.m')"
       - run: scripts/build-matlab-package.sh dist/matlab
+      - uses: actions/upload-artifact@v7
+        with:
+          name: matlab-octave
+          path: dist/matlab/*

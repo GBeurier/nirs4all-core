@@ -32,3 +32,7 @@ cargo package -p nirs4all
 `R CMD build/check`, Octave smoke tests, and CRAN/R-universe validation require
 R/Octave toolchains. They are part of CI because they may not be available on
 every development workstation.
+
+Every CI run uploads the build outputs as artifacts (`rust-crate`, `python-*`,
+`npm-wasm`, `r-source`, and `matlab-octave`). Tagged releases attach the same
+artifact families to the GitHub Release.
