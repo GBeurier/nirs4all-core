@@ -46,7 +46,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: r-lib/actions/setup-r@v2
       - run: mkdir -p dist/r
-      - run: R CMD build bindings/r --outdir=dist/r
+      - run: cd dist/r && R CMD build ../../bindings/r
       - run: R CMD check --no-manual dist/r/nirs4all_*.tar.gz
 
   matlab-octave:

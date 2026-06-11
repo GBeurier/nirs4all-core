@@ -3,7 +3,8 @@ addpath(fullfile(fileparts(mfilename('fullpath')), '..'));
 items = nirs4all.upstreams();
 assert(numel(items) == 6);
 assert(strcmp(items(1).key, 'dag_ml'));
-assert(strcmp(nirs4all.requireUpstream('methods').key, 'methods'));
+method_item = nirs4all.requireUpstream('methods');
+assert(strcmp(method_item.key, 'methods'));
 
 try
     nirs4all.requireUpstream('missing');

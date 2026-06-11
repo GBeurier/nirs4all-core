@@ -33,7 +33,7 @@ build-npm:
 
 build-r:
 	mkdir -p $(DIST_DIR)/r
-	R CMD build bindings/r --outdir=$(DIST_DIR)/r
+	cd $(DIST_DIR)/r && R CMD build ../../bindings/r
 
 build-matlab:
 	scripts/build-matlab-package.sh $(DIST_DIR)/matlab

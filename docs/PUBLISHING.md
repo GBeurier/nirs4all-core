@@ -64,7 +64,8 @@ cargo publish -p nirs4all
 Build and check:
 
 ```bash
-R CMD build bindings/r --outdir=dist/r
+mkdir -p dist/r
+cd dist/r && R CMD build ../../bindings/r && cd ../..
 R CMD check --as-cran dist/r/nirs4all_*.tar.gz
 ```
 

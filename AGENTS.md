@@ -28,7 +28,7 @@ Run the checks matching the touched area:
 - `cargo test --workspace`
 - `PYTHONPATH=bindings/python/src python -m unittest discover -s bindings/python/tests`
 - `npm test --prefix bindings/wasm`
-- `R CMD build bindings/r --outdir=dist/r && R CMD check --no-manual dist/r/nirs4all_*.tar.gz`
+- `mkdir -p dist/r && cd dist/r && R CMD build ../../bindings/r && cd ../.. && R CMD check --no-manual dist/r/nirs4all_*.tar.gz`
 - `octave --quiet --eval "run('bindings/matlab/tests/smoke.m')"`
 
 When parity fixtures are added, run the native-vs-binding and
