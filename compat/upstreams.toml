@@ -1,0 +1,38 @@
+# Machine-readable registry of the upstream projects aggregated by nirs4all-lite.
+# Versions are intentionally unset in the scaffold; pin them before releases.
+
+[[upstream]]
+key = "dag_ml"
+repo = "GBeurier/dag-ml"
+role = "Leakage-safe DAG/ML execution coordinator"
+bindings = ["rust", "c"]
+
+[[upstream]]
+key = "dag_ml_data"
+repo = "GBeurier/dag-ml-data"
+role = "Sample-aligned data contracts for DAG/ML runtimes"
+bindings = ["rust", "c"]
+
+[[upstream]]
+key = "formats"
+repo = "GBeurier/nirs4all-formats"
+role = "Spectroscopy/NIRS vendor file readers"
+bindings = ["rust", "python", "r", "wasm", "c"]
+
+[[upstream]]
+key = "io"
+repo = "GBeurier/nirs4all-io"
+role = "Dataset assembly bridge"
+bindings = ["python"]
+
+[[upstream]]
+key = "datasets"
+repo = "GBeurier/nirs4all-datasets"
+role = "DOI-pinned NIRS dataset catalog"
+bindings = ["python"]
+
+[[upstream]]
+key = "methods"
+repo = "GBeurier/nirs4all-methods"
+role = "Portable C ABI PLS/NIRS numerical engine"
+bindings = ["python", "r", "matlab", "octave", "wasm", "rust"]

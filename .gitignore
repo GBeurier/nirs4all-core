@@ -1,0 +1,15 @@
+.DS_Store
+*.py[cod]
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+target/
+node_modules/
+dist/
+build/
+*.egg-info/
+*.Rcheck/
+*.tar.gz
+*.mex*
+*.oct

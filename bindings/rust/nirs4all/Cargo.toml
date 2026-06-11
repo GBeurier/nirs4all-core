@@ -1,0 +1,10 @@
+[package]
+name = "nirs4all"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Portable nirs4all aggregate binding over formats, IO, datasets, methods, dag-ml, and dag-ml-data"
+
+[lib]
+path = "src/lib.rs"

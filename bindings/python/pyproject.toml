@@ -1,0 +1,15 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nirs4all-lite"
+version = "0.0.0"
+description = "Portable nirs4all aggregate binding over formats, IO, datasets, methods, dag-ml, and dag-ml-data"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "nirs4all contributors" }]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nirs4all_lite"]

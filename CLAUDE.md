@@ -1,0 +1,44 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code when working in `nirs4all-lite`.
+
+## Role
+
+`nirs4all-lite` is a portability layer over the low-level nirs4all ecosystem. It
+must expose the same upstream capabilities across Rust, Python, R,
+MATLAB/Octave, and JavaScript/WASM without becoming a second implementation of
+formats, datasets, ML orchestration, or numerical methods.
+
+## Naming
+
+- Repository: `nirs4all-lite`
+- Python distribution: `nirs4all-lite`
+- Python import package: `nirs4all_lite`
+- Non-Python packages/modules: `nirs4all`
+
+The full Python `nirs4all` project remains separate until its core can be
+replaced by the lite Python binding intentionally.
+
+## Architecture rules
+
+1. Re-export upstream domains (`formats`, `io`, `datasets`, `methods`,
+   `dag_ml`, `dag_ml_data`) from the top-level binding surface.
+2. Never add a parser, estimator, numerical kernel, dataset catalog, or DAG
+   compiler here.
+3. Keep host-language APIs idiomatic: sklearn-compatible Python adapters, R
+   formula/data-frame paths, MATLAB/Octave arrays and tables, typed npm APIs,
+   and Rust traits/results.
+4. Add parity fixtures before widening behavior. A change is not complete until
+   native, binding, and full Python `nirs4all` outputs are compared where
+   equivalent pipelines exist.
+
+## Checks
+
+```bash
+cargo test --workspace
+PYTHONPATH=bindings/python/src python -m unittest discover -s bindings/python/tests
+npm test --prefix bindings/wasm
+```
+
+R and MATLAB/Octave packaging gates should be added before publishing those
+artifacts.
