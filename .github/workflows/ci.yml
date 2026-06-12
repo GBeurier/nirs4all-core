@@ -81,7 +81,7 @@ jobs:
             echo "$EMSDK"
             echo "$EMSDK/upstream/emscripten"
           } >> "$GITHUB_PATH"
-      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gcc-12 g++-12 ninja-build cmake
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gcc-12 g++-12 ninja-build cmake r-base r-base-dev
       - run: python -m pip install numpy scikit-learn pyyaml
       - run: npm ci --prefix bindings/wasm
       - run: cmake --preset emscripten
@@ -102,6 +102,16 @@ jobs:
           PLS4ALL_LIB_PATH="$GITHUB_WORKSPACE/nirs4all-methods/build/dev-release/cpp/src/libn4m.so" \
           NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 \
           python -m unittest bindings/python/tests/test_execution_parity.py -v
+      - run: Rscript -e 'install.packages(c("jsonlite", "yaml"), repos = "https://cloud.r-project.org")'
+      - run: R CMD INSTALL --no-multiarch --no-staged-install nirs4all-methods/bindings/r/n4m
+        env:
+          PLS4ALL_LIB_DIR: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
+          PLS4ALL_GENERATED_DIR: ${{ github.workspace }}/nirs4all-methods/build/dev-release/generated
+          LD_LIBRARY_PATH: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
+      - run: R CMD INSTALL bindings/r
+      - run: make test-r-parity
+        env:
+          LD_LIBRARY_PATH: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
 
   r:
     runs-on: ubuntu-latest

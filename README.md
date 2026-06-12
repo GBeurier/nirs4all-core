@@ -57,7 +57,7 @@ current portable fixtures use the nirs4all examples syntax for Kennard-Stone,
 SNV, Savitzky-Golay, and a PLS `n_components` sweep via `_range_`/`param`.
 Python, Rust, JavaScript/WASM, R, and MATLAB/Octave expose this parser contract.
 
-JavaScript/WASM and Python also execute the initial portable subset through
+JavaScript/WASM, Python, and R also execute the initial portable subset through
 `nirs4all-methods` and compare the same four JSON/YAML fixtures against the
 full Python `nirs4all` oracle. Other host bindings must not fake execution:
 until their upstream method surface can execute KS/SNV/SavGol/PLS natively,
@@ -103,6 +103,13 @@ PYTHONPATH=bindings/python/src:/path/to/nirs4all-methods/bindings/python/src \
 PLS4ALL_LIB_PATH=/path/to/libn4m.so \
 NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 \
 python -m unittest bindings/python/tests/test_execution_parity.py -v
+```
+
+Strict R-vs-full-`nirs4all` execution parity needs an installed `n4m` R binding
+with the portable preprocessing and splitter surface:
+
+```bash
+make test-r-parity
 ```
 
 `make build` produces the language artifacts when the required toolchains are

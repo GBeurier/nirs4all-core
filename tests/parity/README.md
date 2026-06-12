@@ -15,7 +15,9 @@ The initial shared cases are:
 `expected/portable_python_oracle.json` is generated from the full Python
 `nirs4all` library and is the source of truth for the WASM execution parity
 test in `bindings/wasm/tests/parity.test.js` and the optional strict Python
-binding execution parity test in `bindings/python/tests/test_execution_parity.py`.
+and R binding execution parity tests in
+`bindings/python/tests/test_execution_parity.py` and
+`bindings/r/tests/parity.R`.
 
 Regenerate it with:
 
@@ -35,6 +37,10 @@ PYTHONPATH=bindings/python/src:/path/to/nirs4all-methods/bindings/python/src \
 PLS4ALL_LIB_PATH=/path/to/libn4m.so \
 NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 \
 python -m unittest bindings/python/tests/test_execution_parity.py -v
+NIRS4ALL_LITE_PARITY_ORACLE=$PWD/tests/parity/expected/portable_python_oracle.json \
+NIRS4ALL_LITE_PARITY_FIXTURES=$PWD/bindings/r/inst/extdata \
+NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 \
+Rscript bindings/r/tests/parity.R
 ```
 
 Each fixture should include:
