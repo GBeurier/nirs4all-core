@@ -75,6 +75,12 @@ jobs:
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           working-directory: bindings/r
+          # The ecosystem packages (nirs4allformats/io/datasets, n4m, pls4all) are
+          # Suggests available only on R-universe (Additional_repositories) and not
+          # built for every CI R version/platform, so pak cannot solve them. Install
+          # only HARD deps (jsonlite/yaml, on CRAN); the check below tolerates the
+          # missing Suggests via _R_CHECK_FORCE_SUGGESTS_=false.
+          dependencies: '"hard"'
           extra-packages: |
             any::rcmdcheck
             any::jsonlite
@@ -82,6 +88,8 @@ jobs:
 
       - name: R CMD check --as-cran
         uses: r-lib/actions/check-r-package@v2
+        env:
+          _R_CHECK_FORCE_SUGGESTS_: false
         with:
           working-directory: bindings/r
           args: 'c("--no-manual", "--as-cran")'
