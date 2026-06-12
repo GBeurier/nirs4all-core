@@ -27,8 +27,9 @@ Golden outputs should be generated from the owning upstream implementation, not
 from host-language rewrites.
 
 Pipeline definition fixtures must use the full Python `nirs4all` JSON/YAML
-syntax. The parser-level contract accepts direct step lists, `pipeline`, and
-`steps`, but canonical fixtures should keep the same `pipeline` envelope used in
+syntax. The parser-level contract accepts JSON/YAML paths, JSON/YAML text,
+direct step lists, `pipeline`, and `steps` in every target binding, but
+canonical fixtures should keep the same `pipeline` envelope used in
 `nirs4all/examples/pipeline_samples`. Execution parity is a separate gate: a
 definition that parses is not considered validated until native lite and every
 target binding match the full Python `nirs4all` result for the portable operator

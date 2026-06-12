@@ -6,6 +6,8 @@ Every binding must:
 
 - expose upstream domains from the top-level package;
 - translate host-native objects to upstream contracts;
+- parse the shared `nirs4all` JSON/YAML pipeline definition envelope before
+  handing execution to upstream runtimes;
 - preserve ownership and lifetime rules across FFI boundaries;
 - report unavailable upstream components explicitly;
 - expose external operators through host-language idioms only when the upstream

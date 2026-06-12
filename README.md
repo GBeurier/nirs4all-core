@@ -55,6 +55,7 @@ The lightweight parser accepts the same definition envelope as the full Python
 `pipeline`, a mapping with `steps`, a JSON/YAML path, or JSON/YAML text. The
 current portable fixture uses the nirs4all examples syntax for Kennard-Stone,
 SNV, Savitzky-Golay, and a PLS `n_components` sweep via `_grid_`/`param`.
+Python, Rust, JavaScript/WASM, R, and MATLAB/Octave expose this parser contract.
 
 This is a syntax contract only. Numerical execution and lite-vs-full-`nirs4all`
 equivalence still require the parity gates described in
