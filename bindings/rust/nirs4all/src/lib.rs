@@ -245,9 +245,42 @@ mod tests {
             ]
         );
         assert_eq!(
-            json_pipeline["pipeline"][3]["_grid_"]["n_components"],
-            serde_json::json!([2, 4, 6, 8, 10])
+            json_pipeline["pipeline"][3]["_range_"],
+            serde_json::json!([2, 11, 2])
         );
+    }
+
+    #[test]
+    fn all_shared_parity_fixtures_keep_json_and_yaml_in_lockstep() {
+        let fixtures = [
+            (
+                include_str!(
+                    "../../../../tests/parity/fixtures/portable_kennard_stone_snv_pls.json"
+                ),
+                include_str!(
+                    "../../../../tests/parity/fixtures/portable_kennard_stone_snv_pls.yaml"
+                ),
+            ),
+            (
+                include_str!("../../../../tests/parity/fixtures/portable_methods_pipeline.json"),
+                include_str!("../../../../tests/parity/fixtures/portable_methods_pipeline.yaml"),
+            ),
+            (
+                include_str!("../../../../tests/parity/fixtures/portable_savgol_pls.json"),
+                include_str!("../../../../tests/parity/fixtures/portable_savgol_pls.yaml"),
+            ),
+            (
+                include_str!("../../../../tests/parity/fixtures/portable_snv_pls.json"),
+                include_str!("../../../../tests/parity/fixtures/portable_snv_pls.yaml"),
+            ),
+        ];
+
+        for (json, yaml) in fixtures {
+            let json_pipeline = load_pipeline_definition_str(json).unwrap();
+            let yaml_pipeline = load_pipeline_definition_str(yaml).unwrap();
+            assert_eq!(json_pipeline, yaml_pipeline);
+            assert!(!portable_class_names(&json_pipeline).is_empty());
+        }
     }
 
     #[test]

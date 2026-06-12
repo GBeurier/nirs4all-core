@@ -23,7 +23,7 @@ export const upstreams = Object.freeze([
   },
   {
     key: 'datasets',
-    candidates: ['nirs4all-datasets-wasm'],
+    candidates: ['@nirs4all/nirs4all-datasets-wasm'],
     role: 'DOI-pinned NIRS dataset catalog',
   },
   {
@@ -61,7 +61,7 @@ export async function importUpstream(name) {
 
   for (const candidate of item.candidates) {
     try {
-      return await import(candidate);
+      return await importUpstreamCandidate(candidate);
     } catch (error) {
       if (isMissingModuleError(error)) {
         continue;
@@ -84,6 +84,21 @@ export const dagMlData = Object.freeze({
   key: 'dag_ml_data',
   import: () => importUpstream('dag_ml_data'),
 });
+
+export const loadFormats = () => importUpstream('formats');
+export const loadIo = () => importUpstream('io');
+export const loadDatasets = () => importUpstream('datasets');
+export const loadMethods = () => importUpstream('methods');
+export const loadDagMl = () => importUpstream('dag_ml');
+export const loadDagMlData = () => importUpstream('dag_ml_data');
+
+export async function loadPortableStack(keys = upstreams.map((item) => item.key)) {
+  const loaded = {};
+  for (const key of keys) {
+    loaded[key] = await importUpstream(key);
+  }
+  return loaded;
+}
 
 export function loadPipelineDefinition(source) {
   const data = typeof source === 'string' ? parsePipelineText(source) : clone(source);
@@ -121,6 +136,25 @@ export function portableClassNames(definition) {
 
 function isMissingModuleError(error) {
   return error && (error.code === 'ERR_MODULE_NOT_FOUND' || error.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED');
+}
+
+function importUpstreamCandidate(candidate) {
+  switch (candidate) {
+    case 'dag-ml-wasm':
+      return import('dag-ml-wasm');
+    case 'dag-ml-data-wasm':
+      return import('dag-ml-data-wasm');
+    case 'nirs4all-formats-wasm':
+      return import('nirs4all-formats-wasm');
+    case 'nirs4all-io-wasm':
+      return import('nirs4all-io-wasm');
+    case '@nirs4all/nirs4all-datasets-wasm':
+      return import('@nirs4all/nirs4all-datasets-wasm');
+    case '@nirs4all/methods-wasm':
+      return import('@nirs4all/methods-wasm');
+    default:
+      return import(candidate);
+  }
 }
 
 function parsePipelineText(text) {

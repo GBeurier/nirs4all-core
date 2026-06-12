@@ -8,6 +8,18 @@ FIXTURE_DIR = Path(__file__).resolve().parents[3] / "tests" / "parity" / "fixtur
 
 
 class PipelineContractTests(unittest.TestCase):
+    def test_all_shared_json_and_yaml_fixtures_normalize_to_same_pipeline(self) -> None:
+        fixture_names = sorted(path.stem for path in FIXTURE_DIR.glob("portable_*.json"))
+
+        self.assertGreaterEqual(len(fixture_names), 4)
+        for name in fixture_names:
+            with self.subTest(name=name):
+                json_pipeline = n4lite.load_pipeline_definition(FIXTURE_DIR / f"{name}.json")
+                yaml_pipeline = n4lite.load_pipeline_definition(FIXTURE_DIR / f"{name}.yaml")
+
+                self.assertEqual(json_pipeline.as_dict(), yaml_pipeline.as_dict())
+                self.assertGreater(len(n4lite.portable_class_names(json_pipeline)), 0)
+
     def test_json_and_yaml_fixtures_normalize_to_same_pipeline(self) -> None:
         json_pipeline = n4lite.load_pipeline_definition(FIXTURE_DIR / "portable_methods_pipeline.json")
         yaml_pipeline = n4lite.load_pipeline_definition(FIXTURE_DIR / "portable_methods_pipeline.yaml")
@@ -24,12 +36,12 @@ class PipelineContractTests(unittest.TestCase):
             ],
         )
 
-    def test_pls_sweep_uses_nirs4all_grid_syntax(self) -> None:
+    def test_pls_sweep_uses_nirs4all_range_syntax(self) -> None:
         definition = n4lite.load_pipeline_definition(FIXTURE_DIR / "portable_methods_pipeline.json")
         sweep = definition.pipeline[-1]
 
         self.assertEqual(sweep["param"], "n_components")
-        self.assertEqual(sweep["_grid_"], {"n_components": [2, 4, 6, 8, 10]})
+        self.assertEqual(sweep["_range_"], [2, 11, 2])
         self.assertEqual(sweep["model"]["class"], "sklearn.cross_decomposition.PLSRegression")
 
     def test_steps_alias_and_direct_list_match_nirs4all_loader_surface(self) -> None:

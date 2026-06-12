@@ -1,6 +1,16 @@
 # Parity Fixtures
 
-This directory will hold cross-runtime parity fixtures for `nirs4all-lite`.
+This directory holds cross-runtime parity fixtures for `nirs4all-lite`.
+
+The `portable_*.json` / `portable_*.yaml` pairs use the same `pipeline:`
+envelope as the full Python `nirs4all` `examples/pipeline_samples` syntax.
+The initial shared cases are:
+
+- SNV + PLS;
+- Savitzky-Golay + PLS;
+- Kennard-Stone + SNV + PLS;
+- Kennard-Stone + SNV + Savitzky-Golay + PLS `n_components` sweep via
+  `_range_` / `param`.
 
 Each fixture should include:
 

@@ -24,9 +24,7 @@
       "model": {
         "class": "sklearn.cross_decomposition.PLSRegression"
       },
-      "_grid_": {
-        "n_components": [2, 4, 6, 8, 10]
-      },
+      "_range_": [2, 11, 2],
       "param": "n_components",
       "name": "PLS-sweep"
     }

@@ -41,7 +41,7 @@ Every binding must:
   and `TypedArray` data, with async initialization where WASM is required.
 - `nirs4all-web` consumes this package; UI code does not live here.
 - Current upstream package candidates are `nirs4all-formats-wasm`,
-  `nirs4all-io-wasm`, `nirs4all-datasets-wasm`, `dag-ml-wasm`,
+  `nirs4all-io-wasm`, `@nirs4all/nirs4all-datasets-wasm`, `dag-ml-wasm`,
   `dag-ml-data-wasm`, and `@nirs4all/methods-wasm`.
 
 ## R

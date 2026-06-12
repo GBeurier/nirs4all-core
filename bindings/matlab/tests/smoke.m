@@ -14,6 +14,16 @@ catch err
 end
 
 fixture_dir = fullfile(fileparts(mfilename('fullpath')), '..', '..', '..', 'tests', 'parity', 'fixtures');
+fixture_files = dir(fullfile(fixture_dir, 'portable_*.json'));
+assert(numel(fixture_files) >= 4);
+for i = 1:numel(fixture_files)
+    [~, fixture_name, ~] = fileparts(fixture_files(i).name);
+    json_definition = nirs4all.loadPipelineDefinition(fullfile(fixture_dir, [fixture_name '.json']));
+    yaml_definition = nirs4all.loadPipelineDefinition(fullfile(fixture_dir, [fixture_name '.yaml']));
+    assert(numel(json_definition.pipeline) == numel(yaml_definition.pipeline));
+    assert(numel(nirs4all.portableClassNames(json_definition)) > 0);
+end
+
 json_pipeline = nirs4all.loadPipelineDefinition(fullfile(fixture_dir, 'portable_methods_pipeline.json'));
 yaml_pipeline = nirs4all.loadPipelineDefinition(fullfile(fixture_dir, 'portable_methods_pipeline.yaml'));
 
@@ -28,9 +38,9 @@ assert(isequal(nirs4all.portableClassNames(yaml_pipeline), expected_classes));
 assert(numel(json_pipeline.pipeline) == numel(yaml_pipeline.pipeline));
 
 sweep = json_pipeline.pipeline{4};
-grid = sweep.('_grid_');
+range = sweep.('_range_');
 assert(strcmp(sweep.param, 'n_components'));
-assert(isequal(grid.n_components, [2 4 6 8 10]));
+assert(isequal(range(:)', [2 11 2]));
 
 from_steps = nirs4all.loadPipelineDefinition(struct('steps', {json_pipeline.pipeline}));
 from_list = nirs4all.loadPipelineDefinition(json_pipeline.pipeline);
