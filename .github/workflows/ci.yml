@@ -55,6 +55,8 @@ jobs:
 
   strict-parity:
     runs-on: ubuntu-latest
+    env:
+      R_LIBS_USER: ${{ runner.temp }}/R/library
     steps:
       - uses: actions/checkout@v6
       - uses: actions/checkout@v6
@@ -102,13 +104,14 @@ jobs:
           PLS4ALL_LIB_PATH="$GITHUB_WORKSPACE/nirs4all-methods/build/dev-release/cpp/src/libn4m.so" \
           NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 \
           python -m unittest bindings/python/tests/test_execution_parity.py -v
-      - run: Rscript -e 'install.packages(c("jsonlite", "yaml"), repos = "https://cloud.r-project.org")'
-      - run: R CMD INSTALL --no-multiarch --no-staged-install nirs4all-methods/bindings/r/n4m
+      - run: mkdir -p "$R_LIBS_USER"
+      - run: Rscript -e 'install.packages(c("jsonlite", "yaml"), lib = Sys.getenv("R_LIBS_USER"), repos = "https://cloud.r-project.org")'
+      - run: R CMD INSTALL --library="$R_LIBS_USER" --no-multiarch --no-staged-install nirs4all-methods/bindings/r/n4m
         env:
           PLS4ALL_LIB_DIR: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
           PLS4ALL_GENERATED_DIR: ${{ github.workspace }}/nirs4all-methods/build/dev-release/generated
           LD_LIBRARY_PATH: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
-      - run: R CMD INSTALL bindings/r
+      - run: R CMD INSTALL --library="$R_LIBS_USER" bindings/r
       - run: make test-r-parity
         env:
           LD_LIBRARY_PATH: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
