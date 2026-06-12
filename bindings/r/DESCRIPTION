@@ -1,7 +1,9 @@
 Package: nirs4all
 Title: Portable nirs4all Aggregate Binding
 Version: 0.1.0
-Authors@R: c(person("nirs4all", "contributors", role = c("aut", "cre", "cph"), email = "noreply@nirs4all.org"))
+Authors@R: c(
+    person("Gregory", "Beurier", email = "gregory.beurier@cirad.fr", role = c("aut", "cre")),
+    person("nirs4all", "contributors", role = c("ctb", "cph")))
 Description: Aggregates the nirs4all formats, IO, datasets, methods, 'dag-ml', and 'dag-ml-data' language bindings into one portable package surface without reimplementing their parsing, numerical, or pipeline logic. The aggregated engines remain the source of truth and are delegated to at run time.
 License: MIT + file LICENSE
 URL: https://nirs4all.org, https://github.com/GBeurier/nirs4all-lite
