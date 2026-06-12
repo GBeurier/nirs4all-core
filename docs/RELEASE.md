@@ -36,5 +36,15 @@ R/Octave toolchains. They are part of CI because they may not be available on
 every development workstation.
 
 Every CI run uploads the build outputs as artifacts (`rust-crate`, `python-*`,
-`npm-wasm`, `r-source`, and `matlab-octave`). Tagged releases attach the same
-artifact families to the GitHub Release.
+`npm-wasm`, `r-source`, and `matlab-octave`).
+
+Tagged releases are cut by six dedicated workflows — `release-python.yml`,
+`release-npm.yml`, `release-crates.yml`, `release-r.yml`, `release-matlab.yml`,
+`release-source.yml`. On a non-pre-release tag `vX.Y.Z` they publish PyPI
+`nirs4all-lite` (OIDC Trusted Publishing, environment `pypi`), npm `nirs4all`
+(`NPM_TOKEN`), crates.io `nirs4all` (`CARGO_REGISTRY_TOKEN`), and attach the R
+tarball, the MATLAB/Octave zip, and the source + SBOM bundle to the Release.
+Pre-release tags build/attach but publish to no registry; `workflow_dispatch`
+runs every workflow in dry-run mode. The version source of truth is the Rust
+crate manifest, propagated by `scripts/bump_version.sh`. See
+[`PUBLISHING.md`](PUBLISHING.md).
