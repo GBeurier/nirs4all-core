@@ -57,12 +57,15 @@ current portable fixtures use the nirs4all examples syntax for Kennard-Stone,
 SNV, Savitzky-Golay, and a PLS `n_components` sweep via `_range_`/`param`.
 Python, Rust, JavaScript/WASM, R, and MATLAB/Octave expose this parser contract.
 
-JavaScript/WASM, Python, and R also execute the initial portable subset through
-`nirs4all-methods` and compare the same four JSON/YAML fixtures against the
-full Python `nirs4all` oracle. Other host bindings must not fake execution:
-until their upstream method surface can execute KS/SNV/SavGol/PLS natively,
-they remain parser/registry bindings and the gap is tracked in the parity plan.
-See [`docs/PARITY.md`](docs/PARITY.md).
+JavaScript/WASM, Python, Rust, and R also execute the initial portable subset
+through `nirs4all-methods` and compare the same four JSON/YAML fixtures against
+the full Python `nirs4all` oracle. The JavaScript/WASM binding additionally
+returns a serialized PLS model and exposes `predictPortablePipeline()` so
+browser clients can reuse the selected portable pipeline without reimplementing
+the preprocessing or prediction path. MATLAB/Octave must not fake execution:
+until its upstream method surface can execute KS/SNV/SavGol/PLS natively, it
+remains a parser/registry binding and the gap is tracked in the parity plan. See
+[`docs/PARITY.md`](docs/PARITY.md).
 
 ## Repository layout
 
@@ -103,6 +106,15 @@ PYTHONPATH=bindings/python/src:/path/to/nirs4all-methods/bindings/python/src \
 PLS4ALL_LIB_PATH=/path/to/libn4m.so \
 NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 \
 python -m unittest bindings/python/tests/test_execution_parity.py -v
+```
+
+Strict Rust-vs-full-`nirs4all` execution parity needs a local libn4m build:
+
+```bash
+NIRS4ALL_METHODS_LIB=/path/to/libn4m.so \
+LD_LIBRARY_PATH=/path/to/libn4m-directory \
+NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 \
+cargo test -p nirs4all rust_binding_execution_matches_full_python_nirs4all_oracle -- --nocapture
 ```
 
 Strict R-vs-full-`nirs4all` execution parity needs an installed `n4m` R binding

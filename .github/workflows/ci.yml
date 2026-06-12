@@ -99,6 +99,10 @@ jobs:
         working-directory: nirs4all-methods
       - run: cmake --build --preset dev-release --target n4m_c --parallel
         working-directory: nirs4all-methods
+      - run: make test-rust-parity
+        env:
+          NIRS4ALL_METHODS_LIB: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src/libn4m.so
+          LD_LIBRARY_PATH: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
       - run: |
           PYTHONPATH="bindings/python/src:$GITHUB_WORKSPACE/nirs4all-methods/bindings/python/src" \
           PLS4ALL_LIB_PATH="$GITHUB_WORKSPACE/nirs4all-methods/build/dev-release/cpp/src/libn4m.so" \

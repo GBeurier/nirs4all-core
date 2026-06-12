@@ -4,7 +4,7 @@ import { resolve, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import test from 'node:test';
 
-import { runPortablePipeline } from '../src/index.js';
+import { predictPortablePipeline, runPortablePipeline } from '../src/index.js';
 
 function resolveMethodsUrl() {
   const override = process.env.NIRS4ALL_METHODS_JS_DIST;
@@ -69,5 +69,17 @@ test('portable WASM execution matches the full Python nirs4all oracle', async (t
       );
     }
     assert.equal(actual.selected.n_components, expected.selected.n_components, `${expected.name}: selected component mismatch`);
+    assert.equal(actual.model.n_components, expected.selected.n_components, `${expected.name}: fitted model component mismatch`);
+
+    const predicted = await predictPortablePipeline(actual, {
+      X: dataset.X,
+      rows: dataset.rows,
+      cols: dataset.cols,
+    }, { methods });
+    const heldOut = actual.split.testIndices.map((index) => predicted.data[index]);
+    assert.ok(
+      maxAbsDiff(heldOut, actual.selected.predictions) <= tol.predictions_abs,
+      `${expected.name}: portable predict diff for selected model`,
+    );
   }
 });

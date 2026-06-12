@@ -3,6 +3,13 @@
 //! This crate intentionally starts as a registry and namespace layer. Runtime
 //! functionality must delegate to the owning upstream crates.
 
+use std::cmp::Ordering;
+use std::ffi::CStr;
+use std::os::raw::{c_char, c_double, c_int, c_void};
+use std::path::Path;
+use std::ptr;
+
+use libloading::{Library, Symbol};
 use serde_json::Value;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -53,6 +60,27 @@ pub const PORTABLE_OPERATOR_CLASSES: &[&str] = &[
     "nirs4all.operators.transforms.scalers.StandardNormalVariate",
     "nirs4all.operators.transforms.SavitzkyGolay",
     "nirs4all.operators.transforms.nirs.SavitzkyGolay",
+    "sklearn.cross_decomposition.PLSRegression",
+    "sklearn.cross_decomposition._pls.PLSRegression",
+];
+
+const KENNARD_STONE_CLASSES: &[&str] = &[
+    "nirs4all.operators.splitters.KennardStoneSplitter",
+    "nirs4all.operators.splitters.splitters.KennardStoneSplitter",
+];
+
+const SNV_CLASSES: &[&str] = &[
+    "nirs4all.operators.transforms.SNV",
+    "nirs4all.operators.transforms.StandardNormalVariate",
+    "nirs4all.operators.transforms.scalers.StandardNormalVariate",
+];
+
+const SAVGOL_CLASSES: &[&str] = &[
+    "nirs4all.operators.transforms.SavitzkyGolay",
+    "nirs4all.operators.transforms.nirs.SavitzkyGolay",
+];
+
+const PLS_CLASSES: &[&str] = &[
     "sklearn.cross_decomposition.PLSRegression",
     "sklearn.cross_decomposition._pls.PLSRegression",
 ];
@@ -108,6 +136,278 @@ pub fn portable_class_names(value: &Value) -> Vec<String> {
     let mut classes = Vec::new();
     collect_classes(root, &mut classes);
     classes
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct PortableDataset {
+    pub x: Vec<f64>,
+    pub y: Vec<f64>,
+    pub rows: usize,
+    pub cols: usize,
+}
+
+impl PortableDataset {
+    pub fn from_json_value(value: &Value) -> Result<Self, String> {
+        let rows = value
+            .get("rows")
+            .or_else(|| value.get("n_samples"))
+            .and_then(Value::as_u64)
+            .ok_or_else(|| "dataset must provide rows or n_samples".to_string())?
+            as usize;
+        let cols = value
+            .get("cols")
+            .or_else(|| value.get("n_features"))
+            .and_then(Value::as_u64)
+            .ok_or_else(|| "dataset must provide cols or n_features".to_string())?
+            as usize;
+        let x = flatten_matrix(
+            value
+                .get("X")
+                .ok_or_else(|| "dataset must contain X".to_string())?,
+            rows,
+            cols,
+            "X",
+        )?;
+        let y = flatten_matrix(
+            value
+                .get("y")
+                .ok_or_else(|| "dataset must contain y".to_string())?,
+            rows,
+            1,
+            "y",
+        )?;
+        Ok(Self { x, y, rows, cols })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ExecutionPlan {
+    pub splitter: Option<PortableSplitter>,
+    pub preprocessing: Vec<PortablePreprocessing>,
+    pub n_components: Vec<i32>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct PortableSplitter {
+    pub kind: String,
+    pub test_size: f64,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum PortablePreprocessing {
+    StandardNormalVariate,
+    SavitzkyGolay(SavitzkyGolayParams),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SavitzkyGolayParams {
+    pub window_length: i32,
+    pub polyorder: i32,
+    pub deriv: i32,
+    pub mode: i32,
+    pub cval: f64,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct PortablePipelineResult {
+    pub name: String,
+    pub rows: usize,
+    pub cols: usize,
+    pub split: PortableSplitResult,
+    pub preprocessing: Vec<PortablePreprocessingResult>,
+    pub variants: Vec<PortableVariant>,
+    pub selected: PortableVariant,
+    pub targets: Vec<f64>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct PortableSplitResult {
+    pub kind: String,
+    pub train_indices: Vec<usize>,
+    pub test_indices: Vec<usize>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct PortablePreprocessingResult {
+    pub kind: String,
+    pub params: Vec<f64>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct PortableVariant {
+    pub n_components: i32,
+    pub rmse: f64,
+    pub predictions: Vec<f64>,
+}
+
+pub fn parse_execution_plan_str(input: &str) -> Result<ExecutionPlan, String> {
+    let definition = load_pipeline_definition_str(input)?;
+    parse_execution_plan(&definition)
+}
+
+pub fn parse_execution_plan(definition: &Value) -> Result<ExecutionPlan, String> {
+    let pipeline = definition
+        .get("pipeline")
+        .and_then(Value::as_array)
+        .ok_or_else(|| "pipeline definition must contain a pipeline array".to_string())?;
+    let mut splitter = None;
+    let mut preprocessing = Vec::new();
+    let mut model_step = None;
+
+    for step in pipeline {
+        let step_obj = step
+            .as_object()
+            .ok_or_else(|| "portable pipeline steps must be mapping objects".to_string())?;
+
+        if let Some(class_name) = step_obj.get("class").and_then(Value::as_str) {
+            if KENNARD_STONE_CLASSES.contains(&class_name) {
+                let params = step_obj.get("params").unwrap_or(&Value::Null);
+                splitter = Some(PortableSplitter {
+                    kind: "KennardStone".to_string(),
+                    test_size: number_param(params.get("test_size"), 0.25)?,
+                });
+            } else if SNV_CLASSES.contains(&class_name) {
+                preprocessing.push(PortablePreprocessing::StandardNormalVariate);
+            } else if SAVGOL_CLASSES.contains(&class_name) {
+                preprocessing.push(PortablePreprocessing::SavitzkyGolay(savgol_params(
+                    step_obj.get("params").unwrap_or(&Value::Null),
+                )?));
+            } else {
+                return Err(format!(
+                    "portable execution does not support step class '{class_name}'"
+                ));
+            }
+            continue;
+        }
+
+        if step_obj.get("model").and_then(Value::as_object).is_some() {
+            if model_step.is_some() {
+                return Err("portable execution supports exactly one model step".to_string());
+            }
+            model_step = Some(step);
+            continue;
+        }
+
+        return Err(format!(
+            "portable execution does not support pipeline step: {step}"
+        ));
+    }
+
+    let model_step = model_step
+        .ok_or_else(|| "portable execution requires a PLSRegression model step".to_string())?;
+    let model_class = model_step
+        .get("model")
+        .and_then(|model| model.get("class"))
+        .and_then(Value::as_str)
+        .ok_or_else(|| "portable execution requires a model class".to_string())?;
+    if !PLS_CLASSES.contains(&model_class) {
+        return Err(format!(
+            "portable execution does not support model class '{model_class}'"
+        ));
+    }
+
+    Ok(ExecutionPlan {
+        splitter,
+        preprocessing,
+        n_components: component_values(model_step)?,
+    })
+}
+
+pub fn run_portable_pipeline_with_library(
+    input: &str,
+    dataset: &PortableDataset,
+    library_path: impl AsRef<Path>,
+) -> Result<PortablePipelineResult, String> {
+    let definition = load_pipeline_definition_str(input)?;
+    let plan = parse_execution_plan(&definition)?;
+    let methods = MethodsLibrary::load(library_path)?;
+    let split = methods.compute_split(plan.splitter.as_ref(), dataset)?;
+
+    let mut x_train = select_rows(&dataset.x, dataset.rows, dataset.cols, &split.train_indices)?;
+    let mut x_test = select_rows(&dataset.x, dataset.rows, dataset.cols, &split.test_indices)?;
+    let y_train = select_rows(&dataset.y, dataset.rows, 1, &split.train_indices)?;
+    let targets = select_rows(&dataset.y, dataset.rows, 1, &split.test_indices)?;
+
+    let mut preprocessing = Vec::new();
+    for step in &plan.preprocessing {
+        match step {
+            PortablePreprocessing::StandardNormalVariate => {
+                x_train =
+                    methods.snv_transform(&x_train, split.train_indices.len(), dataset.cols)?;
+                x_test = methods.snv_transform(&x_test, split.test_indices.len(), dataset.cols)?;
+                preprocessing.push(PortablePreprocessingResult {
+                    kind: "StandardNormalVariate".to_string(),
+                    params: Vec::new(),
+                });
+            }
+            PortablePreprocessing::SavitzkyGolay(params) => {
+                x_train = methods.savgol_transform(
+                    &x_train,
+                    split.train_indices.len(),
+                    dataset.cols,
+                    params,
+                )?;
+                x_test = methods.savgol_transform(
+                    &x_test,
+                    split.test_indices.len(),
+                    dataset.cols,
+                    params,
+                )?;
+                preprocessing.push(PortablePreprocessingResult {
+                    kind: "SavitzkyGolay".to_string(),
+                    params: vec![
+                        f64::from(params.window_length),
+                        f64::from(params.polyorder),
+                        f64::from(params.deriv),
+                        f64::from(params.mode),
+                        params.cval,
+                    ],
+                });
+            }
+        }
+    }
+
+    let mut variants = Vec::new();
+    for &n_components in &plan.n_components {
+        let predictions = methods.fit_predict_pls(PlsFitInput {
+            x_train: &x_train,
+            y_train: &y_train,
+            train_rows: split.train_indices.len(),
+            cols: dataset.cols,
+            n_components,
+            x_test: &x_test,
+            test_rows: split.test_indices.len(),
+        })?;
+        variants.push(PortableVariant {
+            n_components,
+            rmse: rmse(&predictions, &targets)?,
+            predictions,
+        });
+    }
+    let selected = variants
+        .iter()
+        .min_by(|left, right| {
+            left.rmse
+                .partial_cmp(&right.rmse)
+                .unwrap_or(Ordering::Equal)
+        })
+        .ok_or_else(|| "portable execution needs at least one PLS variant".to_string())?
+        .clone();
+
+    Ok(PortablePipelineResult {
+        name: definition
+            .get("name")
+            .and_then(Value::as_str)
+            .unwrap_or("pipeline")
+            .to_string(),
+        rows: dataset.rows,
+        cols: dataset.cols,
+        split,
+        preprocessing,
+        variants,
+        selected,
+        targets,
+    })
 }
 
 pub mod dag_ml {
@@ -198,6 +498,573 @@ fn collect_classes(value: &Value, output: &mut Vec<String>) {
             }
         }
         _ => {}
+    }
+}
+
+fn savgol_params(params: &Value) -> Result<SavitzkyGolayParams, String> {
+    let delta = number_param(params.get("delta"), 1.0)?;
+    if (delta - 1.0).abs() > f64::EPSILON {
+        return Err(
+            "portable Savitzky-Golay execution currently supports delta=1 only".to_string(),
+        );
+    }
+    Ok(SavitzkyGolayParams {
+        window_length: int_param(
+            params.get("window_length").or_else(|| params.get("window")),
+            11,
+        )?,
+        polyorder: int_param(params.get("polyorder"), 2)?,
+        deriv: int_param(params.get("deriv"), 0)?,
+        mode: 4,
+        cval: number_param(params.get("cval"), 0.0)?,
+    })
+}
+
+fn component_values(step: &Value) -> Result<Vec<i32>, String> {
+    if let Some(range) = step.get("_range_") {
+        if step.get("param").and_then(Value::as_str) != Some("n_components") {
+            return Err(
+                "portable execution only supports _range_ sweeps over 'n_components'".to_string(),
+            );
+        }
+        let values = range
+            .as_array()
+            .ok_or_else(|| "invalid n_components _range_; expected an array".to_string())?;
+        if values.len() != 3 {
+            return Err(
+                "invalid n_components _range_; expected [start, stop, positive_step]".to_string(),
+            );
+        }
+        let start = int_param(values.first(), 0)?;
+        let stop = int_param(values.get(1), 0)?;
+        let stride = int_param(values.get(2), 0)?;
+        if stride <= 0 {
+            return Err("invalid n_components _range_; expected a positive step".to_string());
+        }
+        let mut out = Vec::new();
+        let mut value = start;
+        while value <= stop {
+            out.push(value);
+            value += stride;
+        }
+        return Ok(out);
+    }
+    let params = step
+        .get("model")
+        .and_then(|model| model.get("params"))
+        .unwrap_or(&Value::Null);
+    Ok(vec![int_param(params.get("n_components"), 2)?.max(1)])
+}
+
+fn number_param(value: Option<&Value>, fallback: f64) -> Result<f64, String> {
+    match value {
+        None | Some(Value::Null) => Ok(fallback),
+        Some(Value::Number(number)) => number
+            .as_f64()
+            .ok_or_else(|| "numeric parameter is outside f64 range".to_string()),
+        Some(Value::String(text)) => text
+            .parse::<f64>()
+            .map_err(|error| format!("invalid numeric parameter '{text}': {error}")),
+        Some(other) => Err(format!("expected numeric parameter, got {other}")),
+    }
+}
+
+fn int_param(value: Option<&Value>, fallback: i32) -> Result<i32, String> {
+    let Some(value) = value else {
+        return Ok(fallback);
+    };
+    if value.is_null() {
+        return Ok(fallback);
+    }
+    let raw = match value {
+        Value::Number(number) => number
+            .as_i64()
+            .or_else(|| number.as_f64().map(|item| item.round() as i64))
+            .ok_or_else(|| "integer parameter is outside i64 range".to_string())?,
+        Value::String(text) => text
+            .parse::<i64>()
+            .map_err(|error| format!("invalid integer parameter '{text}': {error}"))?,
+        other => return Err(format!("expected integer parameter, got {other}")),
+    };
+    i32::try_from(raw).map_err(|_| format!("integer parameter {raw} is outside i32 range"))
+}
+
+fn flatten_matrix(
+    value: &Value,
+    rows: usize,
+    cols: usize,
+    label: &str,
+) -> Result<Vec<f64>, String> {
+    let expected = rows
+        .checked_mul(cols)
+        .ok_or_else(|| format!("dataset {label} shape overflows"))?;
+    let array = value
+        .as_array()
+        .ok_or_else(|| format!("dataset {label} must be an array"))?;
+
+    let out = if array.first().is_some_and(Value::is_array) {
+        let mut flattened = Vec::with_capacity(expected);
+        for row in array {
+            let row_items = row
+                .as_array()
+                .ok_or_else(|| format!("dataset {label} rows must be arrays"))?;
+            for item in row_items {
+                flattened.push(
+                    item.as_f64()
+                        .ok_or_else(|| format!("dataset {label} contains a non-numeric value"))?,
+                );
+            }
+        }
+        flattened
+    } else {
+        array
+            .iter()
+            .map(|item| {
+                item.as_f64()
+                    .ok_or_else(|| format!("dataset {label} contains a non-numeric value"))
+            })
+            .collect::<Result<Vec<_>, _>>()?
+    };
+
+    if out.len() != expected {
+        return Err(format!(
+            "dataset {label} length {} does not match {rows}x{cols}",
+            out.len()
+        ));
+    }
+    Ok(out)
+}
+
+fn select_rows(
+    data: &[f64],
+    rows: usize,
+    cols: usize,
+    indices: &[usize],
+) -> Result<Vec<f64>, String> {
+    let mut out = Vec::with_capacity(indices.len() * cols);
+    for &index in indices {
+        if index >= rows {
+            return Err(format!("row index {index} is outside 0..{}", rows - 1));
+        }
+        let start = index * cols;
+        out.extend_from_slice(&data[start..start + cols]);
+    }
+    Ok(out)
+}
+
+fn rmse(predictions: &[f64], targets: &[f64]) -> Result<f64, String> {
+    if predictions.len() != targets.len() {
+        return Err(format!(
+            "prediction/target length mismatch: {} != {}",
+            predictions.len(),
+            targets.len()
+        ));
+    }
+    let sum = predictions
+        .iter()
+        .zip(targets)
+        .map(|(actual, expected)| {
+            let diff = actual - expected;
+            diff * diff
+        })
+        .sum::<f64>();
+    Ok((sum / predictions.len() as f64).sqrt())
+}
+
+type N4mStatus = c_int;
+type N4mHandle = *mut c_void;
+
+const N4M_OK: N4mStatus = 0;
+const N4M_DTYPE_F64: c_int = 1;
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+struct N4mMatrixView {
+    data: *mut c_void,
+    rows: i64,
+    cols: i64,
+    row_stride: i64,
+    col_stride: i64,
+    dtype: c_int,
+    reserved0: i32,
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+struct N4mSplitResult {
+    train_idx: *mut i64,
+    n_train: i64,
+    test_idx: *mut i64,
+    n_test: i64,
+    owner: *mut c_void,
+}
+
+struct MethodsLibrary {
+    library: Library,
+}
+
+struct PlsFitInput<'a> {
+    x_train: &'a [f64],
+    y_train: &'a [f64],
+    train_rows: usize,
+    cols: usize,
+    n_components: i32,
+    x_test: &'a [f64],
+    test_rows: usize,
+}
+
+impl MethodsLibrary {
+    fn load(path: impl AsRef<Path>) -> Result<Self, String> {
+        let path = path.as_ref();
+        let library = unsafe { Library::new(path) }
+            .map_err(|error| format!("could not load libn4m at {}: {error}", path.display()))?;
+        Ok(Self { library })
+    }
+
+    fn compute_split(
+        &self,
+        splitter: Option<&PortableSplitter>,
+        dataset: &PortableDataset,
+    ) -> Result<PortableSplitResult, String> {
+        let Some(splitter) = splitter else {
+            let indices = (0..dataset.rows).collect::<Vec<_>>();
+            return Ok(PortableSplitResult {
+                kind: "all".to_string(),
+                train_indices: indices.clone(),
+                test_indices: indices,
+            });
+        };
+
+        let create: Symbol<unsafe extern "C" fn(*mut N4mHandle, c_double) -> N4mStatus> =
+            self.symbol(b"n4m_split_kennard_stone_create")?;
+        let split_fn: Symbol<
+            unsafe extern "C" fn(N4mHandle, N4mMatrixView, *mut N4mSplitResult) -> N4mStatus,
+        > = self.symbol(b"n4m_split_kennard_stone_split")?;
+        let destroy: Symbol<unsafe extern "C" fn(N4mHandle)> =
+            self.symbol(b"n4m_split_kennard_stone_destroy")?;
+        let result_destroy: Symbol<unsafe extern "C" fn(*mut N4mSplitResult)> =
+            self.symbol(b"n4m_split_result_destroy")?;
+
+        let mut handle = ptr::null_mut();
+        unsafe {
+            self.check(
+                create(&mut handle, splitter.test_size),
+                "n4m_split_kennard_stone_create",
+                None,
+            )?;
+        }
+        let mut x = dataset.x.clone();
+        let mut result = N4mSplitResult {
+            train_idx: ptr::null_mut(),
+            n_train: 0,
+            test_idx: ptr::null_mut(),
+            n_test: 0,
+            owner: ptr::null_mut(),
+        };
+        let split_status = unsafe {
+            split_fn(
+                handle,
+                matrix_view(&mut x, dataset.rows, dataset.cols)?,
+                &mut result,
+            )
+        };
+        let split_result =
+            if let Err(error) = self.check(split_status, "n4m_split_kennard_stone_split", None) {
+                unsafe { destroy(handle) };
+                return Err(error);
+            } else {
+                let train = copy_indices(result.train_idx, result.n_train)?;
+                let test = copy_indices(result.test_idx, result.n_test)?;
+                unsafe {
+                    result_destroy(&mut result);
+                    destroy(handle);
+                }
+                PortableSplitResult {
+                    kind: splitter.kind.clone(),
+                    train_indices: train,
+                    test_indices: test,
+                }
+            };
+        Ok(split_result)
+    }
+
+    fn snv_transform(&self, input: &[f64], rows: usize, cols: usize) -> Result<Vec<f64>, String> {
+        let create: Symbol<unsafe extern "C" fn(*mut N4mHandle, c_int, c_int, c_int) -> N4mStatus> =
+            self.symbol(b"n4m_pp_snv_create")?;
+        let transform: Symbol<
+            unsafe extern "C" fn(N4mHandle, N4mMatrixView, N4mMatrixView) -> N4mStatus,
+        > = self.symbol(b"n4m_pp_snv_transform")?;
+        let destroy: Symbol<unsafe extern "C" fn(N4mHandle)> =
+            self.symbol(b"n4m_pp_snv_destroy")?;
+
+        let mut handle = ptr::null_mut();
+        unsafe {
+            self.check(create(&mut handle, 1, 1, 0), "n4m_pp_snv_create", None)?;
+        }
+        let mut x = input.to_vec();
+        let mut out = vec![0.0; input.len()];
+        let status = unsafe {
+            transform(
+                handle,
+                matrix_view(&mut x, rows, cols)?,
+                matrix_view(&mut out, rows, cols)?,
+            )
+        };
+        unsafe { destroy(handle) };
+        self.check(status, "n4m_pp_snv_transform", None)?;
+        Ok(out)
+    }
+
+    fn savgol_transform(
+        &self,
+        input: &[f64],
+        rows: usize,
+        cols: usize,
+        params: &SavitzkyGolayParams,
+    ) -> Result<Vec<f64>, String> {
+        let create: Symbol<
+            unsafe extern "C" fn(
+                *mut N4mHandle,
+                i32,
+                i32,
+                i32,
+                c_double,
+                i32,
+                c_double,
+            ) -> N4mStatus,
+        > = self.symbol(b"n4m_pp_savgol_create")?;
+        let transform: Symbol<
+            unsafe extern "C" fn(N4mHandle, N4mMatrixView, N4mMatrixView) -> N4mStatus,
+        > = self.symbol(b"n4m_pp_savgol_transform")?;
+        let destroy: Symbol<unsafe extern "C" fn(N4mHandle)> =
+            self.symbol(b"n4m_pp_savgol_destroy")?;
+
+        let mut handle = ptr::null_mut();
+        unsafe {
+            self.check(
+                create(
+                    &mut handle,
+                    params.window_length,
+                    params.polyorder,
+                    params.deriv,
+                    1.0,
+                    params.mode,
+                    params.cval,
+                ),
+                "n4m_pp_savgol_create",
+                None,
+            )?;
+        }
+        let mut x = input.to_vec();
+        let mut out = vec![0.0; input.len()];
+        let status = unsafe {
+            transform(
+                handle,
+                matrix_view(&mut x, rows, cols)?,
+                matrix_view(&mut out, rows, cols)?,
+            )
+        };
+        unsafe { destroy(handle) };
+        self.check(status, "n4m_pp_savgol_transform", None)?;
+        Ok(out)
+    }
+
+    fn fit_predict_pls(&self, input: PlsFitInput<'_>) -> Result<Vec<f64>, String> {
+        let context_create: Symbol<unsafe extern "C" fn(*mut N4mHandle) -> N4mStatus> =
+            self.symbol(b"n4m_context_create")?;
+        let context_destroy: Symbol<unsafe extern "C" fn(N4mHandle)> =
+            self.symbol(b"n4m_context_destroy")?;
+        let config_create: Symbol<unsafe extern "C" fn(*mut N4mHandle) -> N4mStatus> =
+            self.symbol(b"n4m_config_create")?;
+        let config_destroy: Symbol<unsafe extern "C" fn(N4mHandle)> =
+            self.symbol(b"n4m_config_destroy")?;
+        let set_algorithm: Symbol<unsafe extern "C" fn(N4mHandle, i32) -> N4mStatus> =
+            self.symbol(b"n4m_config_set_algorithm")?;
+        let set_solver: Symbol<unsafe extern "C" fn(N4mHandle, i32) -> N4mStatus> =
+            self.symbol(b"n4m_config_set_solver")?;
+        let set_deflation: Symbol<unsafe extern "C" fn(N4mHandle, i32) -> N4mStatus> =
+            self.symbol(b"n4m_config_set_deflation")?;
+        let set_n_components: Symbol<unsafe extern "C" fn(N4mHandle, i32) -> N4mStatus> =
+            self.symbol(b"n4m_config_set_n_components")?;
+        let set_center_x: Symbol<unsafe extern "C" fn(N4mHandle, i32) -> N4mStatus> =
+            self.symbol(b"n4m_config_set_center_x")?;
+        let set_scale_x: Symbol<unsafe extern "C" fn(N4mHandle, i32) -> N4mStatus> =
+            self.symbol(b"n4m_config_set_scale_x")?;
+        let set_center_y: Symbol<unsafe extern "C" fn(N4mHandle, i32) -> N4mStatus> =
+            self.symbol(b"n4m_config_set_center_y")?;
+        let set_scale_y: Symbol<unsafe extern "C" fn(N4mHandle, i32) -> N4mStatus> =
+            self.symbol(b"n4m_config_set_scale_y")?;
+        let model_fit: Symbol<
+            unsafe extern "C" fn(
+                N4mHandle,
+                N4mHandle,
+                *const N4mMatrixView,
+                *const N4mMatrixView,
+                *mut N4mHandle,
+            ) -> N4mStatus,
+        > = self.symbol(b"n4m_model_fit")?;
+        let model_predict: Symbol<
+            unsafe extern "C" fn(
+                N4mHandle,
+                N4mHandle,
+                *const N4mMatrixView,
+                *mut N4mMatrixView,
+            ) -> N4mStatus,
+        > = self.symbol(b"n4m_model_predict")?;
+        let model_destroy: Symbol<unsafe extern "C" fn(N4mHandle)> =
+            self.symbol(b"n4m_model_destroy")?;
+
+        let mut ctx: N4mHandle = ptr::null_mut();
+        let mut cfg: N4mHandle = ptr::null_mut();
+        let mut model: N4mHandle = ptr::null_mut();
+        unsafe {
+            self.check(context_create(&mut ctx), "n4m_context_create", None)?;
+        }
+        macro_rules! checked {
+            ($status:expr, $name:literal) => {
+                if let Err(error) = self.check(unsafe { $status }, $name, Some(ctx)) {
+                    unsafe {
+                        if !model.is_null() {
+                            model_destroy(model);
+                        }
+                        if !cfg.is_null() {
+                            config_destroy(cfg);
+                        }
+                        if !ctx.is_null() {
+                            context_destroy(ctx);
+                        }
+                    }
+                    return Err(error);
+                }
+            };
+        }
+        checked!(config_create(&mut cfg), "n4m_config_create");
+        checked!(set_algorithm(cfg, 0), "n4m_config_set_algorithm");
+        checked!(set_solver(cfg, 1), "n4m_config_set_solver");
+        checked!(set_deflation(cfg, 0), "n4m_config_set_deflation");
+        checked!(
+            set_n_components(cfg, input.n_components),
+            "n4m_config_set_n_components"
+        );
+        checked!(set_center_x(cfg, 1), "n4m_config_set_center_x");
+        checked!(set_scale_x(cfg, 1), "n4m_config_set_scale_x");
+        checked!(set_center_y(cfg, 1), "n4m_config_set_center_y");
+        checked!(set_scale_y(cfg, 1), "n4m_config_set_scale_y");
+
+        let mut x_train = input.x_train.to_vec();
+        let mut y_train = input.y_train.to_vec();
+        let x_view = matrix_view(&mut x_train, input.train_rows, input.cols)?;
+        let y_view = matrix_view(&mut y_train, input.train_rows, 1)?;
+        let fit_status = unsafe { model_fit(ctx, cfg, &x_view, &y_view, &mut model) };
+        if let Err(error) = self.check(fit_status, "n4m_model_fit", Some(ctx)) {
+            unsafe {
+                config_destroy(cfg);
+                context_destroy(ctx);
+            }
+            return Err(error);
+        }
+
+        let mut x_test = input.x_test.to_vec();
+        let mut predictions = vec![0.0; input.test_rows];
+        let predict_status = unsafe {
+            let x_view = matrix_view(&mut x_test, input.test_rows, input.cols)?;
+            let mut out_view = matrix_view(&mut predictions, input.test_rows, 1)?;
+            model_predict(ctx, model, &x_view, &mut out_view)
+        };
+        let predict_check = self.check(predict_status, "n4m_model_predict", Some(ctx));
+        unsafe {
+            model_destroy(model);
+            config_destroy(cfg);
+            context_destroy(ctx);
+        }
+        predict_check?;
+        Ok(predictions)
+    }
+
+    fn symbol<T>(&self, name: &[u8]) -> Result<Symbol<'_, T>, String> {
+        unsafe { self.library.get::<T>(name) }.map_err(|error| {
+            format!(
+                "could not load symbol {}: {error}",
+                String::from_utf8_lossy(name)
+            )
+        })
+    }
+
+    fn check(
+        &self,
+        status: N4mStatus,
+        function_name: &str,
+        ctx: Option<N4mHandle>,
+    ) -> Result<(), String> {
+        if status == N4M_OK {
+            return Ok(());
+        }
+        let status_to_string: Result<Symbol<unsafe extern "C" fn(N4mStatus) -> *const c_char>, _> =
+            unsafe { self.library.get(b"n4m_status_to_string") };
+        let status_text = status_to_string
+            .ok()
+            .and_then(|func| unsafe { c_string(func(status)) })
+            .unwrap_or_else(|| format!("status {status}"));
+        let context_error = ctx.filter(|handle| !handle.is_null()).and_then(|handle| {
+            let last_error: Result<Symbol<unsafe extern "C" fn(N4mHandle) -> *const c_char>, _> =
+                unsafe { self.library.get(b"n4m_context_last_error") };
+            last_error
+                .ok()
+                .and_then(|func| unsafe { c_string(func(handle)) })
+                .filter(|message| !message.is_empty())
+        });
+        match context_error {
+            Some(message) => Err(format!("{function_name} failed: {status_text}: {message}")),
+            None => Err(format!("{function_name} failed: {status_text}")),
+        }
+    }
+}
+
+fn matrix_view(data: &mut [f64], rows: usize, cols: usize) -> Result<N4mMatrixView, String> {
+    if data.len() != rows * cols {
+        return Err(format!(
+            "matrix length {} does not match {rows}x{cols}",
+            data.len()
+        ));
+    }
+    Ok(N4mMatrixView {
+        data: data.as_mut_ptr().cast::<c_void>(),
+        rows: i64::try_from(rows).map_err(|_| format!("row count {rows} is outside i64 range"))?,
+        cols: i64::try_from(cols)
+            .map_err(|_| format!("column count {cols} is outside i64 range"))?,
+        row_stride: i64::try_from(cols)
+            .map_err(|_| format!("column count {cols} is outside i64 range"))?,
+        col_stride: 1,
+        dtype: N4M_DTYPE_F64,
+        reserved0: 0,
+    })
+}
+
+fn copy_indices(ptr: *const i64, len: i64) -> Result<Vec<usize>, String> {
+    if len < 0 {
+        return Err(format!("split result contains a negative length: {len}"));
+    }
+    if len == 0 {
+        return Ok(Vec::new());
+    }
+    if ptr.is_null() {
+        return Err("split result contains a null index buffer".to_string());
+    }
+    let values = unsafe { std::slice::from_raw_parts(ptr, len as usize) };
+    values
+        .iter()
+        .map(|&value| {
+            usize::try_from(value)
+                .map_err(|_| format!("split index {value} cannot be represented as usize"))
+        })
+        .collect()
+}
+
+unsafe fn c_string(ptr: *const c_char) -> Option<String> {
+    if ptr.is_null() {
+        None
+    } else {
+        Some(CStr::from_ptr(ptr).to_string_lossy().into_owned())
     }
 }
 
@@ -296,5 +1163,132 @@ mod tests {
 
         assert_eq!(from_steps["pipeline"], definition["pipeline"]);
         assert_eq!(from_list["pipeline"], definition["pipeline"]);
+    }
+
+    #[test]
+    fn rust_binding_execution_matches_full_python_nirs4all_oracle() {
+        let library_path =
+            std::env::var("NIRS4ALL_METHODS_LIB").or_else(|_| std::env::var("PLS4ALL_LIB_PATH"));
+        let library_path = match library_path {
+            Ok(path) => path,
+            Err(error) => {
+                if std::env::var("NIRS4ALL_LITE_REQUIRE_METHODS_PARITY").as_deref() == Ok("1") {
+                    panic!("strict Rust parity requires NIRS4ALL_METHODS_LIB: {error}");
+                }
+                eprintln!("skipping Rust execution parity: NIRS4ALL_METHODS_LIB is not set");
+                return;
+            }
+        };
+
+        let oracle: Value = serde_json::from_str(include_str!(
+            "../../../../tests/parity/expected/portable_python_oracle.json"
+        ))
+        .unwrap();
+        let dataset = PortableDataset::from_json_value(&oracle["dataset"]).unwrap();
+        let cases = oracle["cases"].as_array().unwrap();
+        let tolerances = &oracle["metadata"]["tolerances"];
+        let target_tol = tolerances["targets_abs"].as_f64().unwrap();
+        let rmse_tol = tolerances["rmse_abs"].as_f64().unwrap();
+        let prediction_tol = tolerances["predictions_abs"].as_f64().unwrap();
+
+        assert!(cases.len() >= 4);
+        for expected in cases {
+            let name = expected["name"].as_str().unwrap();
+            let fixture =
+                fixture_for_name(name).unwrap_or_else(|| panic!("missing fixture {name}"));
+            let actual =
+                run_portable_pipeline_with_library(fixture, &dataset, &library_path).unwrap();
+
+            assert_eq!(
+                actual.split.kind,
+                expected["split"]["kind"].as_str().unwrap()
+            );
+            assert_eq!(
+                actual.split.train_indices,
+                value_usize_vec(&expected["split"]["trainIndices"])
+            );
+            assert_eq!(
+                actual.split.test_indices,
+                value_usize_vec(&expected["split"]["testIndices"])
+            );
+            assert!(
+                max_abs_diff(&actual.targets, &value_f64_vec(&expected["targets"])) <= target_tol,
+                "{name}: target diff exceeded tolerance"
+            );
+            let expected_variants = expected["variants"].as_array().unwrap();
+            assert_eq!(actual.variants.len(), expected_variants.len(), "{name}");
+            for (actual_variant, expected_variant) in actual.variants.iter().zip(expected_variants)
+            {
+                assert_eq!(
+                    actual_variant.n_components,
+                    expected_variant["n_components"].as_i64().unwrap() as i32,
+                    "{name}: component mismatch"
+                );
+                assert!(
+                    (actual_variant.rmse - expected_variant["rmse"].as_f64().unwrap()).abs()
+                        <= rmse_tol,
+                    "{name}: RMSE diff for n_components={}",
+                    actual_variant.n_components
+                );
+                assert!(
+                    max_abs_diff(
+                        &actual_variant.predictions,
+                        &value_f64_vec(&expected_variant["predictions"])
+                    ) <= prediction_tol,
+                    "{name}: prediction diff for n_components={}",
+                    actual_variant.n_components
+                );
+            }
+            assert_eq!(
+                actual.selected.n_components,
+                expected["selected"]["n_components"].as_i64().unwrap() as i32,
+                "{name}: selected component mismatch"
+            );
+        }
+    }
+
+    fn fixture_for_name(name: &str) -> Option<&'static str> {
+        match name {
+            "portable_kennard_stone_snv_pls" => Some(include_str!(
+                "../../../../tests/parity/fixtures/portable_kennard_stone_snv_pls.json"
+            )),
+            "portable_methods_pipeline" => Some(include_str!(
+                "../../../../tests/parity/fixtures/portable_methods_pipeline.json"
+            )),
+            "portable_savgol_pls" => Some(include_str!(
+                "../../../../tests/parity/fixtures/portable_savgol_pls.json"
+            )),
+            "portable_snv_pls" => Some(include_str!(
+                "../../../../tests/parity/fixtures/portable_snv_pls.json"
+            )),
+            _ => None,
+        }
+    }
+
+    fn value_usize_vec(value: &Value) -> Vec<usize> {
+        value
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|item| item.as_u64().unwrap() as usize)
+            .collect()
+    }
+
+    fn value_f64_vec(value: &Value) -> Vec<f64> {
+        value
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|item| item.as_f64().unwrap())
+            .collect()
+    }
+
+    fn max_abs_diff(actual: &[f64], expected: &[f64]) -> f64 {
+        assert_eq!(actual.len(), expected.len());
+        actual
+            .iter()
+            .zip(expected)
+            .map(|(left, right)| (left - right).abs())
+            .fold(0.0, f64::max)
     }
 }

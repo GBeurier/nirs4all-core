@@ -1,7 +1,7 @@
 PYTHON ?= python3
 DIST_DIR ?= dist
 
-.PHONY: test test-rust test-python test-python-parity test-wasm test-r test-r-fixtures test-r-parity check-r build build-python build-npm build-r build-matlab package-rust clean
+.PHONY: test test-rust test-rust-parity test-python test-python-parity test-wasm test-r test-r-fixtures test-r-parity check-r build build-python build-npm build-r build-matlab package-rust clean
 
 test: test-rust test-python test-wasm
 
@@ -9,6 +9,9 @@ test-rust:
 	cargo fmt --all --check
 	cargo clippy --workspace --all-targets -- -D warnings
 	cargo test --workspace
+
+test-rust-parity:
+	NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 cargo test -p nirs4all rust_binding_execution_matches_full_python_nirs4all_oracle -- --nocapture
 
 test-python:
 	PYTHONPATH=bindings/python/src $(PYTHON) -m unittest discover -s bindings/python/tests

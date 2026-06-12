@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 
-import { parseExecutionPlan, runPortablePipeline } from '../src/index.js';
+import { parseExecutionPlan, predictPortablePipeline, runPortablePipeline } from '../src/index.js';
 
 const methodsUrl = new URL('../../../../nirs4all-methods/bindings/js/dist/index.js', import.meta.url);
 const fixtureUrl = new URL('../../../tests/parity/fixtures/portable_methods_pipeline.json', import.meta.url);
@@ -37,6 +37,15 @@ function makeDataset(rows = 40, cols = 28) {
   return { X, y, rows, cols };
 }
 
+function maxAbsDiff(actual, expected) {
+  assert.equal(actual.length, expected.length);
+  let max = 0;
+  for (let i = 0; i < actual.length; i += 1) {
+    max = Math.max(max, Math.abs(actual[i] - expected[i]));
+  }
+  return max;
+}
+
 test('portable execution plan recognizes the shared nirs4all fixture', () => {
   const fixture = readFileSync(fixtureUrl, 'utf8');
   const plan = parseExecutionPlan(fixture);
@@ -54,12 +63,21 @@ test('portable WASM execution delegates the shared pipeline to nirs4all-methods'
   }
 
   const methods = await import(methodsUrl.href);
-  const result = await runPortablePipeline(readFileSync(fixtureUrl, 'utf8'), makeDataset(), { methods });
+  const dataset = makeDataset();
+  const result = await runPortablePipeline(readFileSync(fixtureUrl, 'utf8'), dataset, { methods });
 
   assert.equal(result.name, 'portable_methods_pipeline');
   assert.equal(result.split.kind, 'KennardStone');
   assert.equal(result.variants.length, 5);
   assert.equal(result.targets.length, result.split.testIndices.length);
   assert.equal(result.selected.rmse, Math.min(...result.variants.map((item) => item.rmse)));
+  assert.equal(result.model.type, 'PLSRegression');
+  assert.equal(result.model.n_components, result.selected.n_components);
   assert.ok(result.selected.predictions.every(Number.isFinite));
+
+  const predicted = await predictPortablePipeline(result, { X: dataset.X, rows: dataset.rows, cols: dataset.cols }, { methods });
+  assert.equal(predicted.rows, dataset.rows);
+  assert.equal(predicted.cols, 1);
+  const heldOut = result.split.testIndices.map((index) => predicted.data[index]);
+  assert.ok(maxAbsDiff(heldOut, result.selected.predictions) <= 1e-10);
 });

@@ -32,6 +32,8 @@ Every binding must:
 - External operators should use traits and typed builder APIs, with capabilities
   declared at compile time or through explicit runtime feature checks.
 - Keep FFI handles explicit; never hide ownership transfers.
+- The portable KS/SNV/Savitzky-Golay/PLS subset executes through a caller-supplied
+  `libn4m` path and is covered by the shared full-Python `nirs4all` oracle.
 
 ## JavaScript/WASM
 
@@ -39,6 +41,9 @@ Every binding must:
 - Expose typed ESM APIs and browser-safe WASM loaders.
 - External operators should be ESM functions/classes over browser-safe values
   and `TypedArray` data, with async initialization where WASM is required.
+- The portable KS/SNV/Savitzky-Golay/PLS subset executes with
+  `runPortablePipeline()` and predicts from its serialized selected model with
+  `predictPortablePipeline()`, both delegating to `@nirs4all/methods-wasm`.
 - `nirs4all-web` consumes this package; UI code does not live here.
 - Current upstream package candidates are `nirs4all-formats-wasm`,
   `nirs4all-io-wasm`, `@nirs4all/datasets-wasm`, `dag-ml-wasm`,
@@ -63,3 +68,6 @@ Every binding must:
   `fit`/`predict`/`transform`-style methods when execution support exists.
 - Keep Octave compatibility in the public subset unless a function is marked
   MATLAB-only.
+- Current MATLAB/Octave support is parser/registry only for the portable
+  KS/SNV/Savitzky-Golay/PLS subset; it must not claim execution parity until
+  those upstream method calls are exposed without reimplementing kernels.
