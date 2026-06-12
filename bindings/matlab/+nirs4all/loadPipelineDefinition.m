@@ -121,6 +121,11 @@ error('nirs4all:InvalidPipeline', ...
 end
 
 function value = stripComments(value)
+if isnumeric(value) && isvector(value)
+    value = value(:).';
+    return
+end
+
 if iscell(value)
     output = {};
     for idx = 1:numel(value)
