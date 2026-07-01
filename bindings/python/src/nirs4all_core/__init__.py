@@ -29,32 +29,9 @@ from __future__ import annotations
 from typing import Any
 
 import nirs4all_lite as _aggregate
-from nirs4all_lite import (
-    CORE_FACADE_EXPORTS,
-    EXECUTION_ENGINE_EXPORTS,
-    PORTABLE_OPERATOR_CLASSES,
-    TOPOLOGY_EXPORTS,
-    LazyUpstream,
-    PipelineDefinition,
-    Upstream,
-    available_upstreams,
-    core_facade_exports,
-    dag_ml,
-    dag_ml_data,
-    datasets,
-    execution_engine_exports,
-    formats,
-    import_upstream,
-    io,
-    load_pipeline_definition,
-    methods,
-    portable_class_names,
-    release_topology_manifest,
-    require_upstream,
-    upstream_status,
-    upstreams,
-    validate_core_facade,
-)
+
+CORE_FACADE_EXPORTS = _aggregate.CORE_FACADE_EXPORTS
+TOPOLOGY_EXPORTS = _aggregate.TOPOLOGY_EXPORTS
 
 #: Import package currently backing this alias (``nirs4all_lite``). The
 #: distribution rename ``nirs4all-lite`` -> ``nirs4all-core`` is release-gated
@@ -62,6 +39,9 @@ from nirs4all_lite import (
 __aggregate_import__ = _aggregate.__name__
 
 __all__ = list(CORE_FACADE_EXPORTS + TOPOLOGY_EXPORTS)
+
+for _name in __all__:
+    globals()[_name] = getattr(_aggregate, _name)
 
 
 def __getattr__(name: str) -> Any:
