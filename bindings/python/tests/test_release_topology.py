@@ -38,6 +38,10 @@ def _load_wasm_package() -> dict[str, object]:
     return json.loads((ROOT / "bindings/wasm/package.json").read_text())
 
 
+def _load_wasm_package_lock() -> dict[str, object]:
+    return json.loads((ROOT / "bindings/wasm/package-lock.json").read_text())
+
+
 def _load_workflow(name: str) -> str:
     return (ROOT / ".github" / "workflows" / name).read_text()
 
@@ -382,6 +386,49 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             r_parity_step["env"]["NIRS4ALL_LITE_REQUIRE_METHODS_PARITY"],
             "1",
         )
+
+    def test_wasm_package_locks_typechecked_optional_peers(self) -> None:
+        package = _load_wasm_package()
+        lock = _load_wasm_package_lock()
+        root_lock = lock["packages"][""]
+        expected_peers = {
+            "@nirs4all/datasets-wasm",
+            "@nirs4all/methods-wasm",
+            "dag-ml-data-wasm",
+            "dag-ml-wasm",
+            "nirs4all-formats-wasm",
+            "nirs4all-io-wasm",
+        }
+
+        self.assertEqual(lock["lockfileVersion"], 3)
+        self.assertEqual(package["types"], "./src/index.d.ts")
+        self.assertEqual(package["exports"]["."]["types"], package["types"])
+        self.assertEqual(package["scripts"]["test"], "npm run test:js && npm run typecheck")
+        self.assertEqual(package["scripts"]["typecheck"], "tsc --project tsconfig.typecheck.json")
+        self.assertEqual(package["devDependencies"]["typescript"], "5.9.3")
+        self.assertEqual(set(package["peerDependencies"]), expected_peers)
+        self.assertEqual(set(package["peerDependenciesMeta"]), expected_peers)
+        self.assertEqual(set(root_lock["peerDependencies"]), expected_peers)
+        self.assertEqual(set(root_lock["peerDependenciesMeta"]), expected_peers)
+        self.assertEqual(root_lock["license"], package["license"])
+        for peer in expected_peers:
+            self.assertEqual(package["peerDependencies"][peer], "*")
+            self.assertTrue(package["peerDependenciesMeta"][peer]["optional"])
+            self.assertEqual(root_lock["peerDependencies"][peer], "*")
+            self.assertTrue(root_lock["peerDependenciesMeta"][peer]["optional"])
+
+        typescript = lock["packages"]["node_modules/typescript"]
+        self.assertEqual(typescript["version"], package["devDependencies"]["typescript"])
+        self.assertTrue(typescript["dev"])
+        self.assertIn("tsc", typescript["bin"])
+
+        tsconfig = json.loads((ROOT / "bindings/wasm/tsconfig.typecheck.json").read_text())
+        self.assertEqual(tsconfig["compilerOptions"]["module"], "NodeNext")
+        self.assertTrue(tsconfig["compilerOptions"]["strict"])
+        consumer = (ROOT / "bindings/wasm/tests/types/consumer.ts").read_text()
+        self.assertIn("from 'nirs4all'", consumer)
+        self.assertIn("runPortablePipeline", consumer)
+        self.assertIn("predictPortablePipeline", consumer)
 
     def test_optional_upstreams_are_explicit_and_match_python_extras(self) -> None:
         manifest = n4lite.release_topology_manifest()

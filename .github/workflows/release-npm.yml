@@ -7,8 +7,8 @@
 #
 # npm package name is `nirs4all` (there is no "full" nirs4all on npm, so the
 # lite aggregate IS the `nirs4all` umbrella in JS). nirs4all-datasets stays
-# OPTIONAL: it is declared only under peerDependenciesMeta (optional), never a
-# hard dependency.
+# OPTIONAL: it is declared as an optional peer dependency, never a hard
+# dependency.
 #
 # Publishing needs the NPM_TOKEN repository secret (an automation token that can
 # publish the `nirs4all` package; the name must be free / owned by the
