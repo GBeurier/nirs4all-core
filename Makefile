@@ -7,9 +7,11 @@ NIRS4ALL_METHODS_GENERATED_DIR ?= $(NIRS4ALL_METHODS_ROOT)/build/dev-release/gen
 NIRS4ALL_METHODS_MATLAB_PATH ?= $(NIRS4ALL_METHODS_ROOT)/bindings/matlab
 R_PARITY_LIB ?= $(abspath .r-parity-lib)
 
-.PHONY: test test-rust test-rust-parity test-python test-python-parity test-wasm test-r test-r-fixtures test-r-parity test-matlab-parity check-r build build-python build-npm build-r build-matlab package-rust clean
+.PHONY: test test-v1-surfaces test-rust test-rust-parity test-python test-python-parity test-wasm test-r test-r-if-available test-r-fixtures test-r-parity test-matlab-parity check-r build build-python build-npm build-r build-matlab package-rust clean
 
 test: test-rust test-python test-wasm
+
+test-v1-surfaces: test-python test-wasm test-r-if-available
 
 test-rust:
 	cargo fmt --all --check
@@ -31,6 +33,13 @@ test-wasm:
 
 test-r:
 	R CMD check --no-manual bindings/r
+
+test-r-if-available:
+	@if command -v R >/dev/null 2>&1; then \
+		$(MAKE) test-r; \
+	else \
+		printf '%s\n' "Skipping R CMD check: R is not installed"; \
+	fi
 
 test-r-fixtures:
 	diff -ru tests/parity/fixtures bindings/r/inst/extdata

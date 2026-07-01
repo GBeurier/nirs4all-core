@@ -107,11 +107,17 @@ does not vendor or reimplement those engines.
 ## Local checks
 
 ```bash
+make test-v1-surfaces
 make test
 cargo test --workspace
 PYTHONPATH=bindings/python/src python -m unittest discover -s bindings/python/tests
 npm test --prefix bindings/wasm
 ```
+
+`make test-v1-surfaces` is the public V1 surface gate for Python, R, and
+JavaScript/WASM. It runs the Python unittest suite, the WASM npm tests, and
+`R CMD check --no-manual bindings/r` when `R` is installed; local workstations
+without R print a skip message instead.
 
 Strict Python-vs-full-`nirs4all` execution parity needs local
 `nirs4all-methods` Python bindings and libn4m:

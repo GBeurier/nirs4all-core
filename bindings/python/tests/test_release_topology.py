@@ -33,6 +33,10 @@ def _load_r_description() -> dict[str, str]:
     return fields
 
 
+def _load_wasm_package() -> dict[str, object]:
+    return json.loads((ROOT / "bindings/wasm/package.json").read_text())
+
+
 class ReleaseTopologyManifestTests(unittest.TestCase):
     def test_manifest_is_json_serializable_and_names_current_distribution(self) -> None:
         manifest = n4lite.release_topology_manifest()
@@ -222,6 +226,53 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         )
         self.assertEqual(upstream_rows["datasets"]["status"], "external-optional")
         self.assertEqual(upstream_rows["datasets"]["default_inclusion"], "external")
+
+    def test_python_r_and_wasm_are_explicit_v1_release_surfaces(self) -> None:
+        manifest = n4lite.release_topology_manifest()
+        pyproject = _load_pyproject()
+        r_description = _load_r_description()
+        wasm_package = _load_wasm_package()
+        makefile = (ROOT / "Makefile").read_text()
+
+        surfaces = {
+            item["ecosystem"]: item for item in manifest["v1_release_surfaces"]
+        }
+        install_distributions = {
+            (item["ecosystem"], item["registry"], item["name"]): item
+            for item in manifest["install_distributions"]
+        }
+
+        self.assertEqual(
+            set(surfaces),
+            {"python", "javascript_wasm", "r"},
+        )
+        expected_names = {
+            "python": pyproject["project"]["name"],
+            "javascript_wasm": wasm_package["name"],
+            "r": r_description["Package"],
+        }
+        expected_workflows = {
+            "python": "release-python.yml",
+            "javascript_wasm": "release-npm.yml",
+            "r": "release-r.yml",
+        }
+
+        for ecosystem, package_name in expected_names.items():
+            with self.subTest(ecosystem=ecosystem):
+                surface = surfaces[ecosystem]
+                self.assertEqual(surface["distribution"], package_name)
+                self.assertEqual(
+                    surface["release_workflow"],
+                    expected_workflows[ecosystem],
+                )
+                self.assertIn(f"{surface['local_gate']}:", makefile)
+
+                distribution = install_distributions[
+                    (ecosystem, surface["registry"], package_name)
+                ]
+                self.assertEqual(distribution["status"], "current")
+                self.assertEqual(distribution["workflow"], surface["release_workflow"])
+                self.assertEqual(distribution["default_inclusion"], "base")
 
     def test_optional_upstreams_are_explicit_and_match_python_extras(self) -> None:
         manifest = n4lite.release_topology_manifest()

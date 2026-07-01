@@ -26,14 +26,16 @@ Before release:
 `nirs4all_lite.release_topology_manifest()` is the lite-side consumer contract
 for ecosystem release manifests. It records the current `nirs4all-lite` Python
 distribution, the release-gated `nirs4all-core` target, per-registry aggregate
-artifact rows, Python facade namespaces, optional upstream policy (notably
-external `nirs4all-datasets`), and license/SBOM/`nirs4all-methods` C ABI
-pointers. Central release tooling should consume these fields instead of
-re-deriving lite/core topology from prose.
+artifact rows, explicit V1 Python/R/JavaScript-WASM surface gates, Python
+facade namespaces, optional upstream policy (notably external
+`nirs4all-datasets`), and license/SBOM/`nirs4all-methods` C ABI pointers.
+Central release tooling should consume these fields instead of re-deriving
+lite/core topology from prose.
 
 Local artifact commands:
 
 ```bash
+make test-v1-surfaces
 make test
 make build-python
 make build-npm
@@ -42,6 +44,8 @@ make build-matlab
 cargo package -p nirs4all
 ```
 
+`make test-v1-surfaces` runs Python unittest, the WASM npm test suite, and
+`R CMD check --no-manual bindings/r` only when `R` is available locally.
 `R CMD build/check`, Octave smoke tests, and CRAN/R-universe validation require
 R/Octave toolchains. They are part of CI because they may not be available on
 every development workstation.

@@ -240,6 +240,39 @@ _INSTALL_DISTRIBUTIONS: list[dict[str, Any]] = [
     },
 ]
 
+_V1_RELEASE_SURFACES: list[dict[str, Any]] = [
+    {
+        "ecosystem": "python",
+        "registry": "pypi",
+        "distribution": "nirs4all-lite",
+        "namespace": "nirs4all_lite",
+        "package_manifest": "bindings/python/pyproject.toml",
+        "release_workflow": "release-python.yml",
+        "local_gate": "test-python",
+        "tool_policy": "required",
+    },
+    {
+        "ecosystem": "javascript_wasm",
+        "registry": "npm",
+        "distribution": "nirs4all",
+        "namespace": "nirs4all",
+        "package_manifest": "bindings/wasm/package.json",
+        "release_workflow": "release-npm.yml",
+        "local_gate": "test-wasm",
+        "tool_policy": "required",
+    },
+    {
+        "ecosystem": "r",
+        "registry": "cran/r-universe",
+        "distribution": "nirs4all",
+        "namespace": "library(nirs4all)",
+        "package_manifest": "bindings/r/DESCRIPTION",
+        "release_workflow": "release-r.yml",
+        "local_gate": "test-r-if-available",
+        "tool_policy": "skip-locally-if-r-missing",
+    },
+]
+
 _UPSTREAM_COMPONENTS: list[dict[str, Any]] = [
     {
         "key": "dag_ml",
@@ -453,6 +486,7 @@ _RELEASE_TOPOLOGY_MANIFEST: dict[str, Any] = {
     },
     "namespace_facades": _NAMESPACE_FACADES,
     "install_distributions": _INSTALL_DISTRIBUTIONS,
+    "v1_release_surfaces": _V1_RELEASE_SURFACES,
     "upstream_components": _UPSTREAM_COMPONENTS,
     "release_pointers": _RELEASE_POINTERS,
 }
