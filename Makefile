@@ -29,7 +29,8 @@ test-python-v1-surfaces:
 		bindings/python/tests/test_release_topology.py \
 		bindings/python/tests/test_facade.py \
 		bindings/python/tests/test_pipeline_contract.py \
-		bindings/python/tests/test_upstreams.py
+		bindings/python/tests/test_upstreams.py \
+		bindings/python/tests/test_cross_language_surface.py
 
 test-python-parity:
 	PYTHONPATH=bindings/python/src$(if $(NIRS4ALL_METHODS_PYTHONPATH),:$(NIRS4ALL_METHODS_PYTHONPATH)) NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 $(PYTHON) -m unittest bindings/python/tests/test_execution_parity.py -v
