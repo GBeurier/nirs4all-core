@@ -1,17 +1,33 @@
 # Parity Strategy
 
-`nirs4all-lite` needs parity gates because it is intended to become the portable
+`nirs4all-core` needs parity gates because it is intended to become the portable
 core behind multiple host-language APIs.
 
 ## Tiers
 
 1. **Upstream native vs upstream binding**: each upstream project proves its own
    binding parity first, especially `nirs4all-methods`.
-2. **nirs4all-lite native vs binding**: lite pipelines produce identical
+2. **nirs4all-core native vs binding**: lite pipelines produce identical
    results across Rust, Python, R, MATLAB/Octave, and WASM within declared
    tolerance.
-3. **nirs4all-lite vs full Python nirs4all**: equivalent pipelines match the
+3. **nirs4all-core vs full Python nirs4all**: equivalent pipelines match the
    current Python library before the lite binding can replace any core path.
+
+## Static surface parity (no runtime required)
+
+Before any numeric gate runs, the public *surface* must be identical across
+bindings. `bindings/python/tests/test_cross_language_surface.py` proves, in pure
+Python by reading the binding sources, that the portable operator subset and the
+upstream registry (keys + role strings) are identical across **all five**
+bindings — Python, WASM, R, MATLAB/Octave, and Rust — plus the machine-readable
+`compat/upstreams.toml`. `bindings/python/tests/test_capability_matrix.py`
+additionally proves the per-language capability claims in
+`compat/capabilities.toml` are backed by real run symbols and parity gates (see
+[`CAPABILITIES.md`](CAPABILITIES.md)).
+
+Because these gates need no R/Node/Octave/`cargo` toolchain, surface drift in any
+binding is caught in the required Python suite even on machines where the other
+runtimes are unavailable. They run in `make test-python-v1-surfaces`.
 
 ## Fixture policy
 

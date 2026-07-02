@@ -1,12 +1,10 @@
-"""``nirs4all_core`` -- release-gated core facade for the aggregate.
+"""``nirs4all_core`` -- core-contract facade of the aggregate.
 
-LOCK-GOV direction (target-state): the portable nirs4all aggregate -- shipped
-today as the ``nirs4all-lite`` distribution (import ``nirs4all_lite``) -- is to
-be promoted to ``nirs4all-core``. The actual distribution rename is gated on the
-release lock (``LOCK-REL``) and is intentionally **not** performed in this
-slice: the project keeps publishing the aggregate as ``nirs4all-lite`` and only
-adds this additive ``nirs4all_core`` import alias so downstream code can adopt
-the target import name early, without breakage.
+RC V1 topology: the portable nirs4all aggregate ships as the
+``nirs4all-core`` distribution (renamed from ``nirs4all-lite``). The canonical
+import root stays ``nirs4all_lite`` for compatibility; this additive
+``nirs4all_core`` import alias matches the distribution name so downstream
+code can standardize on it without breakage.
 
 The public ``nirs4all_core`` contract advertises only inspection, validation,
 capability, release-topology, and facade APIs. Execution helpers from
@@ -34,8 +32,8 @@ CORE_FACADE_EXPORTS = _aggregate.CORE_FACADE_EXPORTS
 TOPOLOGY_EXPORTS = _aggregate.TOPOLOGY_EXPORTS
 
 #: Import package currently backing this alias (``nirs4all_lite``). The
-#: distribution rename ``nirs4all-lite`` -> ``nirs4all-core`` is release-gated
-#: (LOCK-REL); this alias forwards to the shipped aggregate until then.
+#: ``nirs4all-core`` distribution keeps ``nirs4all_lite`` as its canonical
+#: import root; this alias forwards to that shipped aggregate.
 __aggregate_import__ = _aggregate.__name__
 
 __all__ = list(CORE_FACADE_EXPORTS + TOPOLOGY_EXPORTS)

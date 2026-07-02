@@ -3,7 +3,7 @@
 Release artifacts should be built from the same upstream lock:
 
 - Rust crate: `nirs4all`
-- Python wheel/sdist: `nirs4all-lite`
+- Python wheel/sdist: `nirs4all-core`
 - npm package: `nirs4all`
 - R source package: `nirs4all`
 - MATLAB/Octave archive: `nirs4all`
@@ -18,15 +18,17 @@ Before release:
 5. Run equivalent-pipeline checks against full Python `nirs4all`.
 6. Verify external operator capability levels: metadata-only operators must not
    be marketed as executable, and executable operators must have parity fixtures.
-7. Verify the Python release topology manifest: current installs still publish
-   `nirs4all-lite`, additive imports are limited to `n4a` / `nirs4all_core`,
-   and `nirs4all_core` advertises no execution-engine exports.
+7. Verify the Python release topology manifest: the current distribution is
+   `nirs4all-core` (legacy `nirs4all-lite` marked superseded), additive imports
+   are limited to `n4a` / `nirs4all_core`, and `nirs4all_core` advertises no
+   execution-engine exports.
 8. Publish artifacts and record provenance in the release notes.
 
-`nirs4all_lite.release_topology_manifest()` is the lite-side consumer contract
-for ecosystem release manifests. It records the current `nirs4all-lite` Python
-distribution, the release-gated `nirs4all-core` target, per-registry aggregate
-artifact rows, explicit V1 Python/R/JavaScript-WASM surface gates, Python
+`nirs4all_lite.release_topology_manifest()` is the aggregate-side consumer
+contract for ecosystem release manifests (schema
+`nirs4all-core.release-topology.v2`). It records the current `nirs4all-core`
+Python distribution, the superseded legacy `nirs4all-lite` name, per-registry
+aggregate artifact rows, explicit V1 Python/R/JavaScript-WASM surface gates, Python
 facade namespaces, optional upstream policy (notably external
 `nirs4all-datasets`), and license/SBOM/`nirs4all-methods` C ABI pointers.
 Central release tooling should consume these fields instead of re-deriving
@@ -56,7 +58,9 @@ Every CI run uploads the build outputs as artifacts (`rust-crate`, `python-*`,
 Tagged releases are cut by six dedicated workflows — `release-python.yml`,
 `release-npm.yml`, `release-crates.yml`, `release-r.yml`, `release-matlab.yml`,
 `release-source.yml`. On a non-pre-release tag `vX.Y.Z` they publish PyPI
-`nirs4all-lite` (OIDC Trusted Publishing, environment `pypi`), npm `nirs4all`
+`nirs4all-core` (OIDC Trusted Publishing, environment `pypi`; the new
+`nirs4all-core` Trusted Publisher registration is a pending release blocker),
+npm `nirs4all`
 (`NPM_TOKEN`), crates.io `nirs4all` (`CARGO_REGISTRY_TOKEN`), and attach the R
 tarball, the MATLAB/Octave zip, and the source + SBOM bundle to the Release.
 Pre-release tags build/attach but publish to no registry; `workflow_dispatch`

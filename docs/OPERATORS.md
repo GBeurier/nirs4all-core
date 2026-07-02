@@ -1,6 +1,6 @@
 # External Operator Binding Contract
 
-`nirs4all-lite` must expose external operators idiomatically in every target
+`nirs4all-core` must expose external operators idiomatically in every target
 language, but only when the execution layer can actually use them. The aggregate
 must never pretend to execute an operator by reimplementing numerical behavior
 locally.
@@ -33,6 +33,14 @@ Bindings should classify each external operator with one of these states:
 
 Releases should not market an operator as available unless it is at least
 `execute-local` or `execute-remote`.
+
+The per-language capability level of the portable operator subset is recorded,
+honestly and machine-readably, in [`compat/capabilities.toml`](../compat/capabilities.toml)
+and summarized in [`CAPABILITIES.md`](CAPABILITIES.md). Those claims are enforced
+against the binding sources and parity gate files by
+`bindings/python/tests/test_capability_matrix.py`, which parses this ladder as
+its vocabulary — so a binding cannot claim `execute-local` (or better) without a
+real run symbol, nor `parity-validated` without a real parity gate.
 
 ## Language Idioms
 
@@ -73,5 +81,5 @@ MATLAB/Octave:
 
 Operator parity must compare the host idiom against the owning upstream
 implementation. For pipeline operators, fixtures should also compare equivalent
-pipelines against the full Python `nirs4all` library before `nirs4all-lite` is
+pipelines against the full Python `nirs4all` library before `nirs4all-core` is
 used as a replacement core.

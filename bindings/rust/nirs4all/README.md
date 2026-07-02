@@ -1,6 +1,6 @@
 # nirs4all
 
-Rust aggregate surface for `nirs4all-lite`.
+Rust aggregate surface for `nirs4all-core`.
 
 This crate exposes the low-level nirs4all upstream domains from one package:
 `dag-ml`, `dag-ml-data`, `nirs4all-formats`, `nirs4all-io`,

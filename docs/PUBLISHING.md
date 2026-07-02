@@ -4,12 +4,12 @@ Package names to reserve or create:
 
 | Target | Registry | Name | Artifact | Workflow |
 | --- | --- | --- | --- | --- |
-| Python | PyPI | `nirs4all-lite` | wheel + sdist from `bindings/python` | `release-python.yml` |
+| Python | PyPI | `nirs4all-core` | wheel + sdist from `bindings/python` | `release-python.yml` |
 | JavaScript/WASM | npm | `nirs4all` | npm package from `bindings/wasm` | `release-npm.yml` |
 | Rust | crates.io | `nirs4all` | crate from `bindings/rust/nirs4all` | `release-crates.yml` |
 | R | CRAN / R-universe | `nirs4all` | source tarball from `bindings/r` | `release-r.yml` |
 | MATLAB/Octave | GitHub Releases | `nirs4all-matlab-octave-<version>.zip` | zip from `bindings/matlab` | `release-matlab.yml` |
-| Source + SBOM | GitHub Releases | `nirs4all-lite-<version>-src.*` | git-archive + CycloneDX + SHA256SUMS | `release-source.yml` |
+| Source + SBOM | GitHub Releases | `nirs4all-core-<version>-src.*` | git-archive + CycloneDX + SHA256SUMS | `release-source.yml` |
 
 ## How releases are cut
 
@@ -20,7 +20,7 @@ the Python, npm, and R manifests (with the spelling each ecosystem needs) and
 
 On a **non-pre-release tag `vX.Y.Z`** the six `release-*.yml` workflows run and:
 
-* publish **PyPI `nirs4all-lite`** via **OIDC Trusted Publishing** (GitHub
+* publish **PyPI `nirs4all-core`** via **OIDC Trusted Publishing** (GitHub
   environment `pypi`, `id-token: write` — no API token),
 * publish **npm `nirs4all`** (needs the `NPM_TOKEN` secret),
 * publish **crates.io `nirs4all`** (needs the `CARGO_REGISTRY_TOKEN` secret),
@@ -32,11 +32,16 @@ attaches artifacts but **publishes to no registry**. `workflow_dispatch` runs
 every workflow in dry-run mode (build/validate only).
 
 The PyPI Trusted Publisher must be created once by the maintainer for project
-`nirs4all-lite` with: owner `GBeurier`, repo `nirs4all-lite`, workflow
-`release-python.yml`, environment `pypi`.
+`nirs4all-core` with: owner `GBeurier`, repo `nirs4all-lite` (`nirs4all-core`
+after the pending GitHub repo rename), workflow `release-python.yml`,
+environment `pypi`. **Release blocker:** the `nirs4all-core` project/publisher
+does not exist yet; the old `nirs4all-lite` publisher does not carry over. The
+legacy `nirs4all-lite` PyPI project stays installable — its final release
+becomes a thin alias depending on `nirs4all-core` (see
+[`CORE_RENAME.md`](CORE_RENAME.md) Phase R2); never yank existing versions.
 
 `nirs4all-datasets` is **external/optional everywhere** and is never bundled: a
-Python extra (`nirs4all-lite[datasets]`, excluded from `[all]`), an R `Suggests`
+Python extra (`nirs4all-core[datasets]`, excluded from `[all]`), an R `Suggests`
 (resolved from R-universe via `Additional_repositories`), an optional npm peer
 dependency, and an off-by-default Cargo feature (`datasets`).
 
@@ -50,7 +55,7 @@ python -m build bindings/python --outdir dist/python
 python -m twine check dist/python/*
 ```
 
-Publish after the PyPI project `nirs4all-lite` exists and trusted publishing or
+Publish after the PyPI project `nirs4all-core` exists and trusted publishing or
 an API token is configured:
 
 ```bash

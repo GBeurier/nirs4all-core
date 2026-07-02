@@ -166,7 +166,7 @@ def _validate_portable_classes(value: Any) -> None:
     unsupported = [name for name in classes if name not in PORTABLE_OPERATOR_CLASSES]
     if unsupported:
         raise ValueError(
-            "Pipeline uses operators outside the current nirs4all-lite portable subset: "
+            "Pipeline uses operators outside the current nirs4all-core portable subset: "
             + ", ".join(dict.fromkeys(unsupported))
         )
 

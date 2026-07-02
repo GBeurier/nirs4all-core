@@ -37,7 +37,7 @@ addpath('/path/to/nirs4all-methods/bindings/matlab')
 Then add this binding:
 
 ```matlab
-addpath('/path/to/nirs4all-lite/bindings/matlab')
+addpath('/path/to/nirs4all-core/bindings/matlab')
 ```
 
 ## Checks

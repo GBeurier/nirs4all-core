@@ -2,7 +2,8 @@
 
 ## Scope
 
-`nirs4all-lite` is the canonical portable aggregate of the low-level nirs4all
+`nirs4all-core` (formerly `nirs4all-lite`; the GitHub repo rename is pending)
+is the canonical portable aggregate of the low-level nirs4all
 stack. It wraps and re-exports `dag-ml`, `dag-ml-data`, `nirs4all-formats`,
 `nirs4all-io`, `nirs4all-datasets`, and `nirs4all-methods`.
 
@@ -12,7 +13,8 @@ through this aggregate.
 
 ## Structure
 
-- `bindings/python`: Python distribution named `nirs4all-lite`.
+- `bindings/python`: Python distribution named `nirs4all-core` (canonical
+  import `nirs4all_lite`; additive facades `n4a`, `nirs4all_core`).
 - `bindings/rust`: Rust crate named `nirs4all`.
 - `bindings/wasm`: npm/WASM package named `nirs4all`.
 - `bindings/r`: R package skeleton named `nirs4all`.
@@ -32,7 +34,7 @@ Run the checks matching the touched area:
 - `octave --quiet --eval "run('bindings/matlab/tests/smoke.m')"`
 
 When parity fixtures are added, run the native-vs-binding and
-lite-vs-python-`nirs4all` parity suites before publishing.
+core-vs-python-`nirs4all` parity suites before publishing.
 
 ## Boundaries
 

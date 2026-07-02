@@ -1,7 +1,7 @@
-# Licence commerciale — nirs4all-lite
+# Licence commerciale — nirs4all-core
 
 **Résumé (non contractuel).** Cette licence commerciale vous autorise à utiliser,
-modifier, intégrer et distribuer `nirs4all-lite` et ses œuvres dérivées dans des produits et
+modifier, intégrer et distribuer `nirs4all-core` et ses œuvres dérivées dans des produits et
 services **propriétaires, à code fermé**, **y compris en SaaS**, sans les obligations de
 copyleft de CeCILL-2.1 / AGPL-3.0-or-later (c.-à-d. sans obligation de publier votre code
 source), sous réserve des conditions convenues et des frais applicables.

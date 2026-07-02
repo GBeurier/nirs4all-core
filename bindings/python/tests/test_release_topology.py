@@ -97,16 +97,20 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         manifest = n4lite.release_topology_manifest()
 
         json.dumps(manifest)
-        self.assertEqual(manifest["schema"], "nirs4all-lite.release-topology.v1")
-        self.assertEqual(manifest["aggregate"]["id"], "nirs4all-lite")
-        self.assertEqual(manifest["aggregate"]["future_id"], "nirs4all-core")
-        self.assertFalse(manifest["aggregate"]["private"])
-        self.assertEqual(manifest["python"]["distribution"], "nirs4all-lite")
-        self.assertEqual(manifest["python"]["canonical_import"], "nirs4all_lite")
-        self.assertEqual(manifest["python"]["target_distribution"], "nirs4all-core")
+        self.assertEqual(manifest["schema"], "nirs4all-core.release-topology.v2")
+        self.assertEqual(manifest["aggregate"]["id"], "nirs4all-core")
+        self.assertEqual(manifest["aggregate"]["legacy_id"], "nirs4all-lite")
         self.assertEqual(
-            manifest["python"]["target_distribution_status"],
-            "release-gated",
+            manifest["aggregate"]["target_repo"],
+            "GBeurier/nirs4all-core",
+        )
+        self.assertFalse(manifest["aggregate"]["private"])
+        self.assertEqual(manifest["python"]["distribution"], "nirs4all-core")
+        self.assertEqual(manifest["python"]["canonical_import"], "nirs4all_lite")
+        self.assertEqual(manifest["python"]["legacy_distribution"], "nirs4all-lite")
+        self.assertEqual(
+            manifest["python"]["legacy_distribution_status"],
+            "superseded",
         )
         self.assertIn("n4a", manifest["python"]["additive_imports"])
         self.assertIn("nirs4all_core", manifest["python"]["additive_imports"])
@@ -119,7 +123,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         manifest["release_pointers"]["license"]["files"].clear()
 
         fresh = n4lite.release_topology_manifest()
-        self.assertEqual(fresh["aggregate"]["id"], "nirs4all-lite")
+        self.assertEqual(fresh["aggregate"]["id"], "nirs4all-core")
         self.assertGreater(len(fresh["install_distributions"]), 0)
         self.assertIn("LICENSE", fresh["release_pointers"]["license"]["files"])
 
@@ -152,8 +156,10 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             pyproject["project"]["name"],
             manifest["python"]["distribution"],
         )
-        self.assertNotEqual(pyproject["project"]["name"], "nirs4all-core")
+        self.assertEqual(pyproject["project"]["name"], "nirs4all-core")
+        self.assertNotEqual(pyproject["project"]["name"], "nirs4all-lite")
         self.assertNotIn("nirs4all-core", pyproject["project"].get("dependencies", []))
+        self.assertNotIn("nirs4all-lite", pyproject["project"].get("dependencies", []))
 
         packages = pyproject["tool"]["hatch"]["build"]["targets"]["wheel"]["packages"]
         self.assertEqual(
@@ -183,10 +189,8 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertEqual(facades["nirs4all_lite"]["kind"], "canonical")
         self.assertEqual(facades["n4a"]["backing_import"], "nirs4all_lite")
         self.assertEqual(n4a.__aggregate_import__, "nirs4all_lite")
-        self.assertEqual(
-            facades["nirs4all_core"]["target_distribution"],
-            "nirs4all-core",
-        )
+        for facade in facades.values():
+            self.assertEqual(facade["distribution"], pyproject["project"]["name"])
         self.assertFalse(facades["nirs4all_core"]["execution_engine"])
         self.assertEqual(facades["nirs4all_core"]["exports"], "core_contract")
         self.assertEqual(nirs4all_core.__aggregate_import__, "nirs4all_lite")
@@ -223,7 +227,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
 
         self.assertEqual(len(index), len(manifest["install_distributions"]))
         expected_current_artifacts = {
-            ("python", "pypi", "nirs4all-lite"): (
+            ("python", "pypi", "nirs4all-core"): (
                 "current",
                 "release-python.yml",
                 "wheel+sdist",
@@ -248,7 +252,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
                 "release-matlab.yml",
                 "zip archive",
             ),
-            ("source_sbom", "github-release", "nirs4all-lite-source-sbom"): (
+            ("source_sbom", "github-release", "nirs4all-core-source-sbom"): (
                 "current",
                 "release-source.yml",
                 "source archive + CycloneDX SBOM + SHA256SUMS",
@@ -261,10 +265,11 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
                 self.assertEqual(index[key]["workflow"], workflow)
                 self.assertEqual(index[key]["artifact"], artifact)
 
-        future_python = index[("python", "pypi", "nirs4all-core")]
-        self.assertEqual(future_python["status"], "release-gated")
-        self.assertIsNone(future_python["workflow"])
-        self.assertIsNone(future_python["artifact"])
+        legacy_python = index[("python", "pypi", "nirs4all-lite")]
+        self.assertEqual(legacy_python["status"], "legacy-superseded")
+        self.assertEqual(legacy_python["default_inclusion"], "legacy")
+        self.assertIsNone(legacy_python["workflow"])
+        self.assertIsNone(legacy_python["artifact"])
 
         upstream_rows = {
             item["component_key"]: item

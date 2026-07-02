@@ -96,7 +96,7 @@ class PipelineContractTests(unittest.TestCase):
         self.assertEqual(from_list.name, "pipeline")
 
     def test_unsupported_operator_is_rejected(self) -> None:
-        with self.assertRaisesRegex(ValueError, "outside the current nirs4all-lite portable subset"):
+        with self.assertRaisesRegex(ValueError, "outside the current nirs4all-core portable subset"):
             n4lite.load_pipeline_definition(
                 {
                     "pipeline": [

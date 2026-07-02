@@ -22,12 +22,12 @@ preserved in the execution plan and forwarded to the upstream binding.
 
 ## Python
 
-- Distribution name: `nirs4all-lite`.
+- Distribution name: `nirs4all-core` (renamed from `nirs4all-lite`).
 - Import name: `nirs4all_lite`.
 - Additive import facades (LOCK-GOV, see [naming](NAMING.md)): `n4a` is the
   full brand-aligned aggregate facade (`import n4a`), while `nirs4all_core` is
-  the forward-compatible facade for the release-gated `nirs4all-lite` →
-  `nirs4all-core` rename. `nirs4all_core.__all__` advertises only inspection,
+  the facade matching the `nirs4all-core` distribution name (renamed from
+  `nirs4all-lite`). `nirs4all_core.__all__` advertises only inspection,
   validation, capability, release-topology, and facade APIs; legacy execution
   helpers remain reachable through passthrough but are outside the core
   contract.

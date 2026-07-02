@@ -1,4 +1,4 @@
-"""Python surface for the nirs4all-lite aggregate distribution."""
+"""Python surface for the nirs4all-core aggregate distribution (import root kept as ``nirs4all_lite``)."""
 
 from ._execution import PortableDataset, parse_execution_plan, run_portable_pipeline
 from ._pipeline import (

@@ -7,7 +7,7 @@
 #
 # Keyless attestation (OIDC, id-token: write) avoids any private-key custody.
 #
-# The artifact prefix is nirs4all-lite-<version> (the repo / aggregate name);
+# The artifact prefix is nirs4all-core-<version> (the aggregate name);
 # version is read from the Rust-crate SoT (bindings/rust/nirs4all/Cargo.toml),
 # kept in sync across bindings by scripts/bump_version.sh.
 #
@@ -47,7 +47,7 @@ jobs:
                 bindings/rust/nirs4all/Cargo.toml | head -n1)
           echo "ver=$VER" >> "$GITHUB_OUTPUT"
           echo "epoch=$(git log -1 --format=%ct)" >> "$GITHUB_OUTPUT"
-          echo "prefix=nirs4all-lite-$VER" >> "$GITHUB_OUTPUT"
+          echo "prefix=nirs4all-core-$VER" >> "$GITHUB_OUTPUT"
           echo "resolved version: $VER"
 
       - name: Build reproducible source archives (tar.gz + zip)

@@ -2,8 +2,9 @@
 
 ``n4a`` is the short, brand-aligned import root ("n4a" = nirs4all) for the
 portable nirs4all aggregate. It re-exports the full public surface of the
-aggregate -- shipped today as the ``nirs4all-lite`` distribution / the
-``nirs4all_lite`` import package -- and adds no behavior of its own. Importing
+aggregate -- shipped as the ``nirs4all-core`` distribution (renamed from
+``nirs4all-lite``) / the ``nirs4all_lite`` import package -- and adds no
+behavior of its own. Importing
 ``n4a`` is equivalent to importing the aggregate::
 
     import n4a

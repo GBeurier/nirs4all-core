@@ -179,7 +179,7 @@ def _load_methods_surface():
     except ImportError as exc:  # pragma: no cover - exercised by optional installs
         raise ImportError(
             "Portable execution requires the nirs4all-methods Python bindings. "
-            "Install `nirs4all-lite[methods]` or make `n4m`/`pls4all` available."
+            "Install `nirs4all-core[methods]` or make `n4m`/`pls4all` available."
         ) from exc
     return np, KennardStoneSplitter, SNV, SavitzkyGolay, PLSRegression
 

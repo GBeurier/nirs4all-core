@@ -1,23 +1,27 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code when working in `nirs4all-lite`.
+This file provides guidance to Claude Code when working in `nirs4all-core`
+(formerly `nirs4all-lite`).
 
 ## Role
 
-`nirs4all-lite` is a portability layer over the low-level nirs4all ecosystem. It
+`nirs4all-core` is a portability layer over the low-level nirs4all ecosystem. It
 must expose the same upstream capabilities across Rust, Python, R,
 MATLAB/Octave, and JavaScript/WASM without becoming a second implementation of
 formats, datasets, ML orchestration, or numerical methods.
 
 ## Naming
 
-- Repository: `nirs4all-lite`
-- Python distribution: `nirs4all-lite`
-- Python import package: `nirs4all_lite`
+- Repository: `nirs4all-lite` today; GitHub rename to `nirs4all-core` is a
+  pending admin action (see `docs/CORE_RENAME.md` Phase R2)
+- Python distribution: `nirs4all-core` (RC V1 rename from `nirs4all-lite`;
+  the legacy PyPI project stays installable as a thin alias)
+- Python import packages: `nirs4all_lite` (canonical), `n4a` and
+  `nirs4all_core` (additive facades)
 - Non-Python packages/modules: `nirs4all`
 
 The full Python `nirs4all` project remains separate until its core can be
-replaced by the lite Python binding intentionally.
+replaced by this aggregate's Python binding intentionally.
 
 ## Architecture rules
 

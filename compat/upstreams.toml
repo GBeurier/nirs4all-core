@@ -1,4 +1,4 @@
-# Machine-readable registry of the upstream projects aggregated by nirs4all-lite.
+# Machine-readable registry of the upstream projects aggregated by nirs4all-core.
 # `ref` values are Git checkout refs consumed by release parity jobs.
 # Versions are intentionally unset for most upstreams in the scaffold; pin them
 # before releases when their build artifacts are consumed by the release train.

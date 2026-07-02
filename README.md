@@ -1,13 +1,14 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/brand/horizontal-dark.svg">
-    <img alt="nirs4all-lite" src="assets/brand/horizontal.svg" width="440">
+    <img alt="nirs4all-core" src="assets/brand/horizontal.svg" width="440">
   </picture>
 </p>
 
-# nirs4all-lite
+# nirs4all-core
 
-`nirs4all-lite` is the low-level, portable nirs4all distribution. It aggregates:
+`nirs4all-core` (formerly `nirs4all-lite`) is the low-level, portable nirs4all
+distribution. It aggregates:
 
 - `dag-ml`
 - `dag-ml-data`
@@ -24,20 +25,21 @@ surface, native bindings, release glue, and parity checks.
 
 | Target | External name | Import/module name |
 | --- | --- | --- |
-| Python | `nirs4all-lite` | `nirs4all_lite` |
+| Python | `nirs4all-core` | `nirs4all_lite` |
 | Rust | `nirs4all` | `nirs4all` |
 | JavaScript/WASM | `nirs4all` | `nirs4all` |
 | R | `nirs4all` | `library(nirs4all)` |
 | MATLAB/Octave | `nirs4all` | `+nirs4all` namespace |
 
-Python keeps the `nirs4all-lite` distribution name to avoid colliding with the
-full Python `nirs4all` library. Other language bindings use `nirs4all`.
+The Python distribution is `nirs4all-core` (RC V1 rename from `nirs4all-lite`);
+it cannot use the bare `nirs4all` name because the full Python `nirs4all`
+library owns it. Other language bindings use `nirs4all`. The canonical Python
+import root stays `nirs4all_lite` for compatibility.
 
 The Python aggregate also exposes two **additive, non-shadowing** import facades
 (see [`docs/NAMING.md`](docs/NAMING.md)): the brand root `n4a` (`import n4a`) and
-the `nirs4all_core` forward-compatible alias for the release-gated
-`nirs4all-lite` → `nirs4all-core` direction. Both re-export `nirs4all_lite`
-verbatim and add no behavior; the published distribution stays `nirs4all-lite`.
+the `nirs4all_core` alias matching the distribution name. Both re-export
+`nirs4all_lite` verbatim and add no behavior.
 
 ## Public surface
 
@@ -50,7 +52,7 @@ Every binding exposes the upstream domains directly:
 - `dag_ml`
 - `dag_ml_data`
 
-Pipelines built by `nirs4all-lite` are expected to compose those domains, not
+Pipelines built by `nirs4all-core` are expected to compose those domains, not
 reimplement them. For example, a binding should make it possible to reach the
 formats and methods layers from the top-level `nirs4all` package.
 
@@ -86,7 +88,7 @@ is strict-parity gated in CI. See [`docs/PARITY.md`](docs/PARITY.md).
 
 ```text
 bindings/
-  python/      # Python distribution: nirs4all-lite
+  python/      # Python distribution: nirs4all-core
   rust/        # Rust crate: nirs4all
   wasm/        # npm/WASM package: nirs4all
   r/           # R package skeleton: nirs4all
@@ -101,7 +103,7 @@ tests/parity/  # Cross-runtime parity fixture plan
 This repository is now a buildable aggregate scaffold. It exposes the upstream
 domains in each target language, builds package artifacts for Python, npm,
 R, MATLAB/Octave, and Rust, and wires CI gates for those targets. The numerical
-and parsing behavior is still delegated to the upstream packages; `nirs4all-lite`
+and parsing behavior is still delegated to the upstream packages; `nirs4all-core`
 does not vendor or reimplement those engines.
 
 ## Local checks
@@ -158,7 +160,7 @@ also runs those gates.
 
 ## License
 
-`nirs4all-lite` is dual-licensed open-source — **`CeCILL-2.1 OR AGPL-3.0-or-later`** (your choice) —
+`nirs4all-core` is dual-licensed open-source — **`CeCILL-2.1 OR AGPL-3.0-or-later`** (your choice) —
 with an optional **commercial license** for closed-source / SaaS use. For any commercial use, contact
 <nirs4all-admin@cirad.fr>. As an aggregate it re-exports sibling libraries that carry their own
 licenses (the sibling crates currently use CeCILL-2.1 OR AGPL-3.0-or-later).

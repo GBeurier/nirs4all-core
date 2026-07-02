@@ -1,10 +1,10 @@
 # Architecture
 
-`nirs4all-lite` is an aggregate distribution, not a new computational layer.
+`nirs4all-core` is an aggregate distribution, not a new computational layer.
 
 ## Source-of-truth map
 
-| Domain | Owner | nirs4all-lite responsibility |
+| Domain | Owner | nirs4all-core responsibility |
 | --- | --- | --- |
 | Vendor file parsing | `nirs4all-formats` | expose readers and records |
 | Dataset assembly | `nirs4all-io` | expose loading/configuration adapters |
@@ -28,5 +28,5 @@ Each host binding should provide:
 
 The Python binding is expected to become good enough to replace the core of the
 full Python `nirs4all` library later. Until that migration is explicit,
-`nirs4all-lite` must avoid importing itself as `nirs4all` in Python so both
+`nirs4all-core` must avoid importing itself as `nirs4all` in Python so both
 packages can coexist during parity checks.

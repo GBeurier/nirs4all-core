@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "nirs4all-lite"
+name = "nirs4all-core"
 version = "0.2.0"
 description = "Portable nirs4all aggregate binding over formats, IO, methods, dag-ml, and dag-ml-data (datasets optional)"
 readme = "README.md"
@@ -34,7 +34,7 @@ io = ["nirs4all-io>=0.1.0"]
 datasets = ["nirs4all-datasets>=0.2.0a1"]
 methods = ["nirs4all-methods>=1.0.0", "scikit-learn>=1.3"]
 # The bundled aggregate = methods + formats + io (+ dag-ml / dag-ml-data).
-# Datasets is deliberately excluded; install nirs4all-lite[datasets] (or
+# Datasets is deliberately excluded; install nirs4all-core[datasets] (or
 # [everything]) to opt in.
 all = [
     "dag-ml>=0.2.0",
@@ -44,16 +44,20 @@ all = [
     "nirs4all-methods>=1.0.0",
     "scikit-learn>=1.3",
 ]
-everything = ["nirs4all-lite[all,datasets]"]
+everything = ["nirs4all-core[all,datasets]"]
 
+# GitHub repository rename `nirs4all-lite` -> `nirs4all-core` is a pending
+# external admin action; the old URLs redirect permanently after the rename,
+# so they stay pinned to the current repository name until it happens.
 [project.urls]
 Homepage = "https://nirs4all.org"
 Repository = "https://github.com/GBeurier/nirs4all-lite"
 Issues = "https://github.com/GBeurier/nirs4all-lite/issues"
 
-# The wheel ships the canonical aggregate package (`nirs4all_lite`) plus two
-# additive, non-shadowing import facades (LOCK-GOV): the brand-aligned `n4a`
-# root and the `nirs4all_core` forward-compatible alias for the release-gated
-# `nirs4all-lite` -> `nirs4all-core` rename. Both only re-export `nirs4all_lite`.
+# The wheel ships the canonical aggregate package (`nirs4all_lite`, kept as the
+# stable legacy import root) plus two additive, non-shadowing import facades
+# (LOCK-GOV): the brand-aligned `n4a` root and the `nirs4all_core` alias that
+# matches the `nirs4all-core` distribution name (RC V1 rename from
+# `nirs4all-lite`). Both only re-export `nirs4all_lite`.
 [tool.hatch.build.targets.wheel]
 packages = ["src/nirs4all_lite", "src/n4a", "src/nirs4all_core"]

@@ -1,6 +1,6 @@
 # Parity Fixtures
 
-This directory holds cross-runtime parity fixtures for `nirs4all-lite`.
+This directory holds cross-runtime parity fixtures for `nirs4all-core`.
 
 The `portable_*.json` / `portable_*.yaml` pairs use the same `pipeline:`
 envelope as the full Python `nirs4all` `examples/pipeline_samples` syntax.

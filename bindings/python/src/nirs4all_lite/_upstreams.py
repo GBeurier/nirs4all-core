@@ -1,4 +1,4 @@
-"""Upstream registry and lazy import helpers for nirs4all-lite."""
+"""Upstream registry and lazy import helpers for the nirs4all-core aggregate."""
 
 from __future__ import annotations
 
@@ -62,7 +62,7 @@ def import_upstream(name: str) -> ModuleType | None:
 
     item = upstreams.get(name)
     if item is None:
-        raise KeyError(f"Unknown nirs4all-lite upstream: {name}")
+        raise KeyError(f"Unknown nirs4all-core upstream: {name}")
 
     for candidate in item.candidates:
         if _find_candidate(candidate):
@@ -80,7 +80,7 @@ def require_upstream(name: str) -> ModuleType:
     item = upstreams[name]
     candidates = ", ".join(item.candidates)
     raise ImportError(
-        f"nirs4all-lite upstream '{name}' is not installed. "
+        f"nirs4all-core upstream '{name}' is not installed. "
         f"Tried import candidates: {candidates}."
     )
 
@@ -116,7 +116,7 @@ class LazyUpstream:
 
     def __init__(self, name: str) -> None:
         if name not in upstreams:
-            raise KeyError(f"Unknown nirs4all-lite upstream: {name}")
+            raise KeyError(f"Unknown nirs4all-core upstream: {name}")
         self.name = name
 
     def module(self) -> ModuleType:

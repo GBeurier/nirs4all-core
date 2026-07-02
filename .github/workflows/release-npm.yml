@@ -1,6 +1,6 @@
 # Build, smoke-test, and publish the `nirs4all` npm package.
 #
-# nirs4all-lite's JS/WASM binding (bindings/wasm) is PURE JavaScript: a small
+# nirs4all-core's JS/WASM binding (bindings/wasm) is PURE JavaScript: a small
 # ES-module surface + .d.ts that loads the upstream @nirs4all/* WASM packages
 # as OPTIONAL peer dependencies. There is no wasm-pack / Rust build here (unlike
 # nirs4all-io / nirs4all-methods), so we publish the source tree directly.

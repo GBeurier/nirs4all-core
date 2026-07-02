@@ -1,7 +1,7 @@
 # Build, R CMD check --as-cran, and (on a release tag) attach the `nirs4all` R
 # source tarball to the GitHub Release.
 #
-# The nirs4all-lite R binding is PURE R (NeedsCompilation: no): it has no Rust /
+# The nirs4all-core R binding is PURE R (NeedsCompilation: no): it has no Rust /
 # C shim, so there is NOTHING to vendor or compile (unlike nirs4all-io /
 # nirs4all-methods, whose R packages build a native libn4m / Rust staticlib).
 # The tarball is therefore directly CRAN-submittable on the R side.
@@ -105,7 +105,7 @@ jobs:
     name: Strict R parity / Python oracle
     runs-on: ubuntu-22.04
     env:
-      R_LIBS_USER: /tmp/nirs4all-lite-r-library
+      R_LIBS_USER: /tmp/nirs4all-core-r-library
     steps:
       - uses: actions/checkout@v4
 

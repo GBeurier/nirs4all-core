@@ -47,14 +47,14 @@ _NAMESPACE_FACADES: dict[str, Any] = {
     "python": [
         {
             "import": "nirs4all_lite",
-            "distribution": "nirs4all-lite",
+            "distribution": "nirs4all-core",
             "kind": "canonical",
             "exports": "full_aggregate",
             "execution_engine": True,
         },
         {
             "import": "n4a",
-            "distribution": "nirs4all-lite",
+            "distribution": "nirs4all-core",
             "kind": "additive-brand-facade",
             "backing_import": "nirs4all_lite",
             "exports": "full_aggregate",
@@ -62,8 +62,7 @@ _NAMESPACE_FACADES: dict[str, Any] = {
         },
         {
             "import": "nirs4all_core",
-            "distribution": "nirs4all-lite",
-            "target_distribution": "nirs4all-core",
+            "distribution": "nirs4all-core",
             "kind": "additive-core-facade",
             "backing_import": "nirs4all_lite",
             "exports": "core_contract",
@@ -104,8 +103,8 @@ _INSTALL_DISTRIBUTIONS: list[dict[str, Any]] = [
     {
         "ecosystem": "python",
         "registry": "pypi",
-        "name": "nirs4all-lite",
-        "role": "current Python aggregate distribution",
+        "name": "nirs4all-core",
+        "role": "current Python aggregate distribution (renamed from nirs4all-lite)",
         "status": "current",
         "artifact": "wheel+sdist",
         "workflow": "release-python.yml",
@@ -115,13 +114,13 @@ _INSTALL_DISTRIBUTIONS: list[dict[str, Any]] = [
     {
         "ecosystem": "python",
         "registry": "pypi",
-        "name": "nirs4all-core",
-        "role": "future Python aggregate target distribution",
-        "status": "release-gated",
+        "name": "nirs4all-lite",
+        "role": "legacy Python aggregate distribution name (superseded by nirs4all-core)",
+        "status": "legacy-superseded",
         "artifact": None,
         "workflow": None,
-        "imports": ["nirs4all_core"],
-        "default_inclusion": "reserved",
+        "imports": ["nirs4all_lite", "n4a", "nirs4all_core"],
+        "default_inclusion": "legacy",
     },
     {
         "ecosystem": "rust",
@@ -170,7 +169,7 @@ _INSTALL_DISTRIBUTIONS: list[dict[str, Any]] = [
     {
         "ecosystem": "source_sbom",
         "registry": "github-release",
-        "name": "nirs4all-lite-source-sbom",
+        "name": "nirs4all-core-source-sbom",
         "role": "source archive, SBOM, checksums, and provenance",
         "status": "current",
         "artifact": "source archive + CycloneDX SBOM + SHA256SUMS",
@@ -244,7 +243,7 @@ _V1_RELEASE_SURFACES: list[dict[str, Any]] = [
     {
         "ecosystem": "python",
         "registry": "pypi",
-        "distribution": "nirs4all-lite",
+        "distribution": "nirs4all-core",
         "namespace": "nirs4all_lite",
         "package_manifest": "bindings/python/pyproject.toml",
         "release_workflow": "release-python.yml",
@@ -457,20 +456,22 @@ _RELEASE_POINTERS: dict[str, Any] = {
 }
 
 _RELEASE_TOPOLOGY_MANIFEST: dict[str, Any] = {
-    "schema": "nirs4all-lite.release-topology.v1",
+    "schema": "nirs4all-core.release-topology.v2",
     "aggregate": {
-        "id": "nirs4all-lite",
-        "future_id": "nirs4all-core",
+        "id": "nirs4all-core",
+        "legacy_id": "nirs4all-lite",
         "repo": "GBeurier/nirs4all-lite",
+        "target_repo": "GBeurier/nirs4all-core",
+        "repo_rename_status": "pending-github-rename",
         "owner_boundary": "aggregate",
         "default_inclusion": "base",
         "private": False,
     },
     "python": {
-        "distribution": "nirs4all-lite",
+        "distribution": "nirs4all-core",
         "canonical_import": "nirs4all_lite",
-        "target_distribution": "nirs4all-core",
-        "target_distribution_status": "release-gated",
+        "legacy_distribution": "nirs4all-lite",
+        "legacy_distribution_status": "superseded",
         "additive_imports": ["n4a", "nirs4all_core"],
         "reserved_non_imports": ["nirs4all"],
     },

@@ -1,6 +1,6 @@
 # Python Binding
 
-Distribution name: `nirs4all-lite`
+Distribution name: `nirs4all-core`
 
 Import name: `nirs4all_lite`
 
@@ -34,7 +34,7 @@ The aggregate does not implement numerical kernels. Install the optional
 methods extra, or make `n4m` and `pls4all` importable, before calling it:
 
 ```bash
-python -m pip install "nirs4all-lite[methods]"
+python -m pip install "nirs4all-core[methods]"
 ```
 
 The strict local parity gate compares all shared fixtures against the full

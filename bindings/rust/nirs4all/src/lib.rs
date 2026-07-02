@@ -123,7 +123,7 @@ pub fn load_pipeline_definition_str(input: &str) -> Result<Value, String> {
         .collect();
     if !unsupported.is_empty() {
         return Err(format!(
-            "pipeline uses operators outside the current nirs4all-lite portable subset: {}",
+            "pipeline uses operators outside the current nirs4all-core portable subset: {}",
             unsupported.join(", ")
         ));
     }

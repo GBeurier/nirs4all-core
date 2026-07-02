@@ -23,7 +23,7 @@ nirs4all_load_pipeline <- function(source) {
   if (length(unsupported) > 0L) {
     stop(
       sprintf(
-        "Pipeline uses operators outside the current nirs4all-lite portable subset: %s",
+        "Pipeline uses operators outside the current nirs4all-core portable subset: %s",
         paste(unsupported, collapse = ", ")
       ),
       call. = FALSE

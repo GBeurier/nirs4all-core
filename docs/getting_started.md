@@ -1,13 +1,13 @@
 # Getting started
 
 This page walks through the Python binding, which exposes the verified public
-surface of `nirs4all-lite`. The aggregate delegates all real work to the upstream
+surface of `nirs4all-core`. The aggregate delegates all real work to the upstream
 engines, so its API is mostly about **reaching the upstream domains** and
 **parsing/running the portable pipeline subset**.
 
 ## Import
 
-The Python distribution is `nirs4all-lite` but the import package is
+The Python distribution is `nirs4all-core` but the import package is
 `nirs4all_lite`:
 
 ```python
@@ -16,7 +16,7 @@ import nirs4all_lite as n4lite
 
 ## Inspect which upstreams are available
 
-`nirs4all-lite` does not vendor the engines — it imports them lazily when an
+`nirs4all-core` does not vendor the engines — it imports them lazily when an
 upstream is installed. Check what is reachable in your environment:
 
 ```python
@@ -38,7 +38,7 @@ The six registered upstreams are `dag_ml`, `dag_ml_data`, `formats`, `io`,
 
 The top-level lazy proxies resolve the underlying upstream module on first
 attribute access. Install the matching extra (for example
-`pip install "nirs4all-lite[methods]"`) before using one:
+`pip install "nirs4all-core[methods]"`) before using one:
 
 ```python
 import nirs4all_lite as n4lite
@@ -51,12 +51,12 @@ formats = n4lite.require_upstream("formats")
 ```
 
 If an upstream is not installed, `require_upstream` raises an `ImportError` that
-lists the import candidates it tried — `nirs4all-lite` never falls back to a fake
+lists the import candidates it tried — `nirs4all-core` never falls back to a fake
 local implementation.
 
 ## Parse a portable pipeline definition
 
-`nirs4all-lite` accepts the same JSON/YAML pipeline-definition envelope as the
+`nirs4all-core` accepts the same JSON/YAML pipeline-definition envelope as the
 full Python `nirs4all`, restricted to the portable operator subset
 (Kennard-Stone, SNV, Savitzky-Golay, and a PLS component sweep):
 

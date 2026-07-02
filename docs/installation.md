@@ -1,6 +1,6 @@
 # Installation
 
-`nirs4all-lite` ships one aggregate surface across five host languages. Each
+`nirs4all-core` ships one aggregate surface across five host languages. Each
 binding installs through that language's native registry and delegates numerical,
 parsing, and dataset work to the upstream packages. Install only the upstream
 extras you need — the aggregate itself adds no engines.
@@ -13,10 +13,10 @@ below).
 
 ## Python
 
-Distribution name `nirs4all-lite`, imported as `nirs4all_lite`.
+Distribution name `nirs4all-core`, imported as `nirs4all_lite`.
 
 ```bash
-pip install nirs4all-lite
+pip install nirs4all-core
 ```
 
 The base install pulls in only `PyYAML`. The upstream engines are optional
@@ -24,20 +24,20 @@ extras, so you choose what to bring in:
 
 ```bash
 # Individual upstreams
-pip install "nirs4all-lite[methods]"   # nirs4all-methods + scikit-learn
-pip install "nirs4all-lite[formats]"   # nirs4all-formats
-pip install "nirs4all-lite[io]"        # nirs4all-io
-pip install "nirs4all-lite[dag-ml]"    # dag-ml
-pip install "nirs4all-lite[dag-ml-data]"
+pip install "nirs4all-core[methods]"   # nirs4all-methods + scikit-learn
+pip install "nirs4all-core[formats]"   # nirs4all-formats
+pip install "nirs4all-core[io]"        # nirs4all-io
+pip install "nirs4all-core[dag-ml]"    # dag-ml
+pip install "nirs4all-core[dag-ml-data]"
 
 # Bundled aggregate = methods + formats + io + dag-ml + dag-ml-data
-pip install "nirs4all-lite[all]"
+pip install "nirs4all-core[all]"
 
 # Datasets is excluded from [all]; opt in explicitly
-pip install "nirs4all-lite[datasets]"
+pip install "nirs4all-core[datasets]"
 
 # Everything, including the optional datasets catalog
-pip install "nirs4all-lite[everything]"
+pip install "nirs4all-core[everything]"
 ```
 
 Requires Python 3.11 or newer.

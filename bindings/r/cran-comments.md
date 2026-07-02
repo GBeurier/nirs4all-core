@@ -3,7 +3,7 @@
 ## Submission summary
 
 * This is a **new submission**.
-* `nirs4all` (the R binding of the `nirs4all-lite` aggregate) is a **pure-R**
+* `nirs4all` (the R binding of the `nirs4all-core` aggregate) is a **pure-R**
   package: `NeedsCompilation: no`. It carries **no compiled code** — no C, C++,
   Fortran, or Rust — so none of the "Using Rust" / `~/.cargo` / `abort` /
   `Makevars` / vendored-sources considerations that apply to the project's
@@ -20,7 +20,7 @@
 * License: `CeCILL-2.1 | AGPL (>= 3)`, matching the aggregate source license
   expression `CeCILL-2.1 OR AGPL-3.0-or-later`.
 * The same aggregate surface is shipped to the project's Python (PyPI, as
-  `nirs4all-lite`), JavaScript / WebAssembly (npm) and Rust (crates.io) targets.
+  `nirs4all-core`), JavaScript / WebAssembly (npm) and Rust (crates.io) targets.
 
 ## Suggested ecosystem packages and the distribution channel
 

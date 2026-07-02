@@ -1,6 +1,7 @@
 # Changelog
 
-All notable changes to **nirs4all-lite** are documented here. The project
+All notable changes to **nirs4all-core** (formerly **nirs4all-lite**) are
+documented here. The project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html). The Rust
 crate `[package]` version in `bindings/rust/nirs4all/Cargo.toml` is the
 single source of truth; `scripts/bump_version.sh` propagates it to every other
@@ -8,17 +9,41 @@ binding manifest.
 
 ## [Unreleased]
 
-First safe `LOCK-GOV` slice — **additive only**, no legacy name removed and no
-distribution rename (the `nirs4all-lite` → `nirs4all-core` cutover stays
-release-gated on `LOCK-REL`).
+RC V1 topology: this unreleased train combines the first `LOCK-GOV` facade
+slice (additive) with the **Python distribution rename
+`nirs4all-lite` → `nirs4all-core`** (Phase R1 of `docs/CORE_RENAME.md`,
+executed by RC-A on the RC V1 control-board decision).
+
+### Changed (RC V1 rename)
+
+- Python distribution renamed `nirs4all-lite` → **`nirs4all-core`**
+  (`bindings/python/pyproject.toml`). The canonical import root stays
+  `nirs4all_lite`; the wheel still ships `nirs4all_lite` + `n4a` +
+  `nirs4all_core`, so no import breaks. Rust/npm/R/MATLAB names are unaffected
+  (already the bare `nirs4all`).
+- `release_topology_manifest()` schema bumped to
+  `nirs4all-core.release-topology.v2`: `aggregate.id = "nirs4all-core"`
+  (`legacy_id = "nirs4all-lite"`), `python.distribution = "nirs4all-core"`
+  with `legacy_distribution_status = "superseded"`, install rows flipped, and
+  the source/SBOM artifact renamed `nirs4all-core-source-sbom`.
+- Release workflows build/validate/publish under the new name
+  (`nirs4all_core-*` wheel, `nirs4all-core-<version>-src.*` source prefix,
+  PyPI project `nirs4all-core`). The `nirs4all-core` PyPI Trusted Publisher
+  registration, the GitHub repo rename, and the RTD slug rename remain
+  pending external admin actions (`docs/CORE_RENAME.md` Phase R2); the legacy
+  `nirs4all-lite` PyPI project stays installable and must never be yanked.
+- User-facing diagnostics across the five bindings now say
+  "nirs4all-core portable subset".
+
+First safe `LOCK-GOV` slice — **additive only**, no legacy import removed.
 
 ### Added
 
 - Python `n4a` import facade — a brand-aligned root (`import n4a`) that
   re-exports the full `nirs4all_lite` public surface and adds no behavior.
-- Python `nirs4all_core` forward-compatible import alias for the
-  `nirs4all-lite` → `nirs4all-core` direction; re-exports `nirs4all_lite`. The
-  published distribution name is unchanged (`nirs4all-lite`).
+- Python `nirs4all_core` import alias for the `nirs4all-lite` → `nirs4all-core`
+  direction; re-exports `nirs4all_lite`. (Introduced additively; the
+  distribution rename above landed later in the same unreleased train.)
 - `docs/NAMING.md` documenting the per-language aggregate names, the lite→core
   direction, the facades, and the `n4a` token disambiguation (`n4a` import vs
   `.n4a` bundle extension vs `n4a-datasets` CLI) for `GOV-004`.

@@ -4,7 +4,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = "nirs4all-lite"
+project = "nirs4all-core"
 author = "G. Beurier"
 copyright = "2026, G. Beurier"
 
@@ -52,7 +52,7 @@ autosectionlabel_prefix_document = True
 # -- HTML output -------------------------------------------------------------
 
 html_theme = "furo"
-html_title = "nirs4all-lite"
+html_title = "nirs4all-core"
 html_static_path = ["_static"]
 html_favicon = "_static/brand/favicon.ico"
 html_theme_options = {
