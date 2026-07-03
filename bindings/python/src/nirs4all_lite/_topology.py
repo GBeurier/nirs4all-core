@@ -480,9 +480,10 @@ _RELEASE_TOPOLOGY_MANIFEST: dict[str, Any] = {
     "aggregate": {
         "id": "nirs4all-core",
         "legacy_id": "nirs4all-lite",
-        "repo": "GBeurier/nirs4all-lite",
+        "repo": "GBeurier/nirs4all-core",
+        "legacy_repo": "GBeurier/nirs4all-lite",
         "target_repo": "GBeurier/nirs4all-core",
-        "repo_rename_status": "pending-github-rename",
+        "repo_rename_status": "completed",
         "owner_boundary": "aggregate",
         "default_inclusion": "base",
         "private": False,

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nirs4all-core"
-version = "0.2.2"
+version = "0.2.3"
 description = "Portable nirs4all aggregate binding over formats, IO, methods, dag-ml, and dag-ml-data (datasets optional)"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -46,13 +46,10 @@ all = [
 ]
 everything = ["nirs4all-core[all,datasets]"]
 
-# GitHub repository rename `nirs4all-lite` -> `nirs4all-core` is a pending
-# external admin action; the old URLs redirect permanently after the rename,
-# so they stay pinned to the current repository name until it happens.
 [project.urls]
 Homepage = "https://nirs4all.org"
-Repository = "https://github.com/GBeurier/nirs4all-lite"
-Issues = "https://github.com/GBeurier/nirs4all-lite/issues"
+Repository = "https://github.com/GBeurier/nirs4all-core"
+Issues = "https://github.com/GBeurier/nirs4all-core/issues"
 
 # The wheel ships the canonical aggregate package (`nirs4all_lite`, kept as the
 # stable legacy import root) plus two additive, non-shadowing import facades

@@ -1,6 +1,6 @@
 Package: nirs4all
 Title: Portable 'nirs4all' Aggregate Binding
-Version: 0.2.2
+Version: 0.2.3
 Authors@R: c(
     person("Gregory", "Beurier", email = "gregory.beurier@cirad.fr", role = c("aut", "cre")),
     person("nirs4all", "contributors", role = c("ctb", "cph")))
@@ -9,8 +9,8 @@ Description: Aggregates the 'nirs4all' formats, IO, datasets, methods, 'dag-ml',
     reimplementing their parsing, numerical, or pipeline logic. The aggregated
     engines remain the source of truth and are delegated to at run time.
 License: CeCILL-2.1 | AGPL (>= 3)
-URL: https://nirs4all.org, https://github.com/GBeurier/nirs4all-lite
-BugReports: https://github.com/GBeurier/nirs4all-lite/issues
+URL: https://nirs4all.org, https://github.com/GBeurier/nirs4all-core
+BugReports: https://github.com/GBeurier/nirs4all-core/issues
 Depends: R (>= 4.1)
 Imports:
     jsonlite,

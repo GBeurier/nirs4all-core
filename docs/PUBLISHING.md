@@ -32,12 +32,12 @@ attaches artifacts but **publishes to no registry**. `workflow_dispatch` runs
 every workflow in dry-run mode (build/validate only).
 
 The PyPI Trusted Publisher must be created once by the maintainer for project
-`nirs4all-core` with: owner `GBeurier`, repo `nirs4all-lite` (`nirs4all-core`
-after the pending GitHub repo rename), workflow `release-python.yml`,
-environment `pypi`. **Release blocker:** the `nirs4all-core` project/publisher
-does not exist yet; the old `nirs4all-lite` publisher does not carry over. The
-legacy `nirs4all-lite` PyPI project stays installable — its final release
-becomes a thin alias depending on `nirs4all-core` (see
+`nirs4all-core` with: owner `GBeurier`, repo `nirs4all-core`, workflow
+`release-python.yml`, environment `pypi`. **Release blocker:** the
+`nirs4all-core` project/publisher does not exist yet; the old `nirs4all-lite`
+publisher does not carry over. The legacy `nirs4all-lite` PyPI project stays
+installable — its final release becomes a thin alias depending on
+`nirs4all-core` (see
 [`CORE_RENAME.md`](CORE_RENAME.md) Phase R2); never yank existing versions.
 
 `nirs4all-datasets` is **external/optional everywhere** and is never bundled: a
@@ -112,7 +112,7 @@ the "Using Rust" CRAN considerations apply. `R CMD check --as-cran` is clean
 via `Additional_repositories`. Because those upstreams are not on mainstream
 CRAN yet, the natural channel today is **R-universe**; the tarball is written
 CRAN-submittable for when they land on CRAN. See
-[`bindings/r/cran-comments.md`](https://github.com/GBeurier/nirs4all-lite/blob/main/bindings/r/cran-comments.md).
+[`bindings/r/cran-comments.md`](https://github.com/GBeurier/nirs4all-core/blob/main/bindings/r/cran-comments.md).
 
 `release-r.yml` builds and attaches `nirs4all_<version>.tar.gz` to the Release;
 the maintainer downloads it and submits via CRAN's web form when appropriate.
@@ -125,7 +125,7 @@ R-universe is configured through `GBeurier/GBeurier.r-universe.dev`.
 ```json
 {
   "package": "nirs4all",
-  "url": "https://github.com/GBeurier/nirs4all-lite",
+  "url": "https://github.com/GBeurier/nirs4all-core",
   "subdir": "bindings/r"
 }
 ```

@@ -1,4 +1,4 @@
-//! Rust surface for the nirs4all-lite aggregate distribution.
+//! Rust surface for the nirs4all-core aggregate distribution.
 //!
 //! This crate intentionally starts as a registry and namespace layer. Runtime
 //! functionality must delegate to the owning upstream crates.

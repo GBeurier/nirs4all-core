@@ -100,10 +100,16 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertEqual(manifest["schema"], "nirs4all-core.release-topology.v2")
         self.assertEqual(manifest["aggregate"]["id"], "nirs4all-core")
         self.assertEqual(manifest["aggregate"]["legacy_id"], "nirs4all-lite")
+        self.assertEqual(manifest["aggregate"]["repo"], "GBeurier/nirs4all-core")
+        self.assertEqual(
+            manifest["aggregate"]["legacy_repo"],
+            "GBeurier/nirs4all-lite",
+        )
         self.assertEqual(
             manifest["aggregate"]["target_repo"],
             "GBeurier/nirs4all-core",
         )
+        self.assertEqual(manifest["aggregate"]["repo_rename_status"], "completed")
         self.assertFalse(manifest["aggregate"]["private"])
         self.assertEqual(manifest["python"]["distribution"], "nirs4all-core")
         self.assertEqual(manifest["python"]["canonical_import"], "nirs4all_lite")
