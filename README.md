@@ -117,9 +117,10 @@ npm test --prefix bindings/wasm
 ```
 
 `make test-v1-surfaces` is the public V1 surface gate for Python, R, and
-JavaScript/WASM. It runs the Python unittest suite, the WASM npm tests, and
-`R CMD check --no-manual bindings/r` when `R` is installed; local workstations
-without R print a skip message instead.
+JavaScript/WASM. It runs the Python unittest suite, the WASM npm tests, and the
+R surface/upstream/pipeline checks when `R` and `Rscript` are installed; local
+workstations without them print a skip/risk message instead. `make test-r` is
+the separate local `R CMD check --no-manual bindings/r` gate.
 
 Strict Python-vs-full-`nirs4all` execution parity needs local
 `nirs4all-methods` Python bindings and libn4m:

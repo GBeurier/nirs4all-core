@@ -47,8 +47,8 @@ cargo package -p nirs4all
 ```
 
 `make test-v1-surfaces` runs Python unittest, the WASM npm test suite, and
-`R CMD check --no-manual bindings/r` only when `R` is available locally.
-`R CMD build/check`, Octave smoke tests, and CRAN/R-universe validation require
+the R V1 surface scripts only when `R`/`Rscript` are available locally. `R CMD
+build/check`, Octave smoke tests, and CRAN/R-universe validation require
 R/Octave toolchains. They are part of CI because they may not be available on
 every development workstation.
 

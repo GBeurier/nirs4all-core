@@ -1,10 +1,21 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import test from 'node:test';
+import { pathToFileURL } from 'node:url';
 
 import { parseExecutionPlan, predictPortablePipeline, runPortablePipeline } from '../src/index.js';
 
-const methodsUrl = new URL('../../../../nirs4all-methods/bindings/js/dist/index.js', import.meta.url);
+function resolveMethodsUrl() {
+  const override = process.env.NIRS4ALL_METHODS_JS_DIST;
+  if (override) {
+    const target = resolve(override);
+    return pathToFileURL(target.endsWith('.js') ? target : join(target, 'index.js'));
+  }
+  return new URL('../../../../nirs4all-methods/bindings/js/dist/index.js', import.meta.url);
+}
+
+const methodsUrl = resolveMethodsUrl();
 const fixtureUrl = new URL('../../../tests/parity/fixtures/portable_methods_pipeline.json', import.meta.url);
 
 function deterministicNoise(row, col) {
@@ -93,6 +104,9 @@ test('portable execution plan preserves Savitzky-Golay mode and cval', () => {
 
 test('portable WASM execution delegates the shared pipeline to nirs4all-methods', async (t) => {
   if (!existsSync(methodsUrl)) {
+    if (process.env.NIRS4ALL_LITE_REQUIRE_METHODS_PARITY === '1') {
+      throw new Error(`Required nirs4all-methods JS/WASM build is not available at ${methodsUrl.href}`);
+    }
     t.skip('local nirs4all-methods JS/WASM build is not available');
     return;
   }
