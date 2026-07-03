@@ -140,5 +140,7 @@ Build:
 scripts/build-matlab-package.sh dist/matlab
 ```
 
-Attach the zip to the GitHub Release. A `.mltbx` can be added later when the
-MATLAB toolbox metadata is ready; the current portable artifact is Octave-safe.
+`release-matlab.yml` runs `make test-matlab-parity` against the pinned
+`nirs4all-methods` ref before attaching the zip to the GitHub Release. A
+`.mltbx` can be added later when the MATLAB toolbox metadata is ready; the
+current portable artifact is Octave-safe.

@@ -5,6 +5,8 @@
 # serves MATLAB and Octave. scripts/build-matlab-package.sh assembles it as
 # nirs4all-matlab-octave-<version>.zip (version read from the Rust-crate SoT).
 # It is attached to the GitHub Release so users can download it without cloning.
+# Release upload is blocked by strict MATLAB/Octave parity against the Python
+# oracle and the pinned nirs4all-methods ref from compat/upstreams.toml.
 #
 # Naming: the package is `nirs4all` (there is no "full" nirs4all in MATLAB/
 # Octave, so the lite aggregate IS the `nirs4all` package here).
@@ -26,20 +28,68 @@ permissions:
   contents: write   # attach the asset to the Release
 
 jobs:
+  strict-matlab-parity:
+    name: Strict MATLAB/Octave parity / Python oracle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Read pinned nirs4all-methods ref
+        id: methods-pin
+        shell: python
+        run: |
+          import os
+          from pathlib import Path
+          import tomllib
+
+          upstreams = tomllib.loads(Path("compat/upstreams.toml").read_text())["upstream"]
+          methods = [item for item in upstreams if item.get("key") == "methods"]
+          if len(methods) != 1:
+              raise SystemExit("compat/upstreams.toml must contain exactly one methods upstream")
+          ref = methods[0].get("ref")
+          if not isinstance(ref, str) or not ref.strip():
+              raise SystemExit("compat/upstreams.toml methods upstream must define a non-empty ref")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"ref={ref.strip()}\n")
+
+      - uses: actions/checkout@v4
+        with:
+          repository: GBeurier/nirs4all-methods
+          path: nirs4all-methods
+          ref: ${{ steps.methods-pin.outputs.ref }}
+
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends cmake gcc-12 g++-12 ninja-build octave octave-dev
+      - run: cmake --preset dev-release
+        working-directory: nirs4all-methods
+      - run: cmake --build --preset dev-release --target n4m_c --parallel
+        working-directory: nirs4all-methods
+      - run: octave --quiet --eval "cd bindings/matlab; build_mex"
+        working-directory: nirs4all-methods
+        env:
+          PLS4ALL_INCLUDE_DIR: ${{ github.workspace }}/nirs4all-methods/cpp/include
+          PLS4ALL_GENERATED_DIR: ${{ github.workspace }}/nirs4all-methods/build/dev-release/generated
+          PLS4ALL_LIB_DIR: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
+          LD_LIBRARY_PATH: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
+      - name: Run strict MATLAB/Octave parity against the Python oracle
+        env:
+          LD_LIBRARY_PATH: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
+          NIRS4ALL_METHODS_MATLAB_PATH: ${{ github.workspace }}/nirs4all-methods/bindings/matlab
+          OCTAVE_PATH: ${{ github.workspace }}/nirs4all-methods/bindings/matlab
+          NIRS4ALL_LITE_REQUIRE_METHODS_PARITY: "1"
+        run: make test-matlab-parity
+
   matlab-package:
+    needs: strict-matlab-parity
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Octave (smoke test the package surface)
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends octave zip
-
-      # Non-blocking: the deliverable is the source zip (users compile against their
-      # own MATLAB/Octave). Ubuntu's apt `octave` can be older than 7 and lacks
-      # `jsondecode` (used by the package surface), which must not gate the release.
-      - name: Octave smoke test
-        continue-on-error: true
-        run: octave --quiet --eval "run('bindings/matlab/tests/smoke.m')"
+      - name: Install packaging tools
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends zip
 
       - name: Resolve version
         id: meta

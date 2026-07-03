@@ -390,7 +390,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
                 self.assertEqual(distribution["workflow"], surface["release_workflow"])
                 self.assertEqual(distribution["default_inclusion"], "base")
 
-    def test_public_r_and_wasm_releases_require_strict_parity(self) -> None:
+    def test_public_r_wasm_and_matlab_releases_require_strict_parity(self) -> None:
         methods = _load_compat_upstreams()["methods"]
         self.assertEqual(methods["repo"], "GBeurier/nirs4all-methods")
         self.assertRegex(str(methods["ref"]), r"^[0-9a-f]{40}$")
@@ -436,6 +436,36 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             r_parity_step["env"]["NIRS4ALL_LITE_REQUIRE_METHODS_PARITY"],
             "1",
         )
+
+        matlab_workflow = _load_workflow_yaml("release-matlab.yml")
+        matlab_jobs = matlab_workflow["jobs"]
+        matlab_job = matlab_jobs["strict-matlab-parity"]
+        self.assertEqual(matlab_jobs["matlab-package"]["needs"], "strict-matlab-parity")
+        matlab_pin = _step_by_id(matlab_job, "methods-pin")
+        self.assertEqual(matlab_pin["shell"], "python")
+        self.assertIn("compat/upstreams.toml", matlab_pin["run"])
+        self.assertIn('item.get("key") == "methods"', matlab_pin["run"])
+        matlab_checkout = _checkout_step(matlab_job, methods["repo"])
+        self.assertEqual(matlab_checkout["with"]["path"], "nirs4all-methods")
+        self.assertEqual(matlab_checkout["with"]["ref"], expected_ref)
+        matlab_runs = _job_run_text(matlab_job)
+        self.assertIn("cmake --preset dev-release", matlab_runs)
+        self.assertIn("cmake --build --preset dev-release --target n4m_c", matlab_runs)
+        self.assertIn('octave --quiet --eval "cd bindings/matlab; build_mex"', matlab_runs)
+        self.assertIn("make test-matlab-parity", matlab_runs)
+        matlab_parity_step = _step_by_name(
+            matlab_job,
+            "Run strict MATLAB/Octave parity against the Python oracle",
+        )
+        self.assertEqual(
+            matlab_parity_step["env"]["NIRS4ALL_LITE_REQUIRE_METHODS_PARITY"],
+            "1",
+        )
+        self.assertEqual(
+            matlab_parity_step["env"]["NIRS4ALL_METHODS_MATLAB_PATH"],
+            "${{ github.workspace }}/nirs4all-methods/bindings/matlab",
+        )
+        self.assertNotIn("continue-on-error", _load_workflow("release-matlab.yml"))
 
     def test_wasm_package_locks_typechecked_optional_peers(self) -> None:
         package = _load_wasm_package()
