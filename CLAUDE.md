@@ -12,8 +12,8 @@ formats, datasets, ML orchestration, or numerical methods.
 
 ## Naming
 
-- Repository: `nirs4all-lite` today; GitHub rename to `nirs4all-core` is a
-  pending admin action (see `docs/CORE_RENAME.md` Phase R2)
+- Repository: `nirs4all-core`; the legacy `nirs4all-lite` line remains a
+  compatibility/redirect alias during the V1 cutover (see `docs/CORE_RENAME.md`)
 - Python distribution: `nirs4all-core` (RC V1 rename from `nirs4all-lite`;
   the legacy PyPI project stays installable as a thin alias)
 - Python import packages: `nirs4all_lite` (canonical), `n4a` and
