@@ -104,20 +104,32 @@ test-r-fixtures:
 	diff -ru tests/parity/fixtures bindings/r/inst/extdata
 
 test-r-parity: test-r-fixtures
+	rm -rf $(R_PARITY_LIB)
 	mkdir -p $(R_PARITY_LIB)
-	if [ -d "$(NIRS4ALL_METHODS_R_PATH)" ]; then \
-		PLS4ALL_LIB_DIR="$(NIRS4ALL_METHODS_LIB_DIR)" \
-		PLS4ALL_GENERATED_DIR="$(NIRS4ALL_METHODS_GENERATED_DIR)" \
-		LD_LIBRARY_PATH="$(NIRS4ALL_METHODS_LIB_DIR):$${LD_LIBRARY_PATH}" \
-		R_LIBS_USER="$(R_PARITY_LIB):$${R_LIBS_USER}" \
-		R CMD INSTALL --library="$(R_PARITY_LIB)" --no-multiarch --no-staged-install "$(NIRS4ALL_METHODS_R_PATH)"; \
+	@if [ ! -d "$(NIRS4ALL_METHODS_R_PATH)" ]; then \
+		printf '%s\n' "ERROR: strict R parity requires nirs4all-methods R binding at $(NIRS4ALL_METHODS_R_PATH)"; \
+		printf '%s\n' "Set NIRS4ALL_METHODS_ROOT or checkout the pinned nirs4all-methods ref next to this repo."; \
+		exit 1; \
 	fi
-	R_LIBS_USER="$(R_PARITY_LIB):$${R_LIBS_USER}" R CMD INSTALL --library="$(R_PARITY_LIB)" bindings/r
+	@if [ ! -f "$(NIRS4ALL_METHODS_LIB_DIR)/libn4m.so" ] && [ ! -f "$(NIRS4ALL_METHODS_LIB_DIR)/libn4m.dylib" ]; then \
+		printf '%s\n' "ERROR: strict R parity requires a dev-release libn4m in $(NIRS4ALL_METHODS_LIB_DIR)"; \
+		printf '%s\n' "Build it with: cd $(NIRS4ALL_METHODS_ROOT) && cmake --preset dev-release && cmake --build --preset dev-release --target n4m_c --parallel"; \
+		exit 1; \
+	fi
+	PLS4ALL_LIB_DIR="$(NIRS4ALL_METHODS_LIB_DIR)" \
+	PLS4ALL_GENERATED_DIR="$(NIRS4ALL_METHODS_GENERATED_DIR)" \
+	N4M_R_LINK_PREBUILT=1 \
+	LD_LIBRARY_PATH="$(NIRS4ALL_METHODS_LIB_DIR):$${LD_LIBRARY_PATH}" \
+	R_LIBS="$(R_PARITY_LIB):$${R_LIBS_USER:-}" R_LIBS_USER="$(R_PARITY_LIB):$${R_LIBS_USER:-}" \
+	R CMD INSTALL --preclean --library="$(R_PARITY_LIB)" --no-multiarch --no-staged-install "$(NIRS4ALL_METHODS_R_PATH)"
+	R_LIBS="$(R_PARITY_LIB):$${R_LIBS_USER:-}" R_LIBS_USER="$(R_PARITY_LIB):$${R_LIBS_USER:-}" R CMD INSTALL --library="$(R_PARITY_LIB)" bindings/r
 	NIRS4ALL_LITE_PARITY_ORACLE=$(abspath tests/parity/expected/portable_python_oracle.json) \
 	NIRS4ALL_LITE_PARITY_FIXTURES=$(abspath bindings/r/inst/extdata) \
 	NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 \
-	R_LIBS_USER="$(R_PARITY_LIB):$${R_LIBS_USER}" \
-	Rscript bindings/r/tests/parity.R
+	NIRS4ALL_LITE_R_PARITY_LIB="$(R_PARITY_LIB)" \
+	LD_LIBRARY_PATH="$(NIRS4ALL_METHODS_LIB_DIR):$${LD_LIBRARY_PATH}" \
+	R_LIBS="$(R_PARITY_LIB):$${R_LIBS_USER:-}" R_LIBS_USER="$(R_PARITY_LIB):$${R_LIBS_USER:-}" \
+	Rscript --vanilla bindings/r/tests/parity.R
 
 test-matlab-parity:
 	NIRS4ALL_LITE_PARITY_ORACLE=$(abspath tests/parity/expected/portable_python_oracle.json) \

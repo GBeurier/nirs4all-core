@@ -4,6 +4,22 @@ if (!requireNamespace("n4m", quietly = TRUE)) {
   if (strict) stop("n4m R binding is required for strict parity")
   message("Skipping R execution parity: n4m is not installed")
 } else {
+  n4m_path <- find.package("n4m")
+  expected_r_lib <- Sys.getenv("NIRS4ALL_LITE_R_PARITY_LIB")
+  if (strict && nzchar(expected_r_lib)) {
+    expected_r_lib <- normalizePath(expected_r_lib, mustWork = TRUE)
+    n4m_path <- normalizePath(n4m_path, mustWork = TRUE)
+    if (!startsWith(n4m_path, expected_r_lib)) {
+      stop(sprintf("strict parity loaded n4m from %s, expected it under %s",
+                   n4m_path, expected_r_lib))
+    }
+  }
+  n4m_abi <- n4m::n4m_abi_version()
+  if (strict && (length(n4m_abi) < 1L || as.integer(n4m_abi[[1]]) < 2L)) {
+    stop(sprintf("strict parity requires n4m ABI major >= 2, got %s",
+                 paste(n4m_abi, collapse = ".")))
+  }
+
   oracle_path <- Sys.getenv("NIRS4ALL_LITE_PARITY_ORACLE")
   if (!nzchar(oracle_path)) {
     oracle_path <- file.path("tests", "parity", "expected", "portable_python_oracle.json")

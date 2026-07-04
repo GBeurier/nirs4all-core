@@ -59,10 +59,27 @@ jobs:
       R_LIBS_USER: /tmp/nirs4all-core-r-library
     steps:
       - uses: actions/checkout@v6
+      - name: Read pinned nirs4all-methods ref
+        id: methods-pin
+        shell: python
+        run: |
+          import os
+          from pathlib import Path
+          import tomllib
+
+          upstreams = tomllib.loads(Path("compat/upstreams.toml").read_text())["upstream"]
+          methods = [item for item in upstreams if item.get("key") == "methods"]
+          if len(methods) != 1:
+              raise SystemExit("compat/upstreams.toml must contain exactly one methods upstream")
+          ref = methods[0].get("ref")
+          if not isinstance(ref, str) or not ref.strip():
+              raise SystemExit("compat/upstreams.toml methods upstream must define a non-empty ref")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"ref={ref.strip()}\n")
       - uses: actions/checkout@v6
         with:
           repository: GBeurier/nirs4all-methods
-          ref: 6f6a3fa0dace421925502d4c8d5cab5102f56944
+          ref: ${{ steps.methods-pin.outputs.ref }}
           path: nirs4all-methods
       - uses: actions/setup-python@v6
         with:
@@ -118,10 +135,11 @@ jobs:
           python -m unittest bindings/python/tests/test_execution_parity.py -v
       - run: mkdir -p "$R_LIBS_USER"
       - run: Rscript -e 'install.packages(c("jsonlite", "yaml"), lib = Sys.getenv("R_LIBS_USER"), repos = "https://cloud.r-project.org")'
-      - run: R CMD INSTALL --library="$R_LIBS_USER" --no-multiarch --no-staged-install nirs4all-methods/bindings/r/n4m
+      - run: R CMD INSTALL --preclean --library="$R_LIBS_USER" --no-multiarch --no-staged-install nirs4all-methods/bindings/r/n4m
         env:
           PLS4ALL_LIB_DIR: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
           PLS4ALL_GENERATED_DIR: ${{ github.workspace }}/nirs4all-methods/build/dev-release/generated
+          N4M_R_LINK_PREBUILT: "1"
           LD_LIBRARY_PATH: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
       - run: R CMD INSTALL --library="$R_LIBS_USER" bindings/r
       - run: make test-r-parity

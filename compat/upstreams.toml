@@ -55,7 +55,7 @@ wasm_packages = ["@nirs4all/datasets-wasm"]
 [[upstream]]
 key = "methods"
 repo = "GBeurier/nirs4all-methods"
-ref = "115077ae455176c71af527a5541ffc21080f07de"
+ref = "f1eae4229917ca10da675ea081f887b4749ddacb"
 role = "Portable C ABI PLS/NIRS numerical engine"
 bindings = ["python", "r", "matlab", "octave", "wasm", "rust"]
 python_imports = ["nirs4all_methods", "pls4all", "n4m", "nirs4all.methods"]
