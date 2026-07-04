@@ -25,7 +25,7 @@ wasm_packages = ["dag-ml-data-wasm"]
 [[upstream]]
 key = "formats"
 repo = "GBeurier/nirs4all-formats"
-ref = "181946f141ed8a313e8ed04f54053204fe3358f2"
+ref = "07beca5b67623f8660eca904332565a1c96b2a1c"
 role = "Spectroscopy/NIRS vendor file readers"
 bindings = ["rust", "python", "r", "wasm", "c"]
 python_imports = ["nirs4all_formats", "nirs4all.formats"]
@@ -35,7 +35,7 @@ wasm_packages = ["@nirs4all/formats-wasm"]
 [[upstream]]
 key = "io"
 repo = "GBeurier/nirs4all-io"
-ref = "4a5bef22c1177e5ce7ac85a302841031d7743b38"
+ref = "023421ce16e1e6403a6b805275a0e511f011a9b9"
 role = "Dataset assembly bridge"
 bindings = ["rust", "python", "r", "wasm", "c"]
 python_imports = ["nirs4all_io", "nirs4all.io"]
@@ -45,7 +45,7 @@ wasm_packages = ["@nirs4all/io-wasm"]
 [[upstream]]
 key = "datasets"
 repo = "GBeurier/nirs4all-datasets"
-ref = "c46042dabe295a10099e441000c9a62379d8d748"
+ref = "8551c9f0f31dc96c5ac75d5d6857b6468ba84136"
 role = "DOI-pinned NIRS dataset catalog"
 bindings = ["rust", "python", "r", "wasm", "c"]
 python_imports = ["nirs4all_datasets", "nirs4all.datasets"]
@@ -55,7 +55,7 @@ wasm_packages = ["@nirs4all/datasets-wasm"]
 [[upstream]]
 key = "methods"
 repo = "GBeurier/nirs4all-methods"
-ref = "f1eae4229917ca10da675ea081f887b4749ddacb"
+ref = "f452d95aaf828d2e9a5176e8a6815455424483e3"
 role = "Portable C ABI PLS/NIRS numerical engine"
 bindings = ["python", "r", "matlab", "octave", "wasm", "rust"]
 python_imports = ["nirs4all_methods", "pls4all", "n4m", "nirs4all.methods"]
