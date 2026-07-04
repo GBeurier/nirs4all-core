@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# bump_version.sh — nirs4all-lite version source-of-truth syncer.
+# bump_version.sh — nirs4all-core version source-of-truth syncer.
 #
-# nirs4all-lite has no Cargo workspace.package version (the workspace only
+# nirs4all-core has no Cargo workspace.package version (the workspace only
 # pins the shared edition/license/repository), and every binding manifest
 # carries its own hardcoded version string. To keep them from drifting we
 # elect the Rust crate manifest as the single source of truth:
