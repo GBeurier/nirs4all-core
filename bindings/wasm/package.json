@@ -44,17 +44,17 @@
     "@nirs4all/methods-wasm": "*",
     "dag-ml-data-wasm": "*",
     "dag-ml-wasm": "*",
-    "nirs4all-formats-wasm": "*",
-    "nirs4all-io-wasm": "*"
+    "@nirs4all/formats-wasm": "*",
+    "@nirs4all/io-wasm": "*"
   },
   "peerDependenciesMeta": {
     "@nirs4all/methods-wasm": {
       "optional": true
     },
-    "nirs4all-formats-wasm": {
+    "@nirs4all/formats-wasm": {
       "optional": true
     },
-    "nirs4all-io-wasm": {
+    "@nirs4all/io-wasm": {
       "optional": true
     },
     "@nirs4all/datasets-wasm": {

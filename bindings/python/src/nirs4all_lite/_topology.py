@@ -353,7 +353,7 @@ _UPSTREAM_COMPONENTS: list[dict[str, Any]] = [
         },
         "packages": {
             "rust": [],
-            "npm": ["nirs4all-formats-wasm"],
+            "npm": ["@nirs4all/formats-wasm"],
             "r": ["nirs4allformats"],
             "matlab": [],
             "c_abi": [],
@@ -375,7 +375,7 @@ _UPSTREAM_COMPONENTS: list[dict[str, Any]] = [
         },
         "packages": {
             "rust": [],
-            "npm": ["nirs4all-io-wasm"],
+            "npm": ["@nirs4all/io-wasm"],
             "r": ["nirs4allio"],
             "matlab": [],
             "c_abi": [],

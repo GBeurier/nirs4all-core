@@ -61,8 +61,8 @@ preserved in the execution plan and forwarded to the upstream binding.
   `runPortablePipeline()` and predicts from its serialized selected model with
   `predictPortablePipeline()`, both delegating to `@nirs4all/methods-wasm`.
 - `nirs4all-web` consumes this package; UI code does not live here.
-- Current upstream package candidates are `nirs4all-formats-wasm`,
-  `nirs4all-io-wasm`, `@nirs4all/datasets-wasm`, `dag-ml-wasm`,
+- Current upstream package candidates are `@nirs4all/formats-wasm`,
+  `@nirs4all/io-wasm`, `@nirs4all/datasets-wasm`, `dag-ml-wasm`,
   `dag-ml-data-wasm`, and `@nirs4all/methods-wasm`.
 
 ## R

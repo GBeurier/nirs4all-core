@@ -30,7 +30,7 @@ role = "Spectroscopy/NIRS vendor file readers"
 bindings = ["rust", "python", "r", "wasm", "c"]
 python_imports = ["nirs4all_formats", "nirs4all.formats"]
 r_packages = ["nirs4allformats"]
-wasm_packages = ["nirs4all-formats-wasm"]
+wasm_packages = ["@nirs4all/formats-wasm"]
 
 [[upstream]]
 key = "io"
@@ -40,7 +40,7 @@ role = "Dataset assembly bridge"
 bindings = ["rust", "python", "r", "wasm", "c"]
 python_imports = ["nirs4all_io", "nirs4all.io"]
 r_packages = ["nirs4allio"]
-wasm_packages = ["nirs4all-io-wasm"]
+wasm_packages = ["@nirs4all/io-wasm"]
 
 [[upstream]]
 key = "datasets"

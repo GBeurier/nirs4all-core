@@ -62,6 +62,11 @@ def _prepend_path_env(env: dict[str, str], key: str, value: Path) -> None:
     env[key] = str(value) + (os.pathsep + current if current else "")
 
 
+def _prepend_methods_lib_env(env: dict[str, str], lib_dir: Path) -> None:
+    for key in ("LD_LIBRARY_PATH", "DYLD_LIBRARY_PATH", "PATH"):
+        _prepend_path_env(env, key, lib_dir)
+
+
 def _prediction_frame(runtime: str, dataset: dict[str, Any], actual: dict[str, Any]) -> pd.DataFrame:
     test_indices = _as_int_list(actual["split"]["testIndices"])
     selected = actual["selected"]
@@ -226,12 +231,13 @@ def _prepare_r_library(workspace_root: Path, core_root: Path, artifacts_dir: Pat
         return None, "R is not available on PATH or next to Rscript."
     methods_root = workspace_root / "nirs4all-methods"
     methods_r = methods_root / "bindings" / "r" / "n4m"
-    methods_lib_dir = methods_root / "build" / "dev-release" / "cpp" / "src"
     generated_dir = methods_root / "build" / "dev-release" / "generated"
     if not methods_r.is_dir():
         return None, f"nirs4all-methods R binding not found at {methods_r}"
-    if not (methods_lib_dir / "libn4m.so").exists():
-        return None, f"libn4m dev-release build not found at {methods_lib_dir}"
+    methods_lib = _methods_lib_path(workspace_root)
+    if methods_lib is None:
+        return None, f"libn4m dev-release build not found under {methods_root / 'build' / 'dev-release' / 'cpp' / 'src'}"
+    methods_lib_dir = methods_lib.parent
     r_lib = artifacts_dir / "_r-lib"
     r_lib.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()
@@ -244,7 +250,7 @@ def _prepare_r_library(workspace_root: Path, core_root: Path, artifacts_dir: Pat
             "R_LIBS_USER": str(r_lib),
         }
     )
-    _prepend_path_env(env, "LD_LIBRARY_PATH", methods_lib_dir)
+    _prepend_methods_lib_env(env, methods_lib_dir)
     commands = [
         [
             str(r_cmd),
@@ -337,7 +343,7 @@ jsonlite::write_json(actual, output_path, auto_unbox = TRUE, digits = 16)
         env["R_LIBS_USER"] = str(r_lib)
     methods_lib_dir = workspace_root / "nirs4all-methods" / "build" / "dev-release" / "cpp" / "src"
     if methods_lib_dir.is_dir():
-        _prepend_path_env(env, "LD_LIBRARY_PATH", methods_lib_dir)
+        _prepend_methods_lib_env(env, methods_lib_dir)
     completed = subprocess.run(
         [rscript, "--vanilla", str(script_path), str(pipeline_path), str(dataset_path), str(output_json), str(core_root / "bindings/r/R")],
         cwd=artifacts_dir,

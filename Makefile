@@ -7,12 +7,30 @@ NIRS4ALL_METHODS_GENERATED_DIR ?= $(NIRS4ALL_METHODS_ROOT)/build/dev-release/gen
 NIRS4ALL_METHODS_JS_DIST ?= $(abspath $(NIRS4ALL_METHODS_ROOT)/bindings/js/dist)
 NIRS4ALL_METHODS_MATLAB_PATH ?= $(NIRS4ALL_METHODS_ROOT)/bindings/matlab
 R_PARITY_LIB ?= $(abspath .r-parity-lib)
+WORKSPACE_ROOT ?= $(abspath ..)
+E2E_ARTIFACTS_DIR ?= /tmp/nirs4all-core-e2e
+E2E_SCENARIOS ?= e2e-r-dataset-io-pipeline-save e2e-multimodal-python-r-wasm-roundtrip e2e-multisource-branching-stacking-replay e2e-cluster-dag-rights-client-core
 
-.PHONY: test test-v1-surfaces test-rust test-rust-parity test-python test-python-v1-surfaces test-python-parity check-wasm-methods-artifact test-wasm test-wasm-parity-strict test-wasm-v1-surfaces test-wasm-v1-surfaces-if-available test-r test-r-if-available test-r-v1-surfaces test-r-v1-surfaces-if-available test-r-fixtures test-r-parity test-matlab-parity test-matlab-parity-if-available check-r build build-python build-npm build-r build-matlab package-rust clean
+.PHONY: test test-v1-surfaces test-cross-language-e2e test-e2e-entrypoints test-rust test-rust-parity test-python test-python-v1-surfaces test-python-parity check-wasm-methods-artifact test-wasm test-wasm-parity-strict test-wasm-v1-surfaces test-wasm-v1-surfaces-if-available test-r test-r-if-available test-r-v1-surfaces test-r-v1-surfaces-if-available test-r-fixtures test-r-parity test-matlab-parity test-matlab-parity-if-available check-r build build-python build-npm build-r build-matlab package-rust clean
 
 test: test-rust test-python test-wasm
 
 test-v1-surfaces: test-rust test-python-v1-surfaces test-wasm-v1-surfaces test-r-v1-surfaces-if-available test-matlab-parity-if-available
+
+test-e2e-entrypoints:
+	$(PYTHON) -m py_compile scripts/e2e/*.py
+
+test-cross-language-e2e: test-e2e-entrypoints
+	@test -f "$(WORKSPACE_ROOT)/nirs4all-ecosystem/scripts/n4a_e2e_scenarios.py" || { \
+		printf '%s\n' "ERROR: nirs4all-ecosystem checkout is required at $(WORKSPACE_ROOT)/nirs4all-ecosystem"; \
+		exit 2; \
+	}
+	@mkdir -p "$(E2E_ARTIFACTS_DIR)"
+	@for scenario in $(E2E_SCENARIOS); do \
+		printf '%s\n' "RUN $$scenario"; \
+		PYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(WORKSPACE_ROOT)/nirs4all-ecosystem/scripts/n4a_e2e_scenarios.py" \
+			--artifacts-dir "$(E2E_ARTIFACTS_DIR)" run "$$scenario" --execute; \
+	done
 
 test-rust:
 	cargo fmt --all --check

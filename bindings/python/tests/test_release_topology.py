@@ -482,8 +482,8 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             "@nirs4all/methods-wasm",
             "dag-ml-data-wasm",
             "dag-ml-wasm",
-            "nirs4all-formats-wasm",
-            "nirs4all-io-wasm",
+            "@nirs4all/formats-wasm",
+            "@nirs4all/io-wasm",
         }
 
         self.assertEqual(lock["lockfileVersion"], 3)
