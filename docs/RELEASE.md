@@ -14,7 +14,7 @@ Before release:
 1. Pin upstream versions or SHAs in `compat/upstreams.toml`.
 2. Build each binding from the same lock.
 3. Run upstream binding parity gates.
-4. Run lite cross-language parity gates.
+4. Run aggregate cross-language parity gates.
 5. Run equivalent-pipeline checks against full Python `nirs4all`.
 6. Verify external operator capability levels: metadata-only operators must not
    be marketed as executable, and executable operators must have parity fixtures.
@@ -32,7 +32,7 @@ aggregate artifact rows, explicit V1 Python/R/JavaScript-WASM surface gates, Pyt
 facade namespaces, optional upstream policy (notably external
 `nirs4all-datasets`), and license/SBOM/`nirs4all-methods` C ABI pointers.
 Central release tooling should consume these fields instead of re-deriving
-lite/core topology from prose.
+current-vs-legacy topology from prose.
 
 Local artifact commands:
 

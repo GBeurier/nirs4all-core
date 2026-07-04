@@ -2,7 +2,7 @@
 #
 # nirs4all-core ships a SINGLE crate (bindings/rust/nirs4all, package `nirs4all`)
 # — a thin libloading shim that delegates numerical work to libn4m at runtime.
-# There is no "full" nirs4all on crates.io, so the lite aggregate IS the
+# There is no "full" nirs4all on crates.io, so this aggregate owns the
 # `nirs4all` crate in Rust.
 #
 # It is published with DEFAULT features only, i.e. WITHOUT the off-by-default

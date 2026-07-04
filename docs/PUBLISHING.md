@@ -34,10 +34,10 @@ every workflow in dry-run mode (build/validate only).
 The PyPI Trusted Publisher must be created once by the maintainer for project
 `nirs4all-core` with: owner `GBeurier`, repo `nirs4all-core`, workflow
 `release-python.yml`, environment `pypi`. **Release blocker:** the
-`nirs4all-core` project/publisher does not exist yet; the old `nirs4all-lite`
-publisher does not carry over. The legacy `nirs4all-lite` PyPI project stays
-installable — its final release becomes a thin alias depending on
-`nirs4all-core` (see
+`nirs4all-core` project/publisher still needs to be created; the old
+`nirs4all-lite` publisher on `GBeurier/nirs4all-lite` does not carry over. The
+legacy `nirs4all-lite` PyPI project stays installable — its final release
+becomes a thin alias depending on `nirs4all-core` (see
 [`CORE_RENAME.md`](CORE_RENAME.md) Phase R2); never yank existing versions.
 
 `nirs4all-datasets` is **external/optional everywhere** and is never bundled: a
@@ -55,8 +55,9 @@ python -m build bindings/python --outdir dist/python
 python -m twine check dist/python/*
 ```
 
-Publish after the PyPI project `nirs4all-core` exists and trusted publishing or
-an API token is configured:
+Manual fallback publish only after the PyPI project `nirs4all-core` exists and
+the Trusted Publisher is configured; the normal release path remains
+`release-python.yml` via OIDC:
 
 ```bash
 python -m twine upload dist/python/*

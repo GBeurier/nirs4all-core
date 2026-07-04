@@ -7,7 +7,7 @@
 # The tarball is therefore directly CRAN-submittable on the R side.
 #
 # Naming: the R package is `nirs4all` (there is no "full" nirs4all on CRAN/
-# R-universe, so the lite aggregate IS the `nirs4all` R package).
+# R-universe, so this aggregate owns the `nirs4all` R package).
 #
 # Imports are just jsonlite + yaml. The ecosystem bindings (nirs4allformats,
 # nirs4allio, nirs4alldatasets, n4m, dagmldata) are SUGGESTS only and resolved

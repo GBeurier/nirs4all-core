@@ -396,6 +396,23 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
                 self.assertEqual(distribution["workflow"], surface["release_workflow"])
                 self.assertEqual(distribution["default_inclusion"], "base")
 
+    def test_python_release_workflow_uses_current_repo_trusted_publisher_tuple(self) -> None:
+        workflow = _load_workflow_yaml("release-python.yml")
+        publish = workflow["jobs"]["publish-pypi"]
+        workflow_text = _load_workflow("release-python.yml")
+
+        self.assertEqual(publish["environment"]["name"], "pypi")
+        self.assertEqual(publish["environment"]["url"], "https://pypi.org/p/nirs4all-core")
+        self.assertEqual(publish["permissions"]["id-token"], "write")
+        self.assertIn("repo = nirs4all-core", workflow_text)
+        self.assertNotIn("repo = nirs4all-lite", workflow_text)
+
+        preflight = _step_by_name(publish, "Validate Trusted Publisher release tuple")
+        self.assertIn('expected_repo="GBeurier/nirs4all-core"', preflight["run"])
+        self.assertIn("GITHUB_REPOSITORY", preflight["run"])
+        self.assertIn("GITHUB_WORKFLOW_REF", preflight["run"])
+        self.assertIn("environment=pypi", preflight["run"])
+
     def test_public_r_wasm_and_matlab_releases_require_strict_parity(self) -> None:
         methods = _load_compat_upstreams()["methods"]
         self.assertEqual(methods["repo"], "GBeurier/nirs4all-methods")

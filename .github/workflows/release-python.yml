@@ -16,7 +16,7 @@
 # Trusted Publisher on pypi.org for project `nirs4all-core` (release blocker:
 # does not exist yet; the old `nirs4all-lite` publisher does not carry over)
 # with:
-#   owner = GBeurier, repo = nirs4all-lite (nirs4all-core after the repo rename),
+#   owner = GBeurier, repo = nirs4all-core,
 #   workflow = release-python.yml, environment = pypi
 # (the SAME convention as nirs4all-formats / nirs4all-io / nirs4all-methods).
 #
@@ -108,6 +108,22 @@ jobs:
         with:
           name: python-dist
           path: dist
+      - name: Validate Trusted Publisher release tuple
+        run: |
+          set -euo pipefail
+          expected_repo="GBeurier/nirs4all-core"
+          if [[ "${GITHUB_REPOSITORY}" != "${expected_repo}" ]]; then
+            echo "::error::PyPI Trusted Publisher for project nirs4all-core must target owner=GBeurier repo=nirs4all-core workflow=release-python.yml environment=pypi; current repository is ${GITHUB_REPOSITORY}." >&2
+            exit 1
+          fi
+          case "${GITHUB_WORKFLOW_REF}" in
+            */.github/workflows/release-python.yml@*)
+              ;;
+            *)
+              echo "::error::Expected GITHUB_WORKFLOW_REF to point at .github/workflows/release-python.yml, got ${GITHUB_WORKFLOW_REF}." >&2
+              exit 1
+              ;;
+          esac
       - name: Validate tag is a production release version (vX.Y.Z)
         run: |
           set -euo pipefail
