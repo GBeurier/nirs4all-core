@@ -8,78 +8,62 @@ arg_value <- function(flag) {
   args[[idx + 1L]]
 }
 
+require_field <- function(value, name) {
+  if (is.null(value)) {
+    stop(sprintf("missing required field: %s", name), call. = FALSE)
+  }
+  value
+}
+
 out_dir <- arg_value("--out")
 if (is.null(out_dir) || !nzchar(out_dir)) {
   out_dir <- file.path(tempdir(), "nirs4all-r-dataset-io-pipeline")
 }
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
-oracle_path <- Sys.getenv("NIRS4ALL_LITE_PARITY_ORACLE")
-if (!nzchar(oracle_path)) {
-  oracle_path <- file.path("tests", "parity", "expected", "portable_python_oracle.json")
-}
-pipeline_path <- system.file("extdata", "portable_methods_pipeline.json", package = "nirs4all")
-if (!nzchar(pipeline_path)) {
-  pipeline_path <- file.path("bindings", "r", "inst", "extdata", "portable_methods_pipeline.json")
+python <- Sys.getenv("PYTHON", "python3.11")
+helper <- file.path("scripts", "e2e", "prepare_r_dataset_io_pipeline.py")
+if (!file.exists(helper)) {
+  stop(sprintf("dataset/io prepare helper not found: %s", helper), call. = FALSE)
 }
 
-if (!file.exists(pipeline_path)) {
-  stop(sprintf("pipeline fixture not found: %s", pipeline_path), call. = FALSE)
-}
-
-if (file.exists(oracle_path)) {
-  oracle <- jsonlite::fromJSON(oracle_path, simplifyVector = FALSE)
-  dataset <- list(
-    X = oracle$dataset$X,
-    y = oracle$dataset$y,
-    rows = oracle$dataset$rows,
-    cols = oracle$dataset$cols
-  )
-} else {
-  rows <- 40L
-  cols <- 28L
-  dataset <- list(
-    X = lapply(seq_len(rows), function(row) {
-      round(sin(seq_len(cols) / 5 + row / 7) + row / 20, 12)
-    }),
-    y = round(seq_len(rows) / 13 + cos(seq_len(rows) / 6), 12),
-    rows = rows,
-    cols = cols
-  )
-}
-
-flat_x <- as.numeric(unlist(dataset$X, use.names = FALSE))
-reshaped_x <- lapply(seq_len(dataset$rows), function(row) {
-  offset <- (row - 1L) * dataset$cols
-  flat_x[seq.int(offset + 1L, offset + dataset$cols)]
-})
-
-payload <- list(
-  schema_version = "n4a.e2e.r_dataset_io_pipeline/v1",
-  status = "prepared",
-  source = list(
-    oracle = if (file.exists(oracle_path)) normalizePath(oracle_path, mustWork = TRUE) else NULL,
-    pipeline = normalizePath(pipeline_path, mustWork = TRUE)
-  ),
-  dataset = list(
-    X = reshaped_x,
-    y = dataset$y,
-    rows = dataset$rows,
-    cols = dataset$cols
-  ),
-  io_reshape = list(
-    from = "flat-row-major",
-    to = "list-of-row-vectors",
-    values_preserved = identical(flat_x, as.numeric(unlist(reshaped_x, use.names = FALSE)))
-  )
+status <- system2(
+  python,
+  c(helper, "--out", out_dir),
+  stdout = "",
+  stderr = ""
 )
-if (!isTRUE(payload$io_reshape$values_preserved)) {
-  stop("IO reshape changed spectral values", call. = FALSE)
+if (!identical(status, 0L)) {
+  stop(sprintf("dataset/io prepare helper failed with status %s", status), call. = FALSE)
 }
 
+prepared_path <- file.path(out_dir, "reshaped-dataset.json")
+if (!file.exists(prepared_path)) {
+  stop(sprintf("dataset/io prepare helper did not write %s", prepared_path), call. = FALSE)
+}
+prepared <- jsonlite::fromJSON(prepared_path, simplifyVector = FALSE)
+
+stopifnot(identical(prepared$schema_version, "n4a.e2e.r_dataset_io_pipeline/v2"))
+stopifnot(identical(prepared$status, "prepared"))
+invisible(require_field(prepared$source$dataset_id, "source.dataset_id"))
+invisible(require_field(prepared$provider_contract$provider, "provider_contract.provider"))
+invisible(require_field(prepared$io$io_spec_sha256, "io.io_spec_sha256"))
+stopifnot(isTRUE(prepared$io_reshape$selected_values_preserved))
+stopifnot(length(prepared$dataset$X) == prepared$dataset$rows)
+stopifnot(length(prepared$dataset$y) == prepared$dataset$rows)
+stopifnot(length(prepared$dataset$X[[1L]]) == prepared$dataset$cols)
+
+session_payload <- list(
+  schema_version = "n4a.e2e.r_session/v1",
+  status = "prepared",
+  r_version = as.character(getRversion()),
+  platform = R.version$platform,
+  attached = capture.output(sessionInfo()),
+  prepared_dataset = normalizePath(prepared_path, mustWork = TRUE)
+)
 jsonlite::write_json(
-  payload,
-  file.path(out_dir, "reshaped-dataset.json"),
+  session_payload,
+  file.path(out_dir, "r-session-info.json"),
   auto_unbox = TRUE,
   pretty = TRUE
 )
