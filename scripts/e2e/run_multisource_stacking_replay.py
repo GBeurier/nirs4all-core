@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import sys
@@ -27,6 +28,124 @@ def _finite(value: Any, label: str) -> float:
     if not math.isfinite(number):
         raise AssertionError(f"{label} must be finite, got {value!r}")
     return number
+
+
+def _stable_hash(payload: Any) -> str:
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _as_int_list(values: Any) -> list[int]:
+    if values is None:
+        return []
+    return [int(value) for value in list(values)]
+
+
+def _as_float_list(values: Any) -> list[float]:
+    if values is None:
+        return []
+    return [float(value) for value in list(values)]
+
+
+def _ledger_fold_sample_ids(ledger: dict[str, Any], fold_id: str | None) -> list[int]:
+    if fold_id is None:
+        return []
+    try:
+        wanted = int(fold_id)
+    except ValueError:
+        return []
+    for fold in ledger.get("folds", []):
+        if int(fold.get("fold_id", -1)) == wanted:
+            return _as_int_list(fold.get("sample_ids"))
+    return []
+
+
+def _row_vector_lengths(row: dict[str, Any]) -> dict[str, int]:
+    return {
+        "sample_indices": len(_as_int_list(row.get("sample_indices"))),
+        "y_true": len(_as_float_list(row.get("y_true"))),
+        "y_pred": len(_as_float_list(row.get("y_pred"))),
+    }
+
+
+def _test_vector_parity(array_rows: list[dict[str, Any]], ledger: dict[str, Any], tolerance: float) -> dict[str, Any]:
+    gaps: list[str] = []
+    test_rows = [row for row in array_rows if row.get("partition") == "test"]
+    if not test_rows:
+        return {
+            "available": False,
+            "partition": "test",
+            "reason": "no test rows with arrays_present=true in native predictions.parquet",
+            "gaps": ["native test vectors unavailable"],
+        }
+
+    native_sample_order: list[int] = []
+    native_targets: dict[int, float] = {}
+    native_predictions: dict[int, float] = {}
+    for row in test_rows:
+        sample_indices = _as_int_list(row.get("sample_indices"))
+        y_true = _as_float_list(row.get("y_true"))
+        y_pred = _as_float_list(row.get("y_pred"))
+        if not (len(sample_indices) == len(y_true) == len(y_pred)):
+            gaps.append(
+                "native test vector length mismatch: "
+                f"sample_indices={len(sample_indices)} y_true={len(y_true)} y_pred={len(y_pred)}"
+            )
+            continue
+        native_sample_order.extend(sample_indices)
+        for sample_id, target, prediction in zip(sample_indices, y_true, y_pred):
+            native_targets[int(sample_id)] = float(target)
+            native_predictions[int(sample_id)] = float(prediction)
+
+    oracle_test = ledger.get("test", {})
+    oracle_sample_order = _as_int_list(oracle_test.get("sample_ids"))
+    oracle_targets_list = _as_float_list(oracle_test.get("targets"))
+    oracle_predictions_list = _as_float_list(oracle_test.get("predictions"))
+    if not (len(oracle_sample_order) == len(oracle_targets_list) == len(oracle_predictions_list)):
+        gaps.append(
+            "oracle test vector length mismatch: "
+            f"sample_ids={len(oracle_sample_order)} targets={len(oracle_targets_list)} predictions={len(oracle_predictions_list)}"
+        )
+
+    oracle_targets = {sample_id: target for sample_id, target in zip(oracle_sample_order, oracle_targets_list)}
+    oracle_predictions = {
+        sample_id: prediction for sample_id, prediction in zip(oracle_sample_order, oracle_predictions_list)
+    }
+    native_ids = set(native_predictions)
+    oracle_ids = set(oracle_predictions)
+    missing_in_native = sorted(oracle_ids - native_ids)
+    extra_in_native = sorted(native_ids - oracle_ids)
+    common_ids = sorted(native_ids & oracle_ids & set(native_targets) & set(oracle_targets))
+    if missing_in_native:
+        gaps.append(f"native vectors missing oracle sample ids: {missing_in_native}")
+    if extra_in_native:
+        gaps.append(f"native vectors include extra sample ids: {extra_in_native}")
+    if not common_ids:
+        return {
+            "available": False,
+            "partition": "test",
+            "reason": "no common test sample ids between native vectors and oracle ledger",
+            "gaps": gaps or ["no common test sample ids"],
+        }
+
+    target_abs_max = max(abs(native_targets[sample_id] - oracle_targets[sample_id]) for sample_id in common_ids)
+    prediction_abs_max = max(abs(native_predictions[sample_id] - oracle_predictions[sample_id]) for sample_id in common_ids)
+    return {
+        "available": not gaps,
+        "partition": "test",
+        "sample_count_native": len(native_sample_order),
+        "sample_count_oracle": len(oracle_sample_order),
+        "sample_count_compared": len(common_ids),
+        "sample_order_match": native_sample_order == oracle_sample_order,
+        "sample_set_match": not missing_in_native and not extra_in_native,
+        "native_sample_ids_sha256": _stable_hash(native_sample_order),
+        "oracle_sample_ids_sha256": _stable_hash(oracle_sample_order),
+        "target_abs_max": target_abs_max,
+        "prediction_abs_max": prediction_abs_max,
+        "tolerance": tolerance,
+        "within_tolerance": target_abs_max <= tolerance and prediction_abs_max <= tolerance,
+        "gaps": gaps,
+    }
 
 
 def _required_artifacts(artifacts_dir: Path) -> tuple[Path, Path]:
@@ -70,7 +189,7 @@ def _merge_stack_score(score_set: dict[str, Any], *, partition: str, fold_id: st
     return _finite(matches[0]["metrics"]["rmse"], f"merge:stack {partition}/{fold_id} rmse")
 
 
-def _prediction_table_audit(native_dir: Path, replay: dict[str, Any]) -> dict[str, Any]:
+def _prediction_table_audit(native_dir: Path, replay: dict[str, Any], ledger: dict[str, Any]) -> dict[str, Any]:
     try:
         import pyarrow.parquet as pq
     except ModuleNotFoundError as exc:
@@ -107,13 +226,80 @@ def _prediction_table_audit(native_dir: Path, replay: dict[str, Any]) -> dict[st
         raise AssertionError("native prediction table carries an unexpected target width")
 
     array_rows = [row for row in meta_rows if row.get("arrays_present")]
+    tolerance = _finite(replay["parity"]["score_tolerance"], "score_tolerance")
+    row_alignment: list[dict[str, Any]] = []
+    alignment_gaps: list[str] = []
+    for index, row in enumerate(meta_rows):
+        partition = str(row.get("partition"))
+        fold_id = None if row.get("fold_id") is None else str(row.get("fold_id"))
+        arrays_present = bool(row.get("arrays_present"))
+        target_width = int(row.get("target_width", -1))
+        sample_indices = _as_int_list(row.get("sample_indices")) if arrays_present else []
+        expected_samples: list[int] = []
+        expected_scope = "unavailable"
+        if partition == "test":
+            expected_samples = _as_int_list(ledger.get("test", {}).get("sample_ids"))
+            expected_scope = "ledger.test.sample_ids"
+        elif partition == "validation":
+            expected_samples = _ledger_fold_sample_ids(ledger, fold_id)
+            expected_scope = "ledger.folds.sample_ids"
+
+        lengths = _row_vector_lengths(row) if arrays_present else {"sample_indices": 0, "y_true": 0, "y_pred": 0}
+        vector_lengths_match = arrays_present and lengths["sample_indices"] == lengths["y_true"] == lengths["y_pred"]
+        sample_order_match = sample_indices == expected_samples if expected_samples and arrays_present else None
+        sample_set_match = sorted(sample_indices) == sorted(expected_samples) if expected_samples and arrays_present else None
+        if arrays_present and not vector_lengths_match:
+            alignment_gaps.append(f"row {index} vector lengths do not align: {lengths}")
+        if arrays_present and expected_samples and not sample_set_match:
+            alignment_gaps.append(f"row {index} sample set does not match {expected_scope}")
+
+        row_alignment.append(
+            {
+                "row_index": index,
+                "partition": partition,
+                "fold_id": fold_id,
+                "arrays_present": arrays_present,
+                "target_width": target_width,
+                "target_width_expected": 1,
+                "target_width_matches": target_width == 1,
+                "vector_lengths": lengths,
+                "vector_lengths_match": vector_lengths_match,
+                "expected_sample_scope": expected_scope,
+                "sample_count_native": len(sample_indices),
+                "sample_count_expected": len(expected_samples),
+                "sample_order_match": sample_order_match,
+                "sample_set_match": sample_set_match,
+                "sample_indices_sha256": _stable_hash(sample_indices),
+                "expected_sample_ids_sha256": _stable_hash(expected_samples),
+            }
+        )
+
+    arrays_present_values = sorted({bool(row.get("arrays_present")) for row in meta_rows})
+    target_width_values = sorted({int(row.get("target_width", -1)) for row in meta_rows})
     return {
         "rows": len(rows),
         "meta_model_rows": len(meta_rows),
         "array_rows": len(array_rows),
-        "array_payload_scope": "absent_in_current_native_prediction_table",
+        "arrays_present": {
+            "column_present": True,
+            "values": arrays_present_values,
+            "true_rows": len(array_rows),
+            "false_rows": len(meta_rows) - len(array_rows),
+        },
+        "array_payload_scope": "present_in_native_prediction_table" if array_rows else "absent_in_current_native_prediction_table",
         "partitions": sorted({str(row.get("partition")) for row in meta_rows}),
         "fold_ids": sorted({str(row.get("fold_id")) for row in meta_rows}),
+        "target_width": {
+            "values": target_width_values,
+            "all_one": target_width_values == [1],
+        },
+        "sample_fold_partition_target_alignment": {
+            "available": bool(array_rows),
+            "strict_claim": False,
+            "rows": row_alignment,
+            "gaps": alignment_gaps,
+        },
+        "vector_parity": _test_vector_parity(array_rows, ledger, tolerance),
         "schema_columns": table.column_names,
     }
 
@@ -169,7 +355,7 @@ def _validate(artifacts_dir: Path) -> dict[str, Any]:
         raise AssertionError(
             f"native score_set deltas exceed tolerance: cv={cv_score_delta} best={best_score_delta} tol={tolerance}"
         )
-    prediction_table = _prediction_table_audit(native_dir, replay)
+    prediction_table = _prediction_table_audit(native_dir, replay, ledger)
 
     return {
         "scenario_id": SCENARIO_ID,

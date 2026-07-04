@@ -23,6 +23,92 @@ if (is.null(in_path) || !nzchar(in_path)) {
 }
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
+`%||%` <- function(lhs, rhs) {
+  if (is.null(lhs)) rhs else lhs
+}
+
+numeric_vec <- function(value) {
+  as.numeric(unlist(value, use.names = FALSE))
+}
+
+integer_vec <- function(value) {
+  as.integer(unlist(value, use.names = FALSE))
+}
+
+max_abs_diff <- function(actual, expected) {
+  actual <- numeric_vec(actual)
+  expected <- numeric_vec(expected)
+  if (length(actual) != length(expected)) {
+    stop(sprintf("numeric vector lengths differ: %d != %d", length(actual), length(expected)), call. = FALSE)
+  }
+  if (length(actual) == 0L) {
+    return(0)
+  }
+  max(abs(actual - expected))
+}
+
+expect_close <- function(actual, expected, tolerance, label) {
+  diff <- max_abs_diff(actual, expected)
+  if (!is.finite(diff) || diff > tolerance) {
+    stop(sprintf("%s differed by %0.12g > %0.12g", label, diff, tolerance), call. = FALSE)
+  }
+  invisible(diff)
+}
+
+expect_same_split <- function(actual, expected) {
+  if (!identical(actual$kind, expected$kind)) {
+    stop(sprintf("split kind differs: %s != %s", actual$kind, expected$kind), call. = FALSE)
+  }
+  if (!identical(integer_vec(actual$trainIndices), integer_vec(expected$trainIndices))) {
+    stop("split trainIndices differ", call. = FALSE)
+  }
+  if (!identical(integer_vec(actual$testIndices), integer_vec(expected$testIndices))) {
+    stop("split testIndices differ", call. = FALSE)
+  }
+}
+
+expect_same_result <- function(actual, expected, tolerance, label) {
+  stopifnot(identical(as.integer(actual$rows), as.integer(expected$rows)))
+  stopifnot(identical(as.integer(actual$cols), as.integer(expected$cols)))
+  expect_same_split(actual$split, expected$split)
+  expect_close(actual$targets, expected$targets, tolerance, paste(label, "targets"))
+  stopifnot(length(actual$variants) == length(expected$variants))
+  for (idx in seq_along(expected$variants)) {
+    stopifnot(identical(
+      as.integer(actual$variants[[idx]]$n_components),
+      as.integer(expected$variants[[idx]]$n_components)
+    ))
+    expect_close(actual$variants[[idx]]$rmse, expected$variants[[idx]]$rmse, tolerance, paste(label, "variant", idx, "rmse"))
+    expect_close(
+      actual$variants[[idx]]$predictions,
+      expected$variants[[idx]]$predictions,
+      tolerance,
+      paste(label, "variant", idx, "predictions")
+    )
+  }
+  stopifnot(identical(
+    as.integer(actual$selected$n_components),
+    as.integer(expected$selected$n_components)
+  ))
+  expect_close(actual$selected$rmse, expected$selected$rmse, tolerance, paste(label, "selected rmse"))
+  expect_close(
+    actual$selected$predictions,
+    expected$selected$predictions,
+    tolerance,
+    paste(label, "selected predictions")
+  )
+}
+
+candidate_path <- function(paths) {
+  paths <- unique(paths[nzchar(paths)])
+  for (path in paths) {
+    if (file.exists(path)) {
+      return(normalizePath(path, mustWork = TRUE))
+    }
+  }
+  ""
+}
+
 local_lib <- normalizePath(".r-parity-lib", mustWork = FALSE)
 if (dir.exists(local_lib)) {
   .libPaths(c(local_lib, .libPaths()))
@@ -85,6 +171,13 @@ workspace <- list(
   io_reshape = prepared$io_reshape,
   result = result
 )
+pipeline_artifact <- c(
+  list(
+    schema_version = "n4a.e2e.r_pipeline/v1",
+    status = "passed"
+  ),
+  unclass(pipeline)
+)
 predictions <- list(
   schema_version = "n4a.e2e.r_predictions/v1",
   status = "passed",
@@ -103,15 +196,105 @@ predictions <- list(
   })
 )
 
-jsonlite::write_json(workspace, file.path(out_dir, "workspace.n4a.json"), auto_unbox = TRUE, pretty = TRUE)
-jsonlite::write_json(
-  list(
-    schema_version = "n4a.e2e.r_pipeline/v1",
+workspace_path <- file.path(out_dir, "workspace.n4a.json")
+pipeline_artifact_path <- file.path(out_dir, "pipeline.n4a.json")
+predictions_path <- file.path(out_dir, "r-predictions.json")
+
+jsonlite::write_json(workspace, workspace_path, auto_unbox = TRUE, pretty = TRUE, digits = NA)
+jsonlite::write_json(pipeline_artifact, pipeline_artifact_path, auto_unbox = TRUE, pretty = TRUE, digits = NA)
+jsonlite::write_json(predictions, predictions_path, auto_unbox = TRUE, pretty = TRUE, digits = NA)
+
+reopened_workspace <- jsonlite::fromJSON(workspace_path, simplifyVector = FALSE)
+reopened_pipeline <- nirs4all::nirs4all_load_pipeline(pipeline_artifact_path)
+reopened_predictions <- jsonlite::fromJSON(predictions_path, simplifyVector = FALSE)
+reopened_prepared <- jsonlite::fromJSON(reopened_workspace$source$prepared_dataset, simplifyVector = FALSE)
+roundtrip_result <- nirs4all::nirs4all_run_portable_pipeline(pipeline_artifact_path, reopened_prepared$dataset)
+
+stopifnot(identical(reopened_workspace$schema_version, "n4a.e2e.r_workspace/v1"))
+stopifnot(identical(reopened_workspace$status, "passed"))
+stopifnot(identical(reopened_pipeline$name, pipeline$name))
+stopifnot(identical(reopened_pipeline$random_state, pipeline$random_state))
+stopifnot(identical(reopened_predictions$schema_version, "n4a.e2e.r_predictions/v1"))
+stopifnot(identical(reopened_predictions$status, "passed"))
+stopifnot(identical(reopened_workspace$source$dataset_sha256, prepared$io_reshape$dataset_sha256))
+stopifnot(identical(reopened_workspace$source$io_spec_sha256, prepared$io$io_spec_sha256))
+expect_same_result(reopened_workspace$result, result, 1e-10, "workspace JSON")
+expect_same_result(roundtrip_result, result, 1e-10, "pipeline JSON rerun")
+expect_close(reopened_predictions$targets, result$targets, 1e-10, "predictions artifact targets")
+expect_close(reopened_predictions$predictions, result$selected$predictions, 1e-10, "predictions artifact predictions")
+stopifnot(identical(
+  as.integer(reopened_predictions$selected_n_components),
+  as.integer(result$selected$n_components)
+))
+
+oracle_path <- candidate_path(c(
+  Sys.getenv("NIRS4ALL_LITE_PARITY_ORACLE"),
+  file.path("tests", "parity", "expected", "portable_python_oracle.json"),
+  file.path("..", "..", "tests", "parity", "expected", "portable_python_oracle.json")
+))
+oracle_check <- list(status = "not_available")
+if (nzchar(oracle_path)) {
+  oracle <- jsonlite::fromJSON(oracle_path, simplifyVector = FALSE)
+  expected_cases <- Filter(function(item) identical(item$name, "portable_methods_pipeline"), oracle$cases)
+  if (length(expected_cases) != 1L) {
+    stop("portable_methods_pipeline case not found in Python oracle", call. = FALSE)
+  }
+  expected <- expected_cases[[1L]]
+  oracle_dataset <- list(
+    X = oracle$dataset$X,
+    y = oracle$dataset$y,
+    rows = oracle$dataset$rows,
+    cols = oracle$dataset$cols
+  )
+  oracle_result <- nirs4all::nirs4all_run_portable_pipeline(pipeline_artifact_path, oracle_dataset)
+  tol <- oracle$metadata$tolerances %||% list()
+  expect_same_split(oracle_result$split, expected$split)
+  expect_close(oracle_result$targets, expected$targets, tol$targets_abs %||% 1e-12, "Python oracle targets")
+  stopifnot(length(oracle_result$variants) == length(expected$variants))
+  for (idx in seq_along(expected$variants)) {
+    stopifnot(identical(
+      as.integer(oracle_result$variants[[idx]]$n_components),
+      as.integer(expected$variants[[idx]]$n_components)
+    ))
+    expect_close(
+      oracle_result$variants[[idx]]$rmse,
+      expected$variants[[idx]]$rmse,
+      tol$rmse_abs %||% 1e-6,
+      paste("Python oracle variant", idx, "rmse")
+    )
+    expect_close(
+      oracle_result$variants[[idx]]$predictions,
+      expected$variants[[idx]]$predictions,
+      tol$predictions_abs %||% 1e-5,
+      paste("Python oracle variant", idx, "predictions")
+    )
+  }
+  stopifnot(identical(
+    as.integer(oracle_result$selected$n_components),
+    as.integer(expected$selected$n_components)
+  ))
+  expect_close(
+    oracle_result$selected$predictions,
+    expected$selected$predictions,
+    tol$predictions_abs %||% 1e-5,
+    "Python oracle selected predictions"
+  )
+  oracle_check <- list(
     status = "passed",
-    definition = unclass(pipeline)
-  ),
-  file.path(out_dir, "pipeline.n4a.json"),
-  auto_unbox = TRUE,
-  pretty = TRUE
+    oracle = oracle_path,
+    case = expected$name,
+    dataset_rows = oracle$dataset$rows,
+    dataset_cols = oracle$dataset$cols
+  )
+}
+
+roundtrip_checks <- list(
+  schema_version = "n4a.e2e.r_roundtrip_checks/v1",
+  status = "passed",
+  workspace_reopened = TRUE,
+  pipeline_reopened = TRUE,
+  predictions_reopened = TRUE,
+  reproduced_split_targets_rmse_predictions = TRUE,
+  oracle = oracle_check
 )
-jsonlite::write_json(predictions, file.path(out_dir, "r-predictions.json"), auto_unbox = TRUE, pretty = TRUE)
+jsonlite::write_json(roundtrip_checks, file.path(out_dir, "roundtrip-checks.json"), auto_unbox = TRUE, pretty = TRUE, digits = NA)

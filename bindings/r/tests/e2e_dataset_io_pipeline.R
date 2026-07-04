@@ -15,6 +15,14 @@ require_field <- function(value, name) {
   value
 }
 
+require_non_empty <- function(value, name) {
+  value <- require_field(value, name)
+  if (!is.character(value) || length(value) != 1L || !nzchar(value)) {
+    stop(sprintf("field must be a non-empty string: %s", name), call. = FALSE)
+  }
+  value
+}
+
 sha256_text <- function(value) {
   tool <- Sys.which("sha256sum")
   if (!nzchar(tool)) {
@@ -131,13 +139,34 @@ prepared <- jsonlite::fromJSON(prepared_path, simplifyVector = FALSE)
 
 stopifnot(identical(prepared$schema_version, "n4a.e2e.r_dataset_io_pipeline/v2"))
 stopifnot(identical(prepared$status, "prepared"))
-invisible(require_field(prepared$source$dataset_id, "source.dataset_id"))
-invisible(require_field(prepared$provider_contract$provider, "provider_contract.provider"))
-invisible(require_field(prepared$io$io_spec_sha256, "io.io_spec_sha256"))
+invisible(require_non_empty(prepared$source$dataset_id, "source.dataset_id"))
+invisible(require_non_empty(prepared$source$source, "source.source"))
+invisible(require_non_empty(prepared$source$pipeline, "source.pipeline"))
+stopifnot(file.exists(prepared$source$pipeline))
+invisible(require_non_empty(prepared$provider_contract$provider, "provider_contract.provider"))
+invisible(require_non_empty(prepared$provider_contract$io_bridge, "provider_contract.io_bridge"))
+invisible(require_non_empty(prepared$io$io_spec_sha256, "io.io_spec_sha256"))
+invisible(require_non_empty(prepared$io_reshape$dataset_sha256, "io_reshape.dataset_sha256"))
 stopifnot(isTRUE(prepared$io_reshape$selected_values_preserved))
 stopifnot(length(prepared$dataset$X) == prepared$dataset$rows)
 stopifnot(length(prepared$dataset$y) == prepared$dataset$rows)
 stopifnot(length(prepared$dataset$X[[1L]]) == prepared$dataset$cols)
+stopifnot(identical(as.integer(prepared$io_reshape$to$rows), as.integer(prepared$dataset$rows)))
+stopifnot(identical(as.integer(prepared$io_reshape$to$cols), as.integer(prepared$dataset$cols)))
+if (!is.null(prepared$io$feature_payload_shape)) {
+  stopifnot(as.integer(prepared$io$feature_payload_shape[[1L]]) >= as.integer(prepared$dataset$rows))
+  stopifnot(as.integer(prepared$io$feature_payload_shape[[2L]]) >= as.integer(prepared$dataset$cols))
+}
+if (!is.null(prepared$io$target_payload_shape)) {
+  stopifnot(as.integer(prepared$io$target_payload_shape[[1L]]) >= as.integer(prepared$dataset$rows))
+}
+feature_values <- as.numeric(unlist(prepared$dataset$X, use.names = FALSE))
+target_values <- as.numeric(unlist(prepared$dataset$y, use.names = FALSE))
+stopifnot(length(feature_values) == prepared$dataset$rows * prepared$dataset$cols)
+stopifnot(all(is.finite(feature_values)))
+stopifnot(all(is.finite(target_values)))
+stopifnot(length(prepared$io_reshape$row_indices) == prepared$dataset$rows)
+stopifnot(length(prepared$io_reshape$col_indices) == prepared$dataset$cols)
 
 session_payload <- list(
   schema_version = "n4a.e2e.r_session/v1",

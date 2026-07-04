@@ -30,6 +30,158 @@ def _stable_hash(payload: Any) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
+def _source_id(source: dict[str, Any], index: int) -> str:
+    for key in ("source_id", "id", "name"):
+        value = source.get(key)
+        if isinstance(value, str) and value:
+            return value
+    return f"source_{index}"
+
+
+def _slice_bounds(value: Any) -> tuple[int, int] | None:
+    if not isinstance(value, list | tuple) or len(value) != 2:
+        return None
+    try:
+        start = int(value[0])
+        end = int(value[1])
+    except (TypeError, ValueError):
+        return None
+    if start < 0 or end < start:
+        return None
+    return start, end
+
+
+def _sample_ids_for_indices(dataset: dict[str, Any], indices: list[int]) -> tuple[list[str], list[str]]:
+    samples = list(dataset.get("samples") or [])
+    sample_ids: list[str] = []
+    gaps: list[str] = []
+    for index in indices:
+        if 0 <= index < len(samples) and isinstance(samples[index], dict) and samples[index].get("sample_id") is not None:
+            sample_ids.append(str(samples[index]["sample_id"]))
+        else:
+            gaps.append(f"sample_id missing for sample index {index}")
+    return sample_ids, gaps
+
+
+def _runtime_metadata_alignment(dataset: dict[str, Any], actual: dict[str, Any]) -> dict[str, Any]:
+    test_indices = _as_int_list(actual.get("split", {}).get("testIndices"))
+    test_sample_ids, gaps = _sample_ids_for_indices(dataset, test_indices)
+    selected_predictions = _as_float_list(actual.get("selected", {}).get("predictions"))
+    targets = _as_float_list(actual.get("targets"))
+    return {
+        "available": not gaps,
+        "sample_indices": test_indices,
+        "sample_ids": test_sample_ids,
+        "sample_ids_sha256": _stable_hash(test_sample_ids),
+        "prediction_rows": len(selected_predictions),
+        "target_rows": len(targets),
+        "row_count_matches": len(test_indices) == len(test_sample_ids) == len(selected_predictions) == len(targets),
+        "gaps": gaps,
+    }
+
+
+def _multimodal_artifact_audit(pipeline: dict[str, Any], dataset: dict[str, Any], oracle: dict[str, Any]) -> dict[str, Any]:
+    portable = dataset.get("portable_view", {})
+    sources = list(dataset.get("sources") or [])
+    headers = [str(header) for header in list(dataset.get("feature_headers") or [])]
+    samples = [row for row in list(dataset.get("samples") or []) if isinstance(row, dict)]
+    sample_ids = [str(row["sample_id"]) for row in samples if row.get("sample_id") is not None]
+    rows = int(portable.get("rows", 0) or 0)
+    cols = int(portable.get("cols", 0) or 0)
+    declared_source_count = pipeline.get("multimodal_contract", {}).get("source_count")
+    gaps: list[str] = []
+
+    if rows != len(samples):
+        gaps.append(f"portable rows ({rows}) do not match sample metadata rows ({len(samples)})")
+    if len(sample_ids) != len(samples):
+        gaps.append("one or more sample metadata rows are missing sample_id")
+    if cols != len(headers):
+        gaps.append(f"portable cols ({cols}) do not match feature_headers ({len(headers)})")
+    if isinstance(declared_source_count, int) and declared_source_count != len(sources):
+        gaps.append(f"pipeline source_count ({declared_source_count}) does not match dataset sources ({len(sources)})")
+    elif not isinstance(declared_source_count, int):
+        gaps.append("pipeline multimodal_contract.source_count is not an integer")
+
+    source_descriptors: list[dict[str, Any]] = []
+    source_ids: list[str] = []
+    valid_slices: list[tuple[int, int]] = []
+    for index, raw_source in enumerate(sources):
+        source = raw_source if isinstance(raw_source, dict) else {}
+        source_name = _source_id(source, index)
+        source_ids.append(source_name)
+        bounds = _slice_bounds(source.get("feature_slice"))
+        if bounds is None:
+            gaps.append(f"{source_name} has no valid feature_slice")
+            header_slice: list[str] = []
+            feature_slice: list[int] | None = None
+        else:
+            start, end = bounds
+            feature_slice = [start, end]
+            valid_slices.append(bounds)
+            if end > len(headers):
+                gaps.append(f"{source_name} feature_slice {feature_slice} exceeds feature_headers length {len(headers)}")
+            header_slice = headers[start:min(end, len(headers))]
+            if end - start != len(header_slice):
+                gaps.append(f"{source_name} header slice length does not match feature_slice width")
+        descriptor = {
+            "source_id": source_name,
+            "kind": source.get("kind"),
+            "feature_slice": feature_slice,
+            "header_count": len(header_slice),
+            "headers": header_slice,
+            "headers_sha256": _stable_hash(header_slice),
+        }
+        source_descriptors.append(descriptor)
+
+    sorted_slices = sorted(valid_slices)
+    slices_cover_all_features = bool(sorted_slices) and sorted_slices[0][0] == 0 and sorted_slices[-1][1] == cols
+    slices_non_overlapping = all(left[1] <= right[0] for left, right in zip(sorted_slices, sorted_slices[1:]))
+    if sources and not slices_cover_all_features:
+        gaps.append("source feature_slices do not cover the full portable feature width")
+    if not slices_non_overlapping:
+        gaps.append("source feature_slices overlap")
+
+    oracle_test_indices = _as_int_list(oracle.get("case", {}).get("split", {}).get("testIndices"))
+    oracle_test_sample_ids, oracle_gaps = _sample_ids_for_indices(dataset, oracle_test_indices)
+    gaps.extend(oracle_gaps)
+
+    return {
+        "available": not gaps,
+        "strict_claim": False,
+        "source_count": {
+            "declared": declared_source_count,
+            "dataset": len(sources),
+            "matches": isinstance(declared_source_count, int) and declared_source_count == len(sources),
+        },
+        "source_ids": source_ids,
+        "source_ids_sha256": _stable_hash(source_ids),
+        "sources": source_descriptors,
+        "source_slices_sha256": _stable_hash([list(bounds) for bounds in sorted_slices]),
+        "feature_headers": {
+            "count": len(headers),
+            "portable_cols": cols,
+            "matches_portable_cols": len(headers) == cols,
+            "sha256": _stable_hash(headers),
+        },
+        "sample_id_metadata_alignment": {
+            "sample_metadata_rows": len(samples),
+            "portable_rows": rows,
+            "matches_portable_rows": len(samples) == rows,
+            "sample_ids": sample_ids,
+            "sample_ids_sha256": _stable_hash(sample_ids),
+            "sample_metadata_rows_sha256": _stable_hash(samples),
+            "oracle_test_sample_ids": oracle_test_sample_ids,
+            "oracle_test_sample_ids_sha256": _stable_hash(oracle_test_sample_ids),
+        },
+        "slice_alignment": {
+            "covers_all_features": slices_cover_all_features,
+            "non_overlapping": slices_non_overlapping,
+            "sorted_slices": [list(bounds) for bounds in sorted_slices],
+        },
+        "gaps": gaps,
+    }
+
+
 def _load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -173,6 +325,7 @@ def _record_runtime_success(
         "runtime": runtime,
         "status": comparison["status"],
         "comparison": comparison,
+        "metadata_alignment": _runtime_metadata_alignment(dataset, actual),
         "predictions": prediction_path.name,
         "actual": actual,
     }
@@ -521,6 +674,7 @@ def main(argv: list[str] | None = None) -> int:
         "pipeline_sha256_match": _stable_hash(pipeline) == oracle["pipeline_sha256"],
         "dataset_sha256_match": _stable_hash(dataset["portable_view"]) == oracle["dataset_sha256"],
     }
+    multimodal_audit = _multimodal_artifact_audit(pipeline, dataset, oracle)
 
     runtime_results = [
         _run_python_core(workspace_root, core_root, artifacts_dir, pipeline_path, dataset, oracle),
@@ -544,6 +698,7 @@ def main(argv: list[str] | None = None) -> int:
         "artifacts_dir": str(artifacts_dir),
         "pipeline": {"path": pipeline_path.name, "sha256": oracle["pipeline_sha256"]},
         "dataset": {"path": dataset_path.name, "sha256": oracle["dataset_sha256"]},
+        "multimodal_artifact_audit": multimodal_audit,
         "runtime_results": runtime_results,
         "decisions": [
             "The web language declared by the ecosystem scenario is not executed here because no concrete web roundtrip step exists yet.",
