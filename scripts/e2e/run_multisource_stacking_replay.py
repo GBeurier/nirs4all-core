@@ -70,6 +70,54 @@ def _merge_stack_score(score_set: dict[str, Any], *, partition: str, fold_id: st
     return _finite(matches[0]["metrics"]["rmse"], f"merge:stack {partition}/{fold_id} rmse")
 
 
+def _prediction_table_audit(native_dir: Path, replay: dict[str, Any]) -> dict[str, Any]:
+    try:
+        import pyarrow.parquet as pq
+    except ModuleNotFoundError as exc:
+        raise AssertionError("pyarrow is required to audit native predictions.parquet") from exc
+
+    table = pq.read_table(native_dir / "predictions.parquet")
+    rows = table.to_pylist()
+    required_columns = {
+        "model_name",
+        "partition",
+        "fold_id",
+        "sample_indices",
+        "y_true",
+        "y_pred",
+        "arrays_present",
+        "metric",
+        "target_width",
+    }
+    columns = set(table.column_names)
+    missing_columns = sorted(required_columns - columns)
+    if missing_columns:
+        raise AssertionError(f"native predictions.parquet missing column(s): {missing_columns}")
+
+    expected_rows = int(replay["dagml_native"]["num_predictions"])
+    if len(rows) != expected_rows:
+        raise AssertionError(f"native predictions.parquet row count mismatch: {len(rows)} != {expected_rows}")
+
+    meta_rows = [row for row in rows if row.get("model_name") == "MetaModel_Ridge"]
+    if len(meta_rows) != expected_rows:
+        raise AssertionError(f"expected all native prediction rows to be MetaModel_Ridge, got {len(meta_rows)} of {expected_rows}")
+    if any(row.get("metric") != "rmse" for row in meta_rows):
+        raise AssertionError("native prediction table carries a non-rmse MetaModel row")
+    if any(int(row.get("target_width", -1)) != 1 for row in meta_rows):
+        raise AssertionError("native prediction table carries an unexpected target width")
+
+    array_rows = [row for row in meta_rows if row.get("arrays_present")]
+    return {
+        "rows": len(rows),
+        "meta_model_rows": len(meta_rows),
+        "array_rows": len(array_rows),
+        "array_payload_scope": "absent_in_current_native_prediction_table",
+        "partitions": sorted({str(row.get("partition")) for row in meta_rows}),
+        "fold_ids": sorted({str(row.get("fold_id")) for row in meta_rows}),
+        "schema_columns": table.column_names,
+    }
+
+
 def _validate(artifacts_dir: Path) -> dict[str, Any]:
     replay_path, ledger_path = _required_artifacts(artifacts_dir)
     replay = _load_json(replay_path)
@@ -121,6 +169,7 @@ def _validate(artifacts_dir: Path) -> dict[str, Any]:
         raise AssertionError(
             f"native score_set deltas exceed tolerance: cv={cv_score_delta} best={best_score_delta} tol={tolerance}"
         )
+    prediction_table = _prediction_table_audit(native_dir, replay)
 
     return {
         "scenario_id": SCENARIO_ID,
@@ -135,8 +184,10 @@ def _validate(artifacts_dir: Path) -> dict[str, Any]:
             "best_rmse_abs": best_score_delta,
             "tolerance": tolerance,
         },
+        "prediction_table": prediction_table,
         "decisions": [
-            "nirs4all-core validates the native dag-ml replay artifact instead of reimplementing the Python stacking runner.",
+            "nirs4all-core validates the native dag-ml replay score_set and audits predictions.parquet schema/coverage instead of reimplementing the Python stacking runner.",
+            "Current native MetaModel rows do not persist per-sample arrays, so this scenario no longer claims native vector parity.",
             "The richer by_source stacking legacy case remains fallback-only and is recorded as a known boundary in the replay manifest.",
         ],
     }

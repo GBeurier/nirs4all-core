@@ -53,12 +53,6 @@ def _verify_numeric_oracle(artifacts_dir: Path, scheduler_run: dict[str, Any]) -
         raise AssertionError("numeric oracle sidecar does not match scheduler-run embedded evidence")
 
     status = embedded.get("status")
-    if status == "not_requested":
-        return {
-            "status": "not_requested",
-            "available": False,
-            "enable_with": embedded.get("enable_with"),
-        }
     if status != "passed":
         raise AssertionError(f"numeric oracle did not pass: {embedded!r}")
 
@@ -155,14 +149,9 @@ def verify(artifacts_dir: Path) -> tuple[dict[str, Any], dict[str, Any]]:
     parity = {
         "schema_version": "n4a.e2e.cluster-local-recompute/v1",
         "status": "passed",
-        "scope": (
-            "control_plane_metric_recompute+numeric_oracle"
-            if numeric_oracle["available"]
-            else "control_plane_metric_recompute"
-        ),
+        "scope": "control_plane_metric_recompute+numeric_oracle",
         "note": (
-            "This gate always recomputes the scheduler aggregate from task results. "
-            "When N4A_CLUSTER_NUMERIC_ORACLE=1 was used upstream it also verifies "
+            "This gate recomputes the scheduler aggregate from task results and requires "
             "a real cluster nirs4all.run metric against the local Python reference."
         ),
         "cluster": {
@@ -187,7 +176,7 @@ def verify(artifacts_dir: Path) -> tuple[dict[str, Any], dict[str, Any]]:
                 rel_tol=0.0,
                 abs_tol=1e-12,
             ),
-            "numeric_oracle_valid": numeric_oracle["status"] in {"passed", "not_requested"},
+            "numeric_oracle_valid": numeric_oracle["status"] == "passed",
         },
         "numeric_oracle": numeric_oracle,
     }
