@@ -28,7 +28,7 @@ extras, so you choose what to bring in:
 
 ```bash
 # Individual upstreams
-pip install "nirs4all-core[methods]"   # nirs4all-methods + scikit-learn
+pip install "nirs4all-core[methods]"   # nirs4all-methods + pls4all + scikit-learn
 pip install "nirs4all-core[formats]"   # nirs4all-formats
 pip install "nirs4all-core[io]"        # nirs4all-io
 pip install "nirs4all-core[dag-ml]"    # dag-ml
