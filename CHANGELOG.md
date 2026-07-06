@@ -9,6 +9,8 @@ binding manifest.
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-07-06
+
 RC V1 topology: this unreleased train combines the first `LOCK-GOV` facade
 slice (additive) with the **Python distribution rename
 `nirs4all-lite` → `nirs4all-core`** (Phase R1 of `docs/CORE_RENAME.md`,
