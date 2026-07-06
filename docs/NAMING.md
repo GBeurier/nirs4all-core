@@ -20,6 +20,11 @@ import root. To avoid colliding with it, the Python aggregate ships as
 | R | `nirs4all` | `library(nirs4all)` |
 | MATLAB/Octave | `nirs4all` | `+nirs4all` namespace |
 
+For Rust, JavaScript/WASM, R, and MATLAB/Octave, `nirs4all` is the package or
+namespace name. It does not imply that every upstream domain has an executable
+runtime binding in that host language; unavailable domains remain aggregate
+metadata until their owning upstream publishes the corresponding binding.
+
 ## Applied: `nirs4all-lite` → `nirs4all-core` (RC V1)
 
 The governance direction promoted the aggregate from `lite` to

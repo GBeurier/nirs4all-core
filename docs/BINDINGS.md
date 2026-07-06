@@ -4,8 +4,10 @@
 
 Every binding must:
 
-- expose upstream domains from the top-level package;
-- translate host-native objects to upstream contracts;
+- publish the shared upstream-domain registry from the top-level package;
+- expose runtime loaders only where a real upstream binding exists for that
+  host language;
+- translate host-native objects to upstream contracts for gated execution paths;
 - parse the shared `nirs4all` JSON/YAML pipeline definition envelope before
   handing execution to upstream runtimes;
 - preserve ownership and lifetime rules across FFI boundaries;
@@ -20,6 +22,11 @@ methods-backed SciPy boundary-mode contract: `mirror=0`, `constant=1`,
 the full Python nirs4all operator; explicit `mode` and `cval` values must be
 preserved in the execution plan and forwarded to the upstream binding.
 
+Rust, JavaScript/WASM, R, and MATLAB/Octave publish as `nirs4all`. That shared
+name is only the package/namespace identity. The full six-domain aggregate is
+metadata plus re-export/load hooks; R and MATLAB/Octave do not currently have
+runtime bindings for every `dag_ml` / `formats` / `io` / `datasets` domain row.
+
 ## Python
 
 - Distribution name: `nirs4all-core` (renamed from `nirs4all-lite`).
@@ -33,8 +40,8 @@ preserved in the execution plan and forwarded to the upstream binding.
   contract.
 - Framework idioms: sklearn-style estimators, `fit`/`predict`/`transform`,
   NumPy arrays, pandas data frames, and clear optional extras.
-- External operators should look like normal sklearn-compatible transformers or
-  estimators when they participate in Python execution.
+- Future external operator adapters should look like normal sklearn-compatible
+  transformers or estimators when they participate in Python execution.
 - Do not shadow the full Python `nirs4all` package until the core replacement
   migration is intentional. The `n4a` / `nirs4all_core` facades are additive and
   intentionally do **not** define a top-level `nirs4all` Python module.
@@ -45,8 +52,9 @@ preserved in the execution plan and forwarded to the upstream binding.
 
 - Crate name: `nirs4all`.
 - Use `Result`-returning APIs and typed wrappers around upstream crates.
-- External operators should use traits and typed builder APIs, with capabilities
-  declared at compile time or through explicit runtime feature checks.
+- Future external operator adapters should use traits and typed builder APIs,
+  with capabilities declared at compile time or through explicit runtime feature
+  checks.
 - Keep FFI handles explicit; never hide ownership transfers.
 - The portable KS/SNV/Savitzky-Golay/PLS subset executes through a caller-supplied
   `libn4m` path and is covered by the shared full-Python `nirs4all` oracle.
@@ -55,8 +63,9 @@ preserved in the execution plan and forwarded to the upstream binding.
 
 - npm package name: `nirs4all`.
 - Expose typed ESM APIs and browser-safe WASM loaders.
-- External operators should be ESM functions/classes over browser-safe values
-  and `TypedArray` data, with async initialization where WASM is required.
+- Future external operator adapters should be ESM functions/classes over
+  browser-safe values and `TypedArray` data, with async initialization where
+  WASM is required.
 - The portable KS/SNV/Savitzky-Golay/PLS subset executes with
   `runPortablePipeline()` and predicts from its serialized selected model with
   `predictPortablePipeline()`, both delegating to `@nirs4all/methods-wasm`.
@@ -68,9 +77,10 @@ preserved in the execution plan and forwarded to the upstream binding.
 ## R
 
 - Package name: `nirs4all`.
-- Provide formula/data-frame paths where appropriate.
-- External operators should expose S3 generics and formula/data-frame adapters
-  where that is the natural R interface.
+- The current R surface records the shared domains and delegates the portable
+  methods subset to `n4m` / `pls4all` when installed.
+- Future R controllers/adapters should expose formula/data-frame paths and S3
+  methods where that is the natural R interface.
 - Keep native handles opaque and expose provenance in returned objects.
 - Current R package candidates include `nirs4allformats`, `nirs4allio`,
   `nirs4alldatasets`, `dagmldata`, and `n4m` / `pls4all` for methods. `dag-ml`
@@ -80,11 +90,15 @@ preserved in the execution plan and forwarded to the upstream binding.
 
 - Namespace: `+nirs4all`.
 - Prefer matrices/tables and explicit options structs.
-- External operators should use function handles or small handle classes with
-  `fit`/`predict`/`transform`-style methods when execution support exists.
+- Future MATLAB/Octave controllers/adapters should use function handles or small
+  handle classes with `fit`/`predict`/`transform`-style methods when execution
+  support exists.
 - Keep Octave compatibility in the public subset unless a function is marked
   MATLAB-only.
 - The portable KS/SNV/Savitzky-Golay/PLS subset executes through
   `nirs4all.runPortablePipeline()` by delegating to the `nirs4all-methods`
   `+pls4all` MEX shims. The aggregate binding still owns only parsing,
   orchestration, and result-shape translation.
+- `nirs4all.upstreams()` keeps metadata rows for `dag_ml`, `dag_ml_data`,
+  `formats`, `io`, and `datasets`, but it does not advertise npm/WASM package
+  names or claim MATLAB/Octave runtime candidates for those domains.

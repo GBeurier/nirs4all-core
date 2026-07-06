@@ -36,6 +36,11 @@ it cannot use the bare `nirs4all` name because the full Python `nirs4all`
 library owns it. Other language bindings use `nirs4all`. The canonical Python
 import root stays `nirs4all_lite` for compatibility.
 
+That shared non-Python name is a packaging identity, not a claim that every
+upstream domain has a runtime binding in every language. The full six-domain
+aggregate is recorded as metadata and exposed through re-export/load hooks where
+the host ecosystem has a real upstream package.
+
 The Python aggregate also exposes two **additive, non-shadowing** import facades
 (see [`docs/NAMING.md`](docs/NAMING.md)): the brand root `n4a` (`import n4a`) and
 the `nirs4all_core` alias matching the distribution name. Both re-export
@@ -43,7 +48,7 @@ the `nirs4all_core` alias matching the distribution name. Both re-export
 
 ## Public surface
 
-Every binding exposes the upstream domains directly:
+The aggregate registry tracks the same upstream domains everywhere:
 
 - `formats`
 - `io`
@@ -54,13 +59,21 @@ Every binding exposes the upstream domains directly:
 
 Pipelines built by `nirs4all-core` are expected to compose those domains, not
 reimplement them. For example, a binding should make it possible to reach the
-formats and methods layers from the top-level `nirs4all` package.
+formats and methods layers from the top-level `nirs4all` package when matching
+upstream runtime bindings are installed. Domains without a host binding remain
+metadata-only and must fail explicitly if requested as executable capabilities.
+
+Current runtime coverage is intentionally uneven: JavaScript/WASM records npm
+peer candidates for every domain; R reaches only the upstream R packages that
+exist (`dag_ml` is metadata-only today); MATLAB/Octave only has a runtime
+candidate for `methods` via the upstream `+pls4all` shims, while
+`dag_ml`, `dag_ml_data`, `formats`, `io`, and `datasets` are metadata-only.
 
 External operator support must stay execution-gated. When an upstream executor
-can plan or call an external operator, each language binding should expose that
-operator through native host idioms rather than a raw lowest-common-denominator
-API. Until the execution path exists, bindings must report the capability as
-unavailable instead of shipping a fake local implementation. See
+can plan or call an external operator, a binding may add an idiomatic host
+adapter for that operator. Those adapters are future/gated work, not a current
+availability claim. Until the execution path exists, bindings must report the
+capability as unavailable instead of shipping a fake local implementation. See
 [`docs/OPERATORS.md`](docs/OPERATORS.md).
 
 ## Pipeline definitions
@@ -101,10 +114,11 @@ tests/parity/  # Cross-runtime parity fixture plan
 ## Current status
 
 This repository is now a buildable aggregate scaffold. It exposes the upstream
-domains in each target language, builds package artifacts for Python, npm,
-R, MATLAB/Octave, and Rust, and wires CI gates for those targets. The numerical
-and parsing behavior is still delegated to the upstream packages; `nirs4all-core`
-does not vendor or reimplement those engines.
+domain registry in each target language, builds package artifacts for Python,
+npm, R, MATLAB/Octave, and Rust, and wires CI gates for those targets. Runtime
+execution is limited to the upstream bindings that exist in each host; the
+numerical and parsing behavior is still delegated to the upstream packages, and
+`nirs4all-core` does not vendor or reimplement those engines.
 
 ## Local checks
 

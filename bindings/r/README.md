@@ -2,8 +2,10 @@
 
 R package name: `nirs4all`
 
-The R binding should expose formula/data-frame friendly wrappers while delegating
-all computation to upstream bindings.
+The R package publishes the aggregate registry and delegates only to upstream R
+bindings that exist and are installed. Domains without an R binding, currently
+`dag_ml`, remain metadata-only until the upstream package is published. Future
+formula/data-frame controllers are gated on those upstream execution paths.
 
 The portable execution gate is available as
 `nirs4all_run_portable_pipeline()`. It delegates Kennard-Stone, SNV,

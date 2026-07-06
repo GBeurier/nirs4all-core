@@ -7,6 +7,10 @@ It parses the same portable JSON/YAML pipeline envelope as the other bindings
 and delegates numerical execution to the upstream `nirs4all-methods` `+pls4all`
 MEX shims.
 
+Only `methods` has a MATLAB/Octave runtime candidate today (`+pls4all`). The
+other upstream domains are kept in `nirs4all.upstreams()` as aggregate metadata
+and do not advertise npm/WASM package names or MATLAB/Octave execution support.
+
 ## Surface
 
 - `nirs4all.loadPipelineDefinition(source)` accepts JSON/YAML text, a

@@ -110,6 +110,16 @@ def _matlab_upstreams() -> tuple[list[str], dict[str, str]]:
     return keys, dict(zip(keys, roles))
 
 
+def _matlab_upstream_packages() -> dict[str, str]:
+    text = _read(MATLAB_UPSTREAMS)
+    keys = re.findall(r"'([^']+)'", _bracketed(text, r"'key'\s*,\s*\{(.*?)\}"))
+    packages = re.findall(
+        r"'([^']*)'",
+        _bracketed(text, r"'package'\s*,\s*\{(.*?)\}"),
+    )
+    return dict(zip(keys, packages))
+
+
 def _rust_operator_classes() -> list[str]:
     block = _bracketed(
         _read(RUST_LIB),
@@ -200,6 +210,22 @@ class UpstreamRegistryParityTests(unittest.TestCase):
         for label, roles in bindings.items():
             with self.subTest(binding=label):
                 self.assertEqual(roles, python)
+
+    def test_matlab_upstream_packages_are_matlab_candidates_or_metadata_only(self) -> None:
+        packages = _matlab_upstream_packages()
+
+        self.assertEqual(len(packages), EXPECTED_UPSTREAM_COUNT, packages)
+        self.assertEqual(packages["methods"], "+pls4all")
+        metadata_only = {"dag_ml", "dag_ml_data", "formats", "io", "datasets"}
+        self.assertEqual(
+            {key for key, package in packages.items() if package == ""},
+            metadata_only,
+        )
+        for key, package in packages.items():
+            with self.subTest(upstream=key):
+                self.assertNotIn("wasm", package.lower())
+                self.assertFalse(package.startswith("@"))
+                self.assertNotIn("/", package)
 
 
 class RPublicSurfaceConsistencyTests(unittest.TestCase):

@@ -54,6 +54,12 @@ them is `metadata`; the real execution capability is whatever the installed
 upstream provides. This is recorded as `metadata` rather than dressed up as
 aggregate execution.
 
+This metadata is shared across package names, but runtime candidates are
+language-specific. R currently has no declared `dag_ml` package candidate, and
+MATLAB/Octave only advertises `methods` through `+pls4all`; its other domain
+rows are metadata-only and must not be read as npm/WASM package names or
+MATLAB/Octave runtime support.
+
 | Domain | Aggregate level | Notes |
 | --- | --- | --- |
 | `formats` | `metadata` | lazy re-export; execution = upstream-provided |

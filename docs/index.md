@@ -2,15 +2,16 @@
 
 `nirs4all-core` (formerly `nirs4all-lite`) is the **portable aggregate
 distribution** of the nirs4all
-ecosystem. It is a thin portability layer that exposes the same upstream
-capabilities across **Rust, Python, R, MATLAB/Octave, and JavaScript/WASM** from
-one canonical package surface — without becoming a second implementation of
-parsing, datasets, ML orchestration, or numerical methods.
+ecosystem. It is a thin portability layer that records the same upstream domain
+map across **Rust, Python, R, MATLAB/Octave, and JavaScript/WASM** from one
+canonical package surface - without becoming a second implementation of parsing,
+datasets, ML orchestration, or numerical methods.
 
 ## What it re-exports
 
-`nirs4all-core` aggregates exactly six upstream libraries and delegates all real
-work to them:
+`nirs4all-core` aggregates exactly six upstream libraries. Any real work is
+delegated to those libraries when the current host language has a matching
+runtime binding:
 
 - [`dag-ml`](https://dag-ml.readthedocs.io/en/latest/) — reproducible,
   OOF/leakage-safe ML coordinator.
@@ -25,8 +26,10 @@ work to them:
 - [`nirs4all-methods`](https://nirs4all-methods.readthedocs.io/en/latest/) —
   portable C-ABI PLS/NIRS numerical engine (`libn4m`).
 
-Each binding exposes these upstream domains directly as `formats`, `io`,
-`datasets`, `methods`, `dag_ml`, and `dag_ml_data`.
+Each binding records these upstream domains as `formats`, `io`, `datasets`,
+`methods`, `dag_ml`, and `dag_ml_data`. Runtime loaders/proxies are only
+executable where a real upstream package exists; otherwise the domain remains a
+metadata-only row with an explicit unavailable-capability error.
 
 :::{important}
 **It only re-exports.** `nirs4all-core` must **never** add a parser, estimator,
@@ -40,7 +43,8 @@ canonical package surface, native bindings, release glue, and parity checks.
 The Python distribution is named `nirs4all-core` (RC V1 rename from
 `nirs4all-lite`; the canonical import root stays `nirs4all_lite`) so it does not
 collide with the full Python `nirs4all` library. **Every other binding uses
-`nirs4all`.**
+`nirs4all`.** This shared name is a packaging convention, not a promise that
+each non-Python host has runtime bindings for all six upstream domains.
 
 | Target | External name | Import / module name |
 | --- | --- | --- |
@@ -70,9 +74,9 @@ surface. The aggregate composes upstream domains — it does not reimplement the
 nirs4all-formats ─┐
 nirs4all-io ──────┤
 nirs4all-datasets ┤──►  nirs4all-core  ──►  Python / Rust / R / MATLAB-Octave / JS-WASM
-nirs4all-methods ─┤      (aggregate surface,      (one idiomatic API per host)
-dag-ml ───────────┤       parity gates, release
-dag-ml-data ──────┘       glue — no new logic)
+nirs4all-methods ─┤      (metadata/re-export surface,
+dag-ml ───────────┤       parity gates, release glue,
+dag-ml-data ──────┘       gated runtime delegates)
 ```
 
 The portable pipeline subset (Kennard-Stone, SNV, Savitzky-Golay, and a PLS
