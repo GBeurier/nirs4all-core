@@ -24,6 +24,7 @@ which additionally require the respective runtimes.
 
 from __future__ import annotations
 
+import json
 import re
 import unittest
 from pathlib import Path
@@ -38,14 +39,21 @@ except ModuleNotFoundError:  # pragma: no cover - local Python < 3.11 fallback
 
 ROOT = Path(__file__).resolve().parents[3]
 WASM_INDEX = ROOT / "bindings/wasm/src/index.js"
+WASM_PACKAGE = ROOT / "bindings/wasm/package.json"
+WASM_PACKAGE_LOCK = ROOT / "bindings/wasm/package-lock.json"
+PYPROJECT = ROOT / "bindings/python/pyproject.toml"
 R_PIPELINE = ROOT / "bindings/r/R/pipeline.R"
 R_UPSTREAMS = ROOT / "bindings/r/R/upstreams.R"
+R_DESCRIPTION = ROOT / "bindings/r/DESCRIPTION"
 R_NAMESPACE = ROOT / "bindings/r/NAMESPACE"
 R_SURFACE = ROOT / "bindings/r/tests/surface.R"
 R_MAN_DIR = ROOT / "bindings/r/man"
 R_SRC_DIR = ROOT / "bindings/r/R"
 MATLAB_OPERATORS = ROOT / "bindings/matlab/+nirs4all/portableOperatorClasses.m"
 MATLAB_UPSTREAMS = ROOT / "bindings/matlab/+nirs4all/upstreams.m"
+MATLAB_README = ROOT / "bindings/matlab/README.md"
+MATLAB_BUILDER = ROOT / "scripts/build-matlab-package.sh"
+RUST_CARGO = ROOT / "bindings/rust/nirs4all/Cargo.toml"
 RUST_LIB = ROOT / "bindings/rust/nirs4all/src/lib.rs"
 COMPAT = ROOT / "compat/upstreams.toml"
 
@@ -142,6 +150,88 @@ def _compat_upstreams() -> tuple[list[str], dict[str, str]]:
     data = tomllib.loads(_read(COMPAT))["upstream"]
     keys = [item["key"] for item in data]
     return keys, {item["key"]: item["role"] for item in data}
+
+
+def _r_description_fields() -> dict[str, str]:
+    fields: dict[str, str] = {}
+    current: str | None = None
+    for line in _read(R_DESCRIPTION).splitlines():
+        if line.startswith((" ", "\t")) and current is not None:
+            fields[current] = f"{fields[current]} {line.strip()}".strip()
+            continue
+        key, sep, value = line.partition(":")
+        if sep:
+            current = key
+            fields[current] = value.strip()
+    return fields
+
+
+def _cargo_to_pep440(version: str) -> str:
+    base, sep, prerelease = version.partition("-")
+    if not sep:
+        return base
+    kind, _, number = prerelease.partition(".")
+    suffix = {"alpha": "a", "beta": "b", "rc": "rc"}[kind]
+    return f"{base}{suffix}{number or '0'}"
+
+
+def _cargo_to_r(version: str) -> str:
+    base = version.partition("-")[0]
+    return f"{base}.9000" if "-" in version else base
+
+
+class VersionMetadataParityTests(unittest.TestCase):
+    def test_binding_manifest_versions_match_the_rust_source_of_truth(self) -> None:
+        cargo_version = str(tomllib.loads(_read(RUST_CARGO))["package"]["version"])
+        pyproject = tomllib.loads(_read(PYPROJECT))
+        wasm_package = json.loads(_read(WASM_PACKAGE))
+        wasm_lock = json.loads(_read(WASM_PACKAGE_LOCK))
+        r_description = _r_description_fields()
+
+        self.assertEqual(
+            pyproject["project"]["version"],
+            _cargo_to_pep440(cargo_version),
+        )
+        self.assertEqual(n4lite.__version__, pyproject["project"]["version"])
+        self.assertEqual(wasm_package["version"], cargo_version)
+        self.assertEqual(wasm_lock["version"], cargo_version)
+        self.assertEqual(wasm_lock["packages"][""]["version"], cargo_version)
+        self.assertEqual(r_description["Version"], _cargo_to_r(cargo_version))
+
+    def test_release_surface_version_metadata_covers_all_bindings(self) -> None:
+        manifest = n4lite.release_topology_manifest()
+        surfaces = {item["ecosystem"]: item for item in manifest["v1_release_surfaces"]}
+        expected = {
+            "python": ("bindings/python/pyproject.toml:project.version", "pep440"),
+            "javascript_wasm": ("bindings/wasm/package.json:version", "cargo-semver"),
+            "rust": (
+                "bindings/rust/nirs4all/Cargo.toml:package.version",
+                "cargo-semver",
+            ),
+            "r": ("bindings/r/DESCRIPTION:Version", "r-description"),
+            "matlab_octave": (
+                "bindings/rust/nirs4all/Cargo.toml:package.version",
+                "derived-cargo-semver",
+            ),
+        }
+
+        self.assertEqual(set(surfaces), set(expected))
+        for ecosystem, (source, spelling) in expected.items():
+            with self.subTest(ecosystem=ecosystem):
+                surface = surfaces[ecosystem]
+                self.assertEqual(
+                    (surface["version_source"], surface["version_spelling"]),
+                    (source, spelling),
+                )
+                self.assertTrue((ROOT / surface["package_manifest"]).exists())
+
+        self.assertTrue(surfaces["rust"]["version_source_of_truth"])
+        self.assertEqual(
+            surfaces["matlab_octave"]["package_manifest"],
+            "bindings/matlab/README.md",
+        )
+        self.assertTrue(MATLAB_README.exists())
+        self.assertIn("bindings/rust/nirs4all/Cargo.toml", _read(MATLAB_BUILDER))
 
 
 class PortableOperatorSubsetParityTests(unittest.TestCase):

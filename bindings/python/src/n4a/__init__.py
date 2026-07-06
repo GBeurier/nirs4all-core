@@ -36,6 +36,7 @@ import nirs4all_lite as _aggregate
 #: LOCK-GOV target aggregate name is ``nirs4all-core``; until that
 #: release-gated cutover the facade simply forwards to the shipped aggregate.
 __aggregate_import__ = _aggregate.__name__
+__version__ = _aggregate.__version__
 
 __all__ = list(_aggregate.__all__)
 

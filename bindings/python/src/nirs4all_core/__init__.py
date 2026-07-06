@@ -35,6 +35,7 @@ TOPOLOGY_EXPORTS = _aggregate.TOPOLOGY_EXPORTS
 #: ``nirs4all-core`` distribution keeps ``nirs4all_lite`` as its canonical
 #: import root; this alias forwards to that shipped aggregate.
 __aggregate_import__ = _aggregate.__name__
+__version__ = _aggregate.__version__
 
 __all__ = list(CORE_FACADE_EXPORTS + TOPOLOGY_EXPORTS)
 
