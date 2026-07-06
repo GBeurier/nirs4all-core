@@ -570,7 +570,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             "@nirs4all/datasets-wasm",
             "@nirs4all/formats-wasm",
             "@nirs4all/io-wasm",
-            "@nirs4all/methods-wasm",
+            "@nirs4all/methods",
             "@nirs4all/nirs4all-datasets-wasm",
             "dag-ml-data-wasm",
             "dag-ml-wasm",

@@ -435,9 +435,9 @@ _UPSTREAM_COMPONENTS: list[dict[str, Any]] = [
         },
         "packages": {
             "rust": [],
-            "npm": ["@nirs4all/methods-wasm"],
+            "npm": ["@nirs4all/methods"],
             "r": ["n4m", "pls4all"],
-            "matlab": ["+pls4all"],
+            "matlab": ["+n4m", "+pls4all"],
             "c_abi": [
                 {
                     "header": "cpp/include/n4m/n4m.h",

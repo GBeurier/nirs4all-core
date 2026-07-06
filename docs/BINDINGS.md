@@ -71,11 +71,11 @@ publication names.
   WASM is required.
 - The portable KS/SNV/Savitzky-Golay/PLS subset executes with
   `runPortablePipeline()` and predicts from its serialized selected model with
-  `predictPortablePipeline()`, both delegating to `@nirs4all/methods-wasm`.
+  `predictPortablePipeline()`, both delegating to `@nirs4all/methods`.
 - `nirs4all-web` consumes this package; UI code does not live here.
 - Current upstream package candidates prefer the target scoped names
   `@nirs4all/formats-wasm`, `@nirs4all/io-wasm`,
-  `@nirs4all/datasets-wasm`, and `@nirs4all/methods-wasm`, while keeping
+  `@nirs4all/datasets-wasm`, and `@nirs4all/methods`, while keeping
   compatibility fallbacks for the published names `nirs4all-formats-wasm`,
   `nirs4all-io-wasm`, and `@nirs4all/nirs4all-datasets-wasm`.
   `dag-ml-wasm` and `dag-ml-data-wasm` remain unscoped package candidates.
@@ -103,7 +103,7 @@ publication names.
   MATLAB-only.
 - The portable KS/SNV/Savitzky-Golay/PLS subset executes through
   `nirs4all.runPortablePipeline()` by delegating to the `nirs4all-methods`
-  `+pls4all` MEX shims. The aggregate binding still owns only parsing,
+  `+n4m` MEX shims, with `+pls4all` compatibility. The aggregate binding still owns only parsing,
   orchestration, and result-shape translation.
 - `nirs4all.upstreams()` keeps metadata rows for `dag_ml`, `dag_ml_data`,
   `formats`, `io`, and `datasets`, but it does not advertise npm/WASM package

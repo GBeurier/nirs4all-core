@@ -86,7 +86,7 @@ test('expected upstreams are registered', () => {
 
 test('upstream lookup returns metadata', () => {
   assert.equal(upstream('methods').role, 'Portable C ABI PLS/NIRS numerical engine');
-  assert.deepEqual(upstream('methods').candidates, ['@nirs4all/methods-wasm']);
+  assert.deepEqual(upstream('methods').candidates, ['@nirs4all/methods']);
   assert.deepEqual(upstream('formats').candidates, ['@nirs4all/formats-wasm', 'nirs4all-formats-wasm']);
   assert.deepEqual(upstream('io').candidates, ['@nirs4all/io-wasm', 'nirs4all-io-wasm']);
   assert.deepEqual(upstream('datasets').candidates, [
@@ -126,7 +126,7 @@ test('public upstream loaders report the correct missing upstream', async () => 
     loadDatasets,
     /upstream 'datasets'.*@nirs4all\/datasets-wasm, @nirs4all\/nirs4all-datasets-wasm/s,
   );
-  await assert.rejects(loadMethods, /upstream 'methods'.*@nirs4all\/methods-wasm/s);
+  await assert.rejects(loadMethods, /upstream 'methods'.*@nirs4all\/methods/s);
   await assert.rejects(loadDagMl, /upstream 'dag_ml'.*dag-ml-wasm/s);
   await assert.rejects(loadDagMlData, /upstream 'dag_ml_data'.*dag-ml-data-wasm/s);
 });

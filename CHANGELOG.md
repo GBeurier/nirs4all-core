@@ -9,14 +9,29 @@ binding manifest.
 
 ## [Unreleased]
 
+## [0.2.8] - 2026-07-07
+
+RC12 methods package-name alignment.
+
+### Changed
+
+- Updated JavaScript/WASM upstream metadata from `@nirs4all/methods-wasm` to
+  the V1 package `@nirs4all/methods`.
+- Advertised MATLAB/Octave methods as `+n4m` with `+pls4all` compatibility.
+
 ### Fixed
 
-- Normalized the Python package license expression to the canonical SPDX
-  casing `CECILL-2.1 OR AGPL-3.0-or-later`.
+- Republished the core aggregate surface after `0.2.7` was tagged against the
+  older methods WASM package name.
 
 ## [0.2.7] - 2026-07-06
 
 RC11 core aggregate release head.
+
+### Fixed
+
+- Normalized the Python package license expression to the canonical SPDX
+  casing `CECILL-2.1 OR AGPL-3.0-or-later`.
 
 ### Added
 

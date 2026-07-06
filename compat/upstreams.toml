@@ -60,4 +60,4 @@ role = "Portable C ABI PLS/NIRS numerical engine"
 bindings = ["python", "r", "matlab", "octave", "wasm", "rust"]
 python_imports = ["nirs4all_methods", "pls4all", "n4m", "nirs4all.methods"]
 r_packages = ["n4m", "pls4all"]
-wasm_packages = ["@nirs4all/methods-wasm"]
+wasm_packages = ["@nirs4all/methods"]
