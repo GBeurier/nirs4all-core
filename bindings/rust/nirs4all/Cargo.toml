@@ -1,6 +1,6 @@
 [package]
 name = "nirs4all"
-version = "0.2.2"
+version = "0.2.3"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -22,8 +22,8 @@ default = []
 datasets = []
 
 [dependencies]
-dag_ml_crate = { package = "dag-ml", version = "0.2.2" }
-dag_ml_data_crate = { package = "dag-ml-data", version = "0.2.3" }
+dag_ml_crate = { package = "dag-ml", version = "0.2.3" }
+dag_ml_data_crate = { package = "dag-ml-data", version = "0.2.4" }
 libloading = "0.8"
 serde_json = "1"
 serde_yaml = "0.9"
