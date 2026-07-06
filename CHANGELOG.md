@@ -9,6 +9,36 @@ binding manifest.
 
 ## [Unreleased]
 
+### Fixed
+
+- Normalized the Python package license expression to the canonical SPDX
+  casing `CECILL-2.1 OR AGPL-3.0-or-later`.
+
+## [0.2.7] - 2026-07-06
+
+RC11 core aggregate release head.
+
+### Added
+
+- Custom-host composition documentation for using the `nirs4all` WASM package
+  with host-provided UI/runtime layers.
+
+### Fixed
+
+- Stabilized the R multimodal roundtrip E2E environment checks without changing
+  the runtime contract.
+
+## [0.2.6] - 2026-07-06
+
+RC V1 package-name and upstream compatibility hardening.
+
+### Changed
+
+- Locked core Rust dependencies and merged the core main gates into the RC
+  release train.
+- Accepted the published/scoped WASM upstream package-name variants used by the
+  release train.
+
 ## [0.2.5] - 2026-07-06
 
 RC V1 topology: this unreleased train combines the first `LOCK-GOV` facade
@@ -57,7 +87,7 @@ First safe `LOCK-GOV` slice — **additive only**, no legacy import removed.
 
 - Removed the stale `License :: OSI Approved :: MIT License` trove classifier
   from the Python `pyproject.toml`; the SPDX `License-Expression`
-  (`CeCILL-2.1 OR AGPL-3.0-or-later`) is authoritative (PEP 639). The wheel
+  (`CECILL-2.1 OR AGPL-3.0-or-later`) is authoritative (PEP 639). The wheel
   metadata is no longer self-contradictory.
 
 ## [0.2.0] - 2026-06-14

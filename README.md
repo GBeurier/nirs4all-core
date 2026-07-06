@@ -180,8 +180,8 @@ also runs those gates.
 
 ## License
 
-`nirs4all-core` is dual-licensed open-source — **`CeCILL-2.1 OR AGPL-3.0-or-later`** (your choice) —
+`nirs4all-core` is dual-licensed open-source — **`CECILL-2.1 OR AGPL-3.0-or-later`** (your choice) —
 with an optional **commercial license** for closed-source / SaaS use. For any commercial use, contact
 <nirs4all-admin@cirad.fr>. As an aggregate it re-exports sibling libraries that carry their own
-licenses (the sibling crates currently use CeCILL-2.1 OR AGPL-3.0-or-later).
+licenses (the sibling crates currently use CECILL-2.1 OR AGPL-3.0-or-later).
 See [`LICENSING.md`](LICENSING.md), [`LICENSES/`](LICENSES/), and [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).

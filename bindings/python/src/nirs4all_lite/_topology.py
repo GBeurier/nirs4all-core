@@ -41,7 +41,7 @@ TOPOLOGY_EXPORTS: tuple[str, ...] = (
     "validate_core_facade",
 )
 
-_LICENSE_EXPRESSION = "CeCILL-2.1 OR AGPL-3.0-or-later"
+_LICENSE_EXPRESSION = "CECILL-2.1 OR AGPL-3.0-or-later"
 
 _NAMESPACE_FACADES: dict[str, Any] = {
     "python": [
