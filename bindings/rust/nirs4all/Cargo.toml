@@ -1,6 +1,6 @@
 [package]
 name = "nirs4all"
-version = "0.2.3"
+version = "0.2.6"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
