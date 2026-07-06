@@ -519,13 +519,25 @@ fn savgol_params(params: &Value) -> Result<SavitzkyGolayParams, String> {
             "portable Savitzky-Golay execution currently supports delta=1 only".to_string(),
         );
     }
+    let window_length = int_param(
+        params.get("window_length").or_else(|| params.get("window")),
+        11,
+    )?;
+    if window_length < 1 {
+        return Err("window_length must be >= 1".to_string());
+    }
+    let polyorder = int_param(params.get("polyorder"), 3)?;
+    if polyorder < 0 {
+        return Err("polyorder must be >= 0".to_string());
+    }
+    let deriv = int_param(params.get("deriv"), 0)?;
+    if deriv < 0 {
+        return Err("deriv must be >= 0".to_string());
+    }
     Ok(SavitzkyGolayParams {
-        window_length: int_param(
-            params.get("window_length").or_else(|| params.get("window")),
-            11,
-        )?,
-        polyorder: int_param(params.get("polyorder"), 3)?,
-        deriv: int_param(params.get("deriv"), 0)?,
+        window_length,
+        polyorder,
+        deriv,
         mode: savgol_mode(params.get("mode"))?,
         cval: number_param(params.get("cval"), 0.0)?,
     })
@@ -571,8 +583,14 @@ fn component_values(step: &Value) -> Result<Vec<i32>, String> {
         let start = int_param(values.first(), 0)?;
         let stop = int_param(values.get(1), 0)?;
         let stride = int_param(values.get(2), 0)?;
+        if start < 1 || stop < 1 {
+            return Err("invalid n_components _range_; start and stop must be >= 1".to_string());
+        }
         if stride <= 0 {
             return Err("invalid n_components _range_; expected a positive step".to_string());
+        }
+        if start > stop {
+            return Err("invalid n_components _range_; start must be <= stop".to_string());
         }
         let mut out = Vec::new();
         let mut value = start;
@@ -586,7 +604,11 @@ fn component_values(step: &Value) -> Result<Vec<i32>, String> {
         .get("model")
         .and_then(|model| model.get("params"))
         .unwrap_or(&Value::Null);
-    Ok(vec![int_param(params.get("n_components"), 2)?.max(1)])
+    let n_components = int_param(params.get("n_components"), 2)?;
+    if n_components < 1 {
+        return Err("n_components must be >= 1".to_string());
+    }
+    Ok(vec![n_components])
 }
 
 fn number_param(value: Option<&Value>, fallback: f64) -> Result<f64, String> {
@@ -610,16 +632,55 @@ fn int_param(value: Option<&Value>, fallback: i32) -> Result<i32, String> {
         return Ok(fallback);
     }
     let raw = match value {
-        Value::Number(number) => number
-            .as_i64()
-            .or_else(|| number.as_f64().map(|item| item.round() as i64))
-            .ok_or_else(|| "integer parameter is outside i64 range".to_string())?,
-        Value::String(text) => text
-            .parse::<i64>()
-            .map_err(|error| format!("invalid integer parameter '{text}': {error}"))?,
+        Value::Number(number) => integer_from_number(number, value)?,
+        Value::String(text) => integer_from_string(text)?,
         other => return Err(format!("expected integer parameter, got {other}")),
     };
     i32::try_from(raw).map_err(|_| format!("integer parameter {raw} is outside i32 range"))
+}
+
+fn integer_from_number(number: &serde_json::Number, value: &Value) -> Result<i64, String> {
+    if let Some(raw) = number.as_i64() {
+        return Ok(raw);
+    }
+    let raw = number
+        .as_f64()
+        .ok_or_else(|| "integer parameter is outside f64 range".to_string())?;
+    if !raw.is_finite() {
+        return Err("integer parameter must be finite".to_string());
+    }
+    if raw.fract() != 0.0 {
+        return Err(format!("expected integer parameter, got {value}"));
+    }
+    if raw < i64::MIN as f64 || raw > i64::MAX as f64 {
+        return Err("integer parameter is outside i64 range".to_string());
+    }
+    Ok(raw as i64)
+}
+
+fn integer_from_string(text: &str) -> Result<i64, String> {
+    let trimmed = text.trim();
+    if trimmed.is_empty() {
+        return Err("invalid integer parameter: empty string".to_string());
+    }
+    if let Ok(raw) = trimmed.parse::<i64>() {
+        return Ok(raw);
+    }
+    let raw = trimmed
+        .parse::<f64>()
+        .map_err(|error| format!("invalid integer parameter '{text}': {error}"))?;
+    if !raw.is_finite() {
+        return Err(format!("invalid integer parameter '{text}': not finite"));
+    }
+    if raw.fract() != 0.0 {
+        return Err(format!(
+            "invalid integer parameter '{text}': not an integer"
+        ));
+    }
+    if raw < i64::MIN as f64 || raw > i64::MAX as f64 {
+        return Err(format!("integer parameter '{text}' is outside i64 range"));
+    }
+    Ok(raw as i64)
 }
 
 fn flatten_matrix(
@@ -1215,6 +1276,67 @@ mod tests {
                 cval: 7.25,
             })]
         );
+    }
+
+    #[test]
+    fn execution_plan_rejects_lossy_operator_parameter_coercions() {
+        let definition = serde_json::json!({
+            "pipeline": [
+                {
+                    "class": "nirs4all.operators.transforms.SavitzkyGolay",
+                    "params": { "window_length": 10.5 }
+                },
+                {
+                    "model": {
+                        "class": "sklearn.cross_decomposition.PLSRegression",
+                        "params": { "n_components": 2 }
+                    }
+                }
+            ]
+        });
+        assert!(parse_execution_plan(&definition)
+            .unwrap_err()
+            .contains("expected integer parameter"));
+
+        let definition = serde_json::json!({
+            "pipeline": [
+                {
+                    "model": {
+                        "class": "sklearn.cross_decomposition.PLSRegression",
+                        "params": { "n_components": 1.5 }
+                    }
+                }
+            ]
+        });
+        assert!(parse_execution_plan(&definition)
+            .unwrap_err()
+            .contains("expected integer parameter"));
+
+        let definition = serde_json::json!({
+            "pipeline": [
+                {
+                    "model": { "class": "sklearn.cross_decomposition.PLSRegression" },
+                    "param": "n_components",
+                    "_range_": [0, 4, 2]
+                }
+            ]
+        });
+        assert!(parse_execution_plan(&definition)
+            .unwrap_err()
+            .contains("start and stop must be >= 1"));
+
+        let definition = serde_json::json!({
+            "pipeline": [
+                {
+                    "model": { "class": "sklearn.cross_decomposition.PLSRegression" },
+                    "param": "n_components",
+                    "_range_": [4, 2, 1]
+                }
+            ]
+        });
+        assert!(parse_execution_plan(&definition)
+            .unwrap_err()
+            .contains("start must be <= stop"));
     }
 
     #[test]
