@@ -2,6 +2,8 @@
 
 Rust aggregate surface for `nirs4all-core`.
 
+Published crate name: `nirs4all`
+
 This crate publishes the low-level nirs4all aggregate domain registry from one
 package:
 `dag-ml`, `dag-ml-data`, `nirs4all-formats`, `nirs4all-io`,

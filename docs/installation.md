@@ -5,6 +5,10 @@ binding installs through that language's native registry and delegates work to
 upstream packages only where matching runtime bindings exist. Install only the
 upstream extras you need - the aggregate itself adds no engines.
 
+The canonical source repository is `GBeurier/nirs4all-core`. Registry names are
+ecosystem-specific: Python installs as `nirs4all-core`, while Rust, npm, R, and
+the MATLAB/Octave namespace use `nirs4all`.
+
 :::{note}
 `nirs4all-datasets` is **external and optional everywhere**. It is never bundled
 into the default aggregate; opt in explicitly per binding (see each section

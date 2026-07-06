@@ -11,6 +11,10 @@ Package names to reserve or create:
 | MATLAB/Octave | GitHub Releases | `nirs4all-matlab-octave-<version>.zip` | zip from `bindings/matlab` | `release-matlab.yml` |
 | Source + SBOM | GitHub Releases | `nirs4all-core-<version>-src.*` | git-archive + CycloneDX + SHA256SUMS | `release-source.yml` |
 
+All artifacts are cut from the canonical repository `GBeurier/nirs4all-core`.
+Only the Python distribution uses the `nirs4all-core` registry name; the
+non-Python publications remain `nirs4all`.
+
 ## How releases are cut
 
 The single source of truth for the version is the **Rust crate**

@@ -26,6 +26,9 @@ Rust, JavaScript/WASM, R, and MATLAB/Octave publish as `nirs4all`. That shared
 name is only the package/namespace identity. The full six-domain aggregate is
 metadata plus re-export/load hooks; R and MATLAB/Octave do not currently have
 runtime bindings for every `dag_ml` / `formats` / `io` / `datasets` domain row.
+The canonical source repository for every binding remains `nirs4all-core`; the
+lite->core rename changes the Python distribution name, not the non-Python
+publication names.
 
 ## Python
 

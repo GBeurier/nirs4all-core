@@ -36,6 +36,11 @@ it cannot use the bare `nirs4all` name because the full Python `nirs4all`
 library owns it. Other language bindings use `nirs4all`. The canonical Python
 import root stays `nirs4all_lite` for compatibility.
 
+The canonical source repository for all of these artifacts is
+`GBeurier/nirs4all-core`. Registry/package names are ecosystem-specific:
+Python publishes `nirs4all-core`, while Rust, JavaScript/WASM, R, and the
+MATLAB/Octave namespace publish or ship under `nirs4all`.
+
 That shared non-Python name is a packaging identity, not a claim that every
 upstream domain has a runtime binding in every language. The full six-domain
 aggregate is recorded as metadata and exposed through re-export/load hooks where

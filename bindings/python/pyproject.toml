@@ -48,6 +48,7 @@ everything = ["nirs4all-core[all,datasets]"]
 
 [project.urls]
 Homepage = "https://nirs4all.org"
+Documentation = "https://nirs4all-core.readthedocs.io/en/latest/"
 Repository = "https://github.com/GBeurier/nirs4all-core"
 Issues = "https://github.com/GBeurier/nirs4all-core/issues"
 
