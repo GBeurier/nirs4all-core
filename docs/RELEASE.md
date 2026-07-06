@@ -6,7 +6,7 @@ Release artifacts should be built from the same upstream lock:
 - Python wheel/sdist: `nirs4all-core`
 - npm package: `nirs4all`
 - R source package: `nirs4all`
-- MATLAB/Octave archive: `nirs4all`
+- MATLAB/Octave archive: `nirs4all-matlab-octave`
 - WASM bundle consumed by `nirs4all-web`
 
 Before release:

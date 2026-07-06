@@ -79,7 +79,7 @@ re-exports the methods surface, so consumers must move to the methods 1.0.0 / AB
 
 ### Versioning
 
-- Bumped the lite project version `0.1.0` → `1.0.0` across every packaging
+- Bumped the lite project version `0.1.0` → `0.2.0` across every packaging
   manifest: the Rust crate (source of truth), the WASM `package.json` /
   `package-lock.json`, the Python `pyproject.toml`, and the R `DESCRIPTION`.
   The MATLAB/Octave archive version derives from the Rust crate version at
