@@ -91,6 +91,51 @@ test('portable execution plan preserves Savitzky-Golay mode and cval', () => {
   assert.deepEqual(plan.preprocessing[0].params, [11, 3, 0, 1, 7.25]);
 });
 
+test('portable execution plan rejects lossy operator parameter coercions', () => {
+  assert.throws(() => parseExecutionPlan({
+    pipeline: [
+      { class: 'nirs4all.operators.transforms.SavitzkyGolay', params: { window_length: 10.5 } },
+      {
+        model: {
+          class: 'sklearn.cross_decomposition.PLSRegression',
+          params: { n_components: 2 },
+        },
+      },
+    ],
+  }), /window_length must be an integer/);
+
+  assert.throws(() => parseExecutionPlan({
+    pipeline: [
+      {
+        model: {
+          class: 'sklearn.cross_decomposition.PLSRegression',
+          params: { n_components: 1.5 },
+        },
+      },
+    ],
+  }), /n_components must be an integer/);
+
+  assert.throws(() => parseExecutionPlan({
+    pipeline: [
+      {
+        model: { class: 'sklearn.cross_decomposition.PLSRegression' },
+        param: 'n_components',
+        _range_: [0, 4, 2],
+      },
+    ],
+  }), /n_components range start must be >= 1/);
+
+  assert.throws(() => parseExecutionPlan({
+    pipeline: [
+      {
+        model: { class: 'sklearn.cross_decomposition.PLSRegression' },
+        param: 'n_components',
+        _range_: [4, 2, 1],
+      },
+    ],
+  }), /start must be <= stop/);
+});
+
 test('portable WASM execution delegates the shared pipeline to nirs4all-methods', async (t) => {
   const artifact = requireMethodsArtifact(t);
   if (!artifact) {

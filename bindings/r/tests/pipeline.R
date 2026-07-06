@@ -50,6 +50,39 @@ stopifnot(isTRUE(all.equal(
   c(11, 3, 0, 1, 7.25)
 )))
 
+err <- tryCatch(
+  nirs4all::nirs4all_parse_execution_plan(list(pipeline = list(
+    list(class = "nirs4all.operators.transforms.SavitzkyGolay", params = list(window_length = 10.5)),
+    list(model = list(class = "sklearn.cross_decomposition.PLSRegression", params = list(n_components = 2L)))
+  ))),
+  error = identity
+)
+stopifnot(inherits(err, "error"))
+
+err <- tryCatch(
+  nirs4all::nirs4all_parse_execution_plan(list(pipeline = list(
+    list(model = list(class = "sklearn.cross_decomposition.PLSRegression", params = list(n_components = 1.5)))
+  ))),
+  error = identity
+)
+stopifnot(inherits(err, "error"))
+
+err <- tryCatch(
+  nirs4all::nirs4all_parse_execution_plan(list(pipeline = list(
+    list(model = list(class = "sklearn.cross_decomposition.PLSRegression"), param = "n_components", `_range_` = list(0L, 4L, 2L))
+  ))),
+  error = identity
+)
+stopifnot(inherits(err, "error"))
+
+err <- tryCatch(
+  nirs4all::nirs4all_parse_execution_plan(list(pipeline = list(
+    list(model = list(class = "sklearn.cross_decomposition.PLSRegression"), param = "n_components", `_range_` = list(4L, 2L, 1L))
+  ))),
+  error = identity
+)
+stopifnot(inherits(err, "error"))
+
 from_steps <- nirs4all::nirs4all_load_pipeline(list(steps = json_pipeline$pipeline))
 from_list <- nirs4all::nirs4all_load_pipeline(json_pipeline$pipeline)
 stopifnot(isTRUE(all.equal(from_steps$pipeline, json_pipeline$pipeline, check.attributes = FALSE)))

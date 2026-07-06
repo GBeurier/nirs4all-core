@@ -2,10 +2,10 @@
 
 ## Scope
 
-`nirs4all-core` (formerly `nirs4all-lite`; the GitHub repo rename is pending)
-is the canonical portable aggregate of the low-level nirs4all
-stack. It wraps and re-exports `dag-ml`, `dag-ml-data`, `nirs4all-formats`,
-`nirs4all-io`, `nirs4all-datasets`, and `nirs4all-methods`.
+`nirs4all-core` (formerly `nirs4all-lite`) is the canonical portable aggregate
+of the low-level nirs4all stack. It wraps and re-exports `dag-ml`,
+`dag-ml-data`, `nirs4all-formats`, `nirs4all-io`, `nirs4all-datasets`, and
+`nirs4all-methods`.
 
 Do not implement new parsers, numerical methods, dataset loaders, or ML
 coordinators here. Add that work to the owning upstream project, then expose it

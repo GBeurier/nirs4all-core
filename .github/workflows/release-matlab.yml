@@ -9,7 +9,7 @@
 # oracle and the pinned nirs4all-methods ref from compat/upstreams.toml.
 #
 # Naming: the package is `nirs4all` (there is no "full" nirs4all in MATLAB/
-# Octave, so the lite aggregate IS the `nirs4all` package here).
+# Octave, so this aggregate owns the `nirs4all` package here).
 #
 # Trigger: tag push v*.*.* (attach gated on a non-pre-release tag), or
 # workflow_dispatch for a dry run (build the artifact, no Release upload).

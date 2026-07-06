@@ -1,5 +1,7 @@
 """Python surface for the nirs4all-core aggregate distribution (import root kept as ``nirs4all_lite``)."""
 
+__version__ = "0.2.6"
+
 from ._execution import PortableDataset, parse_execution_plan, run_portable_pipeline
 from ._pipeline import (
     PORTABLE_OPERATOR_CLASSES,

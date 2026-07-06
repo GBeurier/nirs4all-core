@@ -5,8 +5,8 @@
 # as OPTIONAL peer dependencies. There is no wasm-pack / Rust build here (unlike
 # nirs4all-io / nirs4all-methods), so we publish the source tree directly.
 #
-# npm package name is `nirs4all` (there is no "full" nirs4all on npm, so the
-# lite aggregate IS the `nirs4all` umbrella in JS). nirs4all-datasets stays
+# npm package name is `nirs4all` (there is no "full" nirs4all on npm, so this
+# aggregate owns the `nirs4all` umbrella in JS). nirs4all-datasets stays
 # OPTIONAL: it is declared as an optional peer dependency, never a hard
 # dependency.
 #

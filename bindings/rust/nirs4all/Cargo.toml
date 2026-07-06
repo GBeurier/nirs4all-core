@@ -6,6 +6,8 @@ license.workspace = true
 repository.workspace = true
 description = "Portable nirs4all aggregate binding over formats, IO, datasets, methods, dag-ml, and dag-ml-data"
 readme = "README.md"
+homepage = "https://nirs4all.org"
+documentation = "https://nirs4all-core.readthedocs.io/en/latest/"
 keywords = ["nirs", "spectroscopy", "chemometrics", "bindings"]
 include = ["Cargo.toml", "README.md", "src/**/*.rs"]
 

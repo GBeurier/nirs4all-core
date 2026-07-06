@@ -20,6 +20,11 @@ import root. To avoid colliding with it, the Python aggregate ships as
 | R | `nirs4all` | `library(nirs4all)` |
 | MATLAB/Octave | `nirs4all` | `+nirs4all` namespace |
 
+For Rust, JavaScript/WASM, R, and MATLAB/Octave, `nirs4all` is the package or
+namespace name. It does not imply that every upstream domain has an executable
+runtime binding in that host language; unavailable domains remain aggregate
+metadata until their owning upstream publishes the corresponding binding.
+
 ## Applied: `nirs4all-lite` → `nirs4all-core` (RC V1)
 
 The governance direction promoted the aggregate from `lite` to
@@ -45,11 +50,9 @@ The RC V1 head applies the rename in package metadata (Phase R1 of
   validation, capability reporting, release topology, and facade access.
   Execution helpers from `nirs4all_lite` stay reachable through compatibility
   passthrough, but they are not part of `nirs4all_core.__all__`.
-- GitHub repo (`GBeurier/nirs4all-lite` → `GBeurier/nirs4all-core`), Read the
-  Docs slug, and the PyPI Trusted Publisher for `nirs4all-core` are **pending
-  external admin actions** (Phase R2). Repository URLs in package metadata stay
-  on the current slug until then — GitHub redirects them permanently after the
-  rename.
+- GitHub repo and Read the Docs now use `nirs4all-core`. The remaining external
+  admin action is the PyPI Trusted Publisher for `nirs4all-core`, plus the final
+  `nirs4all-lite` alias release.
 
 ```python
 import nirs4all_core          # alias matching the distribution name (additive)

@@ -4,10 +4,11 @@ Version: 0.2.6
 Authors@R: c(
     person("Gregory", "Beurier", email = "gregory.beurier@cirad.fr", role = c("aut", "cre")),
     person("nirs4all", "contributors", role = c("ctb", "cph")))
-Description: Aggregates the 'nirs4all' formats, IO, datasets, methods, 'dag-ml',
-    and 'dag-ml-data' language bindings into one portable package surface without
-    reimplementing their parsing, numerical, or pipeline logic. The aggregated
-    engines remain the source of truth and are delegated to at run time.
+Description: Provides the R package surface for the 'nirs4all-core' aggregate.
+    It records the formats, IO, datasets, methods, 'dag-ml', and 'dag-ml-data'
+    domains, lazily reaches R upstream packages when they exist, and delegates
+    the portable methods subset at run time. Domains without an R binding remain
+    metadata-only; no parsing, numerical, or pipeline logic is reimplemented.
 License: CeCILL-2.1 | AGPL (>= 3)
 URL: https://nirs4all.org, https://github.com/GBeurier/nirs4all-core
 BugReports: https://github.com/GBeurier/nirs4all-core/issues

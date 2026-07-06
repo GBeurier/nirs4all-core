@@ -7,12 +7,30 @@ NIRS4ALL_METHODS_GENERATED_DIR ?= $(NIRS4ALL_METHODS_ROOT)/build/dev-release/gen
 NIRS4ALL_METHODS_JS_DIST ?= $(abspath $(NIRS4ALL_METHODS_ROOT)/bindings/js/dist)
 NIRS4ALL_METHODS_MATLAB_PATH ?= $(NIRS4ALL_METHODS_ROOT)/bindings/matlab
 R_PARITY_LIB ?= $(abspath .r-parity-lib)
+WORKSPACE_ROOT ?= $(abspath ..)
+E2E_ARTIFACTS_DIR ?= /tmp/nirs4all-core-e2e
+E2E_SCENARIOS ?= e2e-r-dataset-io-pipeline-save e2e-multimodal-python-r-wasm-roundtrip e2e-multisource-branching-stacking-replay e2e-cluster-dag-rights-client-core
 
-.PHONY: test test-v1-surfaces test-rust test-rust-parity test-python test-python-v1-surfaces test-python-parity check-wasm-methods-artifact test-wasm test-wasm-parity-strict test-wasm-v1-surfaces test-wasm-v1-surfaces-if-available test-r test-r-if-available test-r-v1-surfaces test-r-v1-surfaces-if-available test-r-fixtures test-r-parity test-matlab-parity test-matlab-parity-if-available check-r build build-python build-npm build-r build-matlab package-rust clean
+.PHONY: test test-v1-surfaces test-cross-language-e2e test-e2e-entrypoints test-rust test-rust-parity test-python test-python-v1-surfaces test-python-parity check-wasm-methods-artifact test-wasm test-wasm-parity-strict test-wasm-v1-surfaces test-wasm-v1-surfaces-if-available test-r test-r-if-available test-r-v1-surfaces test-r-v1-surfaces-if-available test-r-fixtures test-r-parity test-matlab-parity test-matlab-parity-if-available check-r build build-python build-npm build-r build-matlab package-rust clean
 
 test: test-rust test-python test-wasm
 
 test-v1-surfaces: test-rust test-python-v1-surfaces test-wasm-v1-surfaces test-r-v1-surfaces-if-available test-matlab-parity-if-available
+
+test-e2e-entrypoints:
+	$(PYTHON) -m py_compile scripts/e2e/*.py
+
+test-cross-language-e2e: test-e2e-entrypoints
+	@test -f "$(WORKSPACE_ROOT)/nirs4all-ecosystem/scripts/n4a_e2e_scenarios.py" || { \
+		printf '%s\n' "ERROR: nirs4all-ecosystem checkout is required at $(WORKSPACE_ROOT)/nirs4all-ecosystem"; \
+		exit 2; \
+	}
+	@mkdir -p "$(E2E_ARTIFACTS_DIR)"
+	@for scenario in $(E2E_SCENARIOS); do \
+		printf '%s\n' "RUN $$scenario"; \
+		PYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(WORKSPACE_ROOT)/nirs4all-ecosystem/scripts/n4a_e2e_scenarios.py" \
+			--artifacts-dir "$(E2E_ARTIFACTS_DIR)" run "$$scenario" --execute; \
+	done
 
 test-rust:
 	cargo fmt --all --check
@@ -104,20 +122,32 @@ test-r-fixtures:
 	diff -ru tests/parity/fixtures bindings/r/inst/extdata
 
 test-r-parity: test-r-fixtures
+	rm -rf $(R_PARITY_LIB)
 	mkdir -p $(R_PARITY_LIB)
-	if [ -d "$(NIRS4ALL_METHODS_R_PATH)" ]; then \
-		PLS4ALL_LIB_DIR="$(NIRS4ALL_METHODS_LIB_DIR)" \
-		PLS4ALL_GENERATED_DIR="$(NIRS4ALL_METHODS_GENERATED_DIR)" \
-		LD_LIBRARY_PATH="$(NIRS4ALL_METHODS_LIB_DIR):$${LD_LIBRARY_PATH}" \
-		R_LIBS_USER="$(R_PARITY_LIB):$${R_LIBS_USER}" \
-		R CMD INSTALL --library="$(R_PARITY_LIB)" --no-multiarch --no-staged-install "$(NIRS4ALL_METHODS_R_PATH)"; \
+	@if [ ! -d "$(NIRS4ALL_METHODS_R_PATH)" ]; then \
+		printf '%s\n' "ERROR: strict R parity requires nirs4all-methods R binding at $(NIRS4ALL_METHODS_R_PATH)"; \
+		printf '%s\n' "Set NIRS4ALL_METHODS_ROOT or checkout the pinned nirs4all-methods ref next to this repo."; \
+		exit 1; \
 	fi
-	R_LIBS_USER="$(R_PARITY_LIB):$${R_LIBS_USER}" R CMD INSTALL --library="$(R_PARITY_LIB)" bindings/r
+	@if [ ! -f "$(NIRS4ALL_METHODS_LIB_DIR)/libn4m.so" ] && [ ! -f "$(NIRS4ALL_METHODS_LIB_DIR)/libn4m.dylib" ]; then \
+		printf '%s\n' "ERROR: strict R parity requires a dev-release libn4m in $(NIRS4ALL_METHODS_LIB_DIR)"; \
+		printf '%s\n' "Build it with: cd $(NIRS4ALL_METHODS_ROOT) && cmake --preset dev-release && cmake --build --preset dev-release --target n4m_c --parallel"; \
+		exit 1; \
+	fi
+	PLS4ALL_LIB_DIR="$(NIRS4ALL_METHODS_LIB_DIR)" \
+	PLS4ALL_GENERATED_DIR="$(NIRS4ALL_METHODS_GENERATED_DIR)" \
+	N4M_R_LINK_PREBUILT=1 \
+	LD_LIBRARY_PATH="$(NIRS4ALL_METHODS_LIB_DIR):$${LD_LIBRARY_PATH}" \
+	R_LIBS="$(R_PARITY_LIB):$${R_LIBS_USER:-}" R_LIBS_USER="$(R_PARITY_LIB):$${R_LIBS_USER:-}" \
+	R CMD INSTALL --preclean --library="$(R_PARITY_LIB)" --no-multiarch --no-staged-install "$(NIRS4ALL_METHODS_R_PATH)"
+	R_LIBS="$(R_PARITY_LIB):$${R_LIBS_USER:-}" R_LIBS_USER="$(R_PARITY_LIB):$${R_LIBS_USER:-}" R CMD INSTALL --library="$(R_PARITY_LIB)" bindings/r
 	NIRS4ALL_LITE_PARITY_ORACLE=$(abspath tests/parity/expected/portable_python_oracle.json) \
 	NIRS4ALL_LITE_PARITY_FIXTURES=$(abspath bindings/r/inst/extdata) \
 	NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 \
-	R_LIBS_USER="$(R_PARITY_LIB):$${R_LIBS_USER}" \
-	Rscript bindings/r/tests/parity.R
+	NIRS4ALL_LITE_R_PARITY_LIB="$(R_PARITY_LIB)" \
+	LD_LIBRARY_PATH="$(NIRS4ALL_METHODS_LIB_DIR):$${LD_LIBRARY_PATH}" \
+	R_LIBS="$(R_PARITY_LIB):$${R_LIBS_USER:-}" R_LIBS_USER="$(R_PARITY_LIB):$${R_LIBS_USER:-}" \
+	Rscript --vanilla bindings/r/tests/parity.R
 
 test-matlab-parity:
 	NIRS4ALL_LITE_PARITY_ORACLE=$(abspath tests/parity/expected/portable_python_oracle.json) \

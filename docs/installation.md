@@ -1,9 +1,13 @@
 # Installation
 
 `nirs4all-core` ships one aggregate surface across five host languages. Each
-binding installs through that language's native registry and delegates numerical,
-parsing, and dataset work to the upstream packages. Install only the upstream
-extras you need — the aggregate itself adds no engines.
+binding installs through that language's native registry and delegates work to
+upstream packages only where matching runtime bindings exist. Install only the
+upstream extras you need - the aggregate itself adds no engines.
+
+The canonical source repository is `GBeurier/nirs4all-core`. Registry names are
+ecosystem-specific: Python installs as `nirs4all-core`, while Rust, npm, R, and
+the MATLAB/Octave namespace use `nirs4all`.
 
 :::{note}
 `nirs4all-datasets` is **external and optional everywhere**. It is never bundled
@@ -24,7 +28,7 @@ extras, so you choose what to bring in:
 
 ```bash
 # Individual upstreams
-pip install "nirs4all-core[methods]"   # nirs4all-methods + scikit-learn
+pip install "nirs4all-core[methods]"   # nirs4all-methods + pls4all + scikit-learn
 pip install "nirs4all-core[formats]"   # nirs4all-formats
 pip install "nirs4all-core[io]"        # nirs4all-io
 pip install "nirs4all-core[dag-ml]"    # dag-ml
@@ -50,9 +54,12 @@ Crate name `nirs4all` (published from `bindings/rust/nirs4all`).
 cargo add nirs4all
 ```
 
-The bundled aggregate is `methods + formats + io + dag-ml + dag-ml-data`. The
-`nirs4all-datasets` surface is gated behind an off-by-default Cargo feature that
-only un-gates the datasets API (it pulls in no extra compiled dependency):
+The crate records the aggregate domain registry and delegates execution only
+where the relevant Rust crate or dynamic runtime is present. `methods`
+execution loads `libn4m` at runtime; `formats`, `io`, and `datasets` are not
+vendored parsers/loaders in this aggregate crate. The `nirs4all-datasets`
+surface is gated behind an off-by-default Cargo feature that only un-gates the
+datasets API (it pulls in no extra compiled dependency):
 
 ```toml
 [dependencies]
@@ -90,7 +97,8 @@ install.packages(
 It is a pure-R package (no compilation) that `Imports` only `jsonlite` and
 `yaml`. The upstream bindings (`nirs4allformats`, `nirs4allio`,
 `nirs4alldatasets`, `n4m`, `dagmldata`) are `Suggests`, resolved from R-universe
-via `Additional_repositories`.
+via `Additional_repositories`. `dag_ml` is metadata-only in R until an upstream
+R binding is published.
 
 ## MATLAB / Octave
 
@@ -104,3 +112,5 @@ addpath('/path/to/nirs4all-matlab-octave')
 
 The public subset is Octave-safe. Strict-parity execution additionally requires
 the `nirs4all-methods` `+pls4all` MEX shims on the MATLAB/Octave path.
+Other upstream domains are listed as aggregate metadata only; the MATLAB/Octave
+package does not advertise npm/WASM package names as runtime candidates.

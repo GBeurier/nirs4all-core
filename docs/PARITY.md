@@ -7,11 +7,11 @@ core behind multiple host-language APIs.
 
 1. **Upstream native vs upstream binding**: each upstream project proves its own
    binding parity first, especially `nirs4all-methods`.
-2. **nirs4all-core native vs binding**: lite pipelines produce identical
-   results across Rust, Python, R, MATLAB/Octave, and WASM within declared
-   tolerance.
+2. **nirs4all-core native vs binding**: portable aggregate pipelines produce
+   identical results across Rust, Python, R, MATLAB/Octave, and WASM within
+   declared tolerance.
 3. **nirs4all-core vs full Python nirs4all**: equivalent pipelines match the
-   current Python library before the lite binding can replace any core path.
+   current Python library before this binding can replace any core path.
 
 ## Static surface parity (no runtime required)
 
@@ -47,9 +47,9 @@ syntax. The parser-level contract accepts JSON/YAML paths, JSON/YAML text,
 direct step lists, `pipeline`, and `steps` in every target binding, but
 canonical fixtures should keep the same `pipeline` envelope used in
 `nirs4all/examples/pipeline_samples`. Execution parity is a separate gate: a
-definition that parses is not considered validated until native lite and every
-target binding match the full Python `nirs4all` result for the portable operator
-subset.
+definition that parses is not considered validated until the native aggregate
+and every target binding match the full Python `nirs4all` result for the
+portable operator subset.
 
 External operators follow the same rule. A language binding can expose operator
 metadata before execution support exists, but an operator cannot be marked

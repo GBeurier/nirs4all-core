@@ -6,6 +6,9 @@ Import name: `nirs4all_lite`
 
 This binding intentionally avoids the `nirs4all` import name so it can be
 installed next to the full Python `nirs4all` package during parity checks.
+The canonical source repository is `nirs4all-core`; only the Python
+distribution carries the `-core` suffix because the production `nirs4all`
+Python package already owns the bare name.
 
 Additive import facades are available for governed topology work:
 

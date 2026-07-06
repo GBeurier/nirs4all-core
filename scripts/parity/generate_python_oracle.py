@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate full-Python nirs4all parity goldens for portable lite pipelines."""
+"""Generate full-Python nirs4all parity goldens for portable aggregate pipelines."""
 
 from __future__ import annotations
 

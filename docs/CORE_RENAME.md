@@ -16,9 +16,10 @@ moves belong to the coordinator / RC-A.
 > `nirs4all-core.release-topology.v2` (the shape changed: `future_id` →
 > `legacy_id`, `target_distribution` → `legacy_distribution`); no code consumer
 > pinned the old id — only the intentionally-stale committed aggregation lock,
-> which is regenerated at final head selection. Phase R2 (GitHub repo rename,
-> PyPI `nirs4all-core` Trusted Publisher, RTD slug, final `nirs4all-lite`
-> alias release) remains pending admin action and blocks the actual publish.
+> which is regenerated at final head selection. Phase R2 is partially executed:
+> the GitHub repository and Read the Docs slug are now `nirs4all-core`. The
+> remaining admin blocker is the PyPI `nirs4all-core` Trusted Publisher plus the
+> final `nirs4all-lite` alias release.
 
 Governance context: `SW2_GOV_CORE_NAMING_spec.md` (GOV-003/GOV-004),
 `A13_A13-core-release.md` (DEC-GOV-001/002, staged T0→T2), and
@@ -46,8 +47,7 @@ bare `nirs4all` name and are unaffected.
 1. `bindings/python/pyproject.toml` — **done**:
    - `name = "nirs4all-core"`;
    - self-referential extra flipped to `everything = ["nirs4all-core[all,datasets]"]`;
-   - `[project.urls]` stays on the current repo slug until Phase R2 (GitHub
-     redirects permanently after the rename);
+   - `[project.urls]` points to `GBeurier/nirs4all-core`;
    - the wheel `packages` list still ships `nirs4all_core`, `nirs4all_lite`,
      and `n4a` so invariant (1) holds (the old import keeps resolving).
 2. Facade direction — **deferred** (see status note above): making
@@ -59,7 +59,8 @@ bare `nirs4all` name and are unaffected.
    `__aggregate_import__`.
 3. `bindings/python/src/nirs4all_lite/_topology.py` — **done**:
    - `aggregate.id = "nirs4all-core"`, `legacy_id = "nirs4all-lite"`,
-     `target_repo = "GBeurier/nirs4all-core"` (repo rename pending);
+     `repo = "GBeurier/nirs4all-core"`, and
+     `legacy_repo = "GBeurier/nirs4all-lite"`;
    - `python.distribution = "nirs4all-core"`, `canonical_import` unchanged
      (`nirs4all_lite`), `legacy_distribution_status = "superseded"`;
    - `install_distributions`: `nirs4all-core` → `status = "current"` with
@@ -81,24 +82,22 @@ bare `nirs4all` name and are unaffected.
    `bindings/wasm/src/index.js`, and MATLAB now say `nirs4all-core`. These are
    diagnostics, not contracts.
 
-## Phase R2 — coordinator / GitHub / registry actions (PENDING, not simulated)
+## Phase R2 — coordinator / GitHub / registry actions (PARTIAL)
 
-These require repository-admin or registry credentials and are recorded, not
-executed:
+These require repository-admin or registry credentials and are recorded here:
 
-- **Rename the GitHub repo** `GBeurier/nirs4all-lite` → `GBeurier/nirs4all-core`.
-  GitHub installs an automatic redirect, but update `[project.urls]`, the Rust
-  `README`/`Cargo.toml` repo links, and every workflow that hard-codes the slug.
+- **GitHub repo**: `GBeurier/nirs4all-core` is the canonical repository. Keep
+  `GBeurier/nirs4all-lite` only as a legacy redirect/alias reference.
 - **Ecosystem submodule pin** (owned by RC-A / coordinator): update the
   `nirs4all-ecosystem` submodule path/URL for the renamed repo.
 - **PyPI**: register/claim `nirs4all-core` and create its Trusted Publisher
-  (owner `GBeurier`, repo per the rename, workflow `release-python.yml`,
+  (owner `GBeurier`, repo `nirs4all-core`, workflow `release-python.yml`,
   environment `pypi`); publish `nirs4all-core` from `release-python.yml`; then
   publish a final `nirs4all-lite` release whose only dependency is
   `nirs4all-core` (alias wheel) so invariant (1) holds. Never yank existing
   `nirs4all-lite` versions.
-- **Read the Docs**: rename/alias the `nirs4all-lite` project slug; docs URLs
-  in this repo stay on the current slug until then.
+- **Read the Docs**: `nirs4all-core` is the canonical slug; leave
+  `nirs4all-lite` only as a legacy redirect/alias if it remains configured.
 - **Docs site / `nirs4all.org`**: install snippets updated on the org RC head
   (RC-A); that head must not deploy before the PyPI `nirs4all-core` publish.
 
@@ -115,5 +114,6 @@ executed:
 ## One-line status
 
 Phase R1 is executed on the RC V1 head (canonical-import inversion deferred
-with its lockstep requirement recorded). Remaining work is Phase R2
-coordinator/registry actions, then Phase R3 verification.
+with its lockstep requirement recorded). Remaining work is the PyPI Trusted
+Publisher plus the final `nirs4all-lite` alias release, then Phase R3
+verification.

@@ -2,6 +2,9 @@
 
 The Rust crate is named `nirs4all`. It composes the upstream Rust crates and
 FFI-backed engines without moving their implementation into this repository.
+The canonical source repository is `nirs4all-core`; the crate keeps the bare
+`nirs4all` name because the lite->core rename only changes the Python
+distribution identity.
 
 The portable KS/SNV/Savitzky-Golay/PLS subset is exposed through
 `run_portable_pipeline_with_library()`, which loads a caller-supplied `libn4m`

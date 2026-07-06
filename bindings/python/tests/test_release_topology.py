@@ -42,6 +42,10 @@ def _load_wasm_package_lock() -> dict[str, object]:
     return json.loads((ROOT / "bindings/wasm/package-lock.json").read_text())
 
 
+def _load_rust_cargo() -> dict[str, object]:
+    return tomllib.loads((ROOT / "bindings/rust/nirs4all/Cargo.toml").read_text())
+
+
 def _load_workflow(name: str) -> str:
     return (ROOT / ".github" / "workflows" / name).read_text()
 
@@ -92,6 +96,20 @@ def _makefile_target_dependencies(makefile: str, target: str) -> list[str]:
     raise AssertionError(f"Makefile target not found: {target}")
 
 
+def _cargo_to_pep440(version: str) -> str:
+    base, sep, prerelease = version.partition("-")
+    if not sep:
+        return base
+    kind, _, number = prerelease.partition(".")
+    suffix = {"alpha": "a", "beta": "b", "rc": "rc"}[kind]
+    return f"{base}{suffix}{number or '0'}"
+
+
+def _cargo_to_r(version: str) -> str:
+    base = version.partition("-")[0]
+    return f"{base}.9000" if "-" in version else base
+
+
 class ReleaseTopologyManifestTests(unittest.TestCase):
     def test_manifest_is_json_serializable_and_names_current_distribution(self) -> None:
         manifest = n4lite.release_topology_manifest()
@@ -100,10 +118,16 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertEqual(manifest["schema"], "nirs4all-core.release-topology.v2")
         self.assertEqual(manifest["aggregate"]["id"], "nirs4all-core")
         self.assertEqual(manifest["aggregate"]["legacy_id"], "nirs4all-lite")
+        self.assertEqual(manifest["aggregate"]["repo"], "GBeurier/nirs4all-core")
+        self.assertEqual(
+            manifest["aggregate"]["legacy_repo"],
+            "GBeurier/nirs4all-lite",
+        )
         self.assertEqual(
             manifest["aggregate"]["target_repo"],
             "GBeurier/nirs4all-core",
         )
+        self.assertEqual(manifest["aggregate"]["repo_rename_status"], "completed")
         self.assertFalse(manifest["aggregate"]["private"])
         self.assertEqual(manifest["python"]["distribution"], "nirs4all-core")
         self.assertEqual(manifest["python"]["canonical_import"], "nirs4all_lite")
@@ -292,9 +316,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         pyproject = _load_pyproject()
         r_description = _load_r_description()
         wasm_package = _load_wasm_package()
-        rust_cargo = tomllib.loads(
-            (ROOT / "bindings/rust/nirs4all/Cargo.toml").read_text()
-        )
+        rust_cargo = _load_rust_cargo()
         makefile = (ROOT / "Makefile").read_text()
 
         surfaces = {
@@ -340,6 +362,19 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             "r": "test-r-v1-surfaces-if-available",
             "matlab_octave": "test-matlab-parity-if-available",
         }
+        expected_version_sources = {
+            "python": ("bindings/python/pyproject.toml:project.version", "pep440"),
+            "javascript_wasm": ("bindings/wasm/package.json:version", "cargo-semver"),
+            "rust": (
+                "bindings/rust/nirs4all/Cargo.toml:package.version",
+                "cargo-semver",
+            ),
+            "r": ("bindings/r/DESCRIPTION:Version", "r-description"),
+            "matlab_octave": (
+                "bindings/rust/nirs4all/Cargo.toml:package.version",
+                "derived-cargo-semver",
+            ),
+        }
         self.assertEqual(
             _makefile_target_dependencies(makefile, "test-v1-surfaces"),
             [
@@ -382,6 +417,12 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
                     (surface["local_gate"], surface["tool_policy"]),
                     expected_release_gates[ecosystem],
                 )
+                self.assertEqual(
+                    (surface["version_source"], surface["version_spelling"]),
+                    expected_version_sources[ecosystem],
+                )
+                if ecosystem == "rust":
+                    self.assertTrue(surface["version_source_of_truth"])
 
                 distribution = install_distributions[
                     (ecosystem, surface["registry"], package_name)
@@ -389,6 +430,60 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
                 self.assertEqual(distribution["status"], "current")
                 self.assertEqual(distribution["workflow"], surface["release_workflow"])
                 self.assertEqual(distribution["default_inclusion"], "base")
+
+        matlab_builder = (ROOT / "scripts/build-matlab-package.sh").read_text()
+        self.assertIn("bindings/rust/nirs4all/Cargo.toml", matlab_builder)
+        self.assertIn('archive="nirs4all-matlab-octave-${version}.zip"', matlab_builder)
+
+    def test_binding_versions_stay_in_sync_with_rust_source_of_truth(self) -> None:
+        rust_version = str(_load_rust_cargo()["package"]["version"])
+        expected_python = _cargo_to_pep440(rust_version)
+        expected_r = _cargo_to_r(rust_version)
+
+        pyproject = _load_pyproject()
+        wasm_package = _load_wasm_package()
+        wasm_lock = _load_wasm_package_lock()
+        r_description = _load_r_description()
+
+        self.assertEqual(pyproject["project"]["version"], expected_python)
+        self.assertEqual(n4lite.__version__, expected_python)
+        self.assertEqual(n4a.__version__, expected_python)
+        self.assertEqual(nirs4all_core.__version__, expected_python)
+
+        self.assertEqual(wasm_package["version"], rust_version)
+        self.assertEqual(wasm_lock["version"], rust_version)
+        self.assertEqual(wasm_lock["packages"][""]["version"], rust_version)
+        self.assertEqual(r_description["Version"], expected_r)
+
+    def test_version_guard_checks_python_surface_and_binding_sync(self) -> None:
+        workflow = _load_workflow_yaml("version-guard.yml")
+        guard = workflow["jobs"]["guard"]
+        guard_runs = _job_run_text(guard)
+        syncer = (ROOT / "scripts/bump_version.sh").read_text()
+
+        self.assertIn("scripts/bump_version.sh --check", guard_runs)
+        self.assertIn("bindings/python/pyproject.toml", guard_runs)
+        self.assertIn("bindings/python/src/nirs4all_lite/__init__.py", guard_runs)
+        self.assertIn("__version__", guard_runs)
+        self.assertIn("bindings/python/src/nirs4all_lite/__init__.py", syncer)
+        self.assertIn("root_lock_ver", syncer)
+
+    def test_python_release_workflow_uses_current_repo_trusted_publisher_tuple(self) -> None:
+        workflow = _load_workflow_yaml("release-python.yml")
+        publish = workflow["jobs"]["publish-pypi"]
+        workflow_text = _load_workflow("release-python.yml")
+
+        self.assertEqual(publish["environment"]["name"], "pypi")
+        self.assertEqual(publish["environment"]["url"], "https://pypi.org/p/nirs4all-core")
+        self.assertEqual(publish["permissions"]["id-token"], "write")
+        self.assertIn("repo = nirs4all-core", workflow_text)
+        self.assertNotIn("repo = nirs4all-lite", workflow_text)
+
+        preflight = _step_by_name(publish, "Validate Trusted Publisher release tuple")
+        self.assertIn('expected_repo="GBeurier/nirs4all-core"', preflight["run"])
+        self.assertIn("GITHUB_REPOSITORY", preflight["run"])
+        self.assertIn("GITHUB_WORKFLOW_REF", preflight["run"])
+        self.assertIn("environment=pypi", preflight["run"])
 
     def test_public_r_wasm_and_matlab_releases_require_strict_parity(self) -> None:
         methods = _load_compat_upstreams()["methods"]
@@ -546,6 +641,13 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertFalse(
             any(dependency.startswith("nirs4all-datasets") for dependency in all_extra)
         )
+        self.assertEqual(extras["datasets"], ["nirs4all-datasets>=0.3.4"])
+        self.assertIn("nirs4all-methods>=1.0.5", extras["methods"])
+        self.assertIn("pls4all>=1.0.5", extras["methods"])
+        self.assertIn("scikit-learn>=1.3", extras["methods"])
+        self.assertIn("nirs4all-methods>=1.0.5", all_extra)
+        self.assertIn("pls4all>=1.0.5", all_extra)
+        self.assertNotIn("nirs4all-methods>=1.0.2", extras["methods"])
 
     def test_compat_registry_matches_release_topology_packages(self) -> None:
         manifest = n4lite.release_topology_manifest()

@@ -2,10 +2,18 @@
 
 Namespace: `+nirs4all`
 
+The canonical source repository is `nirs4all-core`; the shipped MATLAB/Octave
+surface keeps the bare `nirs4all` namespace and is attached to releases as
+`nirs4all-matlab-octave-<version>.zip`.
+
 The MATLAB/Octave binding exposes the top-level `nirs4all` aggregate namespace.
 It parses the same portable JSON/YAML pipeline envelope as the other bindings
 and delegates numerical execution to the upstream `nirs4all-methods` `+pls4all`
 MEX shims.
+
+Only `methods` has a MATLAB/Octave runtime candidate today (`+pls4all`). The
+other upstream domains are kept in `nirs4all.upstreams()` as aggregate metadata
+and do not advertise npm/WASM package names or MATLAB/Octave execution support.
 
 ## Surface
 

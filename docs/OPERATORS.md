@@ -1,9 +1,10 @@
 # External Operator Binding Contract
 
-`nirs4all-core` must expose external operators idiomatically in every target
-language, but only when the execution layer can actually use them. The aggregate
-must never pretend to execute an operator by reimplementing numerical behavior
-locally.
+`nirs4all-core` may expose external operators beyond metadata only when the
+execution layer can actually use them. When such adapters are added, they should
+be idiomatic for the host language; until then they are future/gated work, not a
+current availability claim. The aggregate must never pretend to execute an
+operator by reimplementing numerical behavior locally.
 
 ## Gate
 
@@ -43,6 +44,9 @@ its vocabulary — so a binding cannot claim `execute-local` (or better) without
 real run symbol, nor `parity-validated` without a real parity gate.
 
 ## Language Idioms
+
+These are target shapes for future/gated operator adapters. They do not imply
+that every language currently has controllers for every upstream domain.
 
 Python:
 

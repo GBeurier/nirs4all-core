@@ -19,10 +19,19 @@ Each host binding should provide:
 
 - a top-level `nirs4all` surface, except Python where the import is
   `nirs4all_lite`;
-- direct access to upstream domains: `formats`, `io`, `datasets`, `methods`,
-  `dag_ml`, and `dag_ml_data`;
-- host-native pipeline composition that delegates to upstream engines;
+- a shared registry for upstream domains: `formats`, `io`, `datasets`,
+  `methods`, `dag_ml`, and `dag_ml_data`;
+- runtime accessors only for upstream bindings that exist in the host language;
+- host-native pipeline composition only where execution is backed by upstream
+  engines and parity gates;
 - no fallback reimplementation when an upstream binding is missing.
+
+The registry is broader than current runtime coverage. JavaScript/WASM publishes
+npm peer candidates for all six domains, Rust records crate/package metadata for
+the aggregate, R currently has package candidates for `dag_ml_data`, `formats`,
+`io`, `datasets`, and `methods` but not `dag_ml`, and MATLAB/Octave only has a
+runtime candidate for `methods` through `+pls4all`. The other MATLAB/Octave
+domain rows are metadata-only.
 
 ## Strategic Python path
 

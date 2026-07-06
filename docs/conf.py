@@ -62,5 +62,5 @@ html_theme_options = {
 
 # -- OpenGraph ---------------------------------------------------------------
 
-ogp_site_url = "https://nirs4all-lite.readthedocs.io/en/latest/"
-ogp_image = "https://nirs4all-lite.readthedocs.io/en/latest/_static/brand/og.png"
+ogp_site_url = "https://nirs4all-core.readthedocs.io/en/latest/"
+ogp_image = "https://nirs4all-core.readthedocs.io/en/latest/_static/brand/og.png"

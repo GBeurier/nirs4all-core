@@ -221,16 +221,16 @@ compute_portable_split <- function(splitter, X, engine) {
 }
 
 savgol_params <- function(params) {
-  delta <- as.numeric(params$delta %||% 1.0)
+  delta <- numeric_param(params$delta, 1.0, "delta")
   if (!identical(delta, 1.0) && !isTRUE(all.equal(delta, 1.0))) {
     stop("Portable Savitzky-Golay execution currently supports delta=1 only.", call. = FALSE)
   }
   list(
-    as.integer(params$window_length %||% params$window %||% 11L),
-    as.integer(params$polyorder %||% 3L),
-    as.integer(params$deriv %||% 0L),
+    integer_param(params$window_length %||% params$window, 11L, "window_length", min = 1L),
+    integer_param(params$polyorder, 3L, "polyorder", min = 0L),
+    integer_param(params$deriv, 0L, "deriv", min = 0L),
     savgol_mode(params$mode %||% "interp"),
-    as.numeric(params$cval %||% 0.0)
+    numeric_param(params$cval, 0.0, "cval")
   )
 }
 
@@ -243,7 +243,7 @@ savgol_mode <- function(value) {
     }
     stop(sprintf("Unsupported Savitzky-Golay mode: %s", value[[1L]]), call. = FALSE)
   }
-  mode <- as.integer(value)
+  mode <- integer_param(value, NULL, "mode", min = 0L)
   if (!is.na(mode) && mode >= 0L && mode <= 4L) {
     return(mode)
   }
@@ -261,14 +261,60 @@ component_values <- function(step) {
     if (!identical(step$param, "n_components")) {
       stop("Portable execution only supports _range_ sweeps over 'n_components'.", call. = FALSE)
     }
-    values <- as.integer(unlist(range_values, use.names = FALSE))
-    if (length(values) != 3L || values[[3L]] <= 0L) {
+    raw_values <- unlist(range_values, use.names = FALSE)
+    if (length(raw_values) != 3L) {
       stop("Invalid n_components _range_; expected [start, stop, positive_step].", call. = FALSE)
+    }
+    values <- c(
+      integer_param(raw_values[[1L]], NULL, "n_components range start", min = 1L),
+      integer_param(raw_values[[2L]], NULL, "n_components range stop", min = 1L),
+      integer_param(raw_values[[3L]], NULL, "n_components range step", min = 1L)
+    )
+    if (values[[1L]] > values[[2L]]) {
+      stop("Invalid n_components _range_; start must be <= stop.", call. = FALSE)
     }
     return(seq.int(values[[1L]], values[[2L]], by = values[[3L]]))
   }
   params <- step$model$params %||% list()
-  as.integer(max(1L, params$n_components %||% 2L))
+  integer_param(params$n_components, 2L, "n_components", min = 1L)
+}
+
+numeric_param <- function(value, fallback, name) {
+  if (is.null(value)) {
+    if (is.null(fallback)) {
+      stop(sprintf("Parameter '%s' must be a finite number.", name), call. = FALSE)
+    }
+    return(as.numeric(fallback))
+  }
+  if (is.logical(value) || length(value) != 1L) {
+    stop(sprintf("Parameter '%s' must be a finite number.", name), call. = FALSE)
+  }
+  number <- if (is.numeric(value)) {
+    as.numeric(value[[1L]])
+  } else if (is.character(value) && nzchar(trimws(value[[1L]]))) {
+    suppressWarnings(as.numeric(value[[1L]]))
+  } else {
+    NA_real_
+  }
+  if (!is.finite(number)) {
+    stop(sprintf("Parameter '%s' must be a finite number.", name), call. = FALSE)
+  }
+  number
+}
+
+integer_param <- function(value, fallback, name, min = NULL) {
+  number <- numeric_param(value, fallback, name)
+  if (number != floor(number)) {
+    stop(sprintf("Parameter '%s' must be an integer.", name), call. = FALSE)
+  }
+  if (number < -.Machine$integer.max || number > .Machine$integer.max) {
+    stop(sprintf("Parameter '%s' is outside R integer range.", name), call. = FALSE)
+  }
+  result <- as.integer(number)
+  if (!is.null(min) && result < min) {
+    stop(sprintf("Parameter '%s' must be >= %d.", name, as.integer(min)), call. = FALSE)
+  }
+  result
 }
 
 `%||%` <- function(lhs, rhs) {

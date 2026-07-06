@@ -5,4 +5,4 @@ members = ["bindings/rust/nirs4all"]
 [workspace.package]
 edition = "2021"
 license = "CECILL-2.1 OR AGPL-3.0-or-later"
-repository = "https://github.com/GBeurier/nirs4all-lite"
+repository = "https://github.com/GBeurier/nirs4all-core"

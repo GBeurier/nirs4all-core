@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# bump_version.sh — nirs4all-lite version source-of-truth syncer.
+# bump_version.sh — nirs4all-core version source-of-truth syncer.
 #
-# nirs4all-lite has no Cargo workspace.package version (the workspace only
+# nirs4all-core has no Cargo workspace.package version (the workspace only
 # pins the shared edition/license/repository), and every binding manifest
 # carries its own hardcoded version string. To keep them from drifting we
 # elect the Rust crate manifest as the single source of truth:
@@ -19,7 +19,8 @@
 #                   bindings/wasm/package.json + package-lock.json.
 #   * PEP 440     : `0.1.0a1` for `0.1.0-alpha.1`; `0.1.0b2` / `0.1.0rc1` for
 #                   beta / rc; plain `X.Y.Z` maps to itself.
-#                   bindings/python/pyproject.toml.
+#                   bindings/python/pyproject.toml and the Python
+#                   nirs4all_lite.__version__ surface.
 #   * R           : the plain base `X.Y.Z` for a final release; `X.Y.Z.9000`
 #                   (the canonical R "in-development toward X.Y.Z" spelling)
 #                   for ANY pre-release — CRAN does not accept SemVer
@@ -213,10 +214,24 @@ update_with_sed \
     "s/^([[:space:]]*\"version\":[[:space:]]*\")[0-9A-Za-z.-]+(\")/\1${CARGO_VERSION}\2/"
 
 # package-lock.json carries the root version twice (top-level + packages."").
-# Both lines match the same pattern; replace ALL occurrences.
 if [[ "${MODE}" != "check" ]]; then
-    sed -i -E "s/^([[:space:]]*\"version\":[[:space:]]*\")0[0-9A-Za-z.-]*(\",)/\1${CARGO_VERSION}\2/" \
-        "${ROOT}/bindings/wasm/package-lock.json" 2>/dev/null || true
+    python3 - "${ROOT}/bindings/wasm/package-lock.json" "${CARGO_VERSION}" <<'PY'
+import json
+import sys
+
+path, version = sys.argv[1], sys.argv[2]
+with open(path, "r", encoding="utf-8") as handle:
+    data = json.load(handle)
+root = (data.get("packages") or {}).get("", {})
+changed = data.get("version") != version or root.get("version") != version
+if changed:
+    data["version"] = version
+    data.setdefault("packages", {}).setdefault("", {})["version"] = version
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(data, handle, indent=2)
+        handle.write("\n")
+    print(f"  updated bindings/wasm/package-lock.json root versions -> {version}")
+PY
 fi
 # Validate the lockfile's root version under --check.
 if [[ "${MODE}" == "check" ]]; then
@@ -224,6 +239,21 @@ if [[ "${MODE}" == "check" ]]; then
                "${ROOT}/bindings/wasm/package-lock.json" | head -n1 || true)
     if [[ "${lock_ver}" != "${CARGO_VERSION}" ]]; then
         echo "  DRIFT: bindings/wasm/package-lock.json reports '${lock_ver}' (expected '${CARGO_VERSION}')" >&2
+        DRIFTED+=("bindings/wasm/package-lock.json")
+        EXIT_CODE=1
+    fi
+    root_lock_ver=$(
+        python3 - "${ROOT}/bindings/wasm/package-lock.json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    data = json.load(handle)
+print((data.get("packages") or {}).get("", {}).get("version", ""))
+PY
+    )
+    if [[ "${root_lock_ver}" != "${CARGO_VERSION}" ]]; then
+        echo "  DRIFT: bindings/wasm/package-lock.json packages.\"\" reports '${root_lock_ver}' (expected '${CARGO_VERSION}')" >&2
         DRIFTED+=("bindings/wasm/package-lock.json")
         EXIT_CODE=1
     fi
@@ -235,6 +265,12 @@ update_with_sed \
     "${PEP440_VERSION}" \
     "^version[[:space:]]*=[[:space:]]*\"([0-9A-Za-z.+!-]+)\"" \
     "s/^(version[[:space:]]*=[[:space:]]*\")[0-9A-Za-z.+!-]+(\")/\1${PEP440_VERSION}\2/"
+
+update_with_sed \
+    "bindings/python/src/nirs4all_lite/__init__.py" \
+    "${PEP440_VERSION}" \
+    "^__version__[[:space:]]*=[[:space:]]*\"([0-9A-Za-z.+!-]+)\"" \
+    "s/^(__version__[[:space:]]*=[[:space:]]*\")[0-9A-Za-z.+!-]+(\")/\1${PEP440_VERSION}\2/"
 
 # --- R DESCRIPTION target --------------------------------------------------
 update_with_sed \
