@@ -73,9 +73,12 @@ publication names.
   `runPortablePipeline()` and predicts from its serialized selected model with
   `predictPortablePipeline()`, both delegating to `@nirs4all/methods-wasm`.
 - `nirs4all-web` consumes this package; UI code does not live here.
-- Current upstream package candidates are `@nirs4all/formats-wasm`,
-  `@nirs4all/io-wasm`, `@nirs4all/datasets-wasm`, `dag-ml-wasm`,
-  `dag-ml-data-wasm`, and `@nirs4all/methods-wasm`.
+- Current upstream package candidates prefer the target scoped names
+  `@nirs4all/formats-wasm`, `@nirs4all/io-wasm`,
+  `@nirs4all/datasets-wasm`, and `@nirs4all/methods-wasm`, while keeping
+  compatibility fallbacks for the published names `nirs4all-formats-wasm`,
+  `nirs4all-io-wasm`, and `@nirs4all/nirs4all-datasets-wasm`.
+  `dag-ml-wasm` and `dag-ml-data-wasm` remain unscoped package candidates.
 
 ## R
 
