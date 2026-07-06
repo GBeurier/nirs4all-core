@@ -473,7 +473,10 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         root_lock = lock["packages"][""]
         expected_peers = {
             "@nirs4all/datasets-wasm",
+            "@nirs4all/formats-wasm",
+            "@nirs4all/io-wasm",
             "@nirs4all/methods-wasm",
+            "@nirs4all/nirs4all-datasets-wasm",
             "dag-ml-data-wasm",
             "dag-ml-wasm",
             "nirs4all-formats-wasm",
