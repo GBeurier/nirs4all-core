@@ -8,6 +8,13 @@ binding manifest.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-07-08
+
+### Fixed
+
+- Removed remaining documentation wording that implied a maintained
+  `nirs4all-lite` public alias. The V1 target has no legacy alias release.
+
 ## [0.3.0] - 2026-07-07
 
 ### Changed
@@ -116,29 +123,26 @@ RC V1 package-name and upstream compatibility hardening.
 
 ## [0.2.5] - 2026-07-06
 
-RC V1 topology: this unreleased train combines the first `LOCK-GOV` facade
-slice (additive) with the **Python distribution rename
-`nirs4all-lite` → `nirs4all-core`** (Phase R1 of `docs/CORE_RENAME.md`,
+RC V1 topology: this historical train combined the first `LOCK-GOV` facade
+slice (additive) with the Python distribution rename from the retired
+`nirs4all-lite` name to `nirs4all-core` (Phase R1 of `docs/CORE_RENAME.md`,
 executed by RC-A on the RC V1 control-board decision).
 
 ### Changed (RC V1 rename)
 
-- Python distribution renamed `nirs4all-lite` → **`nirs4all-core`**
-  (`bindings/python/pyproject.toml`). The canonical import root stays
-  `nirs4all_lite`; the wheel still ships `nirs4all_lite` + `n4a` +
-  `nirs4all_core`, so no import breaks. Rust/npm/R/MATLAB names are unaffected
-  (already the bare `nirs4all`).
+- Python distribution renamed from the retired `nirs4all-lite` name to
+  **`nirs4all-core`** (`bindings/python/pyproject.toml`). This 0.2.x train
+  briefly kept transitional Python import compatibility; that compatibility
+  surface is superseded by the 0.3.0 canonical `nirs4all_core` + `n4a` package.
+  Rust/npm/R/MATLAB names are unaffected (already the bare `nirs4all`).
 - `release_topology_manifest()` schema bumped to
-  `nirs4all-core.release-topology.v2`: `aggregate.id = "nirs4all-core"`
-  (`legacy_id = "nirs4all-lite"`), `python.distribution = "nirs4all-core"`
-  with `legacy_distribution_status = "superseded"`, install rows flipped, and
-  the source/SBOM artifact renamed `nirs4all-core-source-sbom`.
+  `nirs4all-core.release-topology.v2`: `aggregate.id = "nirs4all-core"`,
+  `python.distribution = "nirs4all-core"`, install rows flipped, and the
+  source/SBOM artifact renamed `nirs4all-core-source-sbom`.
 - Release workflows build/validate/publish under the new name
   (`nirs4all_core-*` wheel, `nirs4all-core-<version>-src.*` source prefix,
-  PyPI project `nirs4all-core`). The `nirs4all-core` PyPI Trusted Publisher
-  registration, the GitHub repo rename, and the RTD slug rename remain
-  pending external admin actions (`docs/CORE_RENAME.md` Phase R2); the legacy
-  `nirs4all-lite` PyPI project stays installable and must never be yanked.
+  PyPI project `nirs4all-core`). The V1 RC target does not publish or maintain
+  a public `nirs4all-lite` compatibility release.
 - User-facing diagnostics across the five bindings now say
   "nirs4all-core portable subset".
 
@@ -147,16 +151,14 @@ First safe `LOCK-GOV` slice — **additive only**, no legacy import removed.
 ### Added
 
 - Python `n4a` import facade — a brand-aligned root (`import n4a`) that
-  re-exports the full `nirs4all_lite` public surface and adds no behavior.
-- Python `nirs4all_core` import alias for the `nirs4all-lite` → `nirs4all-core`
-  direction; re-exports `nirs4all_lite`. (Introduced additively; the
-  distribution rename above landed later in the same unreleased train.)
+  re-exports the aggregate public surface and adds no behavior.
+- Python `nirs4all_core` import root for the `nirs4all-core` aggregate.
+  (Introduced additively; it became canonical in the 0.3.0 naming cleanup.)
 - `docs/NAMING.md` documenting the per-language aggregate names, the lite→core
   direction, the facades, and the `n4a` token disambiguation (`n4a` import vs
   `.n4a` bundle extension vs `n4a-datasets` CLI) for `GOV-004`.
 - `bindings/python/tests/test_facade.py` proving surface parity, object
-  identity, `__getattr__` passthrough, and that legacy `nirs4all_lite` imports
-  and the full-`nirs4all` coexistence rule are preserved.
+  identity, `__getattr__` passthrough, and full-`nirs4all` coexistence.
 
 ### Fixed
 
@@ -168,8 +170,9 @@ First safe `LOCK-GOV` slice — **additive only**, no legacy import removed.
 ## [0.2.0] - 2026-06-14
 
 **Breaking** (pre-1.0 minor bump, 0.1.0 → 0.2.0) — coordinated with the breaking
-**nirs4all-methods 1.0.0** (C ABI 2.0 + the `n4m.<role>` namespace). `nirs4all-lite`
-re-exports the methods surface, so consumers must move to the methods 1.0.0 / ABI-2 surface.
+**nirs4all-methods 1.0.0** (C ABI 2.0 + the `n4m.<role>` namespace). The
+then-current aggregate re-exported the methods surface, so consumers had to move
+to the methods 1.0.0 / ABI-2 surface.
 
 ### Changed (breaking)
 

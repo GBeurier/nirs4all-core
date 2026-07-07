@@ -72,7 +72,7 @@ jobs:
           r-version: ${{ matrix.cfg.r_version }}
           use-public-rspm: true
 
-      # nirs4all (lite aggregate) is PURE R: its only hard deps are jsonlite + yaml.
+      # nirs4all (core aggregate) is PURE R: its only hard deps are jsonlite + yaml.
       # The ecosystem packages (nirs4allformats/io/datasets, n4m, dagmldata) are
       # Suggests served from R-universe (Additional_repositories); they are NOT built
       # for every CI R version (e.g. nirs4alldatasets/dagmldata are absent for R-devel),
