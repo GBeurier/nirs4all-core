@@ -138,7 +138,6 @@ jobs:
           PYTHONPATH="bindings/python/src:$GITHUB_WORKSPACE/nirs4all-methods/bindings/python/src" \
           PLS4ALL_LIB_PATH="$GITHUB_WORKSPACE/nirs4all-methods/build/dev-release/cpp/src/libn4m.so" \
           NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 \
-          NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 \
           python -m unittest bindings/python/tests/test_execution_parity.py -v
       - run: mkdir -p "$R_LIBS_USER"
       - run: Rscript -e 'install.packages(c("jsonlite", "yaml"), lib = Sys.getenv("R_LIBS_USER"), repos = "https://cloud.r-project.org")'

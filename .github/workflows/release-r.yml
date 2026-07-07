@@ -154,7 +154,6 @@ jobs:
         env:
           LD_LIBRARY_PATH: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
           NIRS4ALL_CORE_REQUIRE_METHODS_PARITY: "1"
-          NIRS4ALL_CORE_REQUIRE_METHODS_PARITY: "1"
         run: make test-r-parity
 
   build-tarball:
