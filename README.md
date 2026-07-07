@@ -7,8 +7,8 @@
 
 # nirs4all-core
 
-`nirs4all-core` (formerly `nirs4all-lite`) is the low-level, portable nirs4all
-distribution. It aggregates:
+`nirs4all-core` (formerly `nirs4all-lite`) is the portable aggregate
+publication of the low-level nirs4all stack. It aggregates:
 
 - `dag-ml`
 - `dag-ml-data`
@@ -18,8 +18,12 @@ distribution. It aggregates:
 - `nirs4all-methods`
 
 It must not add independent numerical, parsing, or pipeline logic. The upstream
-projects stay the source of truth; this repository provides a canonical package
-surface, native bindings, release glue, and parity checks.
+projects stay the source of truth; this repository provides the canonical
+aggregate package surface, native bindings, release glue, and parity checks.
+Outside Python, the published package names stay `nirs4all`, but those
+artifacts are still this aggregate: target-language surfaces that consume the
+shared upstream packages and `nirs4all-methods` instead of duplicating parsers,
+IO, orchestration, or numerical kernels.
 
 ## Package names
 
@@ -35,6 +39,11 @@ The Python distribution is `nirs4all-core` (RC V1 rename from `nirs4all-lite`);
 it cannot use the bare `nirs4all` name because the full Python `nirs4all`
 library owns it. Other language bindings use `nirs4all`. The canonical Python
 import root stays `nirs4all_lite` for compatibility.
+
+The Rust crate, npm package, R package, and MATLAB/Octave namespace named
+`nirs4all` are therefore release identities for the same `nirs4all-core`
+aggregate, not separate full implementations of the nirs4all stack in those
+host languages.
 
 The canonical source repository for all of these artifacts is
 `GBeurier/nirs4all-core`. Registry/package names are ecosystem-specific:

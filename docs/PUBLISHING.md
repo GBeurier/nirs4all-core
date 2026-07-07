@@ -15,6 +15,12 @@ All artifacts are cut from the canonical repository `GBeurier/nirs4all-core`.
 Only the Python distribution uses the `nirs4all-core` registry name; the
 non-Python publications remain `nirs4all`.
 
+Those non-Python `nirs4all` publications are still bindings of the
+`nirs4all-core` aggregate. Their packaging and release notes must describe them
+as target-language surfaces over the shared upstream packages and
+`nirs4all-methods`, never as independent full `nirs4all` implementations with
+duplicated parsing, IO, orchestration, or numerical logic.
+
 ## How releases are cut
 
 The single source of truth for the version is the **Rust crate**
@@ -30,6 +36,12 @@ On a **non-pre-release tag `vX.Y.Z`** the six `release-*.yml` workflows run and:
 * publish **crates.io `nirs4all`** (needs the `CARGO_REGISTRY_TOKEN` secret),
 * build + attach the **R `nirs4all`** source tarball, the **MATLAB/Octave**
   zip, and the **source + SBOM** bundle to the GitHub Release.
+
+Across those registry publications, the architecture stays fixed: Python uses
+the `nirs4all-core` distribution name because the full Python `nirs4all`
+package already owns the bare name, while Rust/npm/R/MATLAB publish as
+`nirs4all` for their host ecosystems but still consume the same aggregate lock
+and upstream engines.
 
 A **pre-release tag** (anything with a `-`, e.g. `v0.1.0-alpha.1`) builds and
 attaches artifacts but **publishes to no registry**. `workflow_dispatch` runs

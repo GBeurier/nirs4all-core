@@ -9,6 +9,11 @@ Release artifacts should be built from the same upstream lock:
 - MATLAB/Octave archive: `nirs4all-matlab-octave`
 - WASM bundle consumed by `nirs4all-web`
 
+The Rust, JavaScript/WASM, R, and MATLAB/Octave artifacts published as
+`nirs4all` are target-language releases of this `nirs4all-core` aggregate, not
+separate host-language reimplementations. They stay delegating consumers of the
+shared upstream packages and `nirs4all-methods`.
+
 Before release:
 
 1. Pin upstream versions or SHAs in `compat/upstreams.toml`.
