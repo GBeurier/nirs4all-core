@@ -30,6 +30,12 @@ def _finite(value: Any, label: str) -> float:
     return number
 
 
+def _parity_delta(parity: dict[str, Any], canonical_key: str, legacy_key: str) -> float:
+    if canonical_key in parity:
+        return _finite(parity[canonical_key], canonical_key)
+    return _finite(parity[legacy_key], legacy_key)
+
+
 def _stable_hash(payload: Any) -> str:
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
@@ -315,8 +321,8 @@ def _validate(artifacts_dir: Path) -> dict[str, Any]:
         raise AssertionError(f"unexpected replay status {replay.get('status')!r}")
 
     tolerance = _finite(replay["parity"]["score_tolerance"], "score_tolerance")
-    cv_delta = _finite(replay["parity"]["cv_best_score_abs"], "cv_best_score_abs")
-    best_delta = _finite(replay["parity"]["best_rmse_abs"], "best_rmse_abs")
+    cv_delta = _parity_delta(replay["parity"], "cv_best_score_delta", "cv_best_score_abs")
+    best_delta = _parity_delta(replay["parity"], "best_rmse_delta", "best_rmse_abs")
     if cv_delta > tolerance or best_delta > tolerance:
         raise AssertionError(f"replay parity deltas exceed tolerance: cv={cv_delta} best={best_delta} tol={tolerance}")
 
