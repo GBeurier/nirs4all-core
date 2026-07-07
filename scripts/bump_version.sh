@@ -206,6 +206,45 @@ update_with_sed() {
 # 7. The manifest table — every downstream version string lives here.
 # ---------------------------------------------------------------------------
 
+# --- Cargo.lock local crate package entry (Cargo/SemVer spelling verbatim) ---
+lock_ver=$(awk '
+    /^\[\[package\]\]/ { in_pkg = 0 }
+    /^name = "nirs4all"$/ { in_pkg = 1 }
+    in_pkg && /^version = / {
+        gsub(/"/, "", $3)
+        print $3
+        exit
+    }
+' "${ROOT}/Cargo.lock")
+if [[ "${MODE}" == "check" ]]; then
+    if [[ "${lock_ver}" != "${CARGO_VERSION}" ]]; then
+        echo "  DRIFT: Cargo.lock reports '${lock_ver}' (expected '${CARGO_VERSION}')" >&2
+        DRIFTED+=("Cargo.lock")
+        EXIT_CODE=1
+    fi
+else
+    if [[ "${lock_ver}" != "${CARGO_VERSION}" ]]; then
+        python3 - "${ROOT}/Cargo.lock" "${CARGO_VERSION}" <<'PY'
+import re
+import sys
+
+path, version = sys.argv[1], sys.argv[2]
+text = open(path, "r", encoding="utf-8").read()
+
+def update(match: re.Match[str]) -> str:
+    block = match.group(0)
+    if 'name = "nirs4all"' not in block:
+        return block
+    return re.sub(r'version = "[^"]+"', f'version = "{version}"', block, count=1)
+
+updated = re.sub(r'\[\[package\]\]\n(?:[^\[]|\[(?!\[))*', update, text)
+if updated != text:
+    open(path, "w", encoding="utf-8").write(updated)
+PY
+        echo "  updated Cargo.lock: ${lock_ver} -> ${CARGO_VERSION}"
+    fi
+fi
+
 # --- npm package.json (Cargo/SemVer spelling verbatim) ---------------------
 update_with_sed \
     "bindings/wasm/package.json" \
