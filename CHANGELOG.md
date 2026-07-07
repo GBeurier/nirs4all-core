@@ -9,6 +9,43 @@ binding manifest.
 
 ## [Unreleased]
 
+## [0.2.11] - 2026-07-07
+
+RC15 changelog catch-up release.
+
+### Fixed
+
+- Added the missing changelog entries for the `0.2.9` and `0.2.10` release
+  candidates so source releases document the custom-host and lockfile fixes.
+
+## [0.2.10] - 2026-07-07
+
+RC14 lockfile consistency release.
+
+### Fixed
+
+- Bumped the tracked root `Cargo.lock` package entry alongside the Rust crate
+  version after the `0.2.9` source tree still reported `nirs4all = 0.2.8` in
+  the lockfile.
+- Extended `scripts/bump_version.sh --check` so future release bumps also
+  validate the root Cargo lockfile's local `nirs4all` package version.
+
+## [0.2.9] - 2026-07-07
+
+RC13 custom-host capability manifest release.
+
+### Added
+
+- Added the cross-language V1 capability manifest for custom app hosts across
+  Python, WASM/JavaScript, R, Rust, and MATLAB/Octave bindings.
+- Exposed stable controller capability IDs for Kennard-Stone splitting, SNV,
+  Savitzky-Golay, PLS regression, and the portable methods pipeline.
+- Documented runtime surfaces and the custom-host manifest contract.
+
+### Changed
+
+- Synchronized `nirs4all-web` with the vendored core WASM custom-host surface.
+
 ## [0.2.8] - 2026-07-07
 
 RC12 methods package-name alignment.
