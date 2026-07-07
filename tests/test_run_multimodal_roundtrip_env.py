@@ -62,6 +62,7 @@ def test_prepare_r_library_uses_rscript_toolchain_path(tmp_path: Path) -> None:
         assert env["PLS4ALL_GENERATED_DIR"] == str(generated)
         assert env["PLS4ALL_INCLUDE_DIR"] == str(workspace / "nirs4all-methods" / "cpp" / "include")
         assert env["R_MAKEVARS_USER"] == str(artifacts / "r-Makevars")
+        assert env["NIRS4ALL_CORE_R_PARITY_LIB"] == str(artifacts / "_r-lib")
         assert env["NIRS4ALL_LITE_R_PARITY_LIB"] == str(artifacts / "_r-lib")
         return subprocess.CompletedProcess(command, 0, "", "")
 

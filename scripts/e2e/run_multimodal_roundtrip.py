@@ -432,6 +432,7 @@ def _prepare_r_library(workspace_root: Path, core_root: Path, artifacts_dir: Pat
             "R_LIBS": str(r_lib),
             "R_LIBS_USER": str(r_lib),
             "R_MAKEVARS_USER": str(makevars),
+            "NIRS4ALL_CORE_R_PARITY_LIB": str(r_lib),
             "NIRS4ALL_LITE_R_PARITY_LIB": str(r_lib),
         }
     )
@@ -503,7 +504,10 @@ if (!requireNamespace("jsonlite", quietly = TRUE)) {
 if (!requireNamespace("n4m", quietly = TRUE)) {
   stop("n4m R package is not installed; strict R execution requires the nirs4all-methods R binding", call. = FALSE)
 }
-expected_n4m_lib <- Sys.getenv("NIRS4ALL_LITE_R_PARITY_LIB")
+expected_n4m_lib <- Sys.getenv("NIRS4ALL_CORE_R_PARITY_LIB")
+if (!nzchar(expected_n4m_lib)) {
+  expected_n4m_lib <- Sys.getenv("NIRS4ALL_LITE_R_PARITY_LIB")
+}
 if (nzchar(expected_n4m_lib)) {
   expected_n4m_lib <- normalizePath(expected_n4m_lib, winslash = "/", mustWork = TRUE)
   actual_n4m_lib <- normalizePath(find.package("n4m"), winslash = "/", mustWork = TRUE)
@@ -535,6 +539,7 @@ jsonlite::write_json(actual, output_path, auto_unbox = TRUE, digits = 16)
     if r_lib is not None:
         env["R_LIBS"] = str(r_lib)
         env["R_LIBS_USER"] = str(r_lib)
+        env["NIRS4ALL_CORE_R_PARITY_LIB"] = str(r_lib)
         env["NIRS4ALL_LITE_R_PARITY_LIB"] = str(r_lib)
     _prepend_r_toolchain_env(env, rscript)
     methods_lib_dir = _methods_root(workspace_root) / "build" / "dev-release" / "cpp" / "src"

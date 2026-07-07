@@ -131,12 +131,13 @@ npm run stage:wasm
 ```
 
 Set `NIRS4ALL_METHODS_JS_DIST` when the methods checkout is not the default
-sibling. Set `NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1` to make a missing methods
-artifact fail instead of skip:
+sibling. Set `NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1` to make a missing methods
+artifact fail instead of skip. The old `NIRS4ALL_LITE_*` names remain accepted
+as compatibility aliases during the V1 rename:
 
 ```bash
 NIRS4ALL_METHODS_JS_DIST=/path/to/nirs4all-methods/bindings/js/dist \
-NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 \
+NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 \
 npm test --prefix bindings/wasm
 ```
 
@@ -153,7 +154,7 @@ local libn4m build:
 ```bash
 PYTHONPATH=bindings/python/src:/path/to/nirs4all-methods/bindings/python/src \
 PLS4ALL_LIB_PATH=/path/to/libn4m.so \
-NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 \
+NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 \
 python -m unittest bindings/python/tests/test_execution_parity.py -v
 ```
 
@@ -162,7 +163,7 @@ Run the strict Rust parity gate with a local libn4m build:
 ```bash
 NIRS4ALL_METHODS_LIB=/path/to/libn4m.so \
 LD_LIBRARY_PATH=/path/to/libn4m-directory \
-NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 \
+NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 \
 cargo test -p nirs4all rust_binding_execution_matches_full_python_nirs4all_oracle -- --nocapture
 ```
 
@@ -170,9 +171,9 @@ Run the strict R parity gate after installing an `n4m` R binding that exposes
 the portable preprocessing and splitter surface:
 
 ```bash
-NIRS4ALL_LITE_PARITY_ORACLE=$PWD/tests/parity/expected/portable_python_oracle.json \
-NIRS4ALL_LITE_PARITY_FIXTURES=$PWD/bindings/r/inst/extdata \
-NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 \
+NIRS4ALL_CORE_PARITY_ORACLE=$PWD/tests/parity/expected/portable_python_oracle.json \
+NIRS4ALL_CORE_PARITY_FIXTURES=$PWD/bindings/r/inst/extdata \
+NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 \
 Rscript bindings/r/tests/parity.R
 ```
 
@@ -180,8 +181,8 @@ Run the strict MATLAB/Octave parity gate after building the `nirs4all-methods`
 `+pls4all` MEX shims:
 
 ```bash
-NIRS4ALL_LITE_PARITY_ORACLE=$PWD/tests/parity/expected/portable_python_oracle.json \
-NIRS4ALL_LITE_PARITY_FIXTURES=$PWD/tests/parity/fixtures \
-NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 \
+NIRS4ALL_CORE_PARITY_ORACLE=$PWD/tests/parity/expected/portable_python_oracle.json \
+NIRS4ALL_CORE_PARITY_FIXTURES=$PWD/tests/parity/fixtures \
+NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 \
 octave --quiet --eval "addpath('bindings/matlab/tests'); parity"
 ```

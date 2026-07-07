@@ -1675,7 +1675,9 @@ mod tests {
         let library_path = match library_path {
             Ok(path) => path,
             Err(error) => {
-                if std::env::var("NIRS4ALL_LITE_REQUIRE_METHODS_PARITY").as_deref() == Ok("1") {
+                if std::env::var("NIRS4ALL_CORE_REQUIRE_METHODS_PARITY").as_deref() == Ok("1")
+                    || std::env::var("NIRS4ALL_LITE_REQUIRE_METHODS_PARITY").as_deref() == Ok("1")
+                {
                     panic!("strict Rust parity requires NIRS4ALL_METHODS_LIB: {error}");
                 }
                 eprintln!("skipping Rust execution parity: NIRS4ALL_METHODS_LIB is not set");

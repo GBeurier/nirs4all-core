@@ -38,7 +38,7 @@ test-rust:
 	cargo test --workspace
 
 test-rust-parity:
-	NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 cargo test -p nirs4all rust_binding_execution_matches_full_python_nirs4all_oracle -- --nocapture
+	NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 cargo test -p nirs4all rust_binding_execution_matches_full_python_nirs4all_oracle -- --nocapture
 
 test-python:
 	PYTHONPATH=bindings/python/src $(PYTHON) -m unittest discover -s bindings/python/tests
@@ -53,7 +53,7 @@ test-python-v1-surfaces:
 		bindings/python/tests/test_capability_matrix.py
 
 test-python-parity:
-	PYTHONPATH=bindings/python/src$(if $(NIRS4ALL_METHODS_PYTHONPATH),:$(NIRS4ALL_METHODS_PYTHONPATH)) NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 $(PYTHON) -m unittest bindings/python/tests/test_execution_parity.py -v
+	PYTHONPATH=bindings/python/src$(if $(NIRS4ALL_METHODS_PYTHONPATH),:$(NIRS4ALL_METHODS_PYTHONPATH)) NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 $(PYTHON) -m unittest bindings/python/tests/test_execution_parity.py -v
 
 check-wasm-methods-artifact:
 	@missing=""; \
@@ -79,7 +79,7 @@ test-wasm:
 
 test-wasm-parity-strict: check-wasm-methods-artifact
 	npm ci --prefix bindings/wasm
-	NIRS4ALL_METHODS_JS_DIST="$(NIRS4ALL_METHODS_JS_DIST)" NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 npm test --prefix bindings/wasm
+	NIRS4ALL_METHODS_JS_DIST="$(NIRS4ALL_METHODS_JS_DIST)" NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 npm test --prefix bindings/wasm
 
 test-wasm-v1-surfaces:
 	npm ci --prefix bindings/wasm
@@ -141,18 +141,25 @@ test-r-parity: test-r-fixtures
 	R_LIBS="$(R_PARITY_LIB):$${R_LIBS_USER:-}" R_LIBS_USER="$(R_PARITY_LIB):$${R_LIBS_USER:-}" \
 	R CMD INSTALL --preclean --library="$(R_PARITY_LIB)" --no-multiarch --no-staged-install "$(NIRS4ALL_METHODS_R_PATH)"
 	R_LIBS="$(R_PARITY_LIB):$${R_LIBS_USER:-}" R_LIBS_USER="$(R_PARITY_LIB):$${R_LIBS_USER:-}" R CMD INSTALL --library="$(R_PARITY_LIB)" bindings/r
+	NIRS4ALL_CORE_PARITY_ORACLE=$(abspath tests/parity/expected/portable_python_oracle.json) \
 	NIRS4ALL_LITE_PARITY_ORACLE=$(abspath tests/parity/expected/portable_python_oracle.json) \
+	NIRS4ALL_CORE_PARITY_FIXTURES=$(abspath bindings/r/inst/extdata) \
 	NIRS4ALL_LITE_PARITY_FIXTURES=$(abspath bindings/r/inst/extdata) \
+	NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 \
 	NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 \
+	NIRS4ALL_CORE_R_PARITY_LIB="$(R_PARITY_LIB)" \
 	NIRS4ALL_LITE_R_PARITY_LIB="$(R_PARITY_LIB)" \
 	LD_LIBRARY_PATH="$(NIRS4ALL_METHODS_LIB_DIR):$${LD_LIBRARY_PATH}" \
 	R_LIBS="$(R_PARITY_LIB):$${R_LIBS_USER:-}" R_LIBS_USER="$(R_PARITY_LIB):$${R_LIBS_USER:-}" \
 	Rscript --vanilla bindings/r/tests/parity.R
 
 test-matlab-parity:
+	NIRS4ALL_CORE_PARITY_ORACLE=$(abspath tests/parity/expected/portable_python_oracle.json) \
 	NIRS4ALL_LITE_PARITY_ORACLE=$(abspath tests/parity/expected/portable_python_oracle.json) \
+	NIRS4ALL_CORE_PARITY_FIXTURES=$(abspath tests/parity/fixtures) \
 	NIRS4ALL_LITE_PARITY_FIXTURES=$(abspath tests/parity/fixtures) \
 	NIRS4ALL_METHODS_MATLAB_PATH=$(NIRS4ALL_METHODS_MATLAB_PATH) \
+	NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 \
 	NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 \
 	octave --quiet --eval "addpath('bindings/matlab/tests'); parity"
 

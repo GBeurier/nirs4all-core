@@ -11,6 +11,13 @@ FIXTURE_DIR = ROOT / "tests" / "parity" / "fixtures"
 ORACLE_PATH = ROOT / "tests" / "parity" / "expected" / "portable_python_oracle.json"
 
 
+def _strict_methods_parity() -> bool:
+    return (
+        os.environ.get("NIRS4ALL_CORE_REQUIRE_METHODS_PARITY") == "1"
+        or os.environ.get("NIRS4ALL_LITE_REQUIRE_METHODS_PARITY") == "1"
+    )
+
+
 def _max_abs_diff(actual, expected):
     if len(actual) != len(expected):
         raise AssertionError(f"length mismatch: {len(actual)} != {len(expected)}")
@@ -24,7 +31,7 @@ class ExecutionParityTests(unittest.TestCase):
             import n4m  # noqa: F401
             import pls4all  # noqa: F401
         except ImportError as exc:
-            if os.environ.get("NIRS4ALL_LITE_REQUIRE_METHODS_PARITY") == "1":
+            if _strict_methods_parity():
                 raise
             raise unittest.SkipTest(
                 "nirs4all-methods Python bindings are not available"

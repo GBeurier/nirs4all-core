@@ -8,9 +8,15 @@ arg_value <- function(flag) {
   args[[idx + 1L]]
 }
 
+env_value <- function(primary, legacy) {
+  value <- Sys.getenv(primary)
+  if (nzchar(value)) value else Sys.getenv(legacy)
+}
+
 in_path <- arg_value("--in")
 out_dir <- arg_value("--out")
-strict <- identical(Sys.getenv("NIRS4ALL_LITE_REQUIRE_METHODS_PARITY"), "1")
+strict <- identical(env_value("NIRS4ALL_CORE_REQUIRE_METHODS_PARITY",
+                              "NIRS4ALL_LITE_REQUIRE_METHODS_PARITY"), "1")
 if (is.null(out_dir) || !nzchar(out_dir)) {
   out_dir <- file.path(tempdir(), "nirs4all-r-run-save-pipeline")
 }
@@ -228,7 +234,7 @@ stopifnot(identical(
 ))
 
 oracle_path <- candidate_path(c(
-  Sys.getenv("NIRS4ALL_LITE_PARITY_ORACLE"),
+  env_value("NIRS4ALL_CORE_PARITY_ORACLE", "NIRS4ALL_LITE_PARITY_ORACLE"),
   file.path("tests", "parity", "expected", "portable_python_oracle.json"),
   file.path("..", "..", "tests", "parity", "expected", "portable_python_oracle.json")
 ))

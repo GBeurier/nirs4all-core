@@ -14,7 +14,8 @@ if ~isempty(methodsPath) && exist(methodsPath, 'dir') == 7
     addpath(methodsPath);
 end
 
-strict = strcmp(getenv('NIRS4ALL_LITE_REQUIRE_METHODS_PARITY'), '1');
+strict = strcmp(envOrLegacy('NIRS4ALL_CORE_REQUIRE_METHODS_PARITY', ...
+    'NIRS4ALL_LITE_REQUIRE_METHODS_PARITY'), '1');
 if isempty(which('pls4all.pls_fit'))
     if strict
         error('nirs4all:testFailed', 'pls4all MATLAB/Octave binding is required for strict parity');
@@ -23,11 +24,11 @@ if isempty(which('pls4all.pls_fit'))
     return
 end
 
-oraclePath = getenv('NIRS4ALL_LITE_PARITY_ORACLE');
+oraclePath = envOrLegacy('NIRS4ALL_CORE_PARITY_ORACLE', 'NIRS4ALL_LITE_PARITY_ORACLE');
 if isempty(oraclePath)
     oraclePath = fullfile(root, 'tests', 'parity', 'expected', 'portable_python_oracle.json');
 end
-fixtureRoot = getenv('NIRS4ALL_LITE_PARITY_FIXTURES');
+fixtureRoot = envOrLegacy('NIRS4ALL_CORE_PARITY_FIXTURES', 'NIRS4ALL_LITE_PARITY_FIXTURES');
 if isempty(fixtureRoot)
     fixtureRoot = fullfile(root, 'tests', 'parity', 'fixtures');
 end
@@ -116,5 +117,12 @@ if isempty(a)
     diff = 0;
 else
     diff = max(abs(a - e));
+end
+end
+
+function value = envOrLegacy(primary, legacy)
+value = getenv(primary);
+if isempty(value)
+    value = getenv(legacy);
 end
 end

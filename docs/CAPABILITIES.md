@@ -95,7 +95,8 @@ present**. Without it, every binding degrades honestly:
 - the run entry point raises a clear "capability unavailable" style error
   (e.g. R's "does not expose …", MATLAB's `nirs4all:MissingMethods`, the Rust
   loader error, the strict-parity skip guarded by
-  `NIRS4ALL_LITE_REQUIRE_METHODS_PARITY`), never a silent local re-implementation.
+  `NIRS4ALL_CORE_REQUIRE_METHODS_PARITY`), never a silent local re-implementation.
+  The old `NIRS4ALL_LITE_*` environment variables remain compatibility aliases.
 
 The shared numeric oracle is
 `tests/parity/expected/portable_python_oracle.json`, generated from the full

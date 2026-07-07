@@ -62,5 +62,5 @@ octave --quiet --eval "run('bindings/matlab/tests/smoke.m')"
 Strict execution parity against the full Python `nirs4all` oracle:
 
 ```bash
-NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 make test-matlab-parity
+NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 make test-matlab-parity
 ```

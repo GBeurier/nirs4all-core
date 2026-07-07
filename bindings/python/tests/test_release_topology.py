@@ -505,6 +505,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         npm_runs = _job_run_text(npm_job)
         self.assertIn("cmake --preset emscripten", npm_runs)
         self.assertIn("NIRS4ALL_METHODS_JS_DIST=", npm_runs)
+        self.assertIn("NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1", npm_runs)
         self.assertIn("NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1", npm_runs)
         self.assertIn("npm test --prefix bindings/wasm", npm_runs)
         makefile = (ROOT / "Makefile").read_text()
@@ -527,6 +528,10 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertIn("cmake --preset dev-release", r_runs)
         self.assertIn("make test-r-parity", r_runs)
         r_parity_step = _step_by_name(r_job, "Run strict R parity against the Python oracle")
+        self.assertEqual(
+            r_parity_step["env"]["NIRS4ALL_CORE_REQUIRE_METHODS_PARITY"],
+            "1",
+        )
         self.assertEqual(
             r_parity_step["env"]["NIRS4ALL_LITE_REQUIRE_METHODS_PARITY"],
             "1",
@@ -551,6 +556,10 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         matlab_parity_step = _step_by_name(
             matlab_job,
             "Run strict MATLAB/Octave parity against the Python oracle",
+        )
+        self.assertEqual(
+            matlab_parity_step["env"]["NIRS4ALL_CORE_REQUIRE_METHODS_PARITY"],
+            "1",
         )
         self.assertEqual(
             matlab_parity_step["env"]["NIRS4ALL_LITE_REQUIRE_METHODS_PARITY"],

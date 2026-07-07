@@ -32,11 +32,16 @@ export function requireMethodsArtifact(t) {
   }
 
   const message = missingMethodsArtifactMessage(artifact);
-  if (process.env.NIRS4ALL_LITE_REQUIRE_METHODS_PARITY === '1') {
+  if (strictMethodsParity()) {
     throw new Error(message);
   }
   t.skip(message);
   return null;
+}
+
+function strictMethodsParity() {
+  return process.env.NIRS4ALL_CORE_REQUIRE_METHODS_PARITY === '1'
+    || process.env.NIRS4ALL_LITE_REQUIRE_METHODS_PARITY === '1';
 }
 
 function methodsIndexUrl(pathOrFile) {
@@ -48,6 +53,6 @@ function missingMethodsArtifactMessage(artifact) {
   return [
     `local nirs4all-methods JS/WASM build is not available (${artifact.source}: ${artifact.distPath}; missing ${artifact.missing.join(', ')})`,
     'build/stage it in the Methods checkout with: cmake --preset emscripten && cmake --build --preset emscripten --target pls4all_wasm --parallel && cd bindings/js && npm ci && npm run build && npm run stage:wasm',
-    'then rerun with NIRS4ALL_METHODS_JS_DIST=/path/to/nirs4all-methods/bindings/js/dist and NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1',
+    'then rerun with NIRS4ALL_METHODS_JS_DIST=/path/to/nirs4all-methods/bindings/js/dist and NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1',
   ].join('; ');
 }
