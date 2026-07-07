@@ -55,7 +55,7 @@ def _stable_hash(payload: Any) -> str:
 def _load_python(pipeline_path: Path) -> dict[str, Any]:
     _ensure_python_paths()
 
-    import nirs4all_lite as n4a
+    import nirs4all_core as n4a
 
     definition = n4a.load_pipeline_definition(pipeline_path)
     return {
@@ -243,7 +243,7 @@ def _execution_evidence(surface: str, actual: dict[str, Any], extra: dict[str, A
 def _run_python_execution(pipeline_path: Path, dataset: dict[str, Any]) -> dict[str, Any]:
     _ensure_python_paths()
 
-    import nirs4all_lite as n4a
+    import nirs4all_core as n4a
 
     actual = n4a.run_portable_pipeline(pipeline_path, dataset)
     return _execution_evidence("bindings/python", actual)

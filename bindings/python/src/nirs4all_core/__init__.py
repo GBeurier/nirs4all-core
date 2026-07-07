@@ -1,55 +1,78 @@
-"""``nirs4all_core`` -- core-contract facade of the aggregate.
+"""Python surface for the nirs4all-core aggregate distribution."""
 
-RC V1 topology: the portable nirs4all aggregate ships as the
-``nirs4all-core`` distribution (renamed from ``nirs4all-lite``). The canonical
-import root stays ``nirs4all_lite`` for compatibility; this additive
-``nirs4all_core`` import alias matches the distribution name so downstream
-code can standardize on it without breakage.
+__version__ = "0.3.0"
 
-The public ``nirs4all_core`` contract advertises only inspection, validation,
-capability, release-topology, and facade APIs. Execution helpers from
-``nirs4all_lite`` remain reachable through the compatibility passthrough, but
-they are deliberately outside ``nirs4all_core.__all__`` so ``import *`` and
-release manifest checks do not treat core as an execution engine.
+from ._capabilities import (
+    capability_manifest,
+    controller_capabilities,
+    runtime_contracts,
+    runtime_surfaces,
+)
+from ._execution import PortableDataset, parse_execution_plan, run_portable_pipeline
+from ._pipeline import (
+    PORTABLE_OPERATOR_CLASSES,
+    PipelineDefinition,
+    load_pipeline_definition,
+    portable_class_names,
+)
+from ._topology import (
+    CORE_FACADE_EXPORTS,
+    EXECUTION_ENGINE_EXPORTS,
+    TOPOLOGY_EXPORTS,
+    core_facade_exports,
+    execution_engine_exports,
+    release_topology_manifest,
+    validate_core_facade,
+)
+from ._upstreams import (
+    LazyUpstream,
+    Upstream,
+    available_upstreams,
+    import_upstream,
+    require_upstream,
+    upstream_status,
+    upstreams,
+)
 
-Core-style imports are stable::
+dag_ml = LazyUpstream("dag_ml")
+dag_ml_data = LazyUpstream("dag_ml_data")
+datasets = LazyUpstream("datasets")
+formats = LazyUpstream("formats")
+io = LazyUpstream("io")
+methods = LazyUpstream("methods")
 
-    import nirs4all_core as n4a_core
+__aggregate_import__ = __name__
 
-    n4a_core.upstream_status()
-    n4a_core.load_pipeline_definition(config)
-
-The legacy ``nirs4all_lite`` import surface is unchanged and fully supported.
-"""
-
-from __future__ import annotations
-
-from typing import Any
-
-import nirs4all_lite as _aggregate
-
-CORE_FACADE_EXPORTS = _aggregate.CORE_FACADE_EXPORTS
-TOPOLOGY_EXPORTS = _aggregate.TOPOLOGY_EXPORTS
-
-#: Import package currently backing this alias (``nirs4all_lite``). The
-#: ``nirs4all-core`` distribution keeps ``nirs4all_lite`` as its canonical
-#: import root; this alias forwards to that shipped aggregate.
-__aggregate_import__ = _aggregate.__name__
-__version__ = _aggregate.__version__
-
-__all__ = list(CORE_FACADE_EXPORTS + TOPOLOGY_EXPORTS)
-
-for _name in __all__:
-    globals()[_name] = getattr(_aggregate, _name)
-
-
-def __getattr__(name: str) -> Any:
-    """Forward any non-re-exported attribute to the backing aggregate package."""
-
-    return getattr(_aggregate, name)
-
-
-def __dir__() -> list[str]:
-    """Return the advertised core facade surface plus normal module globals."""
-
-    return sorted(set(__all__) | set(globals()))
+__all__ = [
+    "LazyUpstream",
+    "PORTABLE_OPERATOR_CLASSES",
+    "PortableDataset",
+    "PipelineDefinition",
+    "CORE_FACADE_EXPORTS",
+    "EXECUTION_ENGINE_EXPORTS",
+    "TOPOLOGY_EXPORTS",
+    "Upstream",
+    "available_upstreams",
+    "capability_manifest",
+    "core_facade_exports",
+    "controller_capabilities",
+    "dag_ml",
+    "dag_ml_data",
+    "datasets",
+    "execution_engine_exports",
+    "formats",
+    "import_upstream",
+    "io",
+    "load_pipeline_definition",
+    "methods",
+    "parse_execution_plan",
+    "portable_class_names",
+    "release_topology_manifest",
+    "require_upstream",
+    "run_portable_pipeline",
+    "runtime_contracts",
+    "runtime_surfaces",
+    "upstream_status",
+    "upstreams",
+    "validate_core_facade",
+]

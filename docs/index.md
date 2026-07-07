@@ -1,6 +1,6 @@
 # nirs4all-core
 
-`nirs4all-core` (formerly `nirs4all-lite`) is the **portable aggregate
+`nirs4all-core` is the **portable aggregate
 distribution** of the nirs4all
 ecosystem. It is a thin portability layer that records the same upstream domain
 map across **Rust, Python, R, MATLAB/Octave, and JavaScript/WASM** from one
@@ -40,24 +40,23 @@ canonical package surface, native bindings, release glue, and parity checks.
 
 ## Package names
 
-The Python distribution is named `nirs4all-core` (RC V1 rename from
-`nirs4all-lite`; the canonical import root stays `nirs4all_lite`) so it does not
-collide with the full Python `nirs4all` library. **Every other binding uses
-`nirs4all`.** This shared name is a packaging convention, not a promise that
-each non-Python host has runtime bindings for all six upstream domains.
+The Python distribution is named `nirs4all-core` and imports as
+`nirs4all_core` so it does not collide with the full Python `nirs4all` library.
+**Every other binding uses `nirs4all`.** This shared name is a packaging
+convention, not a promise that each non-Python host has runtime bindings for
+all six upstream domains.
 
 | Target | External name | Import / module name |
 | --- | --- | --- |
-| Python | `nirs4all-core` | `nirs4all_lite` |
+| Python | `nirs4all-core` | `nirs4all_core` |
 | Rust | `nirs4all` | `nirs4all` |
 | JavaScript/WASM | `nirs4all` | `nirs4all` |
 | R | `nirs4all` | `library(nirs4all)` |
 | MATLAB/Octave | `nirs4all` | `+nirs4all` namespace |
 
-In Python the aggregate additionally exposes two **additive, non-shadowing**
-import facades (see [](NAMING.md)): the brand root `n4a` (`import n4a`) and the
-`nirs4all_core` alias matching the distribution name. Both only re-export
-`nirs4all_lite`.
+In Python the aggregate additionally exposes the **additive, non-shadowing**
+brand facade `n4a` (`import n4a`; see [Naming](NAMING.md)). It re-exports
+`nirs4all_core` without adding behavior.
 
 :::{note}
 This is the portable aggregate distribution. It is **not** `nirs4all-web` (the
@@ -83,7 +82,7 @@ The portable pipeline subset (Kennard-Stone, SNV, Savitzky-Golay, and a PLS
 component sweep) is parsed from the same JSON/YAML definition envelope used by
 the full Python `nirs4all`, then executed through `nirs4all-methods` and compared
 against the full Python `nirs4all` oracle in every binding. See
-[](PARITY.md) for the parity strategy and gates.
+[PARITY.md](PARITY.md) for the parity strategy and gates.
 
 ```{toctree}
 :maxdepth: 2

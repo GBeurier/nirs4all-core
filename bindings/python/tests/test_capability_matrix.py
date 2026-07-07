@@ -24,7 +24,7 @@ import re
 import unittest
 from pathlib import Path
 
-import nirs4all_lite as n4lite
+import nirs4all_core as n4core
 
 try:
     import tomllib
@@ -58,7 +58,7 @@ EXPECTED_RUNTIME_CONTRACT_SURFACES = (
     "matlab_octave",
 )
 RUNTIME_ENTRYPOINT_SOURCES = {
-    "python": ROOT / "bindings/python/src/nirs4all_lite/_execution.py",
+    "python": ROOT / "bindings/python/src/nirs4all_core/_execution.py",
     "r": ROOT / "bindings/r/R/execution.R",
     "javascript_wasm": ROOT / "bindings/wasm/src/index.js",
     "rust": ROOT / "bindings/rust/nirs4all/src/lib.rs",
@@ -122,7 +122,7 @@ class PortableSubsetLedgerTests(unittest.TestCase):
         caps = _load_capabilities()
         self.assertEqual(
             sorted(caps["portable_operator_subset"]),
-            sorted(n4lite.PORTABLE_OPERATOR_CLASSES),
+            sorted(n4core.PORTABLE_OPERATOR_CLASSES),
         )
 
     def test_portable_pipeline_delegates_to_a_registered_upstream(self) -> None:
@@ -130,7 +130,7 @@ class PortableSubsetLedgerTests(unittest.TestCase):
         pipeline = caps["portable_pipeline"]
 
         self.assertEqual(pipeline["upstream"], "methods")
-        self.assertIn(pipeline["upstream"], n4lite.upstreams)
+        self.assertIn(pipeline["upstream"], n4core.upstreams)
         self.assertTrue((ROOT / pipeline["oracle"]).exists())
 
 
@@ -176,15 +176,15 @@ class UpstreamDomainHonestyTests(unittest.TestCase):
         caps = _load_capabilities()
         keys = set(caps["upstream_domains"]["keys"])
 
-        self.assertTrue(keys <= set(n4lite.upstreams))
+        self.assertTrue(keys <= set(n4core.upstreams))
         # `methods` is the executed upstream, not a metadata-only domain.
         self.assertNotIn("methods", keys)
-        self.assertEqual(keys | {"methods"}, set(n4lite.upstreams))
+        self.assertEqual(keys | {"methods"}, set(n4core.upstreams))
 
 
 class CustomHostCapabilityManifestTests(unittest.TestCase):
     def test_manifest_is_serializable_and_deep_copied(self) -> None:
-        manifest = n4lite.capability_manifest()
+        manifest = n4core.capability_manifest()
         json.dumps(manifest)
 
         self.assertEqual(manifest["schema"], "nirs4all-core.capabilities.v1")
@@ -192,19 +192,19 @@ class CustomHostCapabilityManifestTests(unittest.TestCase):
 
         manifest["controllers"][0]["id"] = "mutated"
         self.assertEqual(
-            n4lite.capability_manifest()["controllers"][0]["id"],
+            n4core.capability_manifest()["controllers"][0]["id"],
             EXPECTED_CONTROLLER_IDS[0],
         )
 
     def test_runtime_surfaces_are_declared_once_in_toml_and_python(self) -> None:
         caps = _load_capabilities()
-        manifest = n4lite.capability_manifest()
+        manifest = n4core.capability_manifest()
 
         self.assertEqual(set(caps["runtime_surfaces"]), EXPECTED_RUNTIME_SURFACES)
-        self.assertEqual(set(n4lite.runtime_surfaces()), EXPECTED_RUNTIME_SURFACES)
+        self.assertEqual(set(n4core.runtime_surfaces()), EXPECTED_RUNTIME_SURFACES)
         self.assertEqual(set(manifest["runtime_surfaces"]), EXPECTED_RUNTIME_SURFACES)
         self.assertEqual(
-            tuple(item["surface"] for item in n4lite.runtime_contracts()),
+            tuple(item["surface"] for item in n4core.runtime_contracts()),
             EXPECTED_RUNTIME_CONTRACT_SURFACES,
         )
         self.assertEqual(
@@ -216,7 +216,7 @@ class CustomHostCapabilityManifestTests(unittest.TestCase):
         caps = _load_capabilities()
         ladder = _ladder_from_operators_doc()
         toml_rows = {item["surface"]: item for item in caps["runtime_contract"]}
-        manifest_rows = {item["surface"]: item for item in n4lite.runtime_contracts()}
+        manifest_rows = {item["surface"]: item for item in n4core.runtime_contracts()}
 
         self.assertEqual(tuple(toml_rows), EXPECTED_RUNTIME_CONTRACT_SURFACES)
         self.assertEqual(set(manifest_rows), set(toml_rows))
@@ -260,7 +260,7 @@ class CustomHostCapabilityManifestTests(unittest.TestCase):
         self.assertIn(wasm_row["predict_entrypoint"], _read(gate))
 
     def test_controller_ids_and_composition_are_stable(self) -> None:
-        controllers = n4lite.controller_capabilities()
+        controllers = n4core.controller_capabilities()
         by_id = {item["id"]: item for item in controllers}
 
         self.assertEqual(tuple(by_id), EXPECTED_CONTROLLER_IDS)
@@ -270,14 +270,14 @@ class CustomHostCapabilityManifestTests(unittest.TestCase):
         )
 
     def test_controller_manifest_covers_the_portable_operator_subset(self) -> None:
-        controllers = n4lite.controller_capabilities()
+        controllers = n4core.controller_capabilities()
         covered_classes = {
             class_name
             for controller in controllers
             for class_name in controller["operator_classes"]
         }
 
-        self.assertEqual(covered_classes, set(n4lite.PORTABLE_OPERATOR_CLASSES))
+        self.assertEqual(covered_classes, set(n4core.PORTABLE_OPERATOR_CLASSES))
         for controller in controllers:
             with self.subTest(controller=controller["id"]):
                 self.assertEqual(controller["domain"], "methods")
@@ -287,7 +287,7 @@ class CustomHostCapabilityManifestTests(unittest.TestCase):
     def test_toml_controller_rows_match_the_python_manifest(self) -> None:
         caps = _load_capabilities()
         toml_rows = {item["id"]: item for item in caps["controller"]}
-        manifest_rows = {item["id"]: item for item in n4lite.controller_capabilities()}
+        manifest_rows = {item["id"]: item for item in n4core.controller_capabilities()}
 
         self.assertEqual(tuple(toml_rows), EXPECTED_CONTROLLER_IDS)
         self.assertEqual(set(manifest_rows), set(toml_rows))
@@ -321,7 +321,7 @@ class CustomHostCapabilityManifestTests(unittest.TestCase):
 
     def test_controller_runtime_levels_are_explicit_and_valid(self) -> None:
         ladder = _ladder_from_operators_doc()
-        for controller in n4lite.controller_capabilities():
+        for controller in n4core.controller_capabilities():
             with self.subTest(controller=controller["id"]):
                 runtime = controller["runtime"]
                 self.assertEqual(set(runtime), EXPECTED_RUNTIME_SURFACES)

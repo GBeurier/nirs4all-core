@@ -8,10 +8,10 @@ engines, so its API is mostly about **reaching the upstream domains** and
 ## Import
 
 The Python distribution is `nirs4all-core` but the import package is
-`nirs4all_lite`:
+`nirs4all_core`:
 
 ```python
-import nirs4all_lite as n4lite
+import nirs4all_core as n4core
 ```
 
 ## Inspect which upstreams are available
@@ -20,14 +20,14 @@ import nirs4all_lite as n4lite
 upstream is installed. Check what is reachable in your environment:
 
 ```python
-import nirs4all_lite as n4lite
+import nirs4all_core as n4core
 
 # {'dag_ml': False, 'dag_ml_data': False, 'formats': False,
 #  'io': False, 'datasets': False, 'methods': False}
-print(n4lite.available_upstreams())
+print(n4core.available_upstreams())
 
 # A serializable status table with the resolved candidate and role per upstream
-for entry in n4lite.upstream_status():
+for entry in n4core.upstream_status():
     print(entry["key"], entry["available"], entry["role"])
 ```
 
@@ -41,13 +41,13 @@ attribute access. Install the matching extra (for example
 `pip install "nirs4all-core[methods]"`) before using one:
 
 ```python
-import nirs4all_lite as n4lite
+import nirs4all_core as n4core
 
 # Lazily resolves nirs4all-methods (or its known candidates) on first use.
-methods = n4lite.methods.module()
+methods = n4core.methods.module()
 
 # Or raise a clear error if an upstream is missing:
-formats = n4lite.require_upstream("formats")
+formats = n4core.require_upstream("formats")
 ```
 
 If an upstream is not installed, `require_upstream` raises an `ImportError` that
@@ -61,9 +61,9 @@ full Python `nirs4all`, restricted to the portable operator subset
 (Kennard-Stone, SNV, Savitzky-Golay, and a PLS component sweep):
 
 ```python
-import nirs4all_lite as n4lite
+import nirs4all_core as n4core
 
-definition = n4lite.load_pipeline_definition(
+definition = n4core.load_pipeline_definition(
     {
         "name": "snv-pls",
         "pipeline": [
@@ -95,16 +95,16 @@ matrices):
 
 ```python
 import numpy as np
-import nirs4all_lite as n4lite
+import nirs4all_core as n4core
 
-dataset = n4lite.PortableDataset(
+dataset = n4core.PortableDataset(
     X=np.asarray(X),  # shape (n_samples, n_wavelengths)
     y=np.asarray(y),  # shape (n_samples,)
 )
 
-result = n4lite.run_portable_pipeline(definition, dataset)
+result = n4core.run_portable_pipeline(definition, dataset)
 ```
 
-See [](PARITY.md) for the exact fixtures and the strict execution-parity gates,
-and [](BINDINGS) for the equivalent entry points in Rust, R, MATLAB/Octave, and
-JavaScript/WASM.
+See [PARITY.md](PARITY.md) for the exact fixtures and the strict
+execution-parity gates, and [BINDINGS.md](BINDINGS.md) for the equivalent entry
+points in Rust, R, MATLAB/Octave, and JavaScript/WASM.

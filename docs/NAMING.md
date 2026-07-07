@@ -1,7 +1,7 @@
 # Naming & aggregate facade (LOCK-GOV)
 
 This page records the governed naming of the portable aggregate and the
-**additive** import facades introduced by the first `LOCK-GOV` slice. It is the
+**additive** import facade introduced by the `LOCK-GOV` slice. It is the
 Python-facing companion to the ecosystem governance decisions (`GOV-003`
 per-language source-of-truth names, `GOV-004` alias/token policy).
 
@@ -10,11 +10,11 @@ per-language source-of-truth names, `GOV-004` alias/token policy).
 The aggregate is published under the bare `nirs4all` name in every host language
 **except Python**, where the full `nirs4all` modelling library already owns that
 import root. To avoid colliding with it, the Python aggregate ships as
-`nirs4all-core` (canonical import `nirs4all_lite`).
+`nirs4all-core` (canonical import `nirs4all_core`).
 
 | Target | Distribution / external name | Import / module name |
 | --- | --- | --- |
-| Python | `nirs4all-core` | `nirs4all_lite` |
+| Python | `nirs4all-core` | `nirs4all_core` |
 | Rust | `nirs4all` | `nirs4all` |
 | JavaScript/WASM | `nirs4all` | `nirs4all` |
 | R | `nirs4all` | `library(nirs4all)` |
@@ -25,47 +25,31 @@ namespace name. It does not imply that every upstream domain has an executable
 runtime binding in that host language; unavailable domains remain aggregate
 metadata until their owning upstream publishes the corresponding binding.
 
-## Applied: `nirs4all-lite` → `nirs4all-core` (RC V1)
+## Applied Core Naming
 
-The governance direction promoted the aggregate from `lite` to
-**`nirs4all-core`** (SW2 `GOV-003`, A13 `DEC-GOV-002`, RC V1 control board).
-This is a *concept* rename, **not** a single literal rename across ecosystems:
-Rust/npm/R/MATLAB already use the bare `nirs4all` name and are unaffected. Only
-the Python distribution name changed.
+The governance direction promotes the aggregate as **`nirs4all-core`** in
+Python packaging while Rust/npm/R/MATLAB use the bare `nirs4all` name. This is
+an ecosystem-specific packaging rule, not a separate implementation per
+language.
 
-The RC V1 head applies the rename in package metadata (Phase R1 of
-[`CORE_RENAME.md`](CORE_RENAME.md)):
-
-- The Python distribution is **`nirs4all-core`**. `nirs4all-lite` is the legacy
-  distribution name; per the rename runbook it stays installable on PyPI and its
-  final release becomes a thin alias that depends on `nirs4all-core` (Phase R2,
-  registry action — never yank existing versions).
-- The **canonical import root stays `nirs4all_lite`** so every existing import
-  keeps working. Inverting canonicity (making `nirs4all_core` the implementation
-  and `nirs4all_lite` the alias) is deliberately deferred: the ecosystem
-  release-lock reads `bindings/python/src/nirs4all_lite/_topology.py` by path
-  and must be updated in lockstep with any such move.
-- The **additive `nirs4all_core` import facade** matches the distribution name.
-  Its advertised public contract is deliberately core-only: inspection,
-  validation, capability reporting, release topology, and facade access.
-  Execution helpers from `nirs4all_lite` stay reachable through compatibility
-  passthrough, but they are not part of `nirs4all_core.__all__`.
-- GitHub repo and Read the Docs now use `nirs4all-core`. The remaining external
-  admin action is the PyPI Trusted Publisher for `nirs4all-core`, plus the final
-  `nirs4all-lite` alias release.
+- The Python distribution is **`nirs4all-core`**.
+- The canonical Python import root is **`nirs4all_core`**.
+- The package exposes the full aggregate surface, including runtime helpers that
+  delegate to upstream projects.
+- GitHub, Read the Docs, and release automation use `nirs4all-core`.
+- No public legacy alias release is part of the RC target.
 
 ```python
-import nirs4all_core          # alias matching the distribution name (additive)
-import nirs4all_lite          # canonical import — unchanged
-assert nirs4all_core.upstreams is nirs4all_lite.upstreams
-assert "run_portable_pipeline" not in nirs4all_core.__all__
+import nirs4all_core
+
+assert "run_portable_pipeline" in nirs4all_core.__all__
 ```
 
 ## The `n4a` facade (additive brand root)
 
 `n4a` is a short, brand-aligned Python import root (`n4a` = "nirs4all") that
 re-exports the full public surface of the aggregate. It adds no behavior; it is
-a facade over `nirs4all_lite`.
+a facade over `nirs4all_core`.
 
 ```python
 import n4a
@@ -74,16 +58,14 @@ n4a.upstream_status()
 plan = n4a.parse_execution_plan(config)
 ```
 
-Both facades are **additive and non-shadowing**: they never remove or rename the
-`nirs4all_lite` surface, and — per the Python strategic-path rule — they do
-**not** define a top-level `nirs4all` Python module, so the full `nirs4all`
-library and the aggregate continue to coexist.
+The facade is **additive and non-shadowing**: it does not define a top-level
+`nirs4all` Python module, so the full `nirs4all` library and the aggregate can
+continue to coexist during the production cutover.
 
 The package exposes `release_topology_manifest()` as a machine-checkable summary
 of this contract (schema `nirs4all-core.release-topology.v2`). It records that
-the current Python distribution is `nirs4all-core`, that `nirs4all-lite` is the
-superseded legacy name, and that the `nirs4all_core` import contract is not an
-execution engine.
+the current Python distribution is `nirs4all-core`, that `nirs4all_core` is the
+canonical import, and that `n4a` is an additive brand facade.
 
 ## `n4a` token disambiguation (GOV-004)
 

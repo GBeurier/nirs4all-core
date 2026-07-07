@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nirs4all-core"
-version = "0.2.13"
+version = "0.3.0"
 description = "Portable nirs4all aggregate binding over formats, IO, methods, dag-ml, and dag-ml-data (datasets optional)"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -53,10 +53,8 @@ Documentation = "https://nirs4all-core.readthedocs.io/en/latest/"
 Repository = "https://github.com/GBeurier/nirs4all-core"
 Issues = "https://github.com/GBeurier/nirs4all-core/issues"
 
-# The wheel ships the canonical aggregate package (`nirs4all_lite`, kept as the
-# stable legacy import root) plus two additive, non-shadowing import facades
-# (LOCK-GOV): the brand-aligned `n4a` root and the `nirs4all_core` alias that
-# matches the `nirs4all-core` distribution name (RC V1 rename from
-# `nirs4all-lite`). Both only re-export `nirs4all_lite`.
+# The wheel ships the canonical aggregate package (`nirs4all_core`) plus the
+# additive, non-shadowing brand facade (`n4a`). The full Python `nirs4all`
+# library remains a separate distribution until its production cutover.
 [tool.hatch.build.targets.wheel]
-packages = ["src/nirs4all_lite", "src/n4a", "src/nirs4all_core"]
+packages = ["src/nirs4all_core", "src/n4a"]

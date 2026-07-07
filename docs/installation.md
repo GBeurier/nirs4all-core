@@ -17,7 +17,7 @@ below).
 
 ## Python
 
-Distribution name `nirs4all-core`, imported as `nirs4all_lite`.
+Distribution name `nirs4all-core`, imported as `nirs4all_core`.
 
 ```bash
 pip install nirs4all-core

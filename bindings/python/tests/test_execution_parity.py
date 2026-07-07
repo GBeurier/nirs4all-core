@@ -3,7 +3,7 @@ import os
 import unittest
 from pathlib import Path
 
-import nirs4all_lite as n4lite
+import nirs4all_core as n4core
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -14,7 +14,7 @@ ORACLE_PATH = ROOT / "tests" / "parity" / "expected" / "portable_python_oracle.j
 def _strict_methods_parity() -> bool:
     return (
         os.environ.get("NIRS4ALL_CORE_REQUIRE_METHODS_PARITY") == "1"
-        or os.environ.get("NIRS4ALL_LITE_REQUIRE_METHODS_PARITY") == "1"
+        or os.environ.get("NIRS4ALL_CORE_REQUIRE_METHODS_PARITY") == "1"
     )
 
 
@@ -51,7 +51,7 @@ class ExecutionParityTests(unittest.TestCase):
         for expected in oracle["cases"]:
             with self.subTest(case=expected["name"]):
                 fixture = FIXTURE_DIR / f"{expected['name']}.json"
-                actual = n4lite.run_portable_pipeline(fixture, dataset)
+                actual = n4core.run_portable_pipeline(fixture, dataset)
 
                 self.assertEqual(actual["split"], expected["split"])
                 self.assertLessEqual(

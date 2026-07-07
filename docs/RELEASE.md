@@ -24,20 +24,19 @@ Before release:
 6. Verify external operator capability levels: metadata-only operators must not
    be marketed as executable, and executable operators must have parity fixtures.
 7. Verify the Python release topology manifest: the current distribution is
-   `nirs4all-core` (legacy `nirs4all-lite` marked superseded), additive imports
-   are limited to `n4a` / `nirs4all_core`, and `nirs4all_core` advertises no
-   execution-engine exports.
+   `nirs4all-core`, `nirs4all_core` is the canonical import, `n4a` is the only
+   additive Python facade, and execution exports are delegated to upstream
+   projects.
 8. Publish artifacts and record provenance in the release notes.
 
-`nirs4all_lite.release_topology_manifest()` is the aggregate-side consumer
+`nirs4all_core.release_topology_manifest()` is the aggregate-side consumer
 contract for ecosystem release manifests (schema
 `nirs4all-core.release-topology.v2`). It records the current `nirs4all-core`
-Python distribution, the superseded legacy `nirs4all-lite` name, per-registry
-aggregate artifact rows, explicit V1 Python/R/JavaScript-WASM surface gates, Python
-facade namespaces, optional upstream policy (notably external
-`nirs4all-datasets`), and license/SBOM/`nirs4all-methods` C ABI pointers.
-Central release tooling should consume these fields instead of re-deriving
-current-vs-legacy topology from prose.
+Python distribution, per-registry aggregate artifact rows, explicit V1
+Python/R/JavaScript-WASM surface gates, Python facade namespaces, optional
+upstream policy (notably external `nirs4all-datasets`), and
+license/SBOM/`nirs4all-methods` C ABI pointers. Central release tooling should
+consume these fields instead of re-deriving topology from prose.
 
 Local artifact commands:
 

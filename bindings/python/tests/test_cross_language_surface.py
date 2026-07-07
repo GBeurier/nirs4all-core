@@ -1,9 +1,9 @@
 """Static cross-language public-surface parity gate for the aggregate.
 
-The nirs4all-core aggregate (formerly ``nirs4all-lite``) public surface is
-declared once per language binding. Three invariants must hold for the aggregate
-to be truthful, and none of them is otherwise checked when R, Node, Octave, or a
-Rust toolchain are unavailable (those runtime gates simply skip):
+The nirs4all-core aggregate public surface is declared once per language
+binding. Three invariants must hold for the aggregate to be truthful, and none
+of them is otherwise checked when R, Node, Octave, or a Rust toolchain are
+unavailable (those runtime gates simply skip):
 
 1. The portable operator subset is identical across **all five** language
    bindings (Python, WASM, R, MATLAB/Octave, Rust).
@@ -29,7 +29,7 @@ import re
 import unittest
 from pathlib import Path
 
-import nirs4all_lite as n4lite
+import nirs4all_core as n4core
 
 try:
     import tomllib
@@ -192,14 +192,14 @@ class VersionMetadataParityTests(unittest.TestCase):
             pyproject["project"]["version"],
             _cargo_to_pep440(cargo_version),
         )
-        self.assertEqual(n4lite.__version__, pyproject["project"]["version"])
+        self.assertEqual(n4core.__version__, pyproject["project"]["version"])
         self.assertEqual(wasm_package["version"], cargo_version)
         self.assertEqual(wasm_lock["version"], cargo_version)
         self.assertEqual(wasm_lock["packages"][""]["version"], cargo_version)
         self.assertEqual(r_description["Version"], _cargo_to_r(cargo_version))
 
     def test_release_surface_version_metadata_covers_all_bindings(self) -> None:
-        manifest = n4lite.release_topology_manifest()
+        manifest = n4core.release_topology_manifest()
         surfaces = {item["ecosystem"]: item for item in manifest["v1_release_surfaces"]}
         expected = {
             "python": ("bindings/python/pyproject.toml:project.version", "pep440"),
@@ -236,7 +236,7 @@ class VersionMetadataParityTests(unittest.TestCase):
 
 class PortableOperatorSubsetParityTests(unittest.TestCase):
     def test_operator_subset_is_identical_across_all_bindings(self) -> None:
-        python = set(n4lite.PORTABLE_OPERATOR_CLASSES)
+        python = set(n4core.PORTABLE_OPERATOR_CLASSES)
         self.assertEqual(len(python), EXPECTED_OPERATOR_COUNT)
 
         extractors = {
@@ -260,7 +260,7 @@ class PortableOperatorSubsetParityTests(unittest.TestCase):
 
 class UpstreamRegistryParityTests(unittest.TestCase):
     def test_upstream_keys_are_identical_and_ordered_across_bindings(self) -> None:
-        python = list(n4lite.upstreams)
+        python = list(n4core.upstreams)
         self.assertEqual(len(python), EXPECTED_UPSTREAM_COUNT)
 
         wasm_keys, _ = _wasm_upstreams()
@@ -281,7 +281,7 @@ class UpstreamRegistryParityTests(unittest.TestCase):
                 self.assertEqual(keys, python)
 
     def test_upstream_role_strings_match_across_bindings_and_compat(self) -> None:
-        python = {name: item.role for name, item in n4lite.upstreams.items()}
+        python = {name: item.role for name, item in n4core.upstreams.items()}
         self.assertEqual(len(python), EXPECTED_UPSTREAM_COUNT)
 
         _, wasm_roles = _wasm_upstreams()

@@ -1,17 +1,11 @@
-env_value <- function(primary, legacy) {
-  value <- Sys.getenv(primary)
-  if (nzchar(value)) value else Sys.getenv(legacy)
-}
-
-strict <- identical(env_value("NIRS4ALL_CORE_REQUIRE_METHODS_PARITY",
-                              "NIRS4ALL_LITE_REQUIRE_METHODS_PARITY"), "1")
+strict <- identical(Sys.getenv("NIRS4ALL_CORE_REQUIRE_METHODS_PARITY"), "1")
 
 if (!requireNamespace("n4m", quietly = TRUE)) {
   if (strict) stop("n4m R binding is required for strict parity")
   message("Skipping R execution parity: n4m is not installed")
 } else {
   n4m_path <- find.package("n4m")
-  expected_r_lib <- env_value("NIRS4ALL_CORE_R_PARITY_LIB", "NIRS4ALL_LITE_R_PARITY_LIB")
+  expected_r_lib <- Sys.getenv("NIRS4ALL_CORE_R_PARITY_LIB")
   if (strict && nzchar(expected_r_lib)) {
     expected_r_lib <- normalizePath(expected_r_lib, mustWork = TRUE)
     n4m_path <- normalizePath(n4m_path, mustWork = TRUE)
@@ -26,7 +20,7 @@ if (!requireNamespace("n4m", quietly = TRUE)) {
                  paste(n4m_abi, collapse = ".")))
   }
 
-  oracle_path <- env_value("NIRS4ALL_CORE_PARITY_ORACLE", "NIRS4ALL_LITE_PARITY_ORACLE")
+  oracle_path <- Sys.getenv("NIRS4ALL_CORE_PARITY_ORACLE")
   if (!nzchar(oracle_path)) {
     oracle_path <- file.path("tests", "parity", "expected", "portable_python_oracle.json")
   }
@@ -34,7 +28,7 @@ if (!requireNamespace("n4m", quietly = TRUE)) {
     if (strict) stop(sprintf("Portable parity oracle not found: %s", oracle_path))
     message("Skipping R execution parity: oracle is not available")
   } else {
-    fixture_root <- env_value("NIRS4ALL_CORE_PARITY_FIXTURES", "NIRS4ALL_LITE_PARITY_FIXTURES")
+    fixture_root <- Sys.getenv("NIRS4ALL_CORE_PARITY_FIXTURES")
     if (!nzchar(fixture_root)) {
       fixture_root <- system.file("extdata", package = "nirs4all")
     }

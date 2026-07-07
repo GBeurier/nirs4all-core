@@ -2,7 +2,7 @@
 
 Distribution name: `nirs4all-core`
 
-Import name: `nirs4all_lite`
+Import name: `nirs4all_core`
 
 This binding intentionally avoids the `nirs4all` import name so it can be
 installed next to the full Python `nirs4all` package during parity checks.
@@ -10,17 +10,13 @@ The canonical source repository is `nirs4all-core`; only the Python
 distribution carries the `-core` suffix because the production `nirs4all`
 Python package already owns the bare name.
 
-Additive import facades are available for governed topology work:
+An additive import facade is available for governed topology work:
 
-- `n4a` mirrors the full `nirs4all_lite` aggregate surface.
-- `nirs4all_core` advertises the release-gated core contract only: inspection,
-  validation, capability reporting, release topology, and facade access. Legacy
-  execution helpers remain reachable through passthrough for compatibility, but
-  are excluded from `nirs4all_core.__all__`.
+- `n4a` mirrors the full `nirs4all_core` aggregate surface.
 
 ## Portable Execution
 
-`nirs4all_lite.run_portable_pipeline(source, dataset)` executes the shared
+`nirs4all_core.run_portable_pipeline(source, dataset)` executes the shared
 portable JSON/YAML subset through the `nirs4all-methods` Python bindings:
 
 - `KennardStoneSplitter`

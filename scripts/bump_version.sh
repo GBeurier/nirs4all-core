@@ -20,7 +20,7 @@
 #   * PEP 440     : `0.1.0a1` for `0.1.0-alpha.1`; `0.1.0b2` / `0.1.0rc1` for
 #                   beta / rc; plain `X.Y.Z` maps to itself.
 #                   bindings/python/pyproject.toml and the Python
-#                   nirs4all_lite.__version__ surface.
+#                   nirs4all_core.__version__ surface.
 #   * R           : the plain base `X.Y.Z` for a final release; `X.Y.Z.9000`
 #                   (the canonical R "in-development toward X.Y.Z" spelling)
 #                   for ANY pre-release — CRAN does not accept SemVer
@@ -306,7 +306,7 @@ update_with_sed \
     "s/^(version[[:space:]]*=[[:space:]]*\")[0-9A-Za-z.+!-]+(\")/\1${PEP440_VERSION}\2/"
 
 update_with_sed \
-    "bindings/python/src/nirs4all_lite/__init__.py" \
+    "bindings/python/src/nirs4all_core/__init__.py" \
     "${PEP440_VERSION}" \
     "^__version__[[:space:]]*=[[:space:]]*\"([0-9A-Za-z.+!-]+)\"" \
     "s/^(__version__[[:space:]]*=[[:space:]]*\")[0-9A-Za-z.+!-]+(\")/\1${PEP440_VERSION}\2/"

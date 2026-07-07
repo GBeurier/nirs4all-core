@@ -7,15 +7,12 @@
 # nirs4all-io / nirs4all-methods whose wheels carry a native libn4m / Rust core).
 #
 # PyPI name is `nirs4all-core` (NOT `nirs4all`): the `nirs4all` PyPI project is
-# the FULL Python library, so the lightweight aggregate ships under its own
-# distribution name (RC V1 rename from `nirs4all-lite`). The import name stays
-# `nirs4all_lite`.
+# the FULL Python library, so the aggregate ships under its own distribution
+# name. The canonical import is `nirs4all_core`; `n4a` is the short facade.
 #
 # Publishing uses GitHub OIDC Trusted Publishing (id-token: write) through the
 # `pypi` GitHub environment — NO API token. The maintainer must create a NEW
-# Trusted Publisher on pypi.org for project `nirs4all-core` (release blocker:
-# does not exist yet; the old `nirs4all-lite` publisher does not carry over)
-# with:
+# Trusted Publisher on pypi.org for project `nirs4all-core` with:
 #   owner = GBeurier, repo = nirs4all-core,
 #   workflow = release-python.yml, environment = pypi
 # (the SAME convention as nirs4all-formats / nirs4all-io / nirs4all-methods).

@@ -18,7 +18,7 @@
 Each host binding should provide:
 
 - a top-level `nirs4all` surface, except Python where the import is
-  `nirs4all_lite`;
+  `nirs4all_core`;
 - a shared registry for upstream domains: `formats`, `io`, `datasets`,
   `methods`, `dag_ml`, and `dag_ml_data`;
 - runtime accessors only for upstream bindings that exist in the host language;

@@ -1,7 +1,7 @@
 # Capability Matrix
 
 This page reports, honestly, what each language binding of the nirs4all aggregate
-(shipping as `nirs4all-core`, formerly `nirs4all-lite`) can actually
+(shipping as `nirs4all-core` in Python and `nirs4all` elsewhere) can actually
 *do* — not what it advertises. The capability vocabulary is the ladder defined in
 [`OPERATORS.md`](OPERATORS.md):
 
@@ -19,11 +19,11 @@ Custom hosts (`nirs4all-web`, Studio, `nirs4all-ui` consumers, and bespoke
 browser/desktop shells) can inspect the portable controller contract without
 duplicating local rules:
 
-- Python: `nirs4all_lite.capability_manifest()`,
-  `nirs4all_lite.controller_capabilities()`,
-  `nirs4all_lite.runtime_surfaces()`, and
-  `nirs4all_lite.runtime_contracts()`
-  (also exported through `n4a` and the no-engine `nirs4all_core` facade).
+- Python: `nirs4all_core.capability_manifest()`,
+  `nirs4all_core.controller_capabilities()`,
+  `nirs4all_core.runtime_surfaces()`, and
+  `nirs4all_core.runtime_contracts()`; the same surface is exported through
+  the additive `n4a` facade.
 - JavaScript/WASM: `capabilityManifest()`, `controllerCapabilities`, and
   `runtimeSurfaces` / `runtimeContracts` from the `nirs4all` package.
 - R: `nirs4all_capability_manifest()`,
@@ -96,7 +96,6 @@ present**. Without it, every binding degrades honestly:
   (e.g. R's "does not expose …", MATLAB's `nirs4all:MissingMethods`, the Rust
   loader error, the strict-parity skip guarded by
   `NIRS4ALL_CORE_REQUIRE_METHODS_PARITY`), never a silent local re-implementation.
-  The old `NIRS4ALL_LITE_*` environment variables remain compatibility aliases.
 
 The shared numeric oracle is
 `tests/parity/expected/portable_python_oracle.json`, generated from the full

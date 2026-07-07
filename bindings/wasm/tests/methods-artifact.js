@@ -40,8 +40,7 @@ export function requireMethodsArtifact(t) {
 }
 
 function strictMethodsParity() {
-  return process.env.NIRS4ALL_CORE_REQUIRE_METHODS_PARITY === '1'
-    || process.env.NIRS4ALL_LITE_REQUIRE_METHODS_PARITY === '1';
+  return process.env.NIRS4ALL_CORE_REQUIRE_METHODS_PARITY === '1';
 }
 
 function methodsIndexUrl(pathOrFile) {

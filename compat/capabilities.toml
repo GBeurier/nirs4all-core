@@ -1,6 +1,6 @@
 # Machine-readable capability ledger for the portable operator subset exposed by
-# each nirs4all aggregate language binding (shipping as `nirs4all-core`,
-# formerly `nirs4all-lite`).
+# each nirs4all aggregate language binding (shipping as `nirs4all-core` in
+# Python and `nirs4all` in non-Python registries).
 #
 # Capability levels use the vocabulary defined in docs/OPERATORS.md:
 #   metadata | plan | execute-local | execute-remote | parity-validated
@@ -13,7 +13,7 @@
 # the `methods` upstream (nirs4all-methods / libn4m / +n4m / n4m, with +pls4all compatibility).
 
 # The portable operator subset every binding must expose consistently. This list
-# MUST equal nirs4all_lite.PORTABLE_OPERATOR_CLASSES (checked by the gate) and is
+# MUST equal nirs4all_core.PORTABLE_OPERATOR_CLASSES (checked by the gate) and is
 # also cross-checked binding-by-binding in test_cross_language_surface.py.
 portable_operator_subset = [
   "nirs4all.operators.splitters.KennardStoneSplitter",
@@ -51,7 +51,7 @@ oracle = "tests/parity/expected/portable_python_oracle.json"
 language = "python"
 level = "parity-validated"
 run_symbol = "run_portable_pipeline"
-run_source = "bindings/python/src/nirs4all_lite/_execution.py"
+run_source = "bindings/python/src/nirs4all_core/_execution.py"
 parity_gate = "bindings/python/tests/test_execution_parity.py"
 execution = "nirs4all-methods Python binding (n4m / pls4all) via libn4m"
 

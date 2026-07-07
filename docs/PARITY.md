@@ -132,8 +132,7 @@ npm run stage:wasm
 
 Set `NIRS4ALL_METHODS_JS_DIST` when the methods checkout is not the default
 sibling. Set `NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1` to make a missing methods
-artifact fail instead of skip. The old `NIRS4ALL_LITE_*` names remain accepted
-as compatibility aliases during the V1 rename:
+artifact fail instead of skip:
 
 ```bash
 NIRS4ALL_METHODS_JS_DIST=/path/to/nirs4all-methods/bindings/js/dist \

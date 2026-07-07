@@ -158,7 +158,7 @@ def _compare_result(actual: dict[str, Any], expected: dict[str, Any], tolerance:
 
 def build_ledger(in_dir: Path, *, workspace_root: Path, tolerance: float) -> dict[str, Any]:
     _prepend_workspace_paths(workspace_root)
-    import nirs4all_lite as n4a
+    import nirs4all_core as n4a
 
     workspace_path = in_dir / "workspace.n4a.json"
     pipeline_path = in_dir / "pipeline.n4a.json"

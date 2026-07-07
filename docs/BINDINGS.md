@@ -26,21 +26,17 @@ Rust, JavaScript/WASM, R, and MATLAB/Octave publish as `nirs4all`. That shared
 name is only the package/namespace identity. The full six-domain aggregate is
 metadata plus re-export/load hooks; R and MATLAB/Octave do not currently have
 runtime bindings for every `dag_ml` / `formats` / `io` / `datasets` domain row.
-The canonical source repository for every binding remains `nirs4all-core`; the
-lite->core rename changes the Python distribution name, not the non-Python
-publication names.
+The canonical source repository for every binding remains `nirs4all-core`.
+Python publishes as `nirs4all-core`; non-Python targets publish as `nirs4all`.
 
 ## Python
 
-- Distribution name: `nirs4all-core` (renamed from `nirs4all-lite`).
-- Import name: `nirs4all_lite`.
-- Additive import facades (LOCK-GOV, see [naming](NAMING.md)): `n4a` is the
-  full brand-aligned aggregate facade (`import n4a`), while `nirs4all_core` is
-  the facade matching the `nirs4all-core` distribution name (renamed from
-  `nirs4all-lite`). `nirs4all_core.__all__` advertises only inspection,
-  validation, capability, release-topology, and facade APIs; legacy execution
-  helpers remain reachable through passthrough but are outside the core
-  contract.
+- Distribution name: `nirs4all-core`.
+- Import name: `nirs4all_core`.
+- Additive import facade (LOCK-GOV, see [naming](NAMING.md)): `n4a` is the
+  full brand-aligned aggregate facade (`import n4a`) over `nirs4all_core`.
+  `nirs4all_core.__all__` advertises the complete aggregate contract, including
+  execution helpers that delegate to upstream projects.
 - Framework idioms: sklearn-style estimators, `fit`/`predict`/`transform`,
   NumPy arrays, pandas data frames, and clear optional extras.
 - Future external operator adapters should look like normal sklearn-compatible

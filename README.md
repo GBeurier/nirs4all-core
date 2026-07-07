@@ -7,8 +7,8 @@
 
 # nirs4all-core
 
-`nirs4all-core` (formerly `nirs4all-lite`) is the portable aggregate
-publication of the low-level nirs4all stack. It aggregates:
+`nirs4all-core` is the portable aggregate publication of the low-level
+nirs4all stack. It aggregates:
 
 - `dag-ml`
 - `dag-ml-data`
@@ -29,16 +29,16 @@ IO, orchestration, or numerical kernels.
 
 | Target | External name | Import/module name |
 | --- | --- | --- |
-| Python | `nirs4all-core` | `nirs4all_lite` |
+| Python | `nirs4all-core` | `nirs4all_core` |
 | Rust | `nirs4all` | `nirs4all` |
 | JavaScript/WASM | `nirs4all` | `nirs4all` |
 | R | `nirs4all` | `library(nirs4all)` |
 | MATLAB/Octave | `nirs4all` | `+nirs4all` namespace |
 
-The Python distribution is `nirs4all-core` (RC V1 rename from `nirs4all-lite`);
-it cannot use the bare `nirs4all` name because the full Python `nirs4all`
-library owns it. Other language bindings use `nirs4all`. The canonical Python
-import root stays `nirs4all_lite` for compatibility.
+The Python distribution is `nirs4all-core`; it cannot use the bare `nirs4all`
+name because the full Python `nirs4all` library owns it. Other language
+bindings use `nirs4all`. The canonical Python import root is
+`nirs4all_core`.
 
 The Rust crate, npm package, R package, and MATLAB/Octave namespace named
 `nirs4all` are therefore release identities for the same `nirs4all-core`
@@ -55,10 +55,9 @@ upstream domain has a runtime binding in every language. The full six-domain
 aggregate is recorded as metadata and exposed through re-export/load hooks where
 the host ecosystem has a real upstream package.
 
-The Python aggregate also exposes two **additive, non-shadowing** import facades
-(see [`docs/NAMING.md`](docs/NAMING.md)): the brand root `n4a` (`import n4a`) and
-the `nirs4all_core` alias matching the distribution name. Both re-export
-`nirs4all_lite` verbatim and add no behavior.
+The Python aggregate also exposes the **additive, non-shadowing** brand facade
+`n4a` (`import n4a`; see [`docs/NAMING.md`](docs/NAMING.md)). It re-exports
+`nirs4all_core` verbatim and adds no behavior.
 
 ## Public surface
 

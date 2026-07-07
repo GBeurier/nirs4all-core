@@ -2,10 +2,9 @@
 
 ``n4a`` is the short, brand-aligned import root ("n4a" = nirs4all) for the
 portable nirs4all aggregate. It re-exports the full public surface of the
-aggregate -- shipped as the ``nirs4all-core`` distribution (renamed from
-``nirs4all-lite``) / the ``nirs4all_lite`` import package -- and adds no
-behavior of its own. Importing
-``n4a`` is equivalent to importing the aggregate::
+aggregate -- shipped as the ``nirs4all-core`` distribution and the
+``nirs4all_core`` import package -- and adds no behavior of its own. Importing
+``n4a`` is equivalent to importing ``nirs4all_core``::
 
     import n4a
 
@@ -21,20 +20,17 @@ places across the ecosystem. They are intentionally consistent ("n4a" =
   ``nirs4all`` library;
 * ``n4a-datasets`` -- the *console script* shipped by ``nirs4all-datasets``.
 
-This facade is additive: it does not remove, rename, or shadow the existing
-``nirs4all_lite`` import surface, and it deliberately does not shadow the full
-Python ``nirs4all`` library.
+This facade is additive and deliberately does not shadow the full Python
+``nirs4all`` library.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-import nirs4all_lite as _aggregate
+import nirs4all_core as _aggregate
 
-#: Import package currently backing this facade (``nirs4all_lite``). The
-#: LOCK-GOV target aggregate name is ``nirs4all-core``; until that
-#: release-gated cutover the facade simply forwards to the shipped aggregate.
+#: Import package currently backing this facade.
 __aggregate_import__ = _aggregate.__name__
 __version__ = _aggregate.__version__
 

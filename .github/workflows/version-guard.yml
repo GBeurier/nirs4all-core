@@ -54,7 +54,7 @@ jobs:
               {
                   "label": "Python import surface",
                   "strat": "python_attr",
-                  "path": "bindings/python/src/nirs4all_lite/__init__.py",
+                  "path": "bindings/python/src/nirs4all_core/__init__.py",
                   "attr": "__version__",
               },
           ]

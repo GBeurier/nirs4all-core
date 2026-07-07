@@ -1,13 +1,23 @@
 # Changelog
 
-All notable changes to **nirs4all-core** (formerly **nirs4all-lite**) are
-documented here. The project
+All notable changes to **nirs4all-core** are documented here. The project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html). The Rust
 crate `[package]` version in `bindings/rust/nirs4all/Cargo.toml` is the
 single source of truth; `scripts/bump_version.sh` propagates it to every other
 binding manifest.
 
 ## [Unreleased]
+
+## [0.3.0] - 2026-07-07
+
+### Changed
+
+- Made `nirs4all_core` the canonical Python implementation package for
+  `nirs4all-core`.
+- Kept `n4a` as the additive brand facade over `nirs4all_core`.
+- Removed public legacy alias rows from the release topology and wheel package
+  list.
+- Standardized strict parity gates on `NIRS4ALL_CORE_*` environment variables.
 
 ## [0.2.12] - 2026-07-07
 

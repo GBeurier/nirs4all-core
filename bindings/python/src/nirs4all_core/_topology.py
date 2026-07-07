@@ -50,7 +50,7 @@ _LICENSE_EXPRESSION = "CECILL-2.1 OR AGPL-3.0-or-later"
 _NAMESPACE_FACADES: dict[str, Any] = {
     "python": [
         {
-            "import": "nirs4all_lite",
+            "import": "nirs4all_core",
             "distribution": "nirs4all-core",
             "kind": "canonical",
             "exports": "full_aggregate",
@@ -60,17 +60,9 @@ _NAMESPACE_FACADES: dict[str, Any] = {
             "import": "n4a",
             "distribution": "nirs4all-core",
             "kind": "additive-brand-facade",
-            "backing_import": "nirs4all_lite",
+            "backing_import": "nirs4all_core",
             "exports": "full_aggregate",
             "execution_engine": True,
-        },
-        {
-            "import": "nirs4all_core",
-            "distribution": "nirs4all-core",
-            "kind": "additive-core-facade",
-            "backing_import": "nirs4all_lite",
-            "exports": "core_contract",
-            "execution_engine": False,
         },
     ],
     "reserved_python_imports": [
@@ -108,23 +100,12 @@ _INSTALL_DISTRIBUTIONS: list[dict[str, Any]] = [
         "ecosystem": "python",
         "registry": "pypi",
         "name": "nirs4all-core",
-        "role": "current Python aggregate distribution (renamed from nirs4all-lite)",
+        "role": "current Python aggregate distribution",
         "status": "current",
         "artifact": "wheel+sdist",
         "workflow": "release-python.yml",
-        "imports": ["nirs4all_lite", "n4a", "nirs4all_core"],
+        "imports": ["nirs4all_core", "n4a"],
         "default_inclusion": "base",
-    },
-    {
-        "ecosystem": "python",
-        "registry": "pypi",
-        "name": "nirs4all-lite",
-        "role": "legacy Python aggregate distribution name (superseded by nirs4all-core)",
-        "status": "legacy-superseded",
-        "artifact": None,
-        "workflow": None,
-        "imports": ["nirs4all_lite", "n4a", "nirs4all_core"],
-        "default_inclusion": "legacy",
     },
     {
         "ecosystem": "rust",
@@ -248,7 +229,7 @@ _V1_RELEASE_SURFACES: list[dict[str, Any]] = [
         "ecosystem": "python",
         "registry": "pypi",
         "distribution": "nirs4all-core",
-        "namespace": "nirs4all_lite",
+        "namespace": "nirs4all_core",
         "package_manifest": "bindings/python/pyproject.toml",
         "version_source": "bindings/python/pyproject.toml:project.version",
         "version_spelling": "pep440",
@@ -494,9 +475,7 @@ _RELEASE_TOPOLOGY_MANIFEST: dict[str, Any] = {
     "schema": "nirs4all-core.release-topology.v2",
     "aggregate": {
         "id": "nirs4all-core",
-        "legacy_id": "nirs4all-lite",
         "repo": "GBeurier/nirs4all-core",
-        "legacy_repo": "GBeurier/nirs4all-lite",
         "target_repo": "GBeurier/nirs4all-core",
         "repo_rename_status": "completed",
         "owner_boundary": "aggregate",
@@ -505,21 +484,21 @@ _RELEASE_TOPOLOGY_MANIFEST: dict[str, Any] = {
     },
     "python": {
         "distribution": "nirs4all-core",
-        "canonical_import": "nirs4all_lite",
-        "legacy_distribution": "nirs4all-lite",
-        "legacy_distribution_status": "superseded",
-        "additive_imports": ["n4a", "nirs4all_core"],
+        "canonical_import": "nirs4all_core",
+        "additive_imports": ["n4a"],
         "reserved_non_imports": ["nirs4all"],
     },
     "core_contract": {
         "import": "nirs4all_core",
-        "backing_import": "nirs4all_lite",
-        "allowed_roles": ["inspect", "validate", "capability", "facade"],
-        "execution_engine": False,
-        "public_exports": list(CORE_FACADE_EXPORTS),
+        "backing_import": "nirs4all_core",
+        "allowed_roles": ["inspect", "validate", "capability", "facade", "execute"],
+        "execution_engine": True,
+        "public_exports": list(
+            CORE_FACADE_EXPORTS + EXECUTION_ENGINE_EXPORTS + TOPOLOGY_EXPORTS
+        ),
+        "core_exports": list(CORE_FACADE_EXPORTS),
         "topology_exports": list(TOPOLOGY_EXPORTS),
-        "excluded_execution_exports": list(EXECUTION_ENGINE_EXPORTS),
-        "compat_passthrough": True,
+        "execution_exports": list(EXECUTION_ENGINE_EXPORTS),
     },
     "namespace_facades": _NAMESPACE_FACADES,
     "install_distributions": _INSTALL_DISTRIBUTIONS,
@@ -548,14 +527,13 @@ def release_topology_manifest() -> dict[str, Any]:
 
 
 def validate_core_facade(module: Any) -> dict[str, tuple[str, ...]]:
-    """Validate that a module advertises the no-engine core facade contract."""
+    """Validate that a module advertises the complete core aggregate contract."""
 
     public_exports = set(getattr(module, "__all__", ()))
+    required = set(CORE_FACADE_EXPORTS + EXECUTION_ENGINE_EXPORTS + TOPOLOGY_EXPORTS)
     return {
-        "missing_core_exports": tuple(
-            sorted(set(CORE_FACADE_EXPORTS) - public_exports)
-        ),
-        "unexpected_execution_exports": tuple(
-            sorted(set(EXECUTION_ENGINE_EXPORTS) & public_exports)
+        "missing_public_exports": tuple(sorted(required - public_exports)),
+        "missing_execution_exports": tuple(
+            sorted(set(EXECUTION_ENGINE_EXPORTS) - public_exports)
         ),
     }
