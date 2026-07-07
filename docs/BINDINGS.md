@@ -72,6 +72,9 @@ publication names.
 - The portable KS/SNV/Savitzky-Golay/PLS subset executes with
   `runPortablePipeline()` and predicts from its serialized selected model with
   `predictPortablePipeline()`, both delegating to `@nirs4all/methods`.
+- `runtimeContracts` is the authoritative custom-host signal for this extra
+  serialized-model predict capability. Other bindings are parity-validated for
+  pipeline execution but do not expose this standalone replay-predict API yet.
 - `nirs4all-web` consumes this package; UI code does not live here.
 - Current upstream package candidates prefer the target scoped names
   `@nirs4all/formats-wasm`, `@nirs4all/io-wasm`,

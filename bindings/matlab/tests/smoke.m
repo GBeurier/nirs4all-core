@@ -9,6 +9,12 @@ assert(strcmp(method_item.key, 'methods'));
 manifest = nirs4all.capabilityManifest();
 assert(strcmp(manifest.schema, 'nirs4all-core.capabilities.v1'));
 assert(isequal(nirs4all.runtimeSurfaces(), {'python', 'r', 'javascript_wasm', 'rust', 'matlab_octave'}));
+contracts = nirs4all.runtimeContracts();
+assert(isequal(manifest.runtimeContracts, contracts));
+contractSurfaces = cellfun(@(item) item.surface, contracts, 'UniformOutput', false);
+assert(isequal(contractSurfaces, {'python', 'r', 'javascript_wasm', 'rust', 'matlab_octave'}));
+predictFlags = cellfun(@(item) item.serializedModelPredict, contracts);
+assert(isequal(predictFlags, [false, false, true, false, false]));
 controllers = nirs4all.controllerCapabilities();
 controllerIds = cellfun(@(item) item.id, controllers, 'UniformOutput', false);
 assert(isequal(controllerIds, { ...

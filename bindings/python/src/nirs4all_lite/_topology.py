@@ -23,6 +23,7 @@ CORE_FACADE_EXPORTS: tuple[str, ...] = (
     "methods",
     "portable_class_names",
     "require_upstream",
+    "runtime_contracts",
     "runtime_surfaces",
     "upstream_status",
     "upstreams",

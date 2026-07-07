@@ -19,6 +19,44 @@ _PARITY_RUNTIME: dict[str, str] = {
     surface: "parity-validated" for surface in RUNTIME_SURFACES
 }
 
+_RUNTIME_CONTRACTS: tuple[dict[str, Any], ...] = (
+    {
+        "surface": "python",
+        "pipeline_execution": "parity-validated",
+        "pipeline_entrypoint": "run_portable_pipeline",
+        "serialized_model_predict": False,
+        "predict_entrypoint": None,
+    },
+    {
+        "surface": "r",
+        "pipeline_execution": "parity-validated",
+        "pipeline_entrypoint": "nirs4all_run_portable_pipeline",
+        "serialized_model_predict": False,
+        "predict_entrypoint": None,
+    },
+    {
+        "surface": "javascript_wasm",
+        "pipeline_execution": "parity-validated",
+        "pipeline_entrypoint": "runPortablePipeline",
+        "serialized_model_predict": True,
+        "predict_entrypoint": "predictPortablePipeline",
+    },
+    {
+        "surface": "rust",
+        "pipeline_execution": "parity-validated",
+        "pipeline_entrypoint": "run_portable_pipeline_with_library",
+        "serialized_model_predict": False,
+        "predict_entrypoint": None,
+    },
+    {
+        "surface": "matlab_octave",
+        "pipeline_execution": "parity-validated",
+        "pipeline_entrypoint": "runPortablePipeline",
+        "serialized_model_predict": False,
+        "predict_entrypoint": None,
+    },
+)
+
 _PORTABLE_CONTROLLERS: tuple[dict[str, Any], ...] = (
     {
         "id": "split.kennard_stone",
@@ -118,6 +156,12 @@ def runtime_surfaces() -> tuple[str, ...]:
     return RUNTIME_SURFACES
 
 
+def runtime_contracts() -> tuple[dict[str, Any], ...]:
+    """Return per-runtime execution and serialized-model prediction contracts."""
+
+    return tuple(deepcopy(item) for item in _RUNTIME_CONTRACTS)
+
+
 def controller_capabilities() -> tuple[dict[str, Any], ...]:
     """Return portable controller capability descriptors for host UIs."""
 
@@ -131,6 +175,7 @@ def capability_manifest() -> dict[str, Any]:
         "schema": "nirs4all-core.capabilities.v1",
         "aggregate": "nirs4all-core",
         "runtime_surfaces": RUNTIME_SURFACES,
+        "runtime_contracts": _RUNTIME_CONTRACTS,
         "portable_operator_classes": tuple(sorted(PORTABLE_OPERATOR_CLASSES)),
         "controllers": _PORTABLE_CONTROLLERS,
     }

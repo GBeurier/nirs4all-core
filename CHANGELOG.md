@@ -9,6 +9,19 @@ binding manifest.
 
 ## [Unreleased]
 
+## [0.2.12] - 2026-07-07
+
+RC16 runtime-contract honesty release.
+
+### Added
+
+- Added `runtime_contracts` / `runtimeContracts` across Python, R, Rust,
+  MATLAB/Octave, and JavaScript/WASM capability manifests.
+- Declared portable pipeline execution and standalone serialized-model
+  prediction as separate custom-host contracts.
+- Guarded the manifest so only JavaScript/WASM currently claims
+  `predictPortablePipeline()` parity for serialized selected-model replay.
+
 ## [0.2.11] - 2026-07-07
 
 RC15 changelog catch-up release.

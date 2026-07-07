@@ -23,6 +23,9 @@ and do not advertise npm/WASM package names or MATLAB/Octave execution support.
   definition.
 - `nirs4all.runPortablePipeline(source, dataset)` executes the portable
   Kennard-Stone/SNV/Savitzky-Golay/PLS subset through `pls4all`.
+- `nirs4all.runtimeContracts()` distinguishes parity-validated pipeline
+  execution from standalone serialized-model prediction. MATLAB/Octave does not
+  expose the WASM replay-predict contract yet.
 - `nirs4all.upstreams()` and `nirs4all.requireUpstream(key)` expose the
   aggregate upstream registry.
 

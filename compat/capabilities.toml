@@ -88,6 +88,41 @@ run_source = "bindings/matlab/+nirs4all/runPortablePipeline.m"
 parity_gate = "bindings/matlab/tests/parity.m"
 execution = "nirs4all-methods +n4m MATLAB/Octave MEX shims with +pls4all compatibility"
 
+# Runtime host contracts separate portable pipeline parity from the narrower
+# ability to hydrate a serialized selected model and run prediction later. Only
+# JavaScript/WASM exposes that standalone predict contract today.
+[[runtime_contract]]
+surface = "python"
+pipeline_execution = "parity-validated"
+pipeline_entrypoint = "run_portable_pipeline"
+serialized_model_predict = false
+
+[[runtime_contract]]
+surface = "r"
+pipeline_execution = "parity-validated"
+pipeline_entrypoint = "nirs4all_run_portable_pipeline"
+serialized_model_predict = false
+
+[[runtime_contract]]
+surface = "javascript_wasm"
+pipeline_execution = "parity-validated"
+pipeline_entrypoint = "runPortablePipeline"
+serialized_model_predict = true
+predict_entrypoint = "predictPortablePipeline"
+predict_parity_gate = "bindings/wasm/tests/parity.test.js"
+
+[[runtime_contract]]
+surface = "rust"
+pipeline_execution = "parity-validated"
+pipeline_entrypoint = "run_portable_pipeline_with_library"
+serialized_model_predict = false
+
+[[runtime_contract]]
+surface = "matlab_octave"
+pipeline_execution = "parity-validated"
+pipeline_entrypoint = "runPortablePipeline"
+serialized_model_predict = false
+
 # Stable controller/capability descriptors consumed by app hosts (`nirs4all-ui`,
 # `nirs4all-web`, Studio, and bespoke browser/desktop shells). These rows are a
 # contract for graph builders and runtime selectors; execution still goes

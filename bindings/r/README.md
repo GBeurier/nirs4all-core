@@ -17,3 +17,8 @@ Savitzky-Golay, and PLS to the installed `n4m` methods binding and is validated
 against the same full Python `nirs4all` oracle as the Python and WASM bindings.
 Savitzky-Golay defaults to `mode = "interp"` for full nirs4all parity and
 preserves explicit methods-backed modes plus `cval`.
+
+`nirs4all_runtime_contracts()` separates portable pipeline execution from
+standalone serialized-model prediction. The R binding is parity-validated for
+pipeline execution, but does not expose the WASM `predictPortablePipeline()`
+replay contract yet.

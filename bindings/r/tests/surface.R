@@ -13,6 +13,7 @@ expected_exports <- c(
   "nirs4all_parse_execution_plan",
   "nirs4all_portable_class_names",
   "nirs4all_require",
+  "nirs4all_runtime_contracts",
   "nirs4all_run_portable_pipeline",
   "nirs4all_runtime_surfaces",
   "nirs4all_upstreams"
@@ -31,6 +32,16 @@ stopifnot(identical(nirs4all::methods, get("methods", envir = namespace)))
 
 manifest <- nirs4all::nirs4all_capability_manifest()
 stopifnot(identical(manifest$schema, "nirs4all-core.capabilities.v1"))
+contracts <- nirs4all::nirs4all_runtime_contracts()
+stopifnot(identical(manifest$runtime_contracts, contracts))
+stopifnot(identical(
+  vapply(contracts, function(item) item$surface, character(1)),
+  c("python", "r", "javascript_wasm", "rust", "matlab_octave")
+))
+stopifnot(identical(
+  vapply(contracts, function(item) isTRUE(item$serialized_model_predict), logical(1)),
+  c(FALSE, FALSE, TRUE, FALSE, FALSE)
+))
 stopifnot(identical(
   nirs4all::nirs4all_runtime_surfaces(),
   c("python", "r", "javascript_wasm", "rust", "matlab_octave")

@@ -66,6 +66,53 @@ pub const PORTABLE_OPERATOR_CLASSES: &[&str] = &[
 
 pub const RUNTIME_SURFACES: &[&str] = &["python", "r", "javascript_wasm", "rust", "matlab_octave"];
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct RuntimeContract {
+    pub surface: &'static str,
+    pub pipeline_execution: &'static str,
+    pub pipeline_entrypoint: &'static str,
+    pub serialized_model_predict: bool,
+    pub predict_entrypoint: Option<&'static str>,
+}
+
+pub const RUNTIME_CONTRACTS: &[RuntimeContract] = &[
+    RuntimeContract {
+        surface: "python",
+        pipeline_execution: "parity-validated",
+        pipeline_entrypoint: "run_portable_pipeline",
+        serialized_model_predict: false,
+        predict_entrypoint: None,
+    },
+    RuntimeContract {
+        surface: "r",
+        pipeline_execution: "parity-validated",
+        pipeline_entrypoint: "nirs4all_run_portable_pipeline",
+        serialized_model_predict: false,
+        predict_entrypoint: None,
+    },
+    RuntimeContract {
+        surface: "javascript_wasm",
+        pipeline_execution: "parity-validated",
+        pipeline_entrypoint: "runPortablePipeline",
+        serialized_model_predict: true,
+        predict_entrypoint: Some("predictPortablePipeline"),
+    },
+    RuntimeContract {
+        surface: "rust",
+        pipeline_execution: "parity-validated",
+        pipeline_entrypoint: "run_portable_pipeline_with_library",
+        serialized_model_predict: false,
+        predict_entrypoint: None,
+    },
+    RuntimeContract {
+        surface: "matlab_octave",
+        pipeline_execution: "parity-validated",
+        pipeline_entrypoint: "runPortablePipeline",
+        serialized_model_predict: false,
+        predict_entrypoint: None,
+    },
+];
+
 const KENNARD_STONE_CLASSES: &[&str] = &[
     "nirs4all.operators.splitters.KennardStoneSplitter",
     "nirs4all.operators.splitters.splitters.KennardStoneSplitter",
@@ -190,6 +237,22 @@ pub const CONTROLLER_CAPABILITIES: &[ControllerCapability] = &[
     },
 ];
 
+pub fn runtime_contracts() -> Value {
+    let contracts: Vec<Value> = RUNTIME_CONTRACTS
+        .iter()
+        .map(|item| {
+            serde_json::json!({
+                "surface": item.surface,
+                "pipeline_execution": item.pipeline_execution,
+                "pipeline_entrypoint": item.pipeline_entrypoint,
+                "serialized_model_predict": item.serialized_model_predict,
+                "predict_entrypoint": item.predict_entrypoint,
+            })
+        })
+        .collect();
+    Value::Array(contracts)
+}
+
 pub fn capability_manifest() -> Value {
     let controllers: Vec<Value> = CONTROLLER_CAPABILITIES
         .iter()
@@ -216,6 +279,7 @@ pub fn capability_manifest() -> Value {
         "schema": "nirs4all-core.capabilities.v1",
         "aggregate": "nirs4all-core",
         "runtime_surfaces": RUNTIME_SURFACES,
+        "runtime_contracts": runtime_contracts(),
         "portable_operator_classes": PORTABLE_OPERATOR_CLASSES,
         "controllers": controllers,
     })
@@ -1364,6 +1428,46 @@ mod tests {
         assert_eq!(
             manifest["runtime_surfaces"],
             serde_json::json!(RUNTIME_SURFACES)
+        );
+        assert_eq!(
+            manifest["runtime_contracts"],
+            serde_json::json!([
+                {
+                    "surface": "python",
+                    "pipeline_execution": "parity-validated",
+                    "pipeline_entrypoint": "run_portable_pipeline",
+                    "serialized_model_predict": false,
+                    "predict_entrypoint": null
+                },
+                {
+                    "surface": "r",
+                    "pipeline_execution": "parity-validated",
+                    "pipeline_entrypoint": "nirs4all_run_portable_pipeline",
+                    "serialized_model_predict": false,
+                    "predict_entrypoint": null
+                },
+                {
+                    "surface": "javascript_wasm",
+                    "pipeline_execution": "parity-validated",
+                    "pipeline_entrypoint": "runPortablePipeline",
+                    "serialized_model_predict": true,
+                    "predict_entrypoint": "predictPortablePipeline"
+                },
+                {
+                    "surface": "rust",
+                    "pipeline_execution": "parity-validated",
+                    "pipeline_entrypoint": "run_portable_pipeline_with_library",
+                    "serialized_model_predict": false,
+                    "predict_entrypoint": null
+                },
+                {
+                    "surface": "matlab_octave",
+                    "pipeline_execution": "parity-validated",
+                    "pipeline_entrypoint": "runPortablePipeline",
+                    "serialized_model_predict": false,
+                    "predict_entrypoint": null
+                }
+            ])
         );
         assert_eq!(manifest["controllers"].as_array().unwrap().len(), 5);
         assert_eq!(

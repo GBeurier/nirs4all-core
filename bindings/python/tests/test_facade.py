@@ -56,6 +56,7 @@ class FacadeImportSurfaceTests(unittest.TestCase):
             "release_topology_manifest",
             "require_upstream",
             "run_portable_pipeline",
+            "runtime_contracts",
             "runtime_surfaces",
             "upstream_status",
             "upstreams",

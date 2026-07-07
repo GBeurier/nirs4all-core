@@ -50,6 +50,20 @@ EXPECTED_RUNTIME_SURFACES = {
     "rust",
     "matlab_octave",
 }
+EXPECTED_RUNTIME_CONTRACT_SURFACES = (
+    "python",
+    "r",
+    "javascript_wasm",
+    "rust",
+    "matlab_octave",
+)
+RUNTIME_ENTRYPOINT_SOURCES = {
+    "python": ROOT / "bindings/python/src/nirs4all_lite/_execution.py",
+    "r": ROOT / "bindings/r/R/execution.R",
+    "javascript_wasm": ROOT / "bindings/wasm/src/index.js",
+    "rust": ROOT / "bindings/rust/nirs4all/src/lib.rs",
+    "matlab_octave": ROOT / "bindings/matlab/+nirs4all/runPortablePipeline.m",
+}
 EXPECTED_CONTROLLER_IDS = (
     "split.kennard_stone",
     "preprocess.snv",
@@ -98,6 +112,9 @@ class CapabilityVocabularyTests(unittest.TestCase):
         for binding in caps["binding"]:
             with self.subTest(language=binding["language"]):
                 self.assertIn(binding["level"], ladder)
+        for contract in caps["runtime_contract"]:
+            with self.subTest(surface=contract["surface"]):
+                self.assertIn(contract["pipeline_execution"], ladder)
 
 
 class PortableSubsetLedgerTests(unittest.TestCase):
@@ -186,6 +203,61 @@ class CustomHostCapabilityManifestTests(unittest.TestCase):
         self.assertEqual(set(caps["runtime_surfaces"]), EXPECTED_RUNTIME_SURFACES)
         self.assertEqual(set(n4lite.runtime_surfaces()), EXPECTED_RUNTIME_SURFACES)
         self.assertEqual(set(manifest["runtime_surfaces"]), EXPECTED_RUNTIME_SURFACES)
+        self.assertEqual(
+            tuple(item["surface"] for item in n4lite.runtime_contracts()),
+            EXPECTED_RUNTIME_CONTRACT_SURFACES,
+        )
+        self.assertEqual(
+            tuple(item["surface"] for item in manifest["runtime_contracts"]),
+            EXPECTED_RUNTIME_CONTRACT_SURFACES,
+        )
+
+    def test_runtime_contract_rows_match_toml_and_do_not_overclaim_predict(self) -> None:
+        caps = _load_capabilities()
+        ladder = _ladder_from_operators_doc()
+        toml_rows = {item["surface"]: item for item in caps["runtime_contract"]}
+        manifest_rows = {item["surface"]: item for item in n4lite.runtime_contracts()}
+
+        self.assertEqual(tuple(toml_rows), EXPECTED_RUNTIME_CONTRACT_SURFACES)
+        self.assertEqual(set(manifest_rows), set(toml_rows))
+
+        for surface, manifest_row in manifest_rows.items():
+            with self.subTest(surface=surface):
+                toml_row = toml_rows[surface]
+                self.assertIn(manifest_row["pipeline_execution"], ladder)
+                self.assertEqual(
+                    manifest_row["pipeline_execution"],
+                    toml_row["pipeline_execution"],
+                )
+                self.assertEqual(
+                    manifest_row["pipeline_entrypoint"],
+                    toml_row["pipeline_entrypoint"],
+                )
+                self.assertEqual(
+                    manifest_row["serialized_model_predict"],
+                    toml_row["serialized_model_predict"],
+                )
+                self.assertEqual(
+                    manifest_row.get("predict_entrypoint"),
+                    toml_row.get("predict_entrypoint"),
+                )
+
+                source = RUNTIME_ENTRYPOINT_SOURCES[surface]
+                self.assertIn(manifest_row["pipeline_entrypoint"], _read(source))
+
+        predict_rows = [
+            item for item in manifest_rows.values() if item["serialized_model_predict"]
+        ]
+        self.assertEqual(
+            [item["surface"] for item in predict_rows],
+            ["javascript_wasm"],
+        )
+        wasm_row = toml_rows["javascript_wasm"]
+        self.assertEqual(wasm_row["predict_entrypoint"], "predictPortablePipeline")
+        self.assertIn(wasm_row["predict_entrypoint"], _read(WASM_INDEX))
+        gate = ROOT / wasm_row["predict_parity_gate"]
+        self.assertTrue(gate.exists(), gate)
+        self.assertIn(wasm_row["predict_entrypoint"], _read(gate))
 
     def test_controller_ids_and_composition_are_stable(self) -> None:
         controllers = n4lite.controller_capabilities()
@@ -258,22 +330,41 @@ class CustomHostCapabilityManifestTests(unittest.TestCase):
 
     def test_all_bindings_expose_the_custom_host_manifest_surface(self) -> None:
         sources = {
-            "wasm": (WASM_INDEX, ("capabilityManifest", "controllerCapabilities", "runtimeSurfaces")),
+            "wasm": (
+                WASM_INDEX,
+                (
+                    "capabilityManifest",
+                    "controllerCapabilities",
+                    "runtimeSurfaces",
+                    "runtimeContracts",
+                ),
+            ),
             "r": (
                 R_CAPABILITIES,
                 (
                     "nirs4all_capability_manifest",
                     "nirs4all_controller_capabilities",
                     "nirs4all_runtime_surfaces",
+                    "nirs4all_runtime_contracts",
                 ),
             ),
             "rust": (
                 RUST_LIB,
-                ("capability_manifest", "CONTROLLER_CAPABILITIES", "RUNTIME_SURFACES"),
+                (
+                    "capability_manifest",
+                    "CONTROLLER_CAPABILITIES",
+                    "RUNTIME_SURFACES",
+                    "RUNTIME_CONTRACTS",
+                ),
             ),
             "matlab": (
                 MATLAB_CAPABILITY_MANIFEST,
-                ("capabilityManifest", "controllerCapabilities", "runtimeSurfaces"),
+                (
+                    "capabilityManifest",
+                    "controllerCapabilities",
+                    "runtimeSurfaces",
+                    "runtimeContracts",
+                ),
             ),
         }
 

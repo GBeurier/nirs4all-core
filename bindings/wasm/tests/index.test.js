@@ -31,6 +31,7 @@ import {
   portableOperatorClasses,
   predictPortablePipeline,
   runPortablePipeline,
+  runtimeContracts,
   runtimeSurfaces,
   upstream,
   upstreams,
@@ -71,6 +72,7 @@ test('public V1 WASM surface exports expected names', () => {
       'portableOperatorClasses',
       'predictPortablePipeline',
       'runPortablePipeline',
+      'runtimeContracts',
       'runtimeSurfaces',
       'upstream',
       'upstreams',
@@ -81,6 +83,7 @@ test('public V1 WASM surface exports expected names', () => {
   assert.equal(nirs4all.predictPortablePipeline, predictPortablePipeline);
   assert.equal(nirs4all.portableOperatorClasses, portableOperatorClasses);
   assert.equal(nirs4all.runtimeSurfaces, runtimeSurfaces);
+  assert.equal(nirs4all.runtimeContracts, runtimeContracts);
   assert.equal(nirs4all.controllerCapabilities, controllerCapabilities);
   assert.equal(nirs4all.capabilityManifest, capabilityManifest);
   assert.equal(nirs4all.methodsWasm, methodsWasm);
@@ -125,6 +128,15 @@ test('capability manifest describes portable custom app host controllers', () =>
     'rust',
     'matlab_octave',
   ]);
+  assert.deepEqual(manifest.runtimeContracts, runtimeContracts);
+  assert.deepEqual(
+    manifest.runtimeContracts.filter((item) => item.serializedModelPredict).map((item) => item.surface),
+    ['javascript_wasm'],
+  );
+  assert.equal(
+    manifest.runtimeContracts.find((item) => item.surface === 'javascript_wasm').predictEntrypoint,
+    'predictPortablePipeline',
+  );
   assert.deepEqual(manifest.portableOperatorClasses.sort(), [...portableOperatorClasses].sort());
 
   const ids = manifest.controllers.map((item) => item.id);

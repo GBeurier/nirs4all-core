@@ -17,6 +17,46 @@ nirs4all_runtime_surfaces <- function() {
   NIRS4ALL_RUNTIME_SURFACES
 }
 
+nirs4all_runtime_contracts <- function() {
+  list(
+    list(
+      surface = "python",
+      pipeline_execution = "parity-validated",
+      pipeline_entrypoint = "run_portable_pipeline",
+      serialized_model_predict = FALSE,
+      predict_entrypoint = NULL
+    ),
+    list(
+      surface = "r",
+      pipeline_execution = "parity-validated",
+      pipeline_entrypoint = "nirs4all_run_portable_pipeline",
+      serialized_model_predict = FALSE,
+      predict_entrypoint = NULL
+    ),
+    list(
+      surface = "javascript_wasm",
+      pipeline_execution = "parity-validated",
+      pipeline_entrypoint = "runPortablePipeline",
+      serialized_model_predict = TRUE,
+      predict_entrypoint = "predictPortablePipeline"
+    ),
+    list(
+      surface = "rust",
+      pipeline_execution = "parity-validated",
+      pipeline_entrypoint = "run_portable_pipeline_with_library",
+      serialized_model_predict = FALSE,
+      predict_entrypoint = NULL
+    ),
+    list(
+      surface = "matlab_octave",
+      pipeline_execution = "parity-validated",
+      pipeline_entrypoint = "runPortablePipeline",
+      serialized_model_predict = FALSE,
+      predict_entrypoint = NULL
+    )
+  )
+}
+
 nirs4all_controller_capabilities <- function() {
   runtime <- parity_runtime()
   list(
@@ -92,6 +132,7 @@ nirs4all_capability_manifest <- function() {
     schema = "nirs4all-core.capabilities.v1",
     aggregate = "nirs4all-core",
     runtime_surfaces = nirs4all_runtime_surfaces(),
+    runtime_contracts = nirs4all_runtime_contracts(),
     portable_operator_classes = NIRS4ALL_PORTABLE_OPERATOR_CLASSES,
     controllers = nirs4all_controller_capabilities()
   )

@@ -20,16 +20,20 @@ browser/desktop shells) can inspect the portable controller contract without
 duplicating local rules:
 
 - Python: `nirs4all_lite.capability_manifest()`,
-  `nirs4all_lite.controller_capabilities()`, `nirs4all_lite.runtime_surfaces()`
+  `nirs4all_lite.controller_capabilities()`,
+  `nirs4all_lite.runtime_surfaces()`, and
+  `nirs4all_lite.runtime_contracts()`
   (also exported through `n4a` and the no-engine `nirs4all_core` facade).
 - JavaScript/WASM: `capabilityManifest()`, `controllerCapabilities`, and
-  `runtimeSurfaces` from the `nirs4all` package.
+  `runtimeSurfaces` / `runtimeContracts` from the `nirs4all` package.
 - R: `nirs4all_capability_manifest()`,
-  `nirs4all_controller_capabilities()`, and `nirs4all_runtime_surfaces()`.
+  `nirs4all_controller_capabilities()`, `nirs4all_runtime_surfaces()`, and
+  `nirs4all_runtime_contracts()`.
 - Rust: `capability_manifest()`, `CONTROLLER_CAPABILITIES`, and
-  `RUNTIME_SURFACES` from the `nirs4all` crate.
+  `RUNTIME_SURFACES` / `RUNTIME_CONTRACTS` from the `nirs4all` crate.
 - MATLAB/Octave: `nirs4all.capabilityManifest()`,
-  `nirs4all.controllerCapabilities()`, and `nirs4all.runtimeSurfaces()`.
+  `nirs4all.controllerCapabilities()`, `nirs4all.runtimeSurfaces()`, and
+  `nirs4all.runtimeContracts()`.
 
 The manifest schema is `nirs4all-core.capabilities.v1`. Its controller IDs are
 stable for the V1 portable subset:
@@ -47,6 +51,24 @@ not future placeholders. The Python gate compares the API against the TOML
 ledger, verifies full operator coverage, and requires every runtime surface to
 carry an explicit capability level.
 
+The runtime contract also separates two promises that custom app hosts must not
+merge accidentally:
+
+| Runtime | Portable pipeline execution | Serialized selected-model prediction |
+| --- | --- | --- |
+| Python | `parity-validated` via `run_portable_pipeline()` | not exposed |
+| R | `parity-validated` via `nirs4all_run_portable_pipeline()` | not exposed |
+| JavaScript/WASM | `parity-validated` via `runPortablePipeline()` | `parity-validated` via `predictPortablePipeline()` |
+| Rust | `parity-validated` via `run_portable_pipeline_with_library()` | not exposed |
+| MATLAB/Octave | `parity-validated` via `nirs4all.runPortablePipeline()` | not exposed |
+
+Only JavaScript/WASM currently exposes a standalone API that hydrates the
+serialized selected model from a previous run and predicts on a later dataset.
+The other bindings remain parity-validated for executing the portable pipeline,
+but a host must rerun the pipeline or use a language-specific model object
+there; it must not infer a cross-runtime replay-predict API from the controller
+level alone.
+
 ## Portable operator subset
 
 The aggregate itself executes exactly one operator subset — Kennard-Stone split,
@@ -60,7 +82,7 @@ declared identically in all five bindings (proven by
 | --- | --- | --- | --- | --- |
 | Python | `parity-validated` | `run_portable_pipeline()` | nirs4all-methods Python (`n4m`/`pls4all`) | `bindings/python/tests/test_execution_parity.py` |
 | Rust | `parity-validated` | `run_portable_pipeline_with_library()` | caller-supplied `libn4m` (`NIRS4ALL_METHODS_LIB`) | `cargo test` `rust_binding_execution_matches_full_python_nirs4all_oracle` |
-| JavaScript/WASM | `parity-validated` | `runPortablePipeline()` / `predictPortablePipeline()` | `@nirs4all/methods` | `bindings/wasm/tests/parity.test.js` |
+| JavaScript/WASM | `parity-validated` | `runPortablePipeline()` plus standalone `predictPortablePipeline()` | `@nirs4all/methods` | `bindings/wasm/tests/parity.test.js` |
 | R | `parity-validated` | `nirs4all_run_portable_pipeline()` | nirs4all-methods R (`n4m`/`pls4all`) | `bindings/r/tests/parity.R` |
 | MATLAB/Octave | `parity-validated` | `nirs4all.runPortablePipeline()` | `+n4m` MATLAB/Octave MEX shims with `+pls4all` compatibility | `bindings/matlab/tests/parity.m` |
 
