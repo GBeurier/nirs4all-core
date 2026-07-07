@@ -108,7 +108,7 @@ jobs:
         run: |
           NIRS4ALL_METHODS_JS_DIST="$GITHUB_WORKSPACE/nirs4all-methods/bindings/js/dist" \
           NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 \
-          NIRS4ALL_LITE_REQUIRE_METHODS_PARITY=1 \
+          NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 \
           npm test --prefix bindings/wasm
 
   build-and-publish:

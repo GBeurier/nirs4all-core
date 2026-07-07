@@ -80,7 +80,7 @@ jobs:
           NIRS4ALL_METHODS_MATLAB_PATH: ${{ github.workspace }}/nirs4all-methods/bindings/matlab
           OCTAVE_PATH: ${{ github.workspace }}/nirs4all-methods/bindings/matlab
           NIRS4ALL_CORE_REQUIRE_METHODS_PARITY: "1"
-          NIRS4ALL_LITE_REQUIRE_METHODS_PARITY: "1"
+          NIRS4ALL_CORE_REQUIRE_METHODS_PARITY: "1"
         run: make test-matlab-parity
 
   matlab-package:
