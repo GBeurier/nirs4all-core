@@ -11,6 +11,8 @@ CORE_FACADE_EXPORTS: tuple[str, ...] = (
     "PipelineDefinition",
     "Upstream",
     "available_upstreams",
+    "capability_manifest",
+    "controller_capabilities",
     "dag_ml",
     "dag_ml_data",
     "datasets",
@@ -21,6 +23,7 @@ CORE_FACADE_EXPORTS: tuple[str, ...] = (
     "methods",
     "portable_class_names",
     "require_upstream",
+    "runtime_surfaces",
     "upstream_status",
     "upstreams",
 )

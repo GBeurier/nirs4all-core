@@ -64,6 +64,8 @@ pub const PORTABLE_OPERATOR_CLASSES: &[&str] = &[
     "sklearn.cross_decomposition._pls.PLSRegression",
 ];
 
+pub const RUNTIME_SURFACES: &[&str] = &["python", "r", "javascript_wasm", "rust", "matlab_octave"];
+
 const KENNARD_STONE_CLASSES: &[&str] = &[
     "nirs4all.operators.splitters.KennardStoneSplitter",
     "nirs4all.operators.splitters.splitters.KennardStoneSplitter",
@@ -84,6 +86,148 @@ const PLS_CLASSES: &[&str] = &[
     "sklearn.cross_decomposition.PLSRegression",
     "sklearn.cross_decomposition._pls.PLSRegression",
 ];
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ControllerPorts {
+    pub inputs: &'static [&'static str],
+    pub outputs: &'static [&'static str],
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ControllerCapability {
+    pub id: &'static str,
+    pub kind: &'static str,
+    pub domain: &'static str,
+    pub label: &'static str,
+    pub operator_classes: &'static [&'static str],
+    pub ports: ControllerPorts,
+    pub parameters: &'static [&'static str],
+    pub runtime_level: &'static str,
+    pub execution_path: &'static str,
+    pub composes: &'static [&'static str],
+}
+
+pub const CONTROLLER_CAPABILITIES: &[ControllerCapability] = &[
+    ControllerCapability {
+        id: "split.kennard_stone",
+        kind: "splitter",
+        domain: "methods",
+        label: "Kennard-Stone split",
+        operator_classes: KENNARD_STONE_CLASSES,
+        ports: ControllerPorts {
+            inputs: &["X"],
+            outputs: &["train_indices", "test_indices"],
+        },
+        parameters: &["test_size"],
+        runtime_level: "parity-validated",
+        execution_path: "portable_pipeline",
+        composes: &[],
+    },
+    ControllerCapability {
+        id: "preprocess.snv",
+        kind: "transform",
+        domain: "methods",
+        label: "Standard normal variate",
+        operator_classes: SNV_CLASSES,
+        ports: ControllerPorts {
+            inputs: &["X"],
+            outputs: &["X_transformed"],
+        },
+        parameters: &[],
+        runtime_level: "parity-validated",
+        execution_path: "portable_pipeline",
+        composes: &[],
+    },
+    ControllerCapability {
+        id: "preprocess.savgol",
+        kind: "transform",
+        domain: "methods",
+        label: "Savitzky-Golay",
+        operator_classes: SAVGOL_CLASSES,
+        ports: ControllerPorts {
+            inputs: &["X"],
+            outputs: &["X_transformed"],
+        },
+        parameters: &["window_length", "polyorder", "deriv", "mode", "cval"],
+        runtime_level: "parity-validated",
+        execution_path: "portable_pipeline",
+        composes: &[],
+    },
+    ControllerCapability {
+        id: "model.pls_regression",
+        kind: "model",
+        domain: "methods",
+        label: "PLS regression",
+        operator_classes: PLS_CLASSES,
+        ports: ControllerPorts {
+            inputs: &["X", "y"],
+            outputs: &["predictions", "model"],
+        },
+        parameters: &["n_components", "_range_"],
+        runtime_level: "parity-validated",
+        execution_path: "portable_pipeline",
+        composes: &[],
+    },
+    ControllerCapability {
+        id: "pipeline.portable_methods",
+        kind: "pipeline",
+        domain: "methods",
+        label: "Portable methods pipeline",
+        operator_classes: &[],
+        ports: ControllerPorts {
+            inputs: &["pipeline", "dataset"],
+            outputs: &["execution_result", "predictions", "model"],
+        },
+        parameters: &[],
+        runtime_level: "parity-validated",
+        execution_path: "run_portable_pipeline",
+        composes: &[
+            "split.kennard_stone",
+            "preprocess.snv",
+            "preprocess.savgol",
+            "model.pls_regression",
+        ],
+    },
+];
+
+pub fn capability_manifest() -> Value {
+    let controllers: Vec<Value> = CONTROLLER_CAPABILITIES
+        .iter()
+        .map(|item| {
+            serde_json::json!({
+                "id": item.id,
+                "kind": item.kind,
+                "domain": item.domain,
+                "label": item.label,
+                "operator_classes": item.operator_classes,
+                "ports": {
+                    "inputs": item.ports.inputs,
+                    "outputs": item.ports.outputs,
+                },
+                "parameters": item.parameters,
+                "runtime": runtime_level_map(item.runtime_level),
+                "execution_path": item.execution_path,
+                "composes": item.composes,
+            })
+        })
+        .collect();
+
+    serde_json::json!({
+        "schema": "nirs4all-core.capabilities.v1",
+        "aggregate": "nirs4all-core",
+        "runtime_surfaces": RUNTIME_SURFACES,
+        "portable_operator_classes": PORTABLE_OPERATOR_CLASSES,
+        "controllers": controllers,
+    })
+}
+
+fn runtime_level_map(level: &str) -> Value {
+    let mut runtime = serde_json::Map::new();
+    for surface in RUNTIME_SURFACES {
+        runtime.insert((*surface).to_string(), Value::String(level.to_string()));
+    }
+    Value::Object(runtime)
+}
 
 pub fn upstream(key: &str) -> Option<&'static Upstream> {
     UPSTREAMS.iter().find(|item| item.key == key)
@@ -1193,6 +1337,39 @@ mod tests {
     fn resolves_upstream_by_key() {
         assert_eq!(upstream("methods").unwrap().package, "nirs4all-methods");
         assert!(upstream("unknown").is_none());
+    }
+
+    #[test]
+    fn exposes_custom_host_capability_manifest() {
+        let ids: Vec<_> = CONTROLLER_CAPABILITIES.iter().map(|item| item.id).collect();
+        assert_eq!(
+            ids,
+            vec![
+                "split.kennard_stone",
+                "preprocess.snv",
+                "preprocess.savgol",
+                "model.pls_regression",
+                "pipeline.portable_methods"
+            ]
+        );
+
+        let covered: Vec<_> = CONTROLLER_CAPABILITIES
+            .iter()
+            .flat_map(|item| item.operator_classes.iter().copied())
+            .collect();
+        assert_eq!(covered, PORTABLE_OPERATOR_CLASSES);
+
+        let manifest = capability_manifest();
+        assert_eq!(manifest["schema"], "nirs4all-core.capabilities.v1");
+        assert_eq!(
+            manifest["runtime_surfaces"],
+            serde_json::json!(RUNTIME_SURFACES)
+        );
+        assert_eq!(manifest["controllers"].as_array().unwrap().len(), 5);
+        assert_eq!(
+            manifest["controllers"][0]["runtime"]["rust"],
+            "parity-validated"
+        );
     }
 
     #[test]

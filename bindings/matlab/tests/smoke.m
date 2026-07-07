@@ -6,6 +6,24 @@ assert(strcmp(items(1).key, 'dag_ml'));
 method_item = nirs4all.requireUpstream('methods');
 assert(strcmp(method_item.key, 'methods'));
 
+manifest = nirs4all.capabilityManifest();
+assert(strcmp(manifest.schema, 'nirs4all-core.capabilities.v1'));
+assert(isequal(nirs4all.runtimeSurfaces(), {'python', 'r', 'javascript_wasm', 'rust', 'matlab_octave'}));
+controllers = nirs4all.controllerCapabilities();
+controllerIds = cellfun(@(item) item.id, controllers, 'UniformOutput', false);
+assert(isequal(controllerIds, { ...
+    'split.kennard_stone', ...
+    'preprocess.snv', ...
+    'preprocess.savgol', ...
+    'model.pls_regression', ...
+    'pipeline.portable_methods' ...
+}));
+covered = {};
+for controllerIdx = 1:numel(controllers)
+    covered = [covered, controllers{controllerIdx}.operatorClasses]; %#ok<AGROW>
+end
+assert(isequal(covered, nirs4all.portableOperatorClasses()));
+
 try
     nirs4all.requireUpstream('missing');
     error('nirs4all:testFailed', 'missing upstream should fail');

@@ -13,6 +13,40 @@ by `bindings/python/tests/test_capability_matrix.py`, so the table cannot
 over-claim: a binding may not say `execute-local` without a real run symbol, nor
 `parity-validated` without a real parity gate.
 
+## Custom app host manifest
+
+Custom hosts (`nirs4all-web`, Studio, `nirs4all-ui` consumers, and bespoke
+browser/desktop shells) can inspect the portable controller contract without
+duplicating local rules:
+
+- Python: `nirs4all_lite.capability_manifest()`,
+  `nirs4all_lite.controller_capabilities()`, `nirs4all_lite.runtime_surfaces()`
+  (also exported through `n4a` and the no-engine `nirs4all_core` facade).
+- JavaScript/WASM: `capabilityManifest()`, `controllerCapabilities`, and
+  `runtimeSurfaces` from the `nirs4all` package.
+- R: `nirs4all_capability_manifest()`,
+  `nirs4all_controller_capabilities()`, and `nirs4all_runtime_surfaces()`.
+- Rust: `capability_manifest()`, `CONTROLLER_CAPABILITIES`, and
+  `RUNTIME_SURFACES` from the `nirs4all` crate.
+- MATLAB/Octave: `nirs4all.capabilityManifest()`,
+  `nirs4all.controllerCapabilities()`, and `nirs4all.runtimeSurfaces()`.
+
+The manifest schema is `nirs4all-core.capabilities.v1`. Its controller IDs are
+stable for the V1 portable subset:
+
+| Controller | Kind | Runtime path | Public parameters |
+| --- | --- | --- | --- |
+| `split.kennard_stone` | splitter | `portable_pipeline` | `test_size` |
+| `preprocess.snv` | transform | `portable_pipeline` | none |
+| `preprocess.savgol` | transform | `portable_pipeline` | `window_length`, `polyorder`, `deriv`, `mode`, `cval` |
+| `model.pls_regression` | model | `portable_pipeline` | `n_components`, `_range_` |
+| `pipeline.portable_methods` | pipeline | `run_portable_pipeline` | none |
+
+Those parameter lists intentionally match the executable parsers today; they are
+not future placeholders. The Python gate compares the API against the TOML
+ledger, verifies full operator coverage, and requires every runtime surface to
+carry an explicit capability level.
+
 ## Portable operator subset
 
 The aggregate itself executes exactly one operator subset — Kennard-Stone split,

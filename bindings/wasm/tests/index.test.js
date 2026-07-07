@@ -6,6 +6,8 @@ import * as nirs4all from '../src/index.js';
 import {
   dagMl,
   dagMlData,
+  capabilityManifest,
+  controllerCapabilities,
   datasets,
   formats,
   importUpstream,
@@ -29,6 +31,7 @@ import {
   portableOperatorClasses,
   predictPortablePipeline,
   runPortablePipeline,
+  runtimeSurfaces,
   upstream,
   upstreams,
 } from '../src/index.js';
@@ -42,6 +45,8 @@ test('public V1 WASM surface exports expected names', () => {
     [
       'dagMl',
       'dagMlData',
+      'capabilityManifest',
+      'controllerCapabilities',
       'datasets',
       'formats',
       'importUpstream',
@@ -66,6 +71,7 @@ test('public V1 WASM surface exports expected names', () => {
       'portableOperatorClasses',
       'predictPortablePipeline',
       'runPortablePipeline',
+      'runtimeSurfaces',
       'upstream',
       'upstreams',
     ].sort(),
@@ -74,6 +80,9 @@ test('public V1 WASM surface exports expected names', () => {
   assert.equal(nirs4all.runPortablePipeline, runPortablePipeline);
   assert.equal(nirs4all.predictPortablePipeline, predictPortablePipeline);
   assert.equal(nirs4all.portableOperatorClasses, portableOperatorClasses);
+  assert.equal(nirs4all.runtimeSurfaces, runtimeSurfaces);
+  assert.equal(nirs4all.controllerCapabilities, controllerCapabilities);
+  assert.equal(nirs4all.capabilityManifest, capabilityManifest);
   assert.equal(nirs4all.methodsWasm, methodsWasm);
 });
 
@@ -103,6 +112,40 @@ test('domain proxies expose keys', () => {
   assert.equal(methods.key, 'methods');
   assert.equal(dagMl.key, 'dag_ml');
   assert.equal(dagMlData.key, 'dag_ml_data');
+});
+
+test('capability manifest describes portable custom app host controllers', () => {
+  const manifest = capabilityManifest();
+
+  assert.equal(manifest.schema, 'nirs4all-core.capabilities.v1');
+  assert.deepEqual(manifest.runtimeSurfaces, [
+    'python',
+    'r',
+    'javascript_wasm',
+    'rust',
+    'matlab_octave',
+  ]);
+  assert.deepEqual(manifest.portableOperatorClasses.sort(), [...portableOperatorClasses].sort());
+
+  const ids = manifest.controllers.map((item) => item.id);
+  assert.deepEqual(ids, [
+    'split.kennard_stone',
+    'preprocess.snv',
+    'preprocess.savgol',
+    'model.pls_regression',
+    'pipeline.portable_methods',
+  ]);
+
+  for (const controller of manifest.controllers) {
+    assert.equal(controller.domain, 'methods');
+    assert.deepEqual(Object.keys(controller.runtime).sort(), [...runtimeSurfaces].sort());
+    assert.ok(Object.values(controller.runtime).every((level) => level === 'parity-validated'));
+    assert.ok(controller.ports.inputs.length > 0);
+    assert.ok(controller.ports.outputs.length > 0);
+  }
+
+  const covered = manifest.controllers.flatMap((item) => item.operatorClasses);
+  assert.deepEqual(covered.sort(), [...portableOperatorClasses].sort());
 });
 
 test('public upstream loaders map to the declared V1 upstreams', () => {

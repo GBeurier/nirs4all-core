@@ -27,6 +27,14 @@ portable_operator_subset = [
   "sklearn.cross_decomposition._pls.PLSRegression",
 ]
 
+runtime_surfaces = [
+  "python",
+  "r",
+  "javascript_wasm",
+  "rust",
+  "matlab_octave",
+]
+
 # Portable Kennard-Stone / SNV / Savitzky-Golay / PLS pipeline execution.
 # Numerics are delegated to the `methods` upstream in every binding; the
 # aggregate owns only parsing, orchestration, and result-shape translation.
@@ -79,6 +87,89 @@ run_symbol = "runPortablePipeline"
 run_source = "bindings/matlab/+nirs4all/runPortablePipeline.m"
 parity_gate = "bindings/matlab/tests/parity.m"
 execution = "nirs4all-methods +n4m MATLAB/Octave MEX shims with +pls4all compatibility"
+
+# Stable controller/capability descriptors consumed by app hosts (`nirs4all-ui`,
+# `nirs4all-web`, Studio, and bespoke browser/desktop shells). These rows are a
+# contract for graph builders and runtime selectors; execution still goes
+# through the portable pipeline entry point and the `methods` upstream.
+[[controller]]
+id = "split.kennard_stone"
+kind = "splitter"
+domain = "methods"
+label = "Kennard-Stone split"
+operator_classes = [
+  "nirs4all.operators.splitters.KennardStoneSplitter",
+  "nirs4all.operators.splitters.splitters.KennardStoneSplitter",
+]
+inputs = ["X"]
+outputs = ["train_indices", "test_indices"]
+parameters = ["test_size"]
+runtime = { python = "parity-validated", r = "parity-validated", javascript_wasm = "parity-validated", rust = "parity-validated", matlab_octave = "parity-validated" }
+execution_path = "portable_pipeline"
+
+[[controller]]
+id = "preprocess.snv"
+kind = "transform"
+domain = "methods"
+label = "Standard normal variate"
+operator_classes = [
+  "nirs4all.operators.transforms.SNV",
+  "nirs4all.operators.transforms.StandardNormalVariate",
+  "nirs4all.operators.transforms.scalers.StandardNormalVariate",
+]
+inputs = ["X"]
+outputs = ["X_transformed"]
+parameters = []
+runtime = { python = "parity-validated", r = "parity-validated", javascript_wasm = "parity-validated", rust = "parity-validated", matlab_octave = "parity-validated" }
+execution_path = "portable_pipeline"
+
+[[controller]]
+id = "preprocess.savgol"
+kind = "transform"
+domain = "methods"
+label = "Savitzky-Golay"
+operator_classes = [
+  "nirs4all.operators.transforms.SavitzkyGolay",
+  "nirs4all.operators.transforms.nirs.SavitzkyGolay",
+]
+inputs = ["X"]
+outputs = ["X_transformed"]
+parameters = ["window_length", "polyorder", "deriv", "mode", "cval"]
+runtime = { python = "parity-validated", r = "parity-validated", javascript_wasm = "parity-validated", rust = "parity-validated", matlab_octave = "parity-validated" }
+execution_path = "portable_pipeline"
+
+[[controller]]
+id = "model.pls_regression"
+kind = "model"
+domain = "methods"
+label = "PLS regression"
+operator_classes = [
+  "sklearn.cross_decomposition.PLSRegression",
+  "sklearn.cross_decomposition._pls.PLSRegression",
+]
+inputs = ["X", "y"]
+outputs = ["predictions", "model"]
+parameters = ["n_components", "_range_"]
+runtime = { python = "parity-validated", r = "parity-validated", javascript_wasm = "parity-validated", rust = "parity-validated", matlab_octave = "parity-validated" }
+execution_path = "portable_pipeline"
+
+[[controller]]
+id = "pipeline.portable_methods"
+kind = "pipeline"
+domain = "methods"
+label = "Portable methods pipeline"
+operator_classes = []
+inputs = ["pipeline", "dataset"]
+outputs = ["execution_result", "predictions", "model"]
+parameters = []
+runtime = { python = "parity-validated", r = "parity-validated", javascript_wasm = "parity-validated", rust = "parity-validated", matlab_octave = "parity-validated" }
+execution_path = "run_portable_pipeline"
+composes = [
+  "split.kennard_stone",
+  "preprocess.snv",
+  "preprocess.savgol",
+  "model.pls_regression",
+]
 
 # Upstream domains (formats, io, datasets, dag_ml, dag_ml_data) are re-exported
 # through lazy import proxies/loaders only. The aggregate itself does not wrap or

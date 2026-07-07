@@ -2,6 +2,11 @@
 
 __version__ = "0.2.8"
 
+from ._capabilities import (
+    capability_manifest,
+    controller_capabilities,
+    runtime_surfaces,
+)
 from ._execution import PortableDataset, parse_execution_plan, run_portable_pipeline
 from ._pipeline import (
     PORTABLE_OPERATOR_CLASSES,
@@ -45,7 +50,9 @@ __all__ = [
     "TOPOLOGY_EXPORTS",
     "Upstream",
     "available_upstreams",
+    "capability_manifest",
     "core_facade_exports",
+    "controller_capabilities",
     "dag_ml",
     "dag_ml_data",
     "datasets",
@@ -60,6 +67,7 @@ __all__ = [
     "release_topology_manifest",
     "require_upstream",
     "run_portable_pipeline",
+    "runtime_surfaces",
     "upstream_status",
     "upstreams",
     "validate_core_facade",

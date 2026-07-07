@@ -7,11 +7,14 @@ expected_exports <- c(
   "formats",
   "io",
   "methods",
+  "nirs4all_capability_manifest",
+  "nirs4all_controller_capabilities",
   "nirs4all_load_pipeline",
   "nirs4all_parse_execution_plan",
   "nirs4all_portable_class_names",
   "nirs4all_require",
   "nirs4all_run_portable_pipeline",
+  "nirs4all_runtime_surfaces",
   "nirs4all_upstreams"
 )
 
@@ -25,3 +28,20 @@ for (name in expected_exports) {
 
 stopifnot(identical(nirs4all::formats, get("formats", envir = namespace)))
 stopifnot(identical(nirs4all::methods, get("methods", envir = namespace)))
+
+manifest <- nirs4all::nirs4all_capability_manifest()
+stopifnot(identical(manifest$schema, "nirs4all-core.capabilities.v1"))
+stopifnot(identical(
+  nirs4all::nirs4all_runtime_surfaces(),
+  c("python", "r", "javascript_wasm", "rust", "matlab_octave")
+))
+stopifnot(identical(
+  vapply(manifest$controllers, function(item) item$id, character(1)),
+  c(
+    "split.kennard_stone",
+    "preprocess.snv",
+    "preprocess.savgol",
+    "model.pls_regression",
+    "pipeline.portable_methods"
+  )
+))
