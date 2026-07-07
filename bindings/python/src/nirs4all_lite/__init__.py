@@ -1,6 +1,6 @@
 """Python surface for the nirs4all-core aggregate distribution (import root kept as ``nirs4all_lite``)."""
 
-__version__ = "0.2.12"
+__version__ = "0.2.13"
 
 from ._capabilities import (
     capability_manifest,
