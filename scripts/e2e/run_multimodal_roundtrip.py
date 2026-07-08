@@ -619,8 +619,12 @@ if (typeof methods.loadModule === 'function') {
 }
 
 const pipeline = readFileSync(pipelinePath, 'utf8');
+const pipelineObject = JSON.parse(pipeline);
 const payload = JSON.parse(readFileSync(datasetPath, 'utf8'));
 const portable = payload.portable_view;
+const manifest = n4a.capabilityManifest();
+const definition = n4a.loadPipelineDefinition(pipelineObject);
+const wasmRuntime = manifest.runtimeContracts.find((item) => item.surface === 'javascript_wasm');
 const dataset = {
   X: Float64Array.from(portable.X),
   y: Float64Array.from(portable.y),
@@ -637,6 +641,35 @@ actual.predict_roundtrip = {
   rows: predicted.rows,
   cols: predicted.cols,
   held_out_predictions: actual.split.testIndices.map((index) => predicted.data[index]),
+};
+actual.web_core_import = {
+  schema_version: 'n4a.e2e.multimodal_web_core_import.v1',
+  scenario_id: 'e2e-multimodal-python-r-wasm-roundtrip',
+  status: 'passed',
+  runtime_surface: 'javascript_wasm',
+  client_side_only: true,
+  backend_api_calls: 0,
+  aggregate: manifest.aggregate,
+  capability_schema: manifest.schema,
+  runtime_surfaces: manifest.runtimeSurfaces,
+  runtime_contract: wasmRuntime ?? null,
+  pipeline_imported: true,
+  loaded_pipeline_name: definition.name,
+  original_pipeline_name: pipelineObject.name,
+  pipeline_name_match: definition.name === pipelineObject.name,
+  run_entrypoint: typeof n4a.runPortablePipeline,
+  predict_entrypoint: typeof n4a.predictPortablePipeline,
+  dataset_imported: true,
+  dataset_name: payload.name,
+  dataset_rows: portable.rows,
+  dataset_cols: portable.cols,
+  source_count: Array.isArray(payload.sources) ? payload.sources.length : 0,
+  source_ids: Array.isArray(payload.sources) ? payload.sources.map((source) => source.name ?? source.id ?? source.source_id ?? null) : [],
+  source_slices: Array.isArray(payload.sources) ? payload.sources.map((source) => source.feature_slice ?? null) : [],
+  sample_count: Array.isArray(payload.samples) ? payload.samples.length : 0,
+  prediction_rows: actual.selected.predictions.length,
+  predict_roundtrip_rows: predicted.rows,
+  predict_roundtrip_cols: predicted.cols,
 };
 writeFileSync(outputPath, `${JSON.stringify(actual, null, 2)}\\n`);
 """.strip()
@@ -672,6 +705,100 @@ writeFileSync(outputPath, `${JSON.stringify(actual, null, 2)}\\n`);
         payload["predict_roundtrip_abs_max"] = _max_abs_diff(_as_float_list(held_out), _as_float_list(actual["selected"]["predictions"]))
         _write_json(result_json, payload)
     return payload
+
+
+def _write_web_core_import_evidence(
+    pipeline: dict[str, Any],
+    dataset: dict[str, Any],
+    oracle: dict[str, Any],
+    wasm_payload: dict[str, Any],
+    artifacts_dir: Path,
+) -> dict[str, Any]:
+    output_path = artifacts_dir / "web-core-import.json"
+    tolerance = float(oracle["metadata"]["prediction_abs_tolerance"])
+    web = dict(wasm_payload.get("actual", {}).get("web_core_import") or {})
+    comparison = dict(wasm_payload.get("comparison") or {})
+    predict_roundtrip_abs_max = wasm_payload.get("predict_roundtrip_abs_max")
+    runtime_contract = dict(web.get("runtime_contract") or {})
+    serialized_model_predict_surfaces = [
+        item.get("surface")
+        for item in web.get("runtime_contracts", [])
+        if isinstance(item, dict) and item.get("serializedModelPredict") is True
+    ]
+    if not serialized_model_predict_surfaces and runtime_contract.get("serializedModelPredict") is True:
+        serialized_model_predict_surfaces = [str(runtime_contract.get("surface"))]
+
+    expected_source_ids = [_source_id(source if isinstance(source, dict) else {}, index) for index, source in enumerate(dataset.get("sources") or [])]
+    expected_source_slices = [
+        list(bounds)
+        for source in dataset.get("sources") or []
+        if isinstance(source, dict) and (bounds := _slice_bounds(source.get("feature_slice"))) is not None
+    ]
+
+    checks = {
+        "client_side_only": web.get("client_side_only") is True,
+        "backend_api_calls_zero": int(web.get("backend_api_calls", -1)) == 0,
+        "capability_schema": web.get("capability_schema") == "nirs4all-core.capabilities.v1",
+        "javascript_wasm_surface_declared": "javascript_wasm" in list(web.get("runtime_surfaces") or []),
+        "runtime_contract_predict_entrypoint": runtime_contract.get("predictEntrypoint") == "predictPortablePipeline",
+        "runtime_contract_pipeline_entrypoint": runtime_contract.get("pipelineEntrypoint") == "runPortablePipeline",
+        "serialized_model_predict_surface": serialized_model_predict_surfaces == ["javascript_wasm"],
+        "pipeline_imported": web.get("pipeline_imported") is True,
+        "pipeline_name_match": web.get("pipeline_name_match") is True and web.get("original_pipeline_name") == pipeline.get("name"),
+        "run_entrypoint_is_function": web.get("run_entrypoint") == "function",
+        "predict_entrypoint_is_function": web.get("predict_entrypoint") == "function",
+        "dataset_imported": web.get("dataset_imported") is True,
+        "dataset_shape_match": int(web.get("dataset_rows", -1)) == int(dataset.get("rows", -2))
+        and int(web.get("dataset_cols", -1)) == int(dataset.get("cols", -2)),
+        "source_count_match": int(web.get("source_count", -1)) == len(expected_source_ids),
+        "source_ids_match": list(web.get("source_ids") or []) == expected_source_ids,
+        "source_slices_match": list(web.get("source_slices") or []) == expected_source_slices,
+        "sample_count_match": int(web.get("sample_count", -1)) == len(list(dataset.get("samples") or [])),
+        "prediction_rows_match": int(web.get("prediction_rows", -1)) == len(_as_float_list(oracle["case"]["selected"]["predictions"])),
+        "prediction_abs_max_within_tolerance": float(comparison.get("prediction_abs_max", float("inf"))) <= tolerance,
+        "predict_roundtrip_abs_max_within_tolerance": float(predict_roundtrip_abs_max if predict_roundtrip_abs_max is not None else float("inf")) <= tolerance,
+    }
+    status = "passed" if checks and all(checks.values()) else "failed"
+    evidence = {
+        "schema_version": "n4a.e2e.multimodal_web_core_import.v1",
+        "scenario_id": SCENARIO_ID,
+        "status": status,
+        "runtime": "javascript_wasm",
+        "artifact": "web-core-import.json",
+        "pipeline_sha256": _stable_hash(pipeline),
+        "dataset_sha256": _stable_hash(dataset["portable_view"]),
+        "client_side_only": web.get("client_side_only") is True,
+        "backend_api_calls": int(web.get("backend_api_calls", -1)),
+        "capability_schema": web.get("capability_schema"),
+        "runtime_surfaces": list(web.get("runtime_surfaces") or []),
+        "runtime_contract": runtime_contract,
+        "serialized_model_predict_surfaces": serialized_model_predict_surfaces,
+        "pipeline_import": {
+            "imported": web.get("pipeline_imported") is True,
+            "loaded_pipeline_name": web.get("loaded_pipeline_name"),
+            "original_pipeline_name": web.get("original_pipeline_name"),
+            "pipeline_name_match": web.get("pipeline_name_match") is True,
+        },
+        "dataset_import": {
+            "imported": web.get("dataset_imported") is True,
+            "dataset_name": web.get("dataset_name"),
+            "rows": web.get("dataset_rows"),
+            "cols": web.get("dataset_cols"),
+            "source_count": web.get("source_count"),
+            "source_ids": list(web.get("source_ids") or []),
+            "source_slices": list(web.get("source_slices") or []),
+            "sample_count": web.get("sample_count"),
+        },
+        "prediction_comparison": {
+            "prediction_abs_max": comparison.get("prediction_abs_max"),
+            "predict_roundtrip_abs_max": predict_roundtrip_abs_max,
+            "tolerance": tolerance,
+            "prediction_rows": web.get("prediction_rows"),
+        },
+        "checks": checks,
+    }
+    _write_json(output_path, evidence)
+    return evidence
 
 
 def _required_artifacts(artifacts_dir: Path) -> tuple[Path, Path, Path]:
@@ -723,10 +850,23 @@ def main(argv: list[str] | None = None) -> int:
         _run_r(workspace_root, core_root, artifacts_dir, pipeline_path, dataset_path, dataset, oracle),
         _run_wasm(workspace_root, core_root, artifacts_dir, pipeline_path, dataset_path, dataset, oracle),
     ]
+    wasm_result = next((result for result in runtime_results if result.get("runtime") == "javascript_wasm"), None)
+    if wasm_result and wasm_result.get("status") == "passed":
+        web_core_import = _write_web_core_import_evidence(pipeline, dataset, oracle, wasm_result, artifacts_dir)
+    else:
+        web_core_import = _blocked(
+            "web_core_import",
+            "javascript_wasm runtime did not pass, so client-side web/core import evidence cannot be written.",
+            artifacts_dir / "web-core-import.json",
+        )
 
     required_runtimes = {"r", "javascript_wasm"}
     blockers = [result for result in runtime_results if result["status"] == "blocked" and result["runtime"] in required_runtimes]
     failures = [result for result in runtime_results if result["status"] == "failed"]
+    if web_core_import["status"] == "failed":
+        failures.append(web_core_import)
+    elif web_core_import["status"] == "blocked":
+        blockers.append(web_core_import)
     status = "passed"
     if failures:
         status = "failed"
@@ -742,8 +882,9 @@ def main(argv: list[str] | None = None) -> int:
         "dataset": {"path": dataset_path.name, "sha256": oracle["dataset_sha256"]},
         "multimodal_artifact_audit": multimodal_audit,
         "runtime_results": runtime_results,
+        "web_core_import": web_core_import,
         "decisions": [
-            "The web language declared by the ecosystem scenario is not executed here because no concrete web roundtrip step exists yet.",
+            "The client-side nirs4all-core JavaScript/WASM runtime imports the same multimodal pipeline and dataset artifacts and records web-core-import.json; the full Studio shell is not exercised by this scenario.",
             "R and JavaScript/WASM receive the explicit fused dense matrix view from the multimodal dataset contract.",
             "Runtime blockers are recorded as JSON artifacts; prediction files are written only after actual execution.",
         ],
