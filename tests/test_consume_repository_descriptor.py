@@ -100,6 +100,11 @@ class RepositoryDescriptorConsumerTests(unittest.TestCase):
                 ),
                 mock.patch.object(
                     consumer,
+                    "_run_r_execution",
+                    return_value=_runtime("bindings/r", [1.25, 2.25]),
+                ),
+                mock.patch.object(
+                    consumer,
                     "_run_javascript_wasm_execution",
                     return_value=_runtime("bindings/wasm", [1.25, 2.25]),
                 ),
@@ -112,9 +117,18 @@ class RepositoryDescriptorConsumerTests(unittest.TestCase):
         self.assertEqual(result["execution"]["dataset"]["source_csv_sha256"], "a" * 64)
         self.assertEqual(result["execution"]["comparison"]["status"], "passed")
         self.assertEqual(
-            [item["status"] for item in result["execution"]["runtime_results"]],
-            ["passed", "passed"],
+            sorted(result["execution"]["comparisons"]),
+            ["python_vs_r", "python_vs_wasm", "r_vs_wasm"],
         )
+        self.assertEqual(
+            [item["status"] for item in result["execution"]["runtime_results"]],
+            ["passed", "passed", "passed"],
+        )
+        self.assertEqual(
+            [item["surface"] for item in result["execution"]["runtime_results"]],
+            ["bindings/python", "bindings/r", "bindings/wasm"],
+        )
+        self.assertNotIn("known_followups", result)
 
     def test_strict_prediction_comparison_fails_on_prediction_drift(self) -> None:
         comparison = consumer._strict_prediction_comparison(
@@ -125,12 +139,17 @@ class RepositoryDescriptorConsumerTests(unittest.TestCase):
         self.assertEqual(comparison["status"], "failed")
         self.assertGreater(comparison["prediction_abs_max"], consumer.EXECUTION_TOLERANCE)
 
-    def test_runtime_execution_requires_python_and_wasm_evidence(self) -> None:
+    def test_runtime_execution_requires_python_r_and_wasm_evidence(self) -> None:
         with (
             mock.patch.object(
                 consumer,
                 "_run_python_execution",
                 return_value=_runtime("bindings/python", [1.25, 2.25]),
+            ),
+            mock.patch.object(
+                consumer,
+                "_run_r_execution",
+                return_value=_runtime("bindings/r", [1.25, 2.25]),
             ),
             mock.patch.object(
                 consumer,

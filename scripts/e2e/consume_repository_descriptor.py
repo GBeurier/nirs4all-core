@@ -10,6 +10,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -217,6 +218,105 @@ def _run_python_execution(pipeline_path: Path, dataset: dict[str, Any]) -> dict[
     return _execution_evidence("bindings/python", actual)
 
 
+def _find_rscript() -> Path | None:
+    candidates = [
+        shutil.which("Rscript"),
+        "/home/delete/miniconda3/envs/pls4all_r/bin/Rscript",
+    ]
+    for candidate in candidates:
+        if candidate and Path(candidate).is_file():
+            return Path(candidate)
+    return None
+
+
+def _run_r_execution(pipeline_path: Path, dataset: dict[str, Any]) -> dict[str, Any]:
+    rscript = _find_rscript()
+    if rscript is None:
+        raise RuntimeError("Rscript runtime not found; cannot execute the R binding surface")
+
+    code = r"""
+args <- commandArgs(trailingOnly = TRUE)
+core_root <- normalizePath(args[[1]], mustWork = TRUE)
+pipeline_path <- normalizePath(args[[2]], mustWork = TRUE)
+dataset_path <- normalizePath(args[[3]], mustWork = TRUE)
+output_path <- args[[4]]
+
+local_lib <- file.path(core_root, ".r-parity-lib")
+if (dir.exists(local_lib)) {
+  .libPaths(c(local_lib, .libPaths()))
+}
+if (!requireNamespace("jsonlite", quietly = TRUE)) {
+  stop("jsonlite is required to execute the nirs4all-core R provider/repository parity path", call. = FALSE)
+}
+
+if (requireNamespace("nirs4all", quietly = TRUE)) {
+  run_portable <- nirs4all::nirs4all_run_portable_pipeline
+  nirs4all_version <- as.character(utils::packageVersion("nirs4all"))
+} else {
+  r_dir <- file.path(core_root, "bindings", "r", "R")
+  source(file.path(r_dir, "upstreams.R"))
+  source(file.path(r_dir, "pipeline.R"))
+  source(file.path(r_dir, "execution.R"))
+  run_portable <- nirs4all_run_portable_pipeline
+  nirs4all_version <- NULL
+}
+
+dataset <- jsonlite::fromJSON(dataset_path, simplifyVector = FALSE)
+actual <- run_portable(pipeline_path, dataset)
+payload <- list(
+  r = R.version.string,
+  nirs4all = nirs4all_version,
+  n4m = if (requireNamespace("n4m", quietly = TRUE)) as.character(utils::packageVersion("n4m")) else NULL,
+  actual = actual
+)
+jsonlite::write_json(payload, output_path, auto_unbox = TRUE, pretty = TRUE, digits = NA)
+"""
+    with tempfile.TemporaryDirectory(prefix="n4a-provider-r-") as tmp:
+        tmp_dir = Path(tmp)
+        dataset_path = tmp_dir / "dataset.json"
+        output_path = tmp_dir / "r-result.json"
+        _write_json(dataset_path, dataset)
+        env = os.environ.copy()
+        local_r_lib = _core_root() / ".r-parity-lib"
+        if local_r_lib.is_dir():
+            existing_r_lib = env.get("R_LIBS_USER", "")
+            env["R_LIBS_USER"] = f"{local_r_lib}:{existing_r_lib}" if existing_r_lib else str(local_r_lib)
+            env["R_LIBS"] = f"{local_r_lib}:{env.get('R_LIBS', '')}".rstrip(":")
+        methods_lib = _workspace_root() / "nirs4all-methods" / "build" / "dev-release" / "cpp" / "src"
+        if methods_lib.is_dir():
+            existing_ld = env.get("LD_LIBRARY_PATH", "")
+            env["LD_LIBRARY_PATH"] = f"{methods_lib}:{existing_ld}" if existing_ld else str(methods_lib)
+        proc = subprocess.run(
+            [
+                str(rscript),
+                "--vanilla",
+                "-e",
+                code,
+                str(_core_root()),
+                str(pipeline_path),
+                str(dataset_path),
+                str(output_path),
+            ],
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=60,
+            env=env,
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stderr.strip() or f"Rscript exited with {proc.returncode}")
+        payload = _read_json(output_path)
+    return _execution_evidence(
+        "bindings/r",
+        payload["actual"],
+        {
+            "r": payload.get("r"),
+            "nirs4all": payload.get("nirs4all"),
+            "n4m": payload.get("n4m"),
+        },
+    )
+
+
 def _methods_js_index() -> tuple[Path | None, str]:
     if os.environ.get("NIRS4ALL_METHODS_JS_DIST"):
         dist = Path(os.environ["NIRS4ALL_METHODS_JS_DIST"])
@@ -393,6 +493,7 @@ def _runtime_execution(pipeline_path: Path, resolution: dict[str, Any]) -> dict[
     runtime_errors = []
     for surface, runner in (
         ("bindings/python", _run_python_execution),
+        ("bindings/r", _run_r_execution),
         ("bindings/wasm", _run_javascript_wasm_execution),
     ):
         try:
@@ -404,13 +505,19 @@ def _runtime_execution(pipeline_path: Path, resolution: dict[str, Any]) -> dict[
         raise AssertionError(f"repository pipeline execution failed on required runtime surface(s): {runtime_errors}")
 
     python_result = next((result for result in runtime_results if result["surface"] == "bindings/python"), None)
+    r_result = next((result for result in runtime_results if result["surface"] == "bindings/r"), None)
     wasm_result = next((result for result in runtime_results if result["surface"] == "bindings/wasm"), None)
-    if python_result is None or wasm_result is None:
-        raise AssertionError("repository pipeline execution requires both Python and JavaScript/WASM runtime evidence")
+    if python_result is None or r_result is None or wasm_result is None:
+        raise AssertionError("repository pipeline execution requires Python, R, and JavaScript/WASM runtime evidence")
 
-    comparison = _strict_prediction_comparison(python_result, wasm_result)
-    if comparison["status"] != "passed":
-        raise AssertionError(f"Python and JavaScript/WASM execution diverged: {comparison}")
+    comparisons = {
+        "python_vs_r": _strict_prediction_comparison(python_result, r_result),
+        "python_vs_wasm": _strict_prediction_comparison(python_result, wasm_result),
+        "r_vs_wasm": _strict_prediction_comparison(r_result, wasm_result),
+    }
+    failures = {name: comparison for name, comparison in comparisons.items() if comparison["status"] != "passed"}
+    if failures:
+        raise AssertionError(f"Repository pipeline execution diverged across runtime surfaces: {failures}")
 
     return {
         "status": "passed",
@@ -425,7 +532,8 @@ def _runtime_execution(pipeline_path: Path, resolution: dict[str, Any]) -> dict[
             "io_package_summary_sha256": (resolution.get("dataset") or {}).get("io_package_summary_sha256"),
         },
         "runtime_results": runtime_results,
-        "comparison": comparison,
+        "comparison": comparisons["python_vs_wasm"],
+        "comparisons": comparisons,
     }
 
 
@@ -463,16 +571,6 @@ def consume(artifacts_dir: Path) -> dict[str, Any]:
         "javascript_wasm": javascript_wasm,
         "parity": parity,
         "execution": execution,
-        "known_followups": [
-            {
-                "surface": "r",
-                "coverage": "covered_by_separate_core_methods_gate",
-                "reason": (
-                    "R remains covered by separate core/methods gates; the current n4m R binding ABI "
-                    "does not expose the preprocessing/splitter functions needed for this repository pipeline."
-                ),
-            }
-        ],
     }
 
 
