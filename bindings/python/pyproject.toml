@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nirs4all-core"
-version = "0.3.5"
+version = "0.3.6"
 description = "Portable nirs4all aggregate binding over formats, IO, methods, dag-ml, and dag-ml-data (datasets optional)"
 readme = "README.md"
 requires-python = ">=3.11"
