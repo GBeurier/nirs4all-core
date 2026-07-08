@@ -6,7 +6,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import math
 import os
 import shutil
 import subprocess
@@ -146,37 +145,6 @@ def _read_json_from_text(text: str) -> dict[str, Any]:
     if not stripped:
         raise RuntimeError("JavaScript/WASM loader emitted no JSON")
     return json.loads(stripped.splitlines()[-1])
-
-
-def _deterministic_noise(row: int, col: int) -> float:
-    state = ((row + 1) * 73856093) ^ ((col + 1) * 19349663)
-    state &= 0xFFFFFFFF
-    state = (1664525 * state + 1013904223) & 0xFFFFFFFF
-    return state / 4294967295 - 0.5
-
-
-def _execution_dataset(rows: int = 40, cols: int = 28) -> dict[str, Any]:
-    x: list[list[float]] = []
-    y: list[float] = []
-    for row_index in range(rows):
-        phase = row_index / 5
-        row: list[float] = []
-        target = 0.0
-        for col_index in range(cols):
-            wavelength = 900 + col_index * 8
-            value = (
-                0.6 * math.sin(phase + col_index / 7)
-                + 0.25 * math.cos(row_index / 6 - col_index / 11)
-                + 0.002 * wavelength
-                + ((row_index % 4) - 1.5) * 0.03
-                + 0.12 * _deterministic_noise(row_index, col_index)
-                + 0.03 * math.sin(((row_index + 1) * (col_index + 2)) / 13)
-            )
-            row.append(value)
-            target += value * (0.04 if col_index < cols / 2 else -0.025) + 0.01 * _deterministic_noise(col_index, row_index)
-        x.append(row)
-        y.append(target + 0.2 * math.sin(row_index / 3) + row_index * 0.015)
-    return {"X": x, "y": y, "rows": rows, "cols": cols}
 
 
 def _as_float_list(values: Any) -> list[float]:
@@ -396,8 +364,31 @@ def _strict_prediction_comparison(left: dict[str, Any], right: dict[str, Any]) -
     }
 
 
-def _runtime_execution(pipeline_path: Path) -> dict[str, Any]:
-    dataset = _execution_dataset()
+def _execution_dataset_from_provider_resolution(resolution: dict[str, Any]) -> dict[str, Any]:
+    dataset = ((resolution.get("dataset") or {}).get("execution_dataset") or {})
+    if not isinstance(dataset, dict):
+        raise AssertionError("provider resolution must include dataset.execution_dataset")
+    required = ("X", "y", "rows", "cols")
+    missing = [key for key in required if key not in dataset]
+    if missing:
+        raise AssertionError(f"provider execution dataset is missing required field(s): {', '.join(missing)}")
+    rows = int(dataset["rows"])
+    cols = int(dataset["cols"])
+    if rows <= 0 or cols <= 0:
+        raise AssertionError("provider execution dataset must have positive rows and cols")
+    if len(dataset["X"]) != rows or len(dataset["y"]) != rows:
+        raise AssertionError("provider execution dataset row counts do not match rows/y")
+    if any(len(row) != cols for row in dataset["X"]):
+        raise AssertionError("provider execution dataset feature rows do not match cols")
+    expected_sha = (resolution.get("dataset") or {}).get("execution_dataset_sha256")
+    actual_sha = _stable_hash(dataset)
+    if expected_sha and expected_sha != actual_sha:
+        raise AssertionError("provider execution dataset sha256 does not match resolution metadata")
+    return dataset
+
+
+def _runtime_execution(pipeline_path: Path, resolution: dict[str, Any]) -> dict[str, Any]:
+    dataset = _execution_dataset_from_provider_resolution(resolution)
     runtime_results = []
     runtime_errors = []
     for surface, runner in (
@@ -424,11 +415,14 @@ def _runtime_execution(pipeline_path: Path) -> dict[str, Any]:
     return {
         "status": "passed",
         "dataset": {
-            "kind": "deterministic_synthetic_nirs_matrix",
+            "kind": dataset.get("kind", "provider_materialized_dataset"),
             "rows": dataset["rows"],
             "cols": dataset["cols"],
             "target_count": len(dataset["y"]),
             "sha256": _stable_hash(dataset),
+            "provider_resolution_sha256": (resolution.get("dataset") or {}).get("execution_dataset_sha256"),
+            "source_csv_sha256": (resolution.get("dataset") or {}).get("execution_dataset_csv_sha256"),
+            "io_package_summary_sha256": (resolution.get("dataset") or {}).get("io_package_summary_sha256"),
         },
         "runtime_results": runtime_results,
         "comparison": comparison,
@@ -446,7 +440,7 @@ def consume(artifacts_dir: Path) -> dict[str, Any]:
     resolution = _read_json(resolution_path)
     python = _load_python(pipeline_path)
     javascript_wasm = _load_javascript_wasm(pipeline_path)
-    execution = _runtime_execution(pipeline_path)
+    execution = _runtime_execution(pipeline_path, resolution)
 
     parity = {
         "classes_match": python["classes"] == javascript_wasm["classes"],

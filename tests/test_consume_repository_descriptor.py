@@ -12,6 +12,25 @@ ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests" / "parity" / "fixtures" / "portable_methods_pipeline.json"
 
 
+def _resolution() -> dict[str, object]:
+    dataset = {
+        "kind": "provider_materialized_csv_nirs_matrix",
+        "X": [[1.0, 2.0], [3.0, 4.0]],
+        "y": [1.0, 2.0],
+        "rows": 2,
+        "cols": 2,
+    }
+    return {
+        "repository": {"pipeline_id": "portable-methods", "catalog_count": 1},
+        "dataset": {
+            "execution_dataset": dataset,
+            "execution_dataset_sha256": consumer._stable_hash(dataset),
+            "execution_dataset_csv_sha256": "a" * 64,
+            "io_package_summary_sha256": "b" * 64,
+        },
+    }
+
+
 def _runtime(surface: str, predictions: list[float]) -> dict[str, object]:
     return {
         "surface": surface,
@@ -52,7 +71,7 @@ class RepositoryDescriptorConsumerTests(unittest.TestCase):
             artifacts_dir = Path(tmp)
             shutil.copyfile(FIXTURE, artifacts_dir / consumer.PIPELINE_ARTIFACT)
             (artifacts_dir / consumer.RESOLUTION_ARTIFACT).write_text(
-                json.dumps({"repository": {"pipeline_id": "portable-methods", "catalog_count": 1}}),
+                json.dumps(_resolution()),
                 encoding="utf-8",
             )
 
@@ -89,6 +108,8 @@ class RepositoryDescriptorConsumerTests(unittest.TestCase):
 
         self.assertEqual(result["status"], "passed")
         self.assertEqual(result["execution"]["status"], "passed")
+        self.assertEqual(result["execution"]["dataset"]["kind"], "provider_materialized_csv_nirs_matrix")
+        self.assertEqual(result["execution"]["dataset"]["source_csv_sha256"], "a" * 64)
         self.assertEqual(result["execution"]["comparison"]["status"], "passed")
         self.assertEqual(
             [item["status"] for item in result["execution"]["runtime_results"]],
@@ -118,7 +139,11 @@ class RepositoryDescriptorConsumerTests(unittest.TestCase):
             ),
         ):
             with self.assertRaisesRegex(AssertionError, "required runtime surface"):
-                consumer._runtime_execution(FIXTURE)
+                consumer._runtime_execution(FIXTURE, _resolution())
+
+    def test_runtime_execution_requires_provider_execution_dataset(self) -> None:
+        with self.assertRaisesRegex(AssertionError, "provider execution dataset"):
+            consumer._runtime_execution(FIXTURE, {"repository": {"pipeline_id": "portable-methods"}})
 
 
 if __name__ == "__main__":
