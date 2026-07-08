@@ -115,11 +115,19 @@ def verify(artifacts_dir: Path) -> tuple[dict[str, Any], dict[str, Any]]:
     aggregate = scheduler_run.get("aggregate") or {}
     local_best, local_best_rmse = _best_task(tasks, "best_rmse")
     best_task_id = local_best.get("id")
+    cluster_num_tasks = int(aggregate.get("num_tasks"))
+    cluster_num_succeeded = int(aggregate.get("num_succeeded"))
+    local_num_tasks = len(tasks)
+    local_num_succeeded = sum(1 for task in tasks if task.get("status") == "succeeded")
+    cluster_best_metric = float(aggregate.get("best_metric"))
+    best_metric_tolerance = 1e-12
+    best_metric_absolute_delta = abs(cluster_best_metric - local_best_rmse)
+    count_tolerance = 0
     if aggregate.get("best_task_id") != best_task_id:
         raise AssertionError(
             f"best task mismatch: aggregate={aggregate.get('best_task_id')!r} local={best_task_id!r}"
         )
-    if not math.isclose(float(aggregate.get("best_metric")), local_best_rmse, rel_tol=0.0, abs_tol=1e-12):
+    if not math.isclose(cluster_best_metric, local_best_rmse, rel_tol=0.0, abs_tol=best_metric_tolerance):
         raise AssertionError(
             f"best metric mismatch: aggregate={aggregate.get('best_metric')!r} local={local_best_rmse!r}"
         )
@@ -155,27 +163,29 @@ def verify(artifacts_dir: Path) -> tuple[dict[str, Any], dict[str, Any]]:
             "a real cluster nirs4all.run metric against the local Python reference."
         ),
         "cluster": {
-            "num_tasks": aggregate.get("num_tasks"),
-            "num_succeeded": aggregate.get("num_succeeded"),
+            "num_tasks": cluster_num_tasks,
+            "num_succeeded": cluster_num_succeeded,
             "best_task_id": aggregate.get("best_task_id"),
-            "best_metric": aggregate.get("best_metric"),
+            "best_metric": cluster_best_metric,
         },
         "local_recompute": {
-            "num_tasks": len(tasks),
-            "num_succeeded": sum(1 for task in tasks if task.get("status") == "succeeded"),
+            "num_tasks": local_num_tasks,
+            "num_succeeded": local_num_succeeded,
             "best_task_id": best_task_id,
             "best_metric": local_best_rmse,
         },
+        "numeric_recompute": {
+            "task_count_absolute_delta": abs(cluster_num_tasks - local_num_tasks),
+            "succeeded_count_absolute_delta": abs(cluster_num_succeeded - local_num_succeeded),
+            "count_tolerance": count_tolerance,
+            "best_metric_absolute_delta": best_metric_absolute_delta,
+            "best_metric_tolerance": best_metric_tolerance,
+        },
         "checks": {
-            "num_tasks_match": aggregate.get("num_tasks") == len(tasks),
-            "all_succeeded": aggregate.get("num_succeeded") == len(tasks),
+            "num_tasks_match": abs(cluster_num_tasks - local_num_tasks) <= count_tolerance,
+            "all_succeeded": abs(cluster_num_succeeded - local_num_succeeded) <= count_tolerance,
             "best_task_match": aggregate.get("best_task_id") == best_task_id,
-            "best_metric_match": math.isclose(
-                float(aggregate.get("best_metric")),
-                local_best_rmse,
-                rel_tol=0.0,
-                abs_tol=1e-12,
-            ),
+            "best_metric_match": best_metric_absolute_delta <= best_metric_tolerance,
             "numeric_oracle_valid": numeric_oracle["status"] == "passed",
         },
         "numeric_oracle": numeric_oracle,

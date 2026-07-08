@@ -88,3 +88,10 @@ def test_verify_cluster_handoff_accepts_passing_numeric_oracle(tmp_path: Path) -
     assert core_client_result["numeric_oracle"]["status"] == "passed"
     assert parity["scope"] == "control_plane_metric_recompute+numeric_oracle"
     assert parity["checks"]["numeric_oracle_valid"] is True
+    assert parity["numeric_recompute"] == {
+        "task_count_absolute_delta": 0,
+        "succeeded_count_absolute_delta": 0,
+        "count_tolerance": 0,
+        "best_metric_absolute_delta": 0.0,
+        "best_metric_tolerance": 1e-12,
+    }
