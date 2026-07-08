@@ -232,7 +232,7 @@ def _prediction_table_audit(native_dir: Path, replay: dict[str, Any], ledger: di
         raise AssertionError("native prediction table carries an unexpected target width")
 
     array_rows = [row for row in meta_rows if row.get("arrays_present")]
-    tolerance = _finite(replay["parity"]["score_tolerance"], "score_tolerance")
+    tolerance = _finite(ledger.get("prediction_tolerance", replay["parity"]["score_tolerance"]), "prediction_tolerance")
     row_alignment: list[dict[str, Any]] = []
     alignment_gaps: list[str] = []
     for index, row in enumerate(meta_rows):
@@ -362,6 +362,27 @@ def _validate(artifacts_dir: Path) -> dict[str, Any]:
             f"native score_set deltas exceed tolerance: cv={cv_score_delta} best={best_score_delta} tol={tolerance}"
         )
     prediction_table = _prediction_table_audit(native_dir, replay, ledger)
+    vector_parity = prediction_table["vector_parity"]
+    prediction_vector_parity = {
+        "available": bool(vector_parity.get("available")),
+        "compared_rows": int(vector_parity.get("sample_count_compared") or 0),
+        "max_abs_delta": vector_parity.get("prediction_abs_max"),
+        "target_max_abs_delta": vector_parity.get("target_abs_max"),
+        "tolerance": vector_parity.get("tolerance"),
+        "within_tolerance": bool(vector_parity.get("within_tolerance")),
+    }
+    decisions = [
+        "nirs4all-core validates the native dag-ml replay score_set and audits predictions.parquet schema/coverage instead of reimplementing the Python stacking runner.",
+        "The richer by_source stacking legacy case remains fallback-only and is recorded as a known boundary in the replay manifest.",
+    ]
+    if prediction_vector_parity["available"]:
+        decisions.append(
+            "Native MetaModel test rows carry per-sample arrays, so native prediction_vector_parity is enforced against the Python oracle ledger."
+        )
+    else:
+        decisions.append(
+            "Native MetaModel rows do not yet expose comparable per-sample arrays, so prediction_vector_parity remains unavailable."
+        )
 
     return {
         "scenario_id": SCENARIO_ID,
@@ -376,12 +397,9 @@ def _validate(artifacts_dir: Path) -> dict[str, Any]:
             "best_rmse_abs": best_score_delta,
             "tolerance": tolerance,
         },
+        "prediction_vector_parity": prediction_vector_parity,
         "prediction_table": prediction_table,
-        "decisions": [
-            "nirs4all-core validates the native dag-ml replay score_set and audits predictions.parquet schema/coverage instead of reimplementing the Python stacking runner.",
-            "Current native MetaModel rows do not persist per-sample arrays, so this scenario no longer claims native vector parity.",
-            "The richer by_source stacking legacy case remains fallback-only and is recorded as a known boundary in the replay manifest.",
-        ],
+        "decisions": decisions,
     }
 
 
