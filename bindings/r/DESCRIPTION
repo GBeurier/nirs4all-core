@@ -1,6 +1,6 @@
 Package: nirs4all
 Title: Portable 'nirs4all' Aggregate Binding
-Version: 0.3.2
+Version: 0.3.3
 Authors@R: c(
     person("Gregory", "Beurier", email = "gregory.beurier@cirad.fr", role = c("aut", "cre")),
     person("nirs4all", "contributors", role = c("ctb", "cph")))
