@@ -73,8 +73,8 @@ level alone.
 
 The aggregate itself executes exactly one operator subset — Kennard-Stone split,
 SNV, Savitzky-Golay, and PLS regression — and it does so by **delegating all
-numerics to the `methods` upstream** (`nirs4all-methods` / `libn4m` / `+n4m`
-with `+pls4all` compatibility / `n4m`). It never re-implements a kernel. The same nine class aliases are
+numerics to the `methods` upstream** (`nirs4all-methods` / `libn4m` / `+n4m` /
+`n4m`). It never re-implements a kernel. The same nine class aliases are
 declared identically in all five bindings (proven by
 `test_cross_language_surface.py`).
 
@@ -84,7 +84,7 @@ declared identically in all five bindings (proven by
 | Rust | `parity-validated` | `run_portable_pipeline_with_library()` | caller-supplied `libn4m` (`NIRS4ALL_METHODS_LIB`) | `cargo test` `rust_binding_execution_matches_full_python_nirs4all_oracle` |
 | JavaScript/WASM | `parity-validated` | `runPortablePipeline()` plus standalone `predictPortablePipeline()` | `@nirs4all/methods` | `bindings/wasm/tests/parity.test.js` |
 | R | `parity-validated` | `nirs4all_run_portable_pipeline()` | nirs4all-methods R (`n4m`/`pls4all`) | `bindings/r/tests/parity.R` |
-| MATLAB/Octave | `parity-validated` | `nirs4all.runPortablePipeline()` | `+n4m` MATLAB/Octave MEX shims with `+pls4all` compatibility | `bindings/matlab/tests/parity.m` |
+| MATLAB/Octave | `parity-validated` | `nirs4all.runPortablePipeline()` | `+n4m` MATLAB/Octave MEX shims | `bindings/matlab/tests/parity.m` |
 
 "`parity-validated`" here is **conditional on the `methods` upstream being
 present**. Without it, every binding degrades honestly:
@@ -112,7 +112,7 @@ aggregate execution.
 
 This metadata is shared across package names, but runtime candidates are
 language-specific. R currently has no declared `dag_ml` package candidate, and
-MATLAB/Octave only advertises `methods` through `+n4m` and `+pls4all`; its other domain
+MATLAB/Octave only advertises `methods` through `+n4m`; its other domain
 rows are metadata-only and must not be read as npm/WASM package names or
 MATLAB/Octave runtime support.
 

@@ -1,12 +1,12 @@
 function result = runPortablePipeline(source, dataset)
 %RUNPORTABLEPIPELINE Execute the portable nirs4all JSON/YAML subset.
 %
-% This binding delegates numerical work to the +pls4all MATLAB/Octave MEX
+% This binding delegates numerical work to the +n4m MATLAB/Octave MEX
 % wrappers from nirs4all-methods. It does not implement kernels locally.
 
-if isempty(which('pls4all.pls_fit'))
+if isempty(which('n4m.pls_fit'))
     error('nirs4all:MissingMethods', ...
-        'Portable execution requires the nirs4all-methods +pls4all MATLAB/Octave binding on the path.');
+        'Portable execution requires the nirs4all-methods +n4m MATLAB/Octave binding on the path.');
 end
 
 definition = nirs4all.loadPipelineDefinition(source);
@@ -26,15 +26,15 @@ preprocessing = {};
 for idx = 1:numel(plan.preprocessing)
     step = plan.preprocessing{idx};
     if strcmp(step.type, 'StandardNormalVariate')
-        Xtrain = pls4all.snv_transform(Xtrain);
-        Xtest = pls4all.snv_transform(Xtest);
+        Xtrain = n4m.snv_transform(Xtrain);
+        Xtest = n4m.snv_transform(Xtest);
     elseif strcmp(step.type, 'SavitzkyGolay')
         params = step.params;
         mode = modeFromInt(params(4));
-        Xtrain = pls4all.savgol_transform( ...
+        Xtrain = n4m.savgol_transform( ...
             Xtrain, 'window_length', params(1), 'polyorder', params(2), ...
             'deriv', params(3), 'delta', 1.0, 'mode', mode, 'cval', params(5));
-        Xtest = pls4all.savgol_transform( ...
+        Xtest = n4m.savgol_transform( ...
             Xtest, 'window_length', params(1), 'polyorder', params(2), ...
             'deriv', params(3), 'delta', 1.0, 'mode', mode, 'cval', params(5));
     else
@@ -47,7 +47,7 @@ end
 variants = {};
 for idx = 1:numel(plan.nComponents)
     nComponents = plan.nComponents(idx);
-    [coefs, xMean, yMean] = pls4all.pls_fit(Xtrain, ytrain, nComponents);
+    [coefs, xMean, yMean] = n4m.pls_fit(Xtrain, ytrain, nComponents);
     predictions = predictFromCoefficients(Xtest, coefs, xMean, yMean);
     diff = predictions(:) - ytest(:);
     variants{end + 1} = struct( ... %#ok<AGROW>
@@ -186,7 +186,7 @@ end
 
 params = splitter.params;
 testSize = getFieldOrDefault(params, 'test_size', 0.25);
-raw = pls4all.kennard_stone_split(X, 'test_size', double(testSize), 'zero_based', true);
+raw = n4m.kennard_stone_split(X, 'test_size', double(testSize), 'zero_based', true);
 split = struct( ...
     'kind', 'KennardStone', ...
     'trainIndices', int32(raw.train(:).'), ...

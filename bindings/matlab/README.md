@@ -8,10 +8,10 @@ surface keeps the bare `nirs4all` namespace and is attached to releases as
 
 The MATLAB/Octave binding exposes the top-level `nirs4all` aggregate namespace.
 It parses the same portable JSON/YAML pipeline envelope as the other bindings
-and delegates numerical execution to the upstream `nirs4all-methods` `+pls4all`
+and delegates numerical execution to the upstream `nirs4all-methods` `+n4m`
 MEX shims.
 
-Only `methods` has a MATLAB/Octave runtime candidate today (`+pls4all`). The
+Only `methods` has a MATLAB/Octave runtime candidate today (`+n4m`). The
 other upstream domains are kept in `nirs4all.upstreams()` as aggregate metadata
 and do not advertise npm/WASM package names or MATLAB/Octave execution support.
 
@@ -22,7 +22,7 @@ and do not advertise npm/WASM package names or MATLAB/Octave execution support.
 - `nirs4all.portableClassNames(definition)` returns the operator classes in the
   definition.
 - `nirs4all.runPortablePipeline(source, dataset)` executes the portable
-  Kennard-Stone/SNV/Savitzky-Golay/PLS subset through `pls4all`.
+  Kennard-Stone/SNV/Savitzky-Golay/PLS subset through `n4m`.
 - `nirs4all.runtimeContracts()` distinguishes parity-validated pipeline
   execution from standalone serialized-model prediction. MATLAB/Octave does not
   expose the WASM replay-predict contract yet.

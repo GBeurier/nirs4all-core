@@ -305,7 +305,7 @@ class UpstreamRegistryParityTests(unittest.TestCase):
         packages = _matlab_upstream_packages()
 
         self.assertEqual(len(packages), EXPECTED_UPSTREAM_COUNT, packages)
-        self.assertEqual(packages["methods"], "+pls4all")
+        self.assertEqual(packages["methods"], "+n4m")
         metadata_only = {"dag_ml", "dag_ml_data", "formats", "io", "datasets"}
         self.assertEqual(
             {key for key, package in packages.items() if package == ""},

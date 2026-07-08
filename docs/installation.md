@@ -111,6 +111,6 @@ addpath('/path/to/nirs4all-matlab-octave')
 ```
 
 The public subset is Octave-safe. Strict-parity execution additionally requires
-the `nirs4all-methods` `+pls4all` MEX shims on the MATLAB/Octave path.
+the `nirs4all-methods` `+n4m` MEX shims on the MATLAB/Octave path.
 Other upstream domains are listed as aggregate metadata only; the MATLAB/Octave
 package does not advertise npm/WASM package names as runtime candidates.

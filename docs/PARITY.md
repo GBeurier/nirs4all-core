@@ -177,7 +177,7 @@ Rscript bindings/r/tests/parity.R
 ```
 
 Run the strict MATLAB/Octave parity gate after building the `nirs4all-methods`
-`+pls4all` MEX shims:
+`+n4m` MEX shims:
 
 ```bash
 NIRS4ALL_CORE_PARITY_ORACLE=$PWD/tests/parity/expected/portable_python_oracle.json \

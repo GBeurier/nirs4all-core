@@ -79,7 +79,7 @@ metadata-only and must fail explicitly if requested as executable capabilities.
 Current runtime coverage is intentionally uneven: JavaScript/WASM records npm
 peer candidates for every domain; R reaches only the upstream R packages that
 exist (`dag_ml` is metadata-only today); MATLAB/Octave only has a runtime
-candidate for `methods` via the upstream `+pls4all` shims, while
+candidate for `methods` via the upstream `+n4m` shims, while
 `dag_ml`, `dag_ml_data`, `formats`, `io`, and `datasets` are metadata-only.
 
 External operator support must stay execution-gated. When an upstream executor
@@ -107,7 +107,7 @@ against the full Python `nirs4all` oracle. The JavaScript/WASM binding
 additionally returns a serialized PLS model and exposes
 `predictPortablePipeline()` so browser clients can reuse the selected portable
 pipeline without reimplementing the preprocessing or prediction path. The
-MATLAB/Octave execution path delegates to the upstream `+pls4all` MEX shims and
+MATLAB/Octave execution path delegates to the upstream `+n4m` MEX shims and
 is strict-parity gated in CI. See [`docs/PARITY.md`](docs/PARITY.md).
 
 ## Repository layout
@@ -176,7 +176,7 @@ make test-r-parity
 ```
 
 Strict MATLAB/Octave-vs-full-`nirs4all` execution parity needs the
-`nirs4all-methods` `+pls4all` MEX shims on the Octave/MATLAB path:
+`nirs4all-methods` `+n4m` MEX shims on the Octave/MATLAB path:
 
 ```bash
 make test-matlab-parity

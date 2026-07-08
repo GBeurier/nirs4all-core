@@ -422,7 +422,7 @@ _UPSTREAM_COMPONENTS: list[dict[str, Any]] = [
             "rust": [],
             "npm": ["@nirs4all/methods"],
             "r": ["n4m", "pls4all"],
-            "matlab": ["+n4m", "+pls4all"],
+            "matlab": ["+n4m"],
             "c_abi": [
                 {
                     "header": "cpp/include/n4m/n4m.h",

@@ -30,7 +30,7 @@ The registry is broader than current runtime coverage. JavaScript/WASM publishes
 npm peer candidates for all six domains, Rust records crate/package metadata for
 the aggregate, R currently has package candidates for `dag_ml_data`, `formats`,
 `io`, `datasets`, and `methods` but not `dag_ml`, and MATLAB/Octave only has a
-runtime candidate for `methods` through `+pls4all`. The other MATLAB/Octave
+runtime candidate for `methods` through `+n4m`. The other MATLAB/Octave
 domain rows are metadata-only.
 
 ## Strategic Python path

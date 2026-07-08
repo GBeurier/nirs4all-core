@@ -10,7 +10,7 @@
 # parity gate files. A binding may not claim `execute-local` (or better) without
 # a real run symbol, nor `parity-validated` without a real parity gate. The
 # aggregate never re-implements numerical logic; execution always delegates to
-# the `methods` upstream (nirs4all-methods / libn4m / +n4m / n4m, with +pls4all compatibility).
+# the `methods` upstream (nirs4all-methods / libn4m / +n4m / n4m).
 
 # The portable operator subset every binding must expose consistently. This list
 # MUST equal nirs4all_core.PORTABLE_OPERATOR_CLASSES (checked by the gate) and is
@@ -86,7 +86,7 @@ level = "parity-validated"
 run_symbol = "runPortablePipeline"
 run_source = "bindings/matlab/+nirs4all/runPortablePipeline.m"
 parity_gate = "bindings/matlab/tests/parity.m"
-execution = "nirs4all-methods +n4m MATLAB/Octave MEX shims with +pls4all compatibility"
+execution = "nirs4all-methods +n4m MATLAB/Octave MEX shims"
 
 # Runtime host contracts separate portable pipeline parity from the narrower
 # ability to hydrate a serialized selected model and run prediction later. Only

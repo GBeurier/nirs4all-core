@@ -16,7 +16,7 @@ returned S3/S4 objects.
 ## MATLAB/Octave
 
 The current MATLAB/Octave package publishes the aggregate registry and the
-portable methods subset through `+pls4all`. Future MATLAB/Octave controllers
+portable methods subset through `+n4m`. Future MATLAB/Octave controllers
 should use matrices, tables, and options structs. Avoid MATLAB-only APIs in
 shared functions unless a fallback or clear error is provided for Octave.
 

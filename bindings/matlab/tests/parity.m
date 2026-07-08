@@ -15,11 +15,11 @@ if ~isempty(methodsPath) && exist(methodsPath, 'dir') == 7
 end
 
 strict = strcmp(getenv('NIRS4ALL_CORE_REQUIRE_METHODS_PARITY'), '1');
-if isempty(which('pls4all.pls_fit'))
+if isempty(which('n4m.pls_fit'))
     if strict
-        error('nirs4all:testFailed', 'pls4all MATLAB/Octave binding is required for strict parity');
+        error('nirs4all:testFailed', 'n4m MATLAB/Octave binding is required for strict parity');
     end
-    disp('Skipping MATLAB/Octave execution parity: pls4all is not on the path');
+    disp('Skipping MATLAB/Octave execution parity: n4m is not on the path');
     return
 end
 

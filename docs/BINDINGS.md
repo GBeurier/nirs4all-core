@@ -102,7 +102,7 @@ Python publishes as `nirs4all-core`; non-Python targets publish as `nirs4all`.
   MATLAB-only.
 - The portable KS/SNV/Savitzky-Golay/PLS subset executes through
   `nirs4all.runPortablePipeline()` by delegating to the `nirs4all-methods`
-  `+n4m` MEX shims, with `+pls4all` compatibility. The aggregate binding still owns only parsing,
+  `+n4m` MEX shims. The aggregate binding still owns only parsing,
   orchestration, and result-shape translation.
 - `nirs4all.upstreams()` keeps metadata rows for `dag_ml`, `dag_ml_data`,
   `formats`, `io`, and `datasets`, but it does not advertise npm/WASM package
