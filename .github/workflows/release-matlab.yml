@@ -70,9 +70,9 @@ jobs:
       - run: octave --quiet --eval "cd bindings/matlab; build_mex"
         working-directory: nirs4all-methods
         env:
-          PLS4ALL_INCLUDE_DIR: ${{ github.workspace }}/nirs4all-methods/cpp/include
-          PLS4ALL_GENERATED_DIR: ${{ github.workspace }}/nirs4all-methods/build/dev-release/generated
-          PLS4ALL_LIB_DIR: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
+          N4M_INCLUDE_DIR: ${{ github.workspace }}/nirs4all-methods/cpp/include
+          N4M_GENERATED_DIR: ${{ github.workspace }}/nirs4all-methods/build/dev-release/generated
+          N4M_LIB_DIR: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
           LD_LIBRARY_PATH: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
       - name: Run strict MATLAB/Octave parity against the Python oracle
         env:

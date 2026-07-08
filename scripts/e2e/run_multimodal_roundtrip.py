@@ -379,7 +379,6 @@ def _run_python_core(
     methods_lib = _methods_lib_path(workspace_root)
     if methods_lib is not None:
         os.environ.setdefault("N4M_LIB_PATH", str(methods_lib))
-        os.environ.setdefault("PLS4ALL_LIB_PATH", str(methods_lib))
     try:
         import nirs4all_core as n4core  # type: ignore[import-not-found]
 
@@ -426,9 +425,9 @@ def _prepare_r_library(workspace_root: Path, core_root: Path, artifacts_dir: Pat
     env.update(
         {
             "N4M_R_LINK_PREBUILT": "1",
-            "PLS4ALL_LIB_DIR": str(methods_lib_dir),
-            "PLS4ALL_GENERATED_DIR": str(generated_dir),
-            "PLS4ALL_INCLUDE_DIR": str(include_dir),
+            "N4M_LIB_DIR": str(methods_lib_dir),
+            "N4M_GENERATED_DIR": str(generated_dir),
+            "N4M_INCLUDE_DIR": str(include_dir),
             "R_LIBS": str(r_lib),
             "R_LIBS_USER": str(r_lib),
             "R_MAKEVARS_USER": str(makevars),

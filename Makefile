@@ -134,8 +134,8 @@ test-r-parity: test-r-fixtures
 		printf '%s\n' "Build it with: cd $(NIRS4ALL_METHODS_ROOT) && cmake --preset dev-release && cmake --build --preset dev-release --target n4m_c --parallel"; \
 		exit 1; \
 	fi
-	PLS4ALL_LIB_DIR="$(NIRS4ALL_METHODS_LIB_DIR)" \
-	PLS4ALL_GENERATED_DIR="$(NIRS4ALL_METHODS_GENERATED_DIR)" \
+	N4M_LIB_DIR="$(NIRS4ALL_METHODS_LIB_DIR)" \
+	N4M_GENERATED_DIR="$(NIRS4ALL_METHODS_GENERATED_DIR)" \
 	N4M_R_LINK_PREBUILT=1 \
 	LD_LIBRARY_PATH="$(NIRS4ALL_METHODS_LIB_DIR):$${LD_LIBRARY_PATH}" \
 	R_LIBS="$(R_PARITY_LIB):$${R_LIBS_USER:-}" R_LIBS_USER="$(R_PARITY_LIB):$${R_LIBS_USER:-}" \

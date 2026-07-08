@@ -40,7 +40,7 @@ LD_LIBRARY_PATH=/path/to/libn4m-directory \
 NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 \
 cargo test -p nirs4all rust_binding_execution_matches_full_python_nirs4all_oracle -- --nocapture
 PYTHONPATH=bindings/python/src:/path/to/nirs4all-methods/bindings/python/src \
-PLS4ALL_LIB_PATH=/path/to/libn4m.so \
+N4M_LIB_PATH=/path/to/libn4m.so \
 NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 \
 python -m unittest bindings/python/tests/test_execution_parity.py -v
 NIRS4ALL_CORE_PARITY_ORACLE=$PWD/tests/parity/expected/portable_python_oracle.json \

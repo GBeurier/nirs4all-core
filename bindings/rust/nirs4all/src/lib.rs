@@ -1670,8 +1670,7 @@ mod tests {
 
     #[test]
     fn rust_binding_execution_matches_full_python_nirs4all_oracle() {
-        let library_path =
-            std::env::var("NIRS4ALL_METHODS_LIB").or_else(|_| std::env::var("PLS4ALL_LIB_PATH"));
+        let library_path = std::env::var("NIRS4ALL_METHODS_LIB");
         let library_path = match library_path {
             Ok(path) => path,
             Err(error) => {

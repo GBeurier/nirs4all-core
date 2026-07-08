@@ -126,9 +126,9 @@ jobs:
       - run: octave --quiet --eval "cd bindings/matlab; build_mex"
         working-directory: nirs4all-methods
         env:
-          PLS4ALL_INCLUDE_DIR: ${{ github.workspace }}/nirs4all-methods/cpp/include
-          PLS4ALL_GENERATED_DIR: ${{ github.workspace }}/nirs4all-methods/build/dev-release/generated
-          PLS4ALL_LIB_DIR: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
+          N4M_INCLUDE_DIR: ${{ github.workspace }}/nirs4all-methods/cpp/include
+          N4M_GENERATED_DIR: ${{ github.workspace }}/nirs4all-methods/build/dev-release/generated
+          N4M_LIB_DIR: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
           LD_LIBRARY_PATH: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
       - run: make test-rust-parity
         env:
@@ -136,15 +136,15 @@ jobs:
           LD_LIBRARY_PATH: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
       - run: |
           PYTHONPATH="bindings/python/src:$GITHUB_WORKSPACE/nirs4all-methods/bindings/python/src" \
-          PLS4ALL_LIB_PATH="$GITHUB_WORKSPACE/nirs4all-methods/build/dev-release/cpp/src/libn4m.so" \
+          N4M_LIB_PATH="$GITHUB_WORKSPACE/nirs4all-methods/build/dev-release/cpp/src/libn4m.so" \
           NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 \
           python -m unittest bindings/python/tests/test_execution_parity.py -v
       - run: mkdir -p "$R_LIBS_USER"
       - run: Rscript -e 'install.packages(c("jsonlite", "yaml"), lib = Sys.getenv("R_LIBS_USER"), repos = "https://cloud.r-project.org")'
       - run: R CMD INSTALL --preclean --library="$R_LIBS_USER" --no-multiarch --no-staged-install nirs4all-methods/bindings/r/n4m
         env:
-          PLS4ALL_LIB_DIR: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
-          PLS4ALL_GENERATED_DIR: ${{ github.workspace }}/nirs4all-methods/build/dev-release/generated
+          N4M_LIB_DIR: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
+          N4M_GENERATED_DIR: ${{ github.workspace }}/nirs4all-methods/build/dev-release/generated
           N4M_R_LINK_PREBUILT: "1"
           LD_LIBRARY_PATH: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
       - run: R CMD INSTALL --library="$R_LIBS_USER" bindings/r

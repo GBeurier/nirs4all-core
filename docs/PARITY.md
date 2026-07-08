@@ -152,7 +152,7 @@ local libn4m build:
 
 ```bash
 PYTHONPATH=bindings/python/src:/path/to/nirs4all-methods/bindings/python/src \
-PLS4ALL_LIB_PATH=/path/to/libn4m.so \
+N4M_LIB_PATH=/path/to/libn4m.so \
 NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 \
 python -m unittest bindings/python/tests/test_execution_parity.py -v
 ```
