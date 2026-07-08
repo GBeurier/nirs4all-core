@@ -51,7 +51,7 @@ function methodsIndexUrl(pathOrFile) {
 function missingMethodsArtifactMessage(artifact) {
   return [
     `local nirs4all-methods JS/WASM build is not available (${artifact.source}: ${artifact.distPath}; missing ${artifact.missing.join(', ')})`,
-    'build/stage it in the Methods checkout with: cmake --preset emscripten && cmake --build --preset emscripten --target pls4all_wasm --parallel && cd bindings/js && npm ci && npm run build && npm run stage:wasm',
+    'build/stage it in the Methods checkout with: cmake --preset emscripten && cmake --build --preset emscripten --target n4m_wasm --parallel && cd bindings/js && npm ci && npm run build && npm run stage:wasm',
     'then rerun with NIRS4ALL_METHODS_JS_DIST=/path/to/nirs4all-methods/bindings/js/dist and NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1',
   ].join('; ');
 }

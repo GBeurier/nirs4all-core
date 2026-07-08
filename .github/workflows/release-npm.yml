@@ -98,7 +98,7 @@ jobs:
       - run: npm ci --prefix bindings/wasm
       - run: cmake --preset emscripten
         working-directory: nirs4all-methods
-      - run: cmake --build --preset emscripten --target pls4all_wasm --parallel
+      - run: cmake --build --preset emscripten --target n4m_wasm --parallel
         working-directory: nirs4all-methods
       - run: npm ci
         working-directory: nirs4all-methods/bindings/js

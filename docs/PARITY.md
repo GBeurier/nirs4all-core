@@ -123,7 +123,7 @@ Build/stage the Methods package from a checkout with Node/npm and Emscripten
 ```bash
 cd /path/to/nirs4all-methods
 cmake --preset emscripten
-cmake --build --preset emscripten --target pls4all_wasm --parallel
+cmake --build --preset emscripten --target n4m_wasm --parallel
 cd bindings/js
 npm ci
 npm run build

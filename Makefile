@@ -67,7 +67,7 @@ check-wasm-methods-artifact:
 		printf '%s\n' "Build/stage it in the methods checkout:"; \
 		printf '%s\n' "  cd $(NIRS4ALL_METHODS_ROOT)"; \
 		printf '%s\n' "  cmake --preset emscripten"; \
-		printf '%s\n' "  cmake --build --preset emscripten --target pls4all_wasm --parallel"; \
+		printf '%s\n' "  cmake --build --preset emscripten --target n4m_wasm --parallel"; \
 		printf '%s\n' "  cd bindings/js && npm ci && npm run build && npm run stage:wasm"; \
 		printf '%s\n' "Or set NIRS4ALL_METHODS_JS_DIST=/path/to/nirs4all-methods/bindings/js/dist."; \
 		exit 1; \
