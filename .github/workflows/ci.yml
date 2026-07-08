@@ -179,11 +179,18 @@ jobs:
 
   matlab-octave:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
-      - run: sudo apt-get update && sudo apt-get install -y octave zip
-      - run: octave --quiet --eval "run('bindings/matlab/tests/smoke.m')"
-      - run: scripts/build-matlab-package.sh dist/matlab
+      - name: Install Octave package tools
+        timeout-minutes: 12
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends octave zip
+      - name: Run MATLAB/Octave smoke
+        timeout-minutes: 3
+        run: octave --no-gui --quiet --eval "run('bindings/matlab/tests/smoke.m'); exit(0)"
+      - name: Build MATLAB/Octave package
+        timeout-minutes: 2
+        run: scripts/build-matlab-package.sh dist/matlab
       - uses: actions/upload-artifact@v7
         with:
           name: matlab-octave
