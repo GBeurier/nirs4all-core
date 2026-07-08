@@ -99,6 +99,25 @@ expect_same_result <- function(actual, expected, tolerance, label) {
   )
 }
 
+result_numeric_deltas <- function(actual, expected) {
+  variant_rmse_deltas <- c()
+  variant_prediction_deltas <- c()
+  for (idx in seq_along(expected$variants)) {
+    variant_rmse_deltas <- c(variant_rmse_deltas, abs(actual$variants[[idx]]$rmse - expected$variants[[idx]]$rmse))
+    variant_prediction_deltas <- c(
+      variant_prediction_deltas,
+      max_abs_diff(actual$variants[[idx]]$predictions, expected$variants[[idx]]$predictions)
+    )
+  }
+  list(
+    target_max_abs_delta = max_abs_diff(actual$targets, expected$targets),
+    selected_prediction_max_abs_delta = max_abs_diff(actual$selected$predictions, expected$selected$predictions),
+    selected_rmse_delta = abs(actual$selected$rmse - expected$selected$rmse),
+    variant_rmse_max_abs_delta = if (length(variant_rmse_deltas) > 0L) max(variant_rmse_deltas) else 0,
+    variant_prediction_max_abs_delta = if (length(variant_prediction_deltas) > 0L) max(variant_prediction_deltas) else 0
+  )
+}
+
 candidate_path <- function(paths) {
   paths <- unique(paths[nzchar(paths)])
   for (path in paths) {
@@ -226,6 +245,16 @@ stopifnot(identical(
   as.integer(reopened_predictions$selected_n_components),
   as.integer(result$selected$n_components)
 ))
+roundtrip_tolerance <- 1e-10
+workspace_numeric_deltas <- result_numeric_deltas(reopened_workspace$result, result)
+pipeline_rerun_numeric_deltas <- result_numeric_deltas(roundtrip_result, result)
+prediction_artifact_numeric_deltas <- list(
+  target_max_abs_delta = max_abs_diff(reopened_predictions$targets, result$targets),
+  selected_prediction_max_abs_delta = max_abs_diff(reopened_predictions$predictions, result$selected$predictions),
+  selected_n_components_absolute_delta = abs(
+    as.integer(reopened_predictions$selected_n_components) - as.integer(result$selected$n_components)
+  )
+)
 
 oracle_path <- candidate_path(c(
   Sys.getenv("NIRS4ALL_CORE_PARITY_ORACLE"),
@@ -295,6 +324,13 @@ roundtrip_checks <- list(
   pipeline_reopened = TRUE,
   predictions_reopened = TRUE,
   reproduced_split_targets_rmse_predictions = TRUE,
+  numeric_roundtrip = list(
+    tolerance = roundtrip_tolerance,
+    count_tolerance = 0,
+    workspace = workspace_numeric_deltas,
+    pipeline_rerun = pipeline_rerun_numeric_deltas,
+    predictions_artifact = prediction_artifact_numeric_deltas
+  ),
   oracle = oracle_check
 )
 jsonlite::write_json(roundtrip_checks, file.path(out_dir, "roundtrip-checks.json"), auto_unbox = TRUE, pretty = TRUE, digits = NA)
