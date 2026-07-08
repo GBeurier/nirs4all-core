@@ -903,7 +903,18 @@ def main(argv: list[str] | None = None) -> int:
         ]
         _write_json(existing_evidence_path, existing)
 
-    print(json.dumps({"scenario_id": SCENARIO_ID, "status": status, "checks": checks}, indent=2, sort_keys=True))
+    summary = {"scenario_id": SCENARIO_ID, "status": status, "checks": checks}
+    if blockers:
+        summary["blockers"] = [
+            {"runtime": result.get("runtime"), "reason": result.get("reason", "blocked")}
+            for result in blockers
+        ]
+    if failures:
+        summary["failures"] = [
+            {"runtime": result.get("runtime"), "status": result.get("status"), "reason": result.get("reason")}
+            for result in failures
+        ]
+    print(json.dumps(summary, indent=2, sort_keys=True))
     if failures:
         return 1
     if blockers or not all(checks.values()):
