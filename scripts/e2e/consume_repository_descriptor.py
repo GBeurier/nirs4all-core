@@ -29,6 +29,13 @@ def _workspace_root() -> Path:
     return _core_root().parent
 
 
+def _methods_root() -> Path:
+    configured = os.environ.get("NIRS4ALL_METHODS_ROOT")
+    if configured:
+        return Path(configured).expanduser().resolve()
+    return _workspace_root() / "nirs4all-methods"
+
+
 def _read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -229,10 +236,121 @@ def _find_rscript() -> Path | None:
     return None
 
 
+def _r_executable(rscript: Path) -> Path | None:
+    paired = rscript.with_name("R")
+    if paired.exists():
+        return paired
+    found = shutil.which("R")
+    return Path(found) if found else None
+
+
+def _methods_lib_path() -> Path | None:
+    lib_dir = _methods_root() / "build" / "dev-release" / "cpp" / "src"
+    for name in ("libn4m.so", "libn4m.dylib", "n4m.dll", "libn4m.dll"):
+        candidate = lib_dir / name
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def _prepend_env_path(env: dict[str, str], key: str, value: Path) -> None:
+    current = env.get(key)
+    env[key] = str(value) + (os.pathsep + current if current else "")
+
+
+def _prepend_r_library_env(env: dict[str, str], library: Path) -> None:
+    _prepend_env_path(env, "R_LIBS", library)
+    if env.get("R_LIBS_USER"):
+        _prepend_env_path(env, "R_LIBS_USER", library)
+
+
+def _prepend_methods_lib_env(env: dict[str, str], lib_dir: Path) -> None:
+    for key in ("LD_LIBRARY_PATH", "DYLD_LIBRARY_PATH", "PATH"):
+        _prepend_env_path(env, key, lib_dir)
+
+
+def _write_r_makevars(artifacts_dir: Path) -> Path:
+    makevars = artifacts_dir / "r-Makevars"
+    makevars.write_text(
+        "CC=gcc\n"
+        "CXX=g++\n"
+        "CXX11=g++\n"
+        "CXX14=g++\n"
+        "CXX17=g++\n"
+        "CXX17STD=-std=gnu++17\n",
+        encoding="utf-8",
+    )
+    return makevars
+
+
+def _prepare_r_execution_library(artifacts_dir: Path, rscript: Path) -> tuple[Path | None, str | None]:
+    r_cmd = _r_executable(rscript)
+    if r_cmd is None:
+        return None, "R is not available on PATH or next to Rscript."
+    methods_root = _methods_root()
+    methods_r = methods_root / "bindings" / "r" / "n4m"
+    generated_dir = methods_root / "build" / "dev-release" / "generated"
+    include_dir = methods_root / "cpp" / "include"
+    if not methods_r.is_dir():
+        return None, f"nirs4all-methods R binding not found at {methods_r}"
+    methods_lib = _methods_lib_path()
+    if methods_lib is None:
+        return None, f"libn4m dev-release build not found under {methods_root / 'build' / 'dev-release' / 'cpp' / 'src'}"
+
+    r_lib = artifacts_dir / "_r-lib"
+    r_lib.mkdir(parents=True, exist_ok=True)
+    makevars = _write_r_makevars(artifacts_dir)
+    env = os.environ.copy()
+    env.update(
+        {
+            "N4M_R_LINK_PREBUILT": "1",
+            "N4M_LIB_DIR": str(methods_lib.parent),
+            "N4M_GENERATED_DIR": str(generated_dir),
+            "N4M_INCLUDE_DIR": str(include_dir),
+            "R_MAKEVARS_USER": str(makevars),
+            "NIRS4ALL_CORE_R_PARITY_LIB": str(r_lib),
+        }
+    )
+    _prepend_r_library_env(env, r_lib)
+    _prepend_methods_lib_env(env, methods_lib.parent)
+    commands = [
+        [
+            str(r_cmd),
+            "CMD",
+            "INSTALL",
+            "--preclean",
+            f"--library={r_lib}",
+            "--no-multiarch",
+            "--no-staged-install",
+            str(methods_r),
+        ],
+        [str(r_cmd), "CMD", "INSTALL", f"--library={r_lib}", str(_core_root() / "bindings" / "r")],
+    ]
+    for command in commands:
+        completed = subprocess.run(
+            command,
+            cwd=_core_root(),
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        if completed.returncode != 0:
+            return None, (
+                f"R package install failed with exit {completed.returncode}: "
+                f"{completed.stderr.strip() or completed.stdout.strip()}"
+            )
+    return r_lib, None
+
+
 def _run_r_execution(pipeline_path: Path, dataset: dict[str, Any]) -> dict[str, Any]:
     rscript = _find_rscript()
     if rscript is None:
         raise RuntimeError("Rscript runtime not found; cannot execute the R binding surface")
+    r_lib, setup_error = _prepare_r_execution_library(pipeline_path.parent, rscript)
+    if setup_error is not None:
+        raise RuntimeError(setup_error)
 
     code = r"""
 args <- commandArgs(trailingOnly = TRUE)
@@ -240,13 +358,24 @@ core_root <- normalizePath(args[[1]], mustWork = TRUE)
 pipeline_path <- normalizePath(args[[2]], mustWork = TRUE)
 dataset_path <- normalizePath(args[[3]], mustWork = TRUE)
 output_path <- args[[4]]
+scenario_lib <- args[[5]]
 
-local_lib <- file.path(core_root, ".r-parity-lib")
-if (dir.exists(local_lib)) {
-  .libPaths(c(local_lib, .libPaths()))
+if (nzchar(scenario_lib) && dir.exists(scenario_lib)) {
+  .libPaths(c(normalizePath(scenario_lib, winslash = "/", mustWork = TRUE), .libPaths()))
 }
 if (!requireNamespace("jsonlite", quietly = TRUE)) {
   stop("jsonlite is required to execute the nirs4all-core R provider/repository parity path", call. = FALSE)
+}
+if (!requireNamespace("n4m", quietly = TRUE)) {
+  stop("n4m R package is not installed; strict repository/provider execution requires the nirs4all-methods R binding", call. = FALSE)
+}
+expected_n4m_lib <- Sys.getenv("NIRS4ALL_CORE_R_PARITY_LIB")
+if (nzchar(expected_n4m_lib)) {
+  expected_n4m_lib <- normalizePath(expected_n4m_lib, winslash = "/", mustWork = TRUE)
+  actual_n4m_lib <- normalizePath(find.package("n4m"), winslash = "/", mustWork = TRUE)
+  if (!startsWith(actual_n4m_lib, expected_n4m_lib)) {
+    stop(sprintf("n4m loaded from %s instead of scenario R library %s", actual_n4m_lib, expected_n4m_lib), call. = FALSE)
+  }
 }
 
 if (requireNamespace("nirs4all", quietly = TRUE)) {
@@ -277,15 +406,12 @@ jsonlite::write_json(payload, output_path, auto_unbox = TRUE, pretty = TRUE, dig
         output_path = tmp_dir / "r-result.json"
         _write_json(dataset_path, dataset)
         env = os.environ.copy()
-        local_r_lib = _core_root() / ".r-parity-lib"
-        if local_r_lib.is_dir():
-            existing_r_lib = env.get("R_LIBS_USER", "")
-            env["R_LIBS_USER"] = f"{local_r_lib}:{existing_r_lib}" if existing_r_lib else str(local_r_lib)
-            env["R_LIBS"] = f"{local_r_lib}:{env.get('R_LIBS', '')}".rstrip(":")
-        methods_lib = _workspace_root() / "nirs4all-methods" / "build" / "dev-release" / "cpp" / "src"
-        if methods_lib.is_dir():
-            existing_ld = env.get("LD_LIBRARY_PATH", "")
-            env["LD_LIBRARY_PATH"] = f"{methods_lib}:{existing_ld}" if existing_ld else str(methods_lib)
+        if r_lib is not None:
+            _prepend_r_library_env(env, r_lib)
+            env["NIRS4ALL_CORE_R_PARITY_LIB"] = str(r_lib)
+        methods_lib = _methods_lib_path()
+        if methods_lib is not None:
+            _prepend_methods_lib_env(env, methods_lib.parent)
         proc = subprocess.run(
             [
                 str(rscript),
@@ -296,6 +422,7 @@ jsonlite::write_json(payload, output_path, auto_unbox = TRUE, pretty = TRUE, dig
                 str(pipeline_path),
                 str(dataset_path),
                 str(output_path),
+                str(r_lib or ""),
             ],
             text=True,
             capture_output=True,

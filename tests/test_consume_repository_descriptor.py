@@ -1,5 +1,7 @@
 import json
+import os
 import shutil
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -163,6 +165,67 @@ class RepositoryDescriptorConsumerTests(unittest.TestCase):
     def test_runtime_execution_requires_provider_execution_dataset(self) -> None:
         with self.assertRaisesRegex(AssertionError, "provider execution dataset"):
             consumer._runtime_execution(FIXTURE, {"repository": {"pipeline_id": "portable-methods"}})
+
+    def test_prepare_r_execution_library_installs_methods_and_core_with_preserved_libs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            artifacts_dir = root / "artifacts"
+            r_bin = root / "r" / "bin"
+            methods_root = root / "nirs4all-methods"
+            methods_r = methods_root / "bindings" / "r" / "n4m"
+            generated = methods_root / "build" / "dev-release" / "generated"
+            methods_lib_dir = methods_root / "build" / "dev-release" / "cpp" / "src"
+            include_dir = methods_root / "cpp" / "include"
+            for path in (artifacts_dir, r_bin, methods_r, generated, methods_lib_dir, include_dir):
+                path.mkdir(parents=True)
+            rscript = r_bin / "Rscript"
+            r_cmd = r_bin / "R"
+            rscript.write_text("#!/bin/sh\n", encoding="utf-8")
+            r_cmd.write_text("#!/bin/sh\n", encoding="utf-8")
+            methods_lib = methods_lib_dir / "libn4m.so"
+            methods_lib.write_text("", encoding="utf-8")
+
+            commands: list[list[str]] = []
+
+            def fake_run(*args, **kwargs):
+                command = args[0]
+                env = kwargs["env"]
+                commands.append(command)
+                self.assertEqual(command[0], str(r_cmd))
+                self.assertEqual(env["N4M_R_LINK_PREBUILT"], "1")
+                self.assertEqual(env["N4M_LIB_DIR"], str(methods_lib_dir))
+                self.assertEqual(env["N4M_GENERATED_DIR"], str(generated))
+                self.assertEqual(env["N4M_INCLUDE_DIR"], str(include_dir))
+                self.assertEqual(env["R_MAKEVARS_USER"], str(artifacts_dir / "r-Makevars"))
+                self.assertEqual(env["NIRS4ALL_CORE_R_PARITY_LIB"], str(artifacts_dir / "_r-lib"))
+                self.assertEqual(env["R_LIBS"].split(os.pathsep)[:2], [str(artifacts_dir / "_r-lib"), "/opt/site-r-lib"])
+                self.assertEqual(
+                    env["R_LIBS_USER"].split(os.pathsep)[:2],
+                    [str(artifacts_dir / "_r-lib"), "/home/runner/R/library"],
+                )
+                self.assertEqual(env["LD_LIBRARY_PATH"].split(os.pathsep)[0], str(methods_lib_dir))
+                return subprocess.CompletedProcess(command, 0, "", "")
+
+            with (
+                mock.patch.object(consumer.subprocess, "run", side_effect=fake_run),
+                mock.patch.dict(
+                    os.environ,
+                    {
+                        "NIRS4ALL_METHODS_ROOT": str(methods_root),
+                        "R_LIBS": "/opt/site-r-lib",
+                        "R_LIBS_USER": "/home/runner/R/library",
+                        "LD_LIBRARY_PATH": "/usr/lib",
+                    },
+                    clear=False,
+                ),
+            ):
+                r_lib, error = consumer._prepare_r_execution_library(artifacts_dir, rscript)
+
+        self.assertIsNone(error)
+        self.assertEqual(r_lib, artifacts_dir / "_r-lib")
+        self.assertEqual(len(commands), 2)
+        self.assertIn(str(methods_r), commands[0])
+        self.assertIn(str(ROOT / "bindings" / "r"), commands[1])
 
 
 if __name__ == "__main__":
