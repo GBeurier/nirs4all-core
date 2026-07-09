@@ -32,6 +32,31 @@ def test_prepend_r_toolchain_env_keeps_existing_path(tmp_path: Path) -> None:
     assert env["PATH"].split(os.pathsep) == [str(r_bin), "/usr/local/bin"]
 
 
+def test_prepend_r_library_env_preserves_existing_user_library(tmp_path: Path) -> None:
+    module = _load_module()
+    scenario_lib = tmp_path / "scenario-r-lib"
+    env = {
+        "R_LIBS": "/opt/site-r-lib",
+        "R_LIBS_USER": "/home/runner/R/library",
+    }
+
+    module._prepend_r_library_env(env, scenario_lib)
+
+    assert env["R_LIBS"].split(os.pathsep) == [str(scenario_lib), "/opt/site-r-lib"]
+    assert env["R_LIBS_USER"].split(os.pathsep) == [str(scenario_lib), "/home/runner/R/library"]
+
+
+def test_prepend_r_library_env_leaves_default_user_library_unset(tmp_path: Path) -> None:
+    module = _load_module()
+    scenario_lib = tmp_path / "scenario-r-lib"
+    env: dict[str, str] = {}
+
+    module._prepend_r_library_env(env, scenario_lib)
+
+    assert env["R_LIBS"] == str(scenario_lib)
+    assert "R_LIBS_USER" not in env
+
+
 def test_prepare_r_library_uses_rscript_toolchain_path(tmp_path: Path) -> None:
     module = _load_module()
     workspace = tmp_path / "workspace"
@@ -61,6 +86,11 @@ def test_prepare_r_library_uses_rscript_toolchain_path(tmp_path: Path) -> None:
         assert env["N4M_LIB_DIR"] == str(methods_lib_dir)
         assert env["N4M_GENERATED_DIR"] == str(generated)
         assert env["N4M_INCLUDE_DIR"] == str(workspace / "nirs4all-methods" / "cpp" / "include")
+        assert env["R_LIBS"].split(os.pathsep)[:2] == [str(artifacts / "_r-lib"), "/opt/site-r-lib"]
+        assert env["R_LIBS_USER"].split(os.pathsep)[:2] == [
+            str(artifacts / "_r-lib"),
+            "/home/runner/R/library",
+        ]
         assert env["R_MAKEVARS_USER"] == str(artifacts / "r-Makevars")
         assert env["NIRS4ALL_CORE_R_PARITY_LIB"] == str(artifacts / "_r-lib")
         return subprocess.CompletedProcess(command, 0, "", "")
@@ -68,7 +98,16 @@ def test_prepare_r_library_uses_rscript_toolchain_path(tmp_path: Path) -> None:
     with (
         mock.patch.object(module, "_methods_lib_path", return_value=methods_lib),
         mock.patch.object(module.subprocess, "run", side_effect=fake_run),
-        mock.patch.dict(os.environ, {"PATH": "/usr/bin", "NIRS4ALL_METHODS_ROOT": str(workspace / "nirs4all-methods")}, clear=False),
+        mock.patch.dict(
+            os.environ,
+            {
+                "PATH": "/usr/bin",
+                "NIRS4ALL_METHODS_ROOT": str(workspace / "nirs4all-methods"),
+                "R_LIBS": "/opt/site-r-lib",
+                "R_LIBS_USER": "/home/runner/R/library",
+            },
+            clear=False,
+        ),
     ):
         r_lib, error = module._prepare_r_library(workspace, core, artifacts, str(rscript))
 

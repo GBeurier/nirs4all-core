@@ -221,6 +221,13 @@ def _prepend_path_env(env: dict[str, str], key: str, value: Path) -> None:
     env[key] = str(value) + (os.pathsep + current if current else "")
 
 
+def _prepend_r_library_env(env: dict[str, str], library: Path) -> None:
+    """Prefer the scenario library without hiding preinstalled R imports."""
+    _prepend_path_env(env, "R_LIBS", library)
+    if env.get("R_LIBS_USER"):
+        _prepend_path_env(env, "R_LIBS_USER", library)
+
+
 def _prepend_methods_lib_env(env: dict[str, str], lib_dir: Path) -> None:
     for key in ("LD_LIBRARY_PATH", "DYLD_LIBRARY_PATH", "PATH"):
         _prepend_path_env(env, key, lib_dir)
@@ -428,12 +435,11 @@ def _prepare_r_library(workspace_root: Path, core_root: Path, artifacts_dir: Pat
             "N4M_LIB_DIR": str(methods_lib_dir),
             "N4M_GENERATED_DIR": str(generated_dir),
             "N4M_INCLUDE_DIR": str(include_dir),
-            "R_LIBS": str(r_lib),
-            "R_LIBS_USER": str(r_lib),
             "R_MAKEVARS_USER": str(makevars),
             "NIRS4ALL_CORE_R_PARITY_LIB": str(r_lib),
         }
     )
+    _prepend_r_library_env(env, r_lib)
     _prepend_methods_lib_env(env, methods_lib_dir)
     _prepend_r_toolchain_env(env, rscript)
     commands = [
@@ -532,8 +538,7 @@ jsonlite::write_json(actual, output_path, auto_unbox = TRUE, digits = 16)
     )
     env = os.environ.copy()
     if r_lib is not None:
-        env["R_LIBS"] = str(r_lib)
-        env["R_LIBS_USER"] = str(r_lib)
+        _prepend_r_library_env(env, r_lib)
         env["NIRS4ALL_CORE_R_PARITY_LIB"] = str(r_lib)
     _prepend_r_toolchain_env(env, rscript)
     methods_lib_dir = _methods_root(workspace_root) / "build" / "dev-release" / "cpp" / "src"
