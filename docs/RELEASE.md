@@ -62,9 +62,8 @@ Every CI run uploads the build outputs as artifacts (`rust-crate`, `python-*`,
 Tagged releases are cut by six dedicated workflows — `release-python.yml`,
 `release-npm.yml`, `release-crates.yml`, `release-r.yml`, `release-matlab.yml`,
 `release-source.yml`. On a non-pre-release tag `vX.Y.Z` they publish PyPI
-`nirs4all-core` (OIDC Trusted Publishing, environment `pypi`; the new
-`nirs4all-core` Trusted Publisher registration is a pending release blocker),
-npm `nirs4all`
+`nirs4all-core` (OIDC Trusted Publishing, environment `pypi`; Trusted Publisher
+registration is configured and `0.3.7` is published), npm `nirs4all`
 (`NPM_TOKEN`), crates.io `nirs4all` (`CARGO_REGISTRY_TOKEN`), and attach the R
 tarball, the MATLAB/Octave zip, and the source + SBOM bundle to the Release.
 Pre-release tags build/attach but publish to no registry; `workflow_dispatch`
