@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +21,23 @@ FIXTURE_REL = "tests/parity/fixtures/portable_methods_pipeline.json"
 FIXTURE_PATH = ROOT / FIXTURE_REL
 OPEN_ARTIFACT = "custom-host-python-open.json"
 RERUN_ARTIFACT = "custom-host-python-rerun.json"
+
+
+def _prepend_env_path(name: str, value: Path) -> None:
+    existing = os.environ.get(name)
+    parts = [str(value)]
+    if existing:
+        parts.append(existing)
+    os.environ[name] = os.pathsep.join(parts)
+
+
+def _configure_methods_runtime_env() -> None:
+    methods_lib_dir = ROOT.parent / "nirs4all-methods" / "build/dev-release/cpp/src"
+    if not methods_lib_dir.exists():
+        return
+    os.environ["PLS4ALL_LIB_PATH"] = str(methods_lib_dir)
+    os.environ["N4M_LIB_PATH"] = str(methods_lib_dir)
+    _prepend_env_path("LD_LIBRARY_PATH", methods_lib_dir)
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -56,6 +74,7 @@ def _case(oracle: dict[str, Any]) -> dict[str, Any]:
 
 
 def build_evidence(artifacts_dir: Path) -> tuple[dict[str, Any], dict[str, Any]]:
+    _configure_methods_runtime_env()
     oracle = _read_json(ORACLE_PATH)
     fixture = _read_json(FIXTURE_PATH)
     expected = _case(oracle)
