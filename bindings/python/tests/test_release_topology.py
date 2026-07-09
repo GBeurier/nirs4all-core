@@ -63,7 +63,7 @@ def _checkout_step(job: dict[str, object], repository: str) -> dict[str, object]
     matches = [
         step
         for step in job["steps"]
-        if step.get("uses") == "actions/checkout@v4"
+        if str(step.get("uses", "")).startswith("actions/checkout@")
         and step.get("with", {}).get("repository") == repository
     ]
     if len(matches) != 1:
