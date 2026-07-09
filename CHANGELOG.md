@@ -8,6 +8,16 @@ binding manifest.
 
 ## [Unreleased]
 
+## [0.3.9] - 2026-07-10
+
+### Changed
+
+- Bumped the portable aggregate release train to the published upstream stack:
+  `dag-ml-data 0.2.9`, `nirs4all-formats 0.2.7`,
+  `nirs4all-io 0.1.11`, and `nirs4all-methods 1.0.9`.
+- Updated Python dependency floors, Rust `dag-ml-data` dependency metadata,
+  and the machine-readable upstream checkout lock used by release parity jobs.
+
 ## [0.3.1] - 2026-07-08
 
 ### Fixed
