@@ -634,7 +634,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertFalse(
             any(dependency.startswith("nirs4all-datasets") for dependency in all_extra)
         )
-        self.assertEqual(extras["datasets"], ["nirs4all-datasets>=0.3.4"])
+        self.assertEqual(extras["datasets"], ["nirs4all-datasets>=0.3.5"])
         self.assertIn("nirs4all-methods>=1.0.5", extras["methods"])
         self.assertIn("pls4all>=1.0.5", extras["methods"])
         self.assertIn("scikit-learn>=1.3", extras["methods"])
