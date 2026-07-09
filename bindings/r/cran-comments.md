@@ -84,10 +84,11 @@ no writes outside `tempdir()` during examples or tests.
 
 ## CRAN version note
 
-CRAN rejects SemVer pre-release suffixes (e.g. `0.1.0-alpha.1`). The submitted R
-version is therefore the plain `0.1.0`. A `.9000` development version (the
-R-universe / development spelling produced from a pre-release Cargo version by
-`scripts/bump_version.sh`) is **not** submitted to CRAN.
+CRAN rejects SemVer pre-release suffixes (e.g. `0.3.7-rc.1`). The submitted R
+version is therefore the plain release version from `DESCRIPTION`, currently
+`0.3.7`. A `.9000` development version (the R-universe / development spelling
+produced from a pre-release Cargo version by `scripts/bump_version.sh`) is
+**not** submitted to CRAN.
 
 ## Anti-patterns avoided
 
