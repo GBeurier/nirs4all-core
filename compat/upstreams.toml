@@ -6,7 +6,7 @@
 [[upstream]]
 key = "dag_ml"
 repo = "GBeurier/dag-ml"
-ref = "7e9a881d0939f79f799bf155bafd69dddc56d7ac"
+ref = "b9b1ef8db052cce8d1481b7416272dcc6b288820"
 role = "Leakage-safe DAG/ML execution coordinator"
 bindings = ["rust", "c", "wasm"]
 python_imports = ["dag_ml"]
@@ -15,7 +15,7 @@ wasm_packages = ["dag-ml-wasm"]
 [[upstream]]
 key = "dag_ml_data"
 repo = "GBeurier/dag-ml-data"
-ref = "22157227e2a8c678292cc91db6c31bf92e04d37a"
+ref = "c3ce2ad58c6402e0080054aadcb4a4b8967125bd"
 role = "Sample-aligned data contracts for DAG/ML runtimes"
 bindings = ["rust", "c", "python", "r", "wasm"]
 python_imports = ["dag_ml_data"]
@@ -25,7 +25,7 @@ wasm_packages = ["dag-ml-data-wasm"]
 [[upstream]]
 key = "formats"
 repo = "GBeurier/nirs4all-formats"
-ref = "07beca5b67623f8660eca904332565a1c96b2a1c"
+ref = "3bc4fa6efe4415289bfef905cae21a515578e1ca"
 role = "Spectroscopy/NIRS vendor file readers"
 bindings = ["rust", "python", "r", "wasm", "c"]
 python_imports = ["nirs4all_formats", "nirs4all.formats"]
@@ -35,7 +35,7 @@ wasm_packages = ["@nirs4all/formats-wasm"]
 [[upstream]]
 key = "io"
 repo = "GBeurier/nirs4all-io"
-ref = "023421ce16e1e6403a6b805275a0e511f011a9b9"
+ref = "d0de3c3d8858d164d66123e67e079ab6f4127837"
 role = "Dataset assembly bridge"
 bindings = ["rust", "python", "r", "wasm", "c"]
 python_imports = ["nirs4all_io", "nirs4all.io"]
@@ -45,7 +45,7 @@ wasm_packages = ["@nirs4all/io-wasm"]
 [[upstream]]
 key = "datasets"
 repo = "GBeurier/nirs4all-datasets"
-ref = "8551c9f0f31dc96c5ac75d5d6857b6468ba84136"
+ref = "ed16875162263207b350ec099ba718e8c30cf5c0"
 role = "DOI-pinned NIRS dataset catalog"
 bindings = ["rust", "python", "r", "wasm", "c"]
 python_imports = ["nirs4all_datasets", "nirs4all.datasets"]
@@ -55,7 +55,7 @@ wasm_packages = ["@nirs4all/datasets-wasm"]
 [[upstream]]
 key = "methods"
 repo = "GBeurier/nirs4all-methods"
-ref = "990077e4b9f9902ba547592d81f0b1a70c7ea8a1"
+ref = "6a3f6c15168b834c86a5eaab667f2ae1e42c7ac8"
 role = "Portable C ABI PLS/NIRS numerical engine"
 bindings = ["python", "r", "matlab", "octave", "wasm", "rust"]
 python_imports = ["nirs4all_methods", "pls4all", "n4m", "nirs4all.methods"]
