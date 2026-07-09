@@ -6,6 +6,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
+import os
+import shutil
 import sys
 from enum import Enum
 from pathlib import Path
@@ -18,6 +21,7 @@ DEFAULT_DATASET_ID = "malaria_anopheles_gambiae_sporozoite_nir"
 DEFAULT_SOURCE = "X"
 DEFAULT_MAX_ROWS = 120
 DEFAULT_MAX_COLS = 96
+FALLBACK_DATASET_ID = "n4a_e2e_public_fixture"
 
 
 def _repo_root() -> Path:
@@ -57,6 +61,158 @@ def _sha256_json(data: Any) -> str:
 
 def _write_json(path: Path, data: Any) -> None:
     path.write_text(json.dumps(data, ensure_ascii=True, indent=2, sort_keys=True, default=_json_default) + "\n", encoding="utf-8")
+
+
+def _write_csv(path: Path, header: list[str], rows: list[list[Any]]) -> None:
+    lines = [";".join(header)]
+    for row in rows:
+        lines.append(";".join(str(item) for item in row))
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _build_public_fixture_registry(out_dir: Path) -> tuple[Path, str]:
+    """Build a tiny public nirs4all-datasets registry for public checkouts without data bytes."""
+
+    import yaml
+    from nirs4all_datasets.bootstrap import build_descriptor_from_card
+    from nirs4all_datasets.manifest import metadata_hash, processing_hash
+    from nirs4all_datasets.organize import organize
+
+    registry_root = out_dir / "_generated-datasets"
+    if registry_root.exists():
+        shutil.rmtree(registry_root)
+
+    leaf = registry_root / "source" / FALLBACK_DATASET_ID
+    leaf.mkdir(parents=True, exist_ok=True)
+
+    rows = 72
+    cols = 48
+    wavelengths = [str(1100 + idx * 2) for idx in range(cols)]
+    x_rows: list[list[Any]] = []
+    y_rows: list[list[Any]] = []
+    m_rows: list[list[Any]] = []
+    for row_idx in range(rows):
+        observation_id = f"obs_{row_idx:03d}"
+        values = [
+            f"{math.sin(row_idx / 7.0 + col_idx / 11.0) + row_idx / 100.0 + col_idx / 1000.0:.12f}"
+            for col_idx in range(cols)
+        ]
+        target = f"{0.35 + row_idx * 0.041 + math.cos(row_idx / 6.0) * 0.12:.12f}"
+        partition = "test" if row_idx % 5 == 0 else "train"
+        x_rows.append([observation_id, *values])
+        y_rows.append([observation_id, target])
+        m_rows.append([FALLBACK_DATASET_ID, observation_id, partition, f"batch_{row_idx % 3}"])
+
+    _write_csv(leaf / "X.csv", ["observation_id", *wavelengths], x_rows)
+    _write_csv(leaf / "Y.csv", ["observation_id", "moisture"], y_rows)
+    _write_csv(leaf / "M.csv", ["dataset_id", "observation_id", "split_original", "batch"], m_rows)
+    (leaf / "dataset_card.json").write_text(
+        json.dumps(
+            {
+                "dataset_id": FALLBACK_DATASET_ID,
+                "dataset_name": "NIRS4ALL E2E public fixture",
+                "spectral_organization": {
+                    "organization_type": "single_block",
+                    "alignment_level": "observation",
+                    "n_blocks": 1,
+                },
+                "spectral_blocks": [
+                    {
+                        "block_id": "X",
+                        "x_file": "X.csv",
+                        "instrument_name": "synthetic_e2e_nir",
+                        "axis_unit": "nm",
+                        "axis_min": wavelengths[0],
+                        "axis_max": wavelengths[-1],
+                        "n_rows": rows,
+                        "n_spectral_variables": cols,
+                    }
+                ],
+                "target_summary": {
+                    "target_variables": ["moisture"],
+                    "target_types": {"moisture": "regression"},
+                },
+                "metadata_fields_summary": {
+                    "m_fields": ["dataset_id", "observation_id", "split_original", "batch"],
+                },
+                "split_summary": {
+                    "original_split_available": True,
+                    "split_should_be_preserved_not_applied": True,
+                },
+                "license_summary": {
+                    "public_release_allowed": True,
+                    "license_name": "CC-BY-4.0",
+                    "rights_notes": "Synthetic E2E fixture generated during CI.",
+                },
+                "source_summary": {
+                    "source_name": "NIRS4ALL generated E2E fixture",
+                    "source_url": "https://github.com/GBeurier/nirs4all-core",
+                },
+                "detected_sources": [{"url": "https://github.com/GBeurier/nirs4all-core"}],
+                "associated_publications": [],
+            },
+            ensure_ascii=True,
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+
+    descriptor, _ = build_descriptor_from_card(leaf)
+    descriptors_dir = registry_root / "catalog" / "datasets"
+    descriptors_dir.mkdir(parents=True, exist_ok=True)
+    descriptor_data = descriptor.model_dump(mode="json", exclude_none=True)
+    (descriptors_dir / f"{descriptor.id}.yaml").write_text(
+        yaml.safe_dump(descriptor_data, sort_keys=False, allow_unicode=True),
+        encoding="utf-8",
+    )
+    result = organize(leaf, descriptor, registry_root / "datasets", force=True)
+    card = {
+        "schema_version": "n4a.e2e.dataset_card/v1",
+        "id": descriptor.id,
+        "name": descriptor.name,
+        "title": descriptor.name,
+        "tier": descriptor.tier.value,
+        "source": "generated_public_e2e_fixture",
+        "inventory": {"n_samples": rows, "n_features": cols, "n_sources": 1},
+        "integrity": {
+            "processing_hash": processing_hash(descriptor),
+            "metadata_hash": metadata_hash(descriptor),
+        },
+    }
+    _write_json(result.dataset_dir / "card.json", card)
+    return registry_root, descriptor.id
+
+
+def _resolve_provider_dataset(
+    *,
+    provider_cls: Any,
+    datasets_root: Path,
+    requested_dataset_id: str,
+    source: str,
+    out_dir: Path,
+) -> tuple[Any, Any, str, dict[str, Any]]:
+    provider = provider_cls(root=str(datasets_root))
+    try:
+        if os.environ.get("NIRS4ALL_CORE_E2E_FORCE_PUBLIC_FIXTURE") == "1":
+            raise FileNotFoundError("forced public-checkout fixture mode")
+        dataset = provider.get_dataset(requested_dataset_id)
+        return provider, dataset, requested_dataset_id, {
+            "mode": "local_catalog",
+            "requested_dataset_id": requested_dataset_id,
+            "resolved_dataset_id": requested_dataset_id,
+            "registry_root": "nirs4all-datasets",
+        }
+    except (FileNotFoundError, ValueError) as exc:
+        fallback_root, fallback_dataset_id = _build_public_fixture_registry(out_dir)
+        fallback_provider = provider_cls(root=str(fallback_root))
+        dataset = fallback_provider.get_dataset(fallback_dataset_id, source=source, split=None)
+        return fallback_provider, dataset, fallback_dataset_id, {
+            "mode": "generated_public_fixture",
+            "requested_dataset_id": requested_dataset_id,
+            "resolved_dataset_id": fallback_dataset_id,
+            "registry_root": "_generated-datasets",
+            "fallback_reason": f"{type(exc).__name__}: canonical dataset bytes unavailable in checkout",
+        }
 
 
 def _select_indices(size: int, limit: int) -> list[int]:
@@ -105,11 +261,16 @@ def prepare(
     if not pipeline_path.is_file():
         raise FileNotFoundError(f"pipeline fixture not found: {pipeline_path}")
 
-    provider = DatasetProvider(root=str(datasets_root))
-    dataset = provider.get_dataset(dataset_id)
-    card = provider.card(dataset_id)
+    provider, dataset, resolved_dataset_id, dataset_resolution = _resolve_provider_dataset(
+        provider_cls=DatasetProvider,
+        datasets_root=datasets_root,
+        requested_dataset_id=dataset_id,
+        source=source,
+        out_dir=out_dir,
+    )
+    card = provider.card(resolved_dataset_id)
     io_spec = dataset.to_io_spec(source=source, split=None)
-    package = provider.to_dataset_package(io_spec, name=dataset_id)
+    package = provider.to_dataset_package(io_spec, name=resolved_dataset_id)
     package_summary = provider.describe_dataset_package(package)
     assembled = nio.load(io_spec, target="assembled")
 
@@ -156,12 +317,13 @@ def prepare(
         "schema_version": "n4a.e2e.r_dataset_io_pipeline/v2",
         "status": "prepared",
         "source": {
-            "dataset_id": dataset_id,
+            "dataset_id": resolved_dataset_id,
             "dataset_title": (card or {}).get("title") or (card or {}).get("name"),
             "dataset_tier": getattr(dataset.tier, "value", str(dataset.tier)),
             "source": source,
             "pipeline": str(pipeline_path),
         },
+        "dataset_resolution": dataset_resolution,
         "provider_contract": {
             "provider": "nirs4all-providers.DatasetProvider",
             "backing": "nirs4all-datasets",
