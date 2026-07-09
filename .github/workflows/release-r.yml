@@ -65,7 +65,7 @@ jobs:
       # requireNamespace().
       _R_CHECK_FORCE_SUGGESTS_: "false"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.0
 
       - uses: r-lib/actions/setup-r@v2
         with:
@@ -96,7 +96,7 @@ jobs:
 
       - name: Upload check artifacts on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: rcheck-${{ matrix.cfg.label }}
           path: bindings/r.Rcheck/
@@ -107,9 +107,9 @@ jobs:
     env:
       R_LIBS_USER: /tmp/nirs4all-core-r-library
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6.3.0
         with:
           python-version: "3.11"
       - uses: r-lib/actions/setup-r@v2
@@ -135,7 +135,7 @@ jobs:
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
               output.write(f"ref={ref.strip()}\n")
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.0
         with:
           repository: GBeurier/nirs4all-methods
           path: nirs4all-methods
@@ -163,7 +163,7 @@ jobs:
       - strict-r-parity
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.0
 
       - uses: r-lib/actions/setup-r@v2
         with:
@@ -196,7 +196,7 @@ jobs:
           mv nirs4all_*.tar.gz dist-r/
           ls -la dist-r/
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7.0.1
         with:
           name: nirs4all-r-tarball
           path: dist-r/nirs4all_*.tar.gz
@@ -211,7 +211,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8.0.1
         with:
           name: nirs4all-r-tarball
           path: dist-r/
