@@ -8,6 +8,15 @@ binding manifest.
 
 ## [Unreleased]
 
+## [0.3.10] - 2026-07-10
+
+### Fixed
+
+- Removed unpublished legacy WASM upstream aliases from the `nirs4all` npm
+  package peer dependencies and runtime loader. The aggregate now exposes only
+  the canonical `@nirs4all/*-wasm` upstream package names plus the published
+  `dag-ml-wasm` and `dag-ml-data-wasm` packages.
+
 ## [0.3.9] - 2026-07-10
 
 ### Changed
