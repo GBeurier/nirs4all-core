@@ -21,19 +21,22 @@ duplicating local rules:
 
 - Python: `nirs4all_core.capability_manifest()`,
   `nirs4all_core.controller_capabilities()`,
-  `nirs4all_core.runtime_surfaces()`, and
-  `nirs4all_core.runtime_contracts()`; the same surface is exported through
+  `nirs4all_core.runtime_surfaces()`,
+  `nirs4all_core.runtime_contracts()`, and
+  `nirs4all_core.artifact_contracts()`; the same surface is exported through
   the additive `n4a` facade.
 - JavaScript/WASM: `capabilityManifest()`, `controllerCapabilities`, and
-  `runtimeSurfaces` / `runtimeContracts` from the `nirs4all` package.
+  `runtimeSurfaces` / `runtimeContracts` / `artifactContracts` from the
+  `nirs4all` package.
 - R: `nirs4all_capability_manifest()`,
-  `nirs4all_controller_capabilities()`, `nirs4all_runtime_surfaces()`, and
-  `nirs4all_runtime_contracts()`.
+  `nirs4all_controller_capabilities()`, `nirs4all_runtime_surfaces()`,
+  `nirs4all_runtime_contracts()`, and `nirs4all_artifact_contracts()`.
 - Rust: `capability_manifest()`, `CONTROLLER_CAPABILITIES`, and
-  `RUNTIME_SURFACES` / `RUNTIME_CONTRACTS` from the `nirs4all` crate.
+  `RUNTIME_SURFACES` / `RUNTIME_CONTRACTS` / `ARTIFACT_CONTRACTS` from the
+  `nirs4all` crate.
 - MATLAB/Octave: `nirs4all.capabilityManifest()`,
   `nirs4all.controllerCapabilities()`, `nirs4all.runtimeSurfaces()`, and
-  `nirs4all.runtimeContracts()`.
+  `nirs4all.runtimeContracts()` / `nirs4all.artifactContracts()`.
 
 The manifest schema is `nirs4all-core.capabilities.v1`. Its controller IDs are
 stable for the V1 portable subset:
@@ -123,6 +126,52 @@ MATLAB/Octave runtime support.
 | `datasets` | `metadata` | optional/external; lazy re-export |
 | `dag_ml` | `metadata` | lazy re-export; no R binding declared yet |
 | `dag_ml_data` | `metadata` | lazy re-export; execution = upstream-provided |
+
+## Native tuning, conformal and robustness artifacts
+
+The full Python `nirs4all` package now owns the first native conformal and
+robustness artifact contracts, plus the lightweight native HPO/tuning summary
+and ordered search-space contracts. `nirs4all-core` records those contracts in
+[`compat/capabilities.toml`](../compat/capabilities.toml), but does not expose
+them as executable aggregate features yet.
+
+| Contract | Producer today | Binding level in nirs4all-core | Allowed consumer behavior |
+| --- | --- | --- | --- |
+| `conformal.calibrated_result` (`nirs4all.dagml.conformal_store.v1`) | full Python `nirs4all.calibrate()` / `predict_calibrated()` | `metadata` for Python, R, JavaScript/WASM, Rust, MATLAB/Octave | Transport or display optional `conformal_guarantee_status`, `calibration_replay_source`, and `tuning_calibration_source` provenance when present; do not reimplement conformal quantiles, interval application, refit, recalibration, calibration replay, or tuning provenance interpretation. |
+| `robustness.summary` (`https://nirs4all.org/schemas/robustness-summary/v1`) | full Python `RobustnessReport.summary_artifact()` / `summary.json` | `metadata` for Python, R, JavaScript/WASM, Rust, MATLAB/Octave | Render or transport a validated summary card, including optional `conformal_guarantee_status` and `spectral_replay` provenance, when a host already receives the JSON; do not recompute robustness metrics, replay spectra or infer conformal guarantees from summary rows. |
+| `tuning.summary` (`https://nirs4all.org/schemas/tuning-summary/v1`) | full Python `TuningResult.summary_artifact()` / `tuning-summary.json` | `metadata` for Python, R, JavaScript/WASM, Rust, MATLAB/Octave | Render or transport a validated HPO card, including optional optimizer metadata `sampler`, `pruner`, `seed`, safe `persistence` flags and compact scalar `trials[*].diagnostics`, when a host already receives the JSON; do not drive optimizers, replay trials, infer native tuning execution, or require raw optimizer storage URIs. |
+| `tuning.ordered_search_space` (`https://nirs4all.org/schemas/tuning-ordered-search-space/v1`) | full Python `inspect_tuning_space()` / `NativeTuning.inspect_space()` / `nirs4all tuning-space` | `metadata` for Python, R, JavaScript/WASM, Rust, MATLAB/Octave | Validate, transport or render an ordered pre-execution search-space preview, including `run.tuning.space` paths and `run.tuning.force_params` subset checks; do not mutate pipelines, drive optimizers, reproduce Python TCV1 fingerprints locally or infer native tuning execution from the preview. |
+| `keyword.registry` (`nirs4all.keyword_registry.v1`) | full Python `nirs4all.get_keyword_registry()` / `keyword_registry_json()` / `TUNING_OPTIMIZER_PERSISTENCE_KEYS` / `ROBUSTNESS_SCENARIO_KINDS` / `ROBUSTNESS_STOCHASTIC_SCENARIO_KINDS` / `ROBUSTNESS_SCENARIO_DISTRIBUTIONS` / `ROBUSTNESS_MODES` / `ROBUSTNESS_EXECUTABLE_MODES` | `metadata` for Python, R, JavaScript/WASM, Rust, MATLAB/Octave | Discover keywords, value schemas, UI hints, invalidation effects and grouped public discovery constants; read `published_constants.ROBUSTNESS_SCENARIO_DISTRIBUTIONS = ["normal", "uniform"]` for the currently published distribution values; preserve the manifest's `required_registry_entries` such as `run.tuning.space`, `run.tuning.force_params`, `predict.coverage`, robustness scenario fields, `robustness.X`, `robustness.predictor` and `robustness.predictor_bundle`; do not infer runtime execution capability from registry presence alone. |
+
+This distinction is intentional. The aggregate cannot claim a conformal or
+robustness binding, or a native HPO/tuning execution binding, until the upstream
+fixtures, schemas, host-language API, and round-trip parity gates exist for that
+binding. Until then, app hosts should
+display these rows as unavailable or externally produced evidence, not as
+native `nirs4all-core` execution capability.
+
+`required_registry_entries` is a metadata compatibility floor for app hosts and
+bindings that mirror the full Python keyword registry. It is not a schema copy
+and it is not an execution claim. In particular, `run.tuning.space` must remain
+the object/mapping form consumed by full Python `run(tuning=...)` and
+`NativeTuning(space=...)`, and `run.tuning.force_params` must remain a public
+decoded warm-start hint rather than an optimizer implemented by `nirs4all-core`.
+`robustness.X`, `robustness.predictor`, and `robustness.predictor_bundle` are
+likewise metadata keys for full Python `nirs4all.robustness()` explicit-X
+frozen-predictor replay. nirs4all-core hosts may preserve or display the keys
+but must not claim local spectral robustness execution or serialize a Python
+predictor object across bindings.
+
+`published_constants` is intentionally narrower: it pins concrete public
+constant values that metadata-only bindings need for forms and validation
+without importing full Python. The first published value is
+`ROBUSTNESS_SCENARIO_DISTRIBUTIONS = ["normal", "uniform"]`, aligned with the
+full Python robustness registry and the shared UI scenario helpers.
+
+The ordered search-space contract is also metadata-only. It is useful before a
+run to show canonical order, public patch paths and optional decoded
+`force_params`, but final TCV1 fingerprints, canonicalization and optimizer
+semantics remain owned by full Python `nirs4all`.
 
 ## Why this matters for the release
 

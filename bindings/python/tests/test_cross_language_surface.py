@@ -59,7 +59,7 @@ COMPAT = ROOT / "compat/upstreams.toml"
 
 EXPECTED_OPERATOR_COUNT = 9
 EXPECTED_UPSTREAM_COUNT = 6
-EXPECTED_R_EXPORT_COUNT = 16
+EXPECTED_R_EXPORT_COUNT = 18
 
 
 def _read(path: Path) -> str:

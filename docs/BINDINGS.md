@@ -12,6 +12,8 @@ Every binding must:
   handing execution to upstream runtimes;
 - preserve ownership and lifetime rules across FFI boundaries;
 - report unavailable upstream components explicitly;
+- report full-Python tuning, conformal and robustness artifacts as
+  metadata-only until binding-specific APIs and parity fixtures exist;
 - expose external operators through host-language idioms only when the upstream
   execution path can actually plan or call them;
 - participate in parity checks before release.
@@ -28,6 +30,63 @@ metadata plus re-export/load hooks; R and MATLAB/Octave do not currently have
 runtime bindings for every `dag_ml` / `formats` / `io` / `datasets` domain row.
 The canonical source repository for every binding remains `nirs4all-core`.
 Python publishes as `nirs4all-core`; non-Python targets publish as `nirs4all`.
+
+The tuning, conformal and robustness artifacts currently produced by the full
+Python `nirs4all` package are explicitly not portable binding execution
+features in this aggregate yet. Bindings may surface them only as metadata or
+externally produced files:
+
+- `conformal.calibrated_result` identifies a stored calibrated result produced
+  by full Python `nirs4all`. Its manifest row exposes
+  `optional_payload_fields = ["conformal_guarantee_status",
+  "calibration_replay_source", "tuning_calibration_source"]`; bindings may
+  transport or display the guarantee badge, calibration replay provenance, and
+  tuning calibration provenance, but must not refit, recalibrate, apply
+  intervals locally, replay calibration sources, or reinterpret tuning
+  provenance;
+- `robustness.summary` identifies the compact `summary.json` contract for
+  robustness dashboards/cards. Its manifest row exposes
+  `optional_payload_fields = ["conformal_guarantee_status", "spectral_replay"]`;
+  bindings may transport or display the guarantee badge and spectral replay
+  provenance metadata, but must not infer either from robustness rows or replay
+  spectra locally;
+- `tuning.summary` identifies the compact HPO summary contract for tuning
+  dashboards/cards. Its manifest row exposes
+  `optional_payload_fields = ["sampler", "pruner", "seed", "persistence",
+  "trials[*].diagnostics"]`; bindings may display this optimizer metadata, safe
+  persistence flags and compact scalar per-trial diagnostics when present, but
+  must not infer optimizer execution capability from the summary or require raw
+  optimizer storage URIs;
+- `tuning.ordered_search_space` identifies the ordered pre-execution search
+  space preview produced by full Python `inspect_tuning_space()`,
+  `NativeTuning.inspect_space()` or the `nirs4all tuning-space` CLI. Its
+  manifest row requires the registry entries `run.tuning.space` and
+  `run.tuning.force_params`; bindings may validate, transport or render the
+  ordered parameter paths and public decoded warm-start values, but must not
+  mutate pipelines, drive optimizers, reproduce Python TCV1 fingerprints
+  locally, or infer runtime HPO support from this metadata;
+- `keyword.registry` identifies the exported keyword/effect/value-schema
+  registry and grouped public discovery constants such as
+  `TUNING_OPTIMIZER_PERSISTENCE_KEYS`, `ROBUSTNESS_SCENARIO_KINDS`,
+  `ROBUSTNESS_SCENARIO_DISTRIBUTIONS`, `ROBUSTNESS_MODES` and
+  `ROBUSTNESS_EXECUTABLE_MODES` used by docs, forms and hosts. Its manifest row
+  exposes `published_constants = { ROBUSTNESS_SCENARIO_DISTRIBUTIONS =
+  ["normal", "uniform"] }`, so bindings and hosts can discover the accepted
+  robustness scenario distributions without parsing prose. It also exposes
+  `required_registry_entries` for the minimum entries that binding hosts must
+  preserve when mirroring the registry, including `run.tuning.space` as the
+  mapping/object tuning-space keyword, `run.tuning.force_params`,
+  `predict.coverage`, `predict.all_predictions`, robustness scenario fields,
+  `robustness.X`, `robustness.predictor` and `robustness.predictor_bundle` for
+  full Python explicit-X frozen-predictor spectral robustness replay.
+
+Bindings must not implement their own split-conformal quantile, interval
+application, robustness perturbation, coverage metric, worst-slice logic, HPO
+trial replay, optimizer driver, search-space canonicalizer, or TCV1 fingerprint
+generator to make those rows look executable, and must not infer execution
+support from the keyword registry or ordered search-space contract alone.
+Promotion from metadata to execution requires upstream fixtures plus
+binding-specific parity gates.
 
 ## Python
 
