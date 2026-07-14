@@ -3,8 +3,10 @@
 __version__ = "0.3.11"
 
 from ._capabilities import (
+    artifact_contracts,
     capability_manifest,
     controller_capabilities,
+    required_keyword_registry_entries,
     runtime_contracts,
     runtime_surfaces,
 )
@@ -53,6 +55,7 @@ __all__ = [
     "TOPOLOGY_EXPORTS",
     "Upstream",
     "available_upstreams",
+    "artifact_contracts",
     "capability_manifest",
     "core_facade_exports",
     "controller_capabilities",
@@ -69,6 +72,7 @@ __all__ = [
     "portable_class_names",
     "release_topology_manifest",
     "require_upstream",
+    "required_keyword_registry_entries",
     "run_portable_pipeline",
     "runtime_contracts",
     "runtime_surfaces",

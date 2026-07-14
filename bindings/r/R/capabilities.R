@@ -57,6 +57,91 @@ nirs4all_runtime_contracts <- function() {
   )
 }
 
+nirs4all_required_keyword_registry_entries <- function() {
+  c(
+    "run.tuning",
+    "run.tuning.engine",
+    "run.tuning.space",
+    "run.tuning.force_params",
+    "run.tuning.score_data",
+    "run.tuning.score_data.conformal_calibration",
+    "predict.coverage",
+    "predict.all_predictions",
+    "robustness.scenarios.kind",
+    "robustness.scenarios.severity",
+    "robustness.scenarios.distribution",
+    "robustness.X",
+    "robustness.predictor",
+    "robustness.predictor_bundle"
+  )
+}
+
+nirs4all_artifact_contracts <- function() {
+  metadata_levels <- stats::setNames(
+    rep("metadata", length(NIRS4ALL_RUNTIME_SURFACES)),
+    NIRS4ALL_RUNTIME_SURFACES
+  )
+  list(
+    list(
+      id = "conformal.calibrated_result",
+      schema = "nirs4all.dagml.conformal_store.v1",
+      producer = "full-python-nirs4all",
+      consumer_level = metadata_levels,
+      python_surface = "nirs4all.calibrate / nirs4all.predict_calibrated / nirs4all.load_calibrated_result",
+      portable_claim = "not-exposed-in-nirs4all-core",
+      optional_payload_fields = c(
+        "conformal_guarantee_status",
+        "calibration_replay_source",
+        "tuning_calibration_source"
+      ),
+      required_registry_entries = character(0)
+    ),
+    list(
+      id = "robustness.summary",
+      schema = "https://nirs4all.org/schemas/robustness-summary/v1",
+      producer = "full-python-nirs4all",
+      consumer_level = metadata_levels,
+      python_surface = "nirs4all.RobustnessReport.summary_artifact / nirs4all.robustness_summary_schema_json",
+      portable_claim = "summary-json-contract-only",
+      optional_payload_fields = c("conformal_guarantee_status", "spectral_replay"),
+      required_registry_entries = character(0)
+    ),
+    list(
+      id = "tuning.summary",
+      schema = "https://nirs4all.org/schemas/tuning-summary/v1",
+      producer = "full-python-nirs4all",
+      consumer_level = metadata_levels,
+      python_surface = "nirs4all.TuningResult.summary_artifact / nirs4all.tuning_summary_schema_json",
+      portable_claim = "summary-json-contract-only",
+      optional_payload_fields = c("sampler", "pruner", "seed", "persistence", "trials[*].diagnostics"),
+      required_registry_entries = character(0)
+    ),
+    list(
+      id = "tuning.ordered_search_space",
+      schema = "https://nirs4all.org/schemas/tuning-ordered-search-space/v1",
+      producer = "full-python-nirs4all",
+      consumer_level = metadata_levels,
+      python_surface = "nirs4all.inspect_tuning_space / nirs4all.NativeTuning.inspect_space / nirs4all.tuning_space_schema_json / nirs4all CLI tuning-space",
+      portable_claim = "search-space-json-contract-only",
+      optional_payload_fields = character(0),
+      required_registry_entries = c("run.tuning.space", "run.tuning.force_params")
+    ),
+    list(
+      id = "keyword.registry",
+      schema = "nirs4all.keyword_registry.v1",
+      producer = "full-python-nirs4all",
+      consumer_level = metadata_levels,
+      python_surface = "nirs4all.get_keyword_registry / nirs4all.keyword_registry_json / nirs4all.keyword_registry_schema_json / nirs4all.TUNING_OPTIMIZER_PERSISTENCE_KEYS / nirs4all.ROBUSTNESS_SCENARIO_KINDS / nirs4all.ROBUSTNESS_STOCHASTIC_SCENARIO_KINDS / nirs4all.ROBUSTNESS_SCENARIO_DISTRIBUTIONS / nirs4all.ROBUSTNESS_MODES / nirs4all.ROBUSTNESS_EXECUTABLE_MODES",
+      portable_claim = "registry-json-contract-only",
+      optional_payload_fields = character(0),
+      published_constants = list(
+        ROBUSTNESS_SCENARIO_DISTRIBUTIONS = c("normal", "uniform")
+      ),
+      required_registry_entries = nirs4all_required_keyword_registry_entries()
+    )
+  )
+}
+
 nirs4all_controller_capabilities <- function() {
   runtime <- parity_runtime()
   list(
@@ -133,6 +218,7 @@ nirs4all_capability_manifest <- function() {
     aggregate = "nirs4all-core",
     runtime_surfaces = nirs4all_runtime_surfaces(),
     runtime_contracts = nirs4all_runtime_contracts(),
+    artifact_contracts = nirs4all_artifact_contracts(),
     portable_operator_classes = NIRS4ALL_PORTABLE_OPERATOR_CLASSES,
     controllers = nirs4all_controller_capabilities()
   )
