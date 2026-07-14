@@ -71,6 +71,29 @@ EXPECTED_CONTROLLER_IDS = (
     "model.pls_regression",
     "pipeline.portable_methods",
 )
+EXPECTED_ARTIFACT_CONTRACT_IDS = (
+    "conformal.calibrated_result",
+    "robustness.summary",
+    "tuning.summary",
+    "tuning.ordered_search_space",
+    "keyword.registry",
+)
+EXPECTED_REQUIRED_KEYWORD_REGISTRY_ENTRIES = (
+    "run.tuning",
+    "run.tuning.engine",
+    "run.tuning.space",
+    "run.tuning.force_params",
+    "run.tuning.score_data",
+    "run.tuning.score_data.conformal_calibration",
+    "predict.coverage",
+    "predict.all_predictions",
+    "robustness.scenarios.kind",
+    "robustness.scenarios.severity",
+    "robustness.scenarios.distribution",
+    "robustness.X",
+    "robustness.predictor",
+    "robustness.predictor_bundle",
+)
 # Levels from docs/OPERATORS.md that require a real, callable run symbol.
 EXECUTABLE_LEVELS = {"execute-local", "execute-remote", "parity-validated"}
 
@@ -182,6 +205,111 @@ class UpstreamDomainHonestyTests(unittest.TestCase):
         self.assertEqual(keys | {"methods"}, set(n4core.upstreams))
 
 
+class ArtifactContractHonestyTests(unittest.TestCase):
+    def test_native_conformal_and_robustness_contracts_do_not_overclaim_execution(self) -> None:
+        caps = _load_capabilities()
+        ladder = _ladder_from_operators_doc()
+        rows = {item["id"]: item for item in caps["artifact_contract"]}
+
+        self.assertEqual(tuple(rows), EXPECTED_ARTIFACT_CONTRACT_IDS)
+        for contract_id, row in rows.items():
+            with self.subTest(contract=contract_id):
+                self.assertEqual(row["producer"], "full-python-nirs4all")
+                self.assertIn("required_registry_entries", row)
+                self.assertIn(
+                    row["portable_claim"],
+                    {
+                        "not-exposed-in-nirs4all-core",
+                        "summary-json-contract-only",
+                        "search-space-json-contract-only",
+                        "registry-json-contract-only",
+                    },
+                )
+                levels = row["consumer_level"]
+                self.assertEqual(set(levels), EXPECTED_RUNTIME_SURFACES)
+                self.assertTrue(set(levels.values()) <= ladder)
+                self.assertEqual(set(levels.values()), {"metadata"})
+                self.assertNotIn(row["portable_claim"], {"execute-local", "execute-remote", "parity-validated"})
+
+    def test_robustness_summary_contract_points_to_the_public_schema(self) -> None:
+        rows = {item["id"]: item for item in _load_capabilities()["artifact_contract"]}
+
+        self.assertEqual(
+            rows["conformal.calibrated_result"]["optional_payload_fields"],
+            [
+                "conformal_guarantee_status",
+                "calibration_replay_source",
+                "tuning_calibration_source",
+            ],
+        )
+        self.assertEqual(
+            rows["robustness.summary"]["schema"],
+            "https://nirs4all.org/schemas/robustness-summary/v1",
+        )
+        self.assertIn("summary_artifact", rows["robustness.summary"]["python_surface"])
+        self.assertEqual(
+            rows["robustness.summary"]["optional_payload_fields"],
+            ["conformal_guarantee_status", "spectral_replay"],
+        )
+
+    def test_tuning_summary_contract_points_to_the_public_schema(self) -> None:
+        rows = {item["id"]: item for item in _load_capabilities()["artifact_contract"]}
+
+        self.assertEqual(
+            rows["tuning.summary"]["schema"],
+            "https://nirs4all.org/schemas/tuning-summary/v1",
+        )
+        self.assertIn("TuningResult.summary_artifact", rows["tuning.summary"]["python_surface"])
+        self.assertIn("tuning_summary_schema_json", rows["tuning.summary"]["python_surface"])
+        self.assertEqual(
+            rows["tuning.summary"]["optional_payload_fields"],
+            ["sampler", "pruner", "seed", "persistence", "trials[*].diagnostics"],
+        )
+
+    def test_ordered_tuning_search_space_contract_points_to_the_public_schema(self) -> None:
+        rows = {item["id"]: item for item in _load_capabilities()["artifact_contract"]}
+
+        self.assertEqual(
+            rows["tuning.ordered_search_space"]["schema"],
+            "https://nirs4all.org/schemas/tuning-ordered-search-space/v1",
+        )
+        self.assertIn("inspect_tuning_space", rows["tuning.ordered_search_space"]["python_surface"])
+        self.assertIn("tuning_space_schema_json", rows["tuning.ordered_search_space"]["python_surface"])
+        self.assertEqual(
+            rows["tuning.ordered_search_space"]["portable_claim"],
+            "search-space-json-contract-only",
+        )
+        self.assertEqual(rows["tuning.ordered_search_space"]["optional_payload_fields"], [])
+        self.assertEqual(
+            rows["tuning.ordered_search_space"]["required_registry_entries"],
+            ["run.tuning.space", "run.tuning.force_params"],
+        )
+
+    def test_keyword_registry_contract_points_to_the_public_registry_surface(self) -> None:
+        rows = {item["id"]: item for item in _load_capabilities()["artifact_contract"]}
+
+        self.assertEqual(rows["keyword.registry"]["schema"], "nirs4all.keyword_registry.v1")
+        self.assertIn("get_keyword_registry", rows["keyword.registry"]["python_surface"])
+        self.assertIn("keyword_registry_schema_json", rows["keyword.registry"]["python_surface"])
+        self.assertIn("TUNING_OPTIMIZER_PERSISTENCE_KEYS", rows["keyword.registry"]["python_surface"])
+        self.assertIn("ROBUSTNESS_SCENARIO_KINDS", rows["keyword.registry"]["python_surface"])
+        self.assertIn("ROBUSTNESS_SCENARIO_DISTRIBUTIONS", rows["keyword.registry"]["python_surface"])
+        self.assertIn("ROBUSTNESS_MODES", rows["keyword.registry"]["python_surface"])
+        self.assertIn("ROBUSTNESS_EXECUTABLE_MODES", rows["keyword.registry"]["python_surface"])
+        self.assertEqual(
+            rows["keyword.registry"]["published_constants"],
+            {"ROBUSTNESS_SCENARIO_DISTRIBUTIONS": ["normal", "uniform"]},
+        )
+        self.assertEqual(
+            tuple(rows["keyword.registry"]["required_registry_entries"]),
+            EXPECTED_REQUIRED_KEYWORD_REGISTRY_ENTRIES,
+        )
+        self.assertEqual(
+            tuple(n4core.required_keyword_registry_entries()),
+            EXPECTED_REQUIRED_KEYWORD_REGISTRY_ENTRIES,
+        )
+
+
 class CustomHostCapabilityManifestTests(unittest.TestCase):
     def test_manifest_is_serializable_and_deep_copied(self) -> None:
         manifest = n4core.capability_manifest()
@@ -195,6 +323,33 @@ class CustomHostCapabilityManifestTests(unittest.TestCase):
             n4core.capability_manifest()["controllers"][0]["id"],
             EXPECTED_CONTROLLER_IDS[0],
         )
+        manifest["artifact_contracts"][0]["id"] = "mutated"
+        self.assertEqual(
+            n4core.capability_manifest()["artifact_contracts"][0]["id"],
+            EXPECTED_ARTIFACT_CONTRACT_IDS[0],
+        )
+
+    def test_artifact_contract_rows_match_toml_and_python_manifest(self) -> None:
+        caps = _load_capabilities()
+        toml_rows = {item["id"]: item for item in caps["artifact_contract"]}
+        api_rows = {item["id"]: item for item in n4core.artifact_contracts()}
+        manifest_rows = {item["id"]: item for item in n4core.capability_manifest()["artifact_contracts"]}
+
+        self.assertEqual(tuple(toml_rows), EXPECTED_ARTIFACT_CONTRACT_IDS)
+        self.assertEqual(set(api_rows), set(toml_rows))
+        self.assertEqual(manifest_rows, api_rows)
+        for contract_id, api_row in api_rows.items():
+            with self.subTest(contract=contract_id):
+                toml_row = toml_rows[contract_id]
+                self.assertEqual(api_row["schema"], toml_row["schema"])
+                self.assertEqual(api_row["producer"], toml_row["producer"])
+                self.assertEqual(api_row["portable_claim"], toml_row["portable_claim"])
+                self.assertEqual(api_row["python_surface"], toml_row["python_surface"])
+                self.assertEqual(list(api_row["optional_payload_fields"]), toml_row["optional_payload_fields"])
+                self.assertEqual(list(api_row["required_registry_entries"]), toml_row["required_registry_entries"])
+                self.assertEqual(api_row.get("published_constants"), toml_row.get("published_constants"))
+                self.assertEqual(set(api_row["consumer_level"]), EXPECTED_RUNTIME_SURFACES)
+                self.assertEqual(set(api_row["consumer_level"].values()), {"metadata"})
 
     def test_runtime_surfaces_are_declared_once_in_toml_and_python(self) -> None:
         caps = _load_capabilities()
@@ -333,6 +488,7 @@ class CustomHostCapabilityManifestTests(unittest.TestCase):
             "wasm": (
                 WASM_INDEX,
                 (
+                    "artifactContracts",
                     "capabilityManifest",
                     "controllerCapabilities",
                     "runtimeSurfaces",
@@ -342,6 +498,7 @@ class CustomHostCapabilityManifestTests(unittest.TestCase):
             "r": (
                 R_CAPABILITIES,
                 (
+                    "nirs4all_artifact_contracts",
                     "nirs4all_capability_manifest",
                     "nirs4all_controller_capabilities",
                     "nirs4all_runtime_surfaces",
@@ -351,6 +508,8 @@ class CustomHostCapabilityManifestTests(unittest.TestCase):
             "rust": (
                 RUST_LIB,
                 (
+                    "artifact_contracts",
+                    "ARTIFACT_CONTRACTS",
                     "capability_manifest",
                     "CONTROLLER_CAPABILITIES",
                     "RUNTIME_SURFACES",
@@ -360,6 +519,7 @@ class CustomHostCapabilityManifestTests(unittest.TestCase):
             "matlab": (
                 MATLAB_CAPABILITY_MANIFEST,
                 (
+                    "artifactContracts",
                     "capabilityManifest",
                     "controllerCapabilities",
                     "runtimeSurfaces",

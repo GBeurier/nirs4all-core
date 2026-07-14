@@ -113,6 +113,102 @@ pub const RUNTIME_CONTRACTS: &[RuntimeContract] = &[
     },
 ];
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ArtifactContract {
+    pub id: &'static str,
+    pub schema: &'static str,
+    pub producer: &'static str,
+    pub python_surface: &'static str,
+    pub portable_claim: &'static str,
+    pub optional_payload_fields: &'static [&'static str],
+    pub required_registry_entries: &'static [&'static str],
+    pub published_constants: &'static [(&'static str, &'static [&'static str])],
+}
+
+pub const REQUIRED_KEYWORD_REGISTRY_ENTRIES: &[&str] = &[
+    "run.tuning",
+    "run.tuning.engine",
+    "run.tuning.space",
+    "run.tuning.force_params",
+    "run.tuning.score_data",
+    "run.tuning.score_data.conformal_calibration",
+    "predict.coverage",
+    "predict.all_predictions",
+    "robustness.scenarios.kind",
+    "robustness.scenarios.severity",
+    "robustness.scenarios.distribution",
+    "robustness.X",
+    "robustness.predictor",
+    "robustness.predictor_bundle",
+];
+
+pub const ROBUSTNESS_SCENARIO_DISTRIBUTIONS: &[&str] = &["normal", "uniform"];
+
+pub const PUBLISHED_KEYWORD_CONSTANTS: &[(&str, &[&str])] = &[(
+    "ROBUSTNESS_SCENARIO_DISTRIBUTIONS",
+    ROBUSTNESS_SCENARIO_DISTRIBUTIONS,
+)];
+
+pub const ARTIFACT_CONTRACTS: &[ArtifactContract] = &[
+    ArtifactContract {
+        id: "conformal.calibrated_result",
+        schema: "nirs4all.dagml.conformal_store.v1",
+        producer: "full-python-nirs4all",
+        python_surface:
+            "nirs4all.calibrate / nirs4all.predict_calibrated / nirs4all.load_calibrated_result",
+        portable_claim: "not-exposed-in-nirs4all-core",
+        optional_payload_fields: &[
+            "conformal_guarantee_status",
+            "calibration_replay_source",
+            "tuning_calibration_source",
+        ],
+        required_registry_entries: &[],
+        published_constants: &[],
+    },
+    ArtifactContract {
+        id: "robustness.summary",
+        schema: "https://nirs4all.org/schemas/robustness-summary/v1",
+        producer: "full-python-nirs4all",
+        python_surface:
+            "nirs4all.RobustnessReport.summary_artifact / nirs4all.robustness_summary_schema_json",
+        portable_claim: "summary-json-contract-only",
+        optional_payload_fields: &["conformal_guarantee_status", "spectral_replay"],
+        required_registry_entries: &[],
+        published_constants: &[],
+    },
+    ArtifactContract {
+        id: "tuning.summary",
+        schema: "https://nirs4all.org/schemas/tuning-summary/v1",
+        producer: "full-python-nirs4all",
+        python_surface: "nirs4all.TuningResult.summary_artifact / nirs4all.tuning_summary_schema_json",
+        portable_claim: "summary-json-contract-only",
+        optional_payload_fields: &["sampler", "pruner", "seed", "persistence", "trials[*].diagnostics"],
+        required_registry_entries: &[],
+        published_constants: &[],
+    },
+    ArtifactContract {
+        id: "tuning.ordered_search_space",
+        schema: "https://nirs4all.org/schemas/tuning-ordered-search-space/v1",
+        producer: "full-python-nirs4all",
+        python_surface: "nirs4all.inspect_tuning_space / nirs4all.NativeTuning.inspect_space / nirs4all.tuning_space_schema_json / nirs4all CLI tuning-space",
+        portable_claim: "search-space-json-contract-only",
+        optional_payload_fields: &[],
+        required_registry_entries: &["run.tuning.space", "run.tuning.force_params"],
+        published_constants: &[],
+    },
+    ArtifactContract {
+        id: "keyword.registry",
+        schema: "nirs4all.keyword_registry.v1",
+        producer: "full-python-nirs4all",
+        python_surface:
+            "nirs4all.get_keyword_registry / nirs4all.keyword_registry_json / nirs4all.keyword_registry_schema_json / nirs4all.TUNING_OPTIMIZER_PERSISTENCE_KEYS / nirs4all.ROBUSTNESS_SCENARIO_KINDS / nirs4all.ROBUSTNESS_STOCHASTIC_SCENARIO_KINDS / nirs4all.ROBUSTNESS_SCENARIO_DISTRIBUTIONS / nirs4all.ROBUSTNESS_MODES / nirs4all.ROBUSTNESS_EXECUTABLE_MODES",
+        portable_claim: "registry-json-contract-only",
+        optional_payload_fields: &[],
+        required_registry_entries: REQUIRED_KEYWORD_REGISTRY_ENTRIES,
+        published_constants: PUBLISHED_KEYWORD_CONSTANTS,
+    },
+];
+
 const KENNARD_STONE_CLASSES: &[&str] = &[
     "nirs4all.operators.splitters.KennardStoneSplitter",
     "nirs4all.operators.splitters.splitters.KennardStoneSplitter",
@@ -253,6 +349,37 @@ pub fn runtime_contracts() -> Value {
     Value::Array(contracts)
 }
 
+pub fn artifact_contracts() -> Value {
+    let contracts: Vec<Value> = ARTIFACT_CONTRACTS
+        .iter()
+        .map(|item| {
+            let mut row = serde_json::json!({
+                "id": item.id,
+                "schema": item.schema,
+                "producer": item.producer,
+                "consumer_level": runtime_level_map("metadata"),
+                "python_surface": item.python_surface,
+                "portable_claim": item.portable_claim,
+                "optional_payload_fields": item.optional_payload_fields,
+                "required_registry_entries": item.required_registry_entries,
+            });
+            if !item.published_constants.is_empty() {
+                row["published_constants"] = published_constants_map(item.published_constants);
+            }
+            row
+        })
+        .collect();
+    Value::Array(contracts)
+}
+
+fn published_constants_map(constants: &[(&'static str, &'static [&'static str])]) -> Value {
+    let mut map = serde_json::Map::new();
+    for (key, values) in constants {
+        map.insert((*key).to_string(), serde_json::json!(values));
+    }
+    Value::Object(map)
+}
+
 pub fn capability_manifest() -> Value {
     let controllers: Vec<Value> = CONTROLLER_CAPABILITIES
         .iter()
@@ -280,6 +407,7 @@ pub fn capability_manifest() -> Value {
         "aggregate": "nirs4all-core",
         "runtime_surfaces": RUNTIME_SURFACES,
         "runtime_contracts": runtime_contracts(),
+        "artifact_contracts": artifact_contracts(),
         "portable_operator_classes": PORTABLE_OPERATOR_CLASSES,
         "controllers": controllers,
     })
@@ -1466,6 +1594,113 @@ mod tests {
                     "pipeline_entrypoint": "runPortablePipeline",
                     "serialized_model_predict": false,
                     "predict_entrypoint": null
+                }
+            ])
+        );
+        assert_eq!(
+            manifest["artifact_contracts"],
+            serde_json::json!([
+                {
+                    "id": "conformal.calibrated_result",
+                    "schema": "nirs4all.dagml.conformal_store.v1",
+                    "producer": "full-python-nirs4all",
+                    "consumer_level": {
+                        "python": "metadata",
+                        "r": "metadata",
+                        "javascript_wasm": "metadata",
+                        "rust": "metadata",
+                        "matlab_octave": "metadata"
+                    },
+                    "python_surface": "nirs4all.calibrate / nirs4all.predict_calibrated / nirs4all.load_calibrated_result",
+                    "portable_claim": "not-exposed-in-nirs4all-core",
+                    "optional_payload_fields": [
+                        "conformal_guarantee_status",
+                        "calibration_replay_source",
+                        "tuning_calibration_source"
+                    ],
+                    "required_registry_entries": []
+                },
+                {
+                    "id": "robustness.summary",
+                    "schema": "https://nirs4all.org/schemas/robustness-summary/v1",
+                    "producer": "full-python-nirs4all",
+                    "consumer_level": {
+                        "python": "metadata",
+                        "r": "metadata",
+                        "javascript_wasm": "metadata",
+                        "rust": "metadata",
+                        "matlab_octave": "metadata"
+                    },
+                    "python_surface": "nirs4all.RobustnessReport.summary_artifact / nirs4all.robustness_summary_schema_json",
+                    "portable_claim": "summary-json-contract-only",
+                    "optional_payload_fields": ["conformal_guarantee_status", "spectral_replay"],
+                    "required_registry_entries": []
+                },
+                {
+                    "id": "tuning.summary",
+                    "schema": "https://nirs4all.org/schemas/tuning-summary/v1",
+                    "producer": "full-python-nirs4all",
+                    "consumer_level": {
+                        "python": "metadata",
+                        "r": "metadata",
+                        "javascript_wasm": "metadata",
+                        "rust": "metadata",
+                        "matlab_octave": "metadata"
+                    },
+                    "python_surface": "nirs4all.TuningResult.summary_artifact / nirs4all.tuning_summary_schema_json",
+                    "portable_claim": "summary-json-contract-only",
+                    "optional_payload_fields": ["sampler", "pruner", "seed", "persistence", "trials[*].diagnostics"],
+                    "required_registry_entries": []
+                },
+                {
+                    "id": "tuning.ordered_search_space",
+                    "schema": "https://nirs4all.org/schemas/tuning-ordered-search-space/v1",
+                    "producer": "full-python-nirs4all",
+                    "consumer_level": {
+                        "python": "metadata",
+                        "r": "metadata",
+                        "javascript_wasm": "metadata",
+                        "rust": "metadata",
+                        "matlab_octave": "metadata"
+                    },
+                    "python_surface": "nirs4all.inspect_tuning_space / nirs4all.NativeTuning.inspect_space / nirs4all.tuning_space_schema_json / nirs4all CLI tuning-space",
+                    "portable_claim": "search-space-json-contract-only",
+                    "optional_payload_fields": [],
+                    "required_registry_entries": ["run.tuning.space", "run.tuning.force_params"]
+                },
+                {
+                    "id": "keyword.registry",
+                    "schema": "nirs4all.keyword_registry.v1",
+                    "producer": "full-python-nirs4all",
+                    "consumer_level": {
+                        "python": "metadata",
+                        "r": "metadata",
+                        "javascript_wasm": "metadata",
+                        "rust": "metadata",
+                        "matlab_octave": "metadata"
+                    },
+                    "python_surface": "nirs4all.get_keyword_registry / nirs4all.keyword_registry_json / nirs4all.keyword_registry_schema_json / nirs4all.TUNING_OPTIMIZER_PERSISTENCE_KEYS / nirs4all.ROBUSTNESS_SCENARIO_KINDS / nirs4all.ROBUSTNESS_STOCHASTIC_SCENARIO_KINDS / nirs4all.ROBUSTNESS_SCENARIO_DISTRIBUTIONS / nirs4all.ROBUSTNESS_MODES / nirs4all.ROBUSTNESS_EXECUTABLE_MODES",
+                    "portable_claim": "registry-json-contract-only",
+                    "optional_payload_fields": [],
+                    "published_constants": {
+                        "ROBUSTNESS_SCENARIO_DISTRIBUTIONS": ["normal", "uniform"]
+                    },
+                    "required_registry_entries": [
+                        "run.tuning",
+                        "run.tuning.engine",
+                        "run.tuning.space",
+                        "run.tuning.force_params",
+                        "run.tuning.score_data",
+                        "run.tuning.score_data.conformal_calibration",
+                        "predict.coverage",
+                        "predict.all_predictions",
+                        "robustness.scenarios.kind",
+                        "robustness.scenarios.severity",
+                        "robustness.scenarios.distribution",
+                        "robustness.X",
+                        "robustness.predictor",
+                        "robustness.predictor_bundle"
+                    ]
                 }
             ])
         );

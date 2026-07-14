@@ -57,6 +57,96 @@ _RUNTIME_CONTRACTS: tuple[dict[str, Any], ...] = (
     },
 )
 
+_REQUIRED_KEYWORD_REGISTRY_ENTRIES: tuple[str, ...] = (
+    "run.tuning",
+    "run.tuning.engine",
+    "run.tuning.space",
+    "run.tuning.force_params",
+    "run.tuning.score_data",
+    "run.tuning.score_data.conformal_calibration",
+    "predict.coverage",
+    "predict.all_predictions",
+    "robustness.scenarios.kind",
+    "robustness.scenarios.severity",
+    "robustness.scenarios.distribution",
+    "robustness.X",
+    "robustness.predictor",
+    "robustness.predictor_bundle",
+)
+
+_PUBLISHED_KEYWORD_CONSTANTS: dict[str, list[str]] = {
+    "ROBUSTNESS_SCENARIO_DISTRIBUTIONS": ["normal", "uniform"],
+}
+
+_ARTIFACT_CONTRACTS: tuple[dict[str, Any], ...] = (
+    {
+        "id": "conformal.calibrated_result",
+        "schema": "nirs4all.dagml.conformal_store.v1",
+        "producer": "full-python-nirs4all",
+        "consumer_level": {surface: "metadata" for surface in RUNTIME_SURFACES},
+        "python_surface": "nirs4all.calibrate / nirs4all.predict_calibrated / nirs4all.load_calibrated_result",
+        "portable_claim": "not-exposed-in-nirs4all-core",
+        "optional_payload_fields": (
+            "conformal_guarantee_status",
+            "calibration_replay_source",
+            "tuning_calibration_source",
+        ),
+        "required_registry_entries": (),
+    },
+    {
+        "id": "robustness.summary",
+        "schema": "https://nirs4all.org/schemas/robustness-summary/v1",
+        "producer": "full-python-nirs4all",
+        "consumer_level": {surface: "metadata" for surface in RUNTIME_SURFACES},
+        "python_surface": "nirs4all.RobustnessReport.summary_artifact / nirs4all.robustness_summary_schema_json",
+        "portable_claim": "summary-json-contract-only",
+        "optional_payload_fields": ("conformal_guarantee_status", "spectral_replay"),
+        "required_registry_entries": (),
+    },
+    {
+        "id": "tuning.summary",
+        "schema": "https://nirs4all.org/schemas/tuning-summary/v1",
+        "producer": "full-python-nirs4all",
+        "consumer_level": {surface: "metadata" for surface in RUNTIME_SURFACES},
+        "python_surface": "nirs4all.TuningResult.summary_artifact / nirs4all.tuning_summary_schema_json",
+        "portable_claim": "summary-json-contract-only",
+        "optional_payload_fields": ("sampler", "pruner", "seed", "persistence", "trials[*].diagnostics"),
+        "required_registry_entries": (),
+    },
+    {
+        "id": "tuning.ordered_search_space",
+        "schema": "https://nirs4all.org/schemas/tuning-ordered-search-space/v1",
+        "producer": "full-python-nirs4all",
+        "consumer_level": {surface: "metadata" for surface in RUNTIME_SURFACES},
+        "python_surface": (
+            "nirs4all.inspect_tuning_space / nirs4all.NativeTuning.inspect_space / "
+            "nirs4all.tuning_space_schema_json / nirs4all CLI tuning-space"
+        ),
+        "portable_claim": "search-space-json-contract-only",
+        "optional_payload_fields": (),
+        "required_registry_entries": ("run.tuning.space", "run.tuning.force_params"),
+    },
+    {
+        "id": "keyword.registry",
+        "schema": "nirs4all.keyword_registry.v1",
+        "producer": "full-python-nirs4all",
+        "consumer_level": {surface: "metadata" for surface in RUNTIME_SURFACES},
+        "python_surface": (
+            "nirs4all.get_keyword_registry / nirs4all.keyword_registry_json / "
+            "nirs4all.keyword_registry_schema_json / "
+            "nirs4all.TUNING_OPTIMIZER_PERSISTENCE_KEYS / "
+            "nirs4all.ROBUSTNESS_SCENARIO_KINDS / "
+            "nirs4all.ROBUSTNESS_STOCHASTIC_SCENARIO_KINDS / "
+            "nirs4all.ROBUSTNESS_SCENARIO_DISTRIBUTIONS / "
+            "nirs4all.ROBUSTNESS_MODES / nirs4all.ROBUSTNESS_EXECUTABLE_MODES"
+        ),
+        "portable_claim": "registry-json-contract-only",
+        "optional_payload_fields": (),
+        "required_registry_entries": _REQUIRED_KEYWORD_REGISTRY_ENTRIES,
+        "published_constants": _PUBLISHED_KEYWORD_CONSTANTS,
+    },
+)
+
 _PORTABLE_CONTROLLERS: tuple[dict[str, Any], ...] = (
     {
         "id": "split.kennard_stone",
@@ -162,6 +252,18 @@ def runtime_contracts() -> tuple[dict[str, Any], ...]:
     return tuple(deepcopy(item) for item in _RUNTIME_CONTRACTS)
 
 
+def required_keyword_registry_entries() -> tuple[str, ...]:
+    """Return registry entries that metadata-only bindings must preserve."""
+
+    return _REQUIRED_KEYWORD_REGISTRY_ENTRIES
+
+
+def artifact_contracts() -> tuple[dict[str, Any], ...]:
+    """Return metadata-only native artifact contracts visible to custom hosts."""
+
+    return tuple(deepcopy(item) for item in _ARTIFACT_CONTRACTS)
+
+
 def controller_capabilities() -> tuple[dict[str, Any], ...]:
     """Return portable controller capability descriptors for host UIs."""
 
@@ -176,6 +278,7 @@ def capability_manifest() -> dict[str, Any]:
         "aggregate": "nirs4all-core",
         "runtime_surfaces": RUNTIME_SURFACES,
         "runtime_contracts": _RUNTIME_CONTRACTS,
+        "artifact_contracts": _ARTIFACT_CONTRACTS,
         "portable_operator_classes": tuple(sorted(PORTABLE_OPERATOR_CLASSES)),
         "controllers": _PORTABLE_CONTROLLERS,
     }

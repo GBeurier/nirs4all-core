@@ -4,6 +4,7 @@ import test from 'node:test';
 
 import * as nirs4all from '../src/index.js';
 import {
+  artifactContracts,
   dagMl,
   dagMlData,
   capabilityManifest,
@@ -30,6 +31,7 @@ import {
   portableClassNames,
   portableOperatorClasses,
   predictPortablePipeline,
+  requiredKeywordRegistryEntries,
   runPortablePipeline,
   runtimeContracts,
   runtimeSurfaces,
@@ -46,6 +48,7 @@ test('public V1 WASM surface exports expected names', () => {
     [
       'dagMl',
       'dagMlData',
+      'artifactContracts',
       'capabilityManifest',
       'controllerCapabilities',
       'datasets',
@@ -71,6 +74,7 @@ test('public V1 WASM surface exports expected names', () => {
       'portableClassNames',
       'portableOperatorClasses',
       'predictPortablePipeline',
+      'requiredKeywordRegistryEntries',
       'runPortablePipeline',
       'runtimeContracts',
       'runtimeSurfaces',
@@ -81,9 +85,11 @@ test('public V1 WASM surface exports expected names', () => {
   assert.equal(nirs4all.loadPipelineDefinition, loadPipelineDefinition);
   assert.equal(nirs4all.runPortablePipeline, runPortablePipeline);
   assert.equal(nirs4all.predictPortablePipeline, predictPortablePipeline);
+  assert.equal(nirs4all.requiredKeywordRegistryEntries, requiredKeywordRegistryEntries);
   assert.equal(nirs4all.portableOperatorClasses, portableOperatorClasses);
   assert.equal(nirs4all.runtimeSurfaces, runtimeSurfaces);
   assert.equal(nirs4all.runtimeContracts, runtimeContracts);
+  assert.equal(nirs4all.artifactContracts, artifactContracts);
   assert.equal(nirs4all.controllerCapabilities, controllerCapabilities);
   assert.equal(nirs4all.capabilityManifest, capabilityManifest);
   assert.equal(nirs4all.methodsWasm, methodsWasm);
@@ -126,6 +132,82 @@ test('capability manifest describes portable custom app host controllers', () =>
     'matlab_octave',
   ]);
   assert.deepEqual(manifest.runtimeContracts, runtimeContracts);
+  assert.deepEqual(manifest.artifactContracts, artifactContracts);
+  assert.deepEqual(manifest.artifactContracts.map((item) => item.id), [
+    'conformal.calibrated_result',
+    'robustness.summary',
+    'tuning.summary',
+    'tuning.ordered_search_space',
+    'keyword.registry',
+  ]);
+  assert.deepEqual(
+    manifest.artifactContracts.find((item) => item.id === 'conformal.calibrated_result').optionalPayloadFields,
+    ['conformal_guarantee_status', 'calibration_replay_source', 'tuning_calibration_source'],
+  );
+  assert.deepEqual(
+    manifest.artifactContracts.find((item) => item.id === 'robustness.summary').optionalPayloadFields,
+    ['conformal_guarantee_status', 'spectral_replay'],
+  );
+  assert.deepEqual(
+    manifest.artifactContracts.find((item) => item.id === 'tuning.summary').optionalPayloadFields,
+    ['sampler', 'pruner', 'seed', 'persistence', 'trials[*].diagnostics'],
+  );
+  assert.equal(
+    manifest.artifactContracts.find((item) => item.id === 'tuning.ordered_search_space').schema,
+    'https://nirs4all.org/schemas/tuning-ordered-search-space/v1',
+  );
+  assert.deepEqual(
+    manifest.artifactContracts.find((item) => item.id === 'tuning.ordered_search_space').requiredRegistryEntries,
+    ['run.tuning.space', 'run.tuning.force_params'],
+  );
+  assert.match(
+    manifest.artifactContracts.find((item) => item.id === 'tuning.ordered_search_space').pythonSurface,
+    /inspect_tuning_space/,
+  );
+  assert.deepEqual(requiredKeywordRegistryEntries, [
+    'run.tuning',
+    'run.tuning.engine',
+    'run.tuning.space',
+    'run.tuning.force_params',
+    'run.tuning.score_data',
+    'run.tuning.score_data.conformal_calibration',
+    'predict.coverage',
+    'predict.all_predictions',
+    'robustness.scenarios.kind',
+    'robustness.scenarios.severity',
+    'robustness.scenarios.distribution',
+    'robustness.X',
+    'robustness.predictor',
+    'robustness.predictor_bundle',
+  ]);
+  assert.deepEqual(
+    manifest.artifactContracts.find((item) => item.id === 'keyword.registry').requiredRegistryEntries,
+    requiredKeywordRegistryEntries,
+  );
+  assert.match(
+    manifest.artifactContracts.find((item) => item.id === 'keyword.registry').pythonSurface,
+    /TUNING_OPTIMIZER_PERSISTENCE_KEYS/,
+  );
+  assert.match(
+    manifest.artifactContracts.find((item) => item.id === 'keyword.registry').pythonSurface,
+    /ROBUSTNESS_SCENARIO_KINDS/,
+  );
+  assert.match(
+    manifest.artifactContracts.find((item) => item.id === 'keyword.registry').pythonSurface,
+    /ROBUSTNESS_SCENARIO_DISTRIBUTIONS/,
+  );
+  assert.match(
+    manifest.artifactContracts.find((item) => item.id === 'keyword.registry').pythonSurface,
+    /ROBUSTNESS_MODES/,
+  );
+  assert.match(
+    manifest.artifactContracts.find((item) => item.id === 'keyword.registry').pythonSurface,
+    /ROBUSTNESS_EXECUTABLE_MODES/,
+  );
+  assert.deepEqual(
+    manifest.artifactContracts.find((item) => item.id === 'keyword.registry').publishedConstants,
+    { ROBUSTNESS_SCENARIO_DISTRIBUTIONS: ['normal', 'uniform'] },
+  );
   assert.deepEqual(
     manifest.runtimeContracts.filter((item) => item.serializedModelPredict).map((item) => item.surface),
     ['javascript_wasm'],
