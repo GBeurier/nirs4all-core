@@ -114,17 +114,16 @@ upstream provides. This is recorded as `metadata` rather than dressed up as
 aggregate execution.
 
 This metadata is shared across package names, but runtime candidates are
-language-specific. R currently has no declared `dag_ml` package candidate, and
-MATLAB/Octave only advertises `methods` through `+n4m`; its other domain
-rows are metadata-only and must not be read as npm/WASM package names or
-MATLAB/Octave runtime support.
+language-specific. R declares `dagml` and MATLAB/Octave declares `+dagml` for
+process-local loss/metric registries. Their remaining metadata-only rows must
+not be read as npm/WASM package names or host-language runtime support.
 
 | Domain | Aggregate level | Notes |
 | --- | --- | --- |
 | `formats` | `metadata` | lazy re-export; execution = upstream-provided |
 | `io` | `metadata` | lazy re-export; execution = upstream-provided |
 | `datasets` | `metadata` | optional/external; lazy re-export |
-| `dag_ml` | `metadata` | lazy re-export; no R binding declared yet |
+| `dag_ml` | `metadata` | lazy re-export plus host-local registry delegation |
 | `dag_ml_data` | `metadata` | lazy re-export; execution = upstream-provided |
 
 ## Native tuning, conformal and robustness artifacts

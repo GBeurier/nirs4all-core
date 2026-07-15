@@ -1,4 +1,6 @@
 import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import nirs4all_core as n4core
 
@@ -26,6 +28,20 @@ class UpstreamRegistryTests(unittest.TestCase):
     def test_unknown_upstream_is_rejected(self) -> None:
         with self.assertRaises(KeyError):
             n4core.import_upstream("unknown")
+
+    def test_local_implementation_registry_delegates_to_dag_ml(self) -> None:
+        registry = object()
+        module = SimpleNamespace(LocalImplementationRegistry=lambda: registry)
+        with patch("nirs4all_core._upstreams.require_upstream", return_value=module):
+            self.assertIs(n4core.local_implementation_registry(), registry)
+
+    def test_local_implementation_registry_rejects_old_dag_ml(self) -> None:
+        with patch(
+            "nirs4all_core._upstreams.require_upstream",
+            return_value=SimpleNamespace(),
+        ):
+            with self.assertRaisesRegex(ImportError, "upgrade dag-ml"):
+                n4core.local_implementation_registry()
 
 
 if __name__ == "__main__":
