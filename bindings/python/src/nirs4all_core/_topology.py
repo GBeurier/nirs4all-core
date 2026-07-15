@@ -21,6 +21,7 @@ CORE_FACADE_EXPORTS: tuple[str, ...] = (
     "import_upstream",
     "io",
     "load_pipeline_definition",
+    "local_implementation_registry",
     "methods",
     "portable_class_names",
     "require_upstream",
@@ -308,8 +309,8 @@ _UPSTREAM_COMPONENTS: list[dict[str, Any]] = [
         "packages": {
             "rust": ["dag-ml"],
             "npm": ["dag-ml-wasm"],
-            "r": [],
-            "matlab": [],
+            "r": ["dagml"],
+            "matlab": ["+dagml"],
             "c_abi": [],
         },
     },

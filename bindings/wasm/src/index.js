@@ -323,6 +323,17 @@ export const loadMethods = () => importUpstream('methods');
 export const loadDagMl = () => importUpstream('dag_ml');
 export const loadDagMlData = () => importUpstream('dag_ml_data');
 
+export async function localImplementationRegistry(dagMlModule = null) {
+  const module = dagMlModule ?? await loadDagMl();
+  const Registry = module?.LocalImplementationRegistry;
+  if (typeof Registry !== 'function') {
+    throw new TypeError(
+      'The loaded dag-ml-wasm binding does not expose LocalImplementationRegistry; upgrade dag-ml-wasm.',
+    );
+  }
+  return new Registry();
+}
+
 let methodsPromise = null;
 let methodsModule = null;
 

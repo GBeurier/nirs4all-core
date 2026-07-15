@@ -28,10 +28,9 @@ Each host binding should provide:
 
 The registry is broader than current runtime coverage. JavaScript/WASM publishes
 npm peer candidates for all six domains, Rust records crate/package metadata for
-the aggregate, R currently has package candidates for `dag_ml_data`, `formats`,
-`io`, `datasets`, and `methods` but not `dag_ml`, and MATLAB/Octave only has a
-runtime candidate for `methods` through `+n4m`. The other MATLAB/Octave
-domain rows are metadata-only.
+the aggregate, and R includes `dagml` for local DAG-ML loss/metric functions.
+MATLAB/Octave similarly exposes the `+dagml` local registry and `+n4m` methods;
+its other domain rows remain metadata-only.
 
 ## Strategic Python path
 

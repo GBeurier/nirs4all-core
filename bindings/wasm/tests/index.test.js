@@ -22,6 +22,7 @@ import {
   loadDatasetsWasm,
   loadFormats,
   loadIo,
+  localImplementationRegistry,
   loadMethods,
   loadMethodsWasm,
   loadPipelineDefinition,
@@ -64,6 +65,7 @@ test('public V1 WASM surface exports expected names', () => {
       'loadDatasetsWasm',
       'loadFormats',
       'loadIo',
+      'localImplementationRegistry',
       'loadMethods',
       'loadMethodsWasm',
       'loadPipelineDefinition',
@@ -251,6 +253,19 @@ test('public upstream loaders map to the declared V1 upstreams', () => {
   assert.equal(typeof loadDagMlDataWasm, 'function');
   assert.equal(typeof loadDatasetsWasm, 'function');
   assert.equal(typeof loadDataIoWasm, 'function');
+});
+
+test('local implementation registry delegates to the DAG-ML constructor', async () => {
+  class Registry {}
+  const registry = await localImplementationRegistry({ LocalImplementationRegistry: Registry });
+  assert.ok(registry instanceof Registry);
+});
+
+test('local implementation registry rejects an old DAG-ML module', async () => {
+  await assert.rejects(
+    () => localImplementationRegistry({}),
+    /does not expose LocalImplementationRegistry.*upgrade dag-ml-wasm/s,
+  );
 });
 
 test('public upstream loaders report the correct missing upstream', async () => {

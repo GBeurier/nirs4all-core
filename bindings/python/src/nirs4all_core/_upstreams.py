@@ -111,6 +111,19 @@ def upstream_status() -> list[dict[str, object]]:
     return status
 
 
+def local_implementation_registry() -> object:
+    """Create the process-local loss/metric registry owned by DAG-ML."""
+
+    module = require_upstream("dag_ml")
+    registry_type = getattr(module, "LocalImplementationRegistry", None)
+    if not callable(registry_type):
+        raise ImportError(
+            "The installed dag-ml binding does not expose "
+            "LocalImplementationRegistry; upgrade dag-ml."
+        )
+    return registry_type()
+
+
 class LazyUpstream:
     """Proxy that resolves an upstream module on first attribute access."""
 

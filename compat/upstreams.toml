@@ -6,10 +6,12 @@
 [[upstream]]
 key = "dag_ml"
 repo = "GBeurier/dag-ml"
-ref = "b9b1ef8db052cce8d1481b7416272dcc6b288820"
+ref = "69802dd95911fa4174139702bf3e8c636c962317"
 role = "Leakage-safe DAG/ML execution coordinator"
-bindings = ["rust", "c", "wasm"]
+bindings = ["rust", "c", "python", "r", "matlab", "octave", "wasm"]
 python_imports = ["dag_ml"]
+r_packages = ["dagml"]
+matlab_packages = ["+dagml"]
 wasm_packages = ["dag-ml-wasm"]
 
 [[upstream]]
@@ -60,4 +62,5 @@ role = "Portable C ABI PLS/NIRS numerical engine"
 bindings = ["python", "r", "matlab", "octave", "wasm", "rust"]
 python_imports = ["nirs4all_methods", "pls4all", "n4m", "nirs4all.methods"]
 r_packages = ["n4m", "pls4all"]
+matlab_packages = ["+n4m"]
 wasm_packages = ["@nirs4all/methods"]

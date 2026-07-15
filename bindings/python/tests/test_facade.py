@@ -49,6 +49,7 @@ class FacadeImportSurfaceTests(unittest.TestCase):
             "import_upstream",
             "io",
             "load_pipeline_definition",
+            "local_implementation_registry",
             "methods",
             "parse_execution_plan",
             "portable_class_names",

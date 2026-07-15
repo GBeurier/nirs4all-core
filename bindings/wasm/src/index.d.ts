@@ -9,6 +9,10 @@ export interface UpstreamProxy {
   import(): Promise<unknown>;
 }
 
+export interface LocalImplementationRegistryModule<T = unknown> {
+  LocalImplementationRegistry: new () => T;
+}
+
 export interface PipelineDefinition {
   name: string;
   description: string;
@@ -132,6 +136,9 @@ export function loadDatasets(): Promise<unknown>;
 export function loadMethods(): Promise<unknown>;
 export function loadDagMl(): Promise<unknown>;
 export function loadDagMlData(): Promise<unknown>;
+export function localImplementationRegistry<T = unknown>(
+  dagMlModule?: LocalImplementationRegistryModule<T> | null,
+): Promise<T>;
 export function loadPortableStack(keys?: readonly string[]): Promise<Record<string, unknown>>;
 export function loadMethodsWasm(): Promise<unknown>;
 export function methodsWasm(): unknown;

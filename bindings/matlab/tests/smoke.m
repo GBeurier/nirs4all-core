@@ -5,6 +5,16 @@ assert(numel(items) == 6);
 assert(strcmp(items(1).key, 'dag_ml'));
 method_item = nirs4all.requireUpstream('methods');
 assert(strcmp(method_item.key, 'methods'));
+dag_ml_item = nirs4all.requireUpstream('dag_ml');
+assert(strcmp(dag_ml_item.package, '+dagml'));
+
+dag_ml_path = getenv('NIRS4ALL_DAG_ML_MATLAB_PATH');
+if ~isempty(dag_ml_path)
+    addpath(dag_ml_path);
+    registry = nirs4all.localImplementationRegistry();
+    assert(isa(registry, 'dagml.LocalImplementationRegistry'));
+    assert(registry.count() == 0);
+end
 
 manifest = nirs4all.capabilityManifest();
 assert(strcmp(manifest.schema, 'nirs4all-core.capabilities.v1'));
