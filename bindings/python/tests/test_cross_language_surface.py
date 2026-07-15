@@ -1,7 +1,7 @@
 """Static cross-language public-surface parity gate for the aggregate.
 
 The nirs4all-core aggregate public surface is declared once per language
-binding. Three invariants must hold for the aggregate to be truthful, and none
+binding. Four invariants must hold for the aggregate to be truthful, and none
 of them is otherwise checked when R, Node, Octave, or a Rust toolchain are
 unavailable (those runtime gates simply skip):
 
@@ -13,6 +13,8 @@ unavailable (those runtime gates simply skip):
    the ``surface.R`` expected exports, every export has an ``\\alias`` in
    ``man/`` (what ``R CMD check`` enforces), and every export has a top-level
    definition in ``R/``.
+4. Every binding exposes a thin facade or re-export for the upstream DAG-ML
+   process-local loss/metric registry.
 
 These checks run in pure Python by reading the binding source files, so surface
 drift in *any* binding is caught in the required Python gate even on machines
@@ -38,7 +40,10 @@ except ModuleNotFoundError:  # pragma: no cover - local Python < 3.11 fallback
 
 
 ROOT = Path(__file__).resolve().parents[3]
+PYTHON_INIT = ROOT / "bindings/python/src/nirs4all_core/__init__.py"
+PYTHON_UPSTREAMS = ROOT / "bindings/python/src/nirs4all_core/_upstreams.py"
 WASM_INDEX = ROOT / "bindings/wasm/src/index.js"
+WASM_TYPES = ROOT / "bindings/wasm/src/index.d.ts"
 WASM_PACKAGE = ROOT / "bindings/wasm/package.json"
 WASM_PACKAGE_LOCK = ROOT / "bindings/wasm/package-lock.json"
 PYPROJECT = ROOT / "bindings/python/pyproject.toml"
@@ -51,6 +56,7 @@ R_MAN_DIR = ROOT / "bindings/r/man"
 R_SRC_DIR = ROOT / "bindings/r/R"
 MATLAB_OPERATORS = ROOT / "bindings/matlab/+nirs4all/portableOperatorClasses.m"
 MATLAB_UPSTREAMS = ROOT / "bindings/matlab/+nirs4all/upstreams.m"
+MATLAB_LOCAL_REGISTRY = ROOT / "bindings/matlab/+nirs4all/localImplementationRegistry.m"
 MATLAB_README = ROOT / "bindings/matlab/README.md"
 MATLAB_BUILDER = ROOT / "scripts/build-matlab-package.sh"
 RUST_CARGO = ROOT / "bindings/rust/nirs4all/Cargo.toml"
@@ -301,7 +307,9 @@ class UpstreamRegistryParityTests(unittest.TestCase):
             with self.subTest(binding=label):
                 self.assertEqual(roles, python)
 
-    def test_matlab_upstream_packages_are_matlab_candidates_or_metadata_only(self) -> None:
+    def test_matlab_upstream_packages_are_matlab_candidates_or_metadata_only(
+        self,
+    ) -> None:
         packages = _matlab_upstream_packages()
 
         self.assertEqual(len(packages), EXPECTED_UPSTREAM_COUNT, packages)
@@ -319,6 +327,41 @@ class UpstreamRegistryParityTests(unittest.TestCase):
                 self.assertNotIn("/", package)
 
 
+class LocalImplementationRegistryFacadeParityTests(unittest.TestCase):
+    def test_all_bindings_expose_the_upstream_dag_ml_registry(self) -> None:
+        markers = {
+            "python-export": (PYTHON_INIT, r"\blocal_implementation_registry\b"),
+            "python-delegation": (
+                PYTHON_UPSTREAMS,
+                r"(?s)def local_implementation_registry\(\).*require_upstream\(\"dag_ml\"\)",
+            ),
+            "wasm-export": (
+                WASM_INDEX,
+                r"export async function localImplementationRegistry\(",
+            ),
+            "wasm-type": (
+                WASM_TYPES,
+                r"localImplementationRegistry(?:<[^>]+>)?\(",
+            ),
+            "r-export": (
+                R_NAMESPACE,
+                r"export\(nirs4all_local_implementation_registry\)",
+            ),
+            "r-delegation": (
+                R_UPSTREAMS,
+                r"nirs4all_local_implementation_registry\s*<-\s*function\(\)",
+            ),
+            "matlab-delegation": (
+                MATLAB_LOCAL_REGISTRY,
+                r"function registry = localImplementationRegistry\(\)",
+            ),
+            "rust-reexport": (RUST_LIB, r"pub use dag_ml_crate::\*;"),
+        }
+        for label, (path, pattern) in markers.items():
+            with self.subTest(binding=label):
+                self.assertRegex(_read(path), pattern)
+
+
 class RPublicSurfaceConsistencyTests(unittest.TestCase):
     def test_namespace_exports_match_surface_test_expected_exports(self) -> None:
         exports = _r_namespace_exports()
@@ -334,7 +377,9 @@ class RPublicSurfaceConsistencyTests(unittest.TestCase):
 
         self.assertEqual(len(exports), EXPECTED_R_EXPORT_COUNT)
         undocumented = sorted(exports - aliases)
-        self.assertEqual(undocumented, [], f"exports without a man \\alias: {undocumented}")
+        self.assertEqual(
+            undocumented, [], f"exports without a man \\alias: {undocumented}"
+        )
 
     def test_every_r_export_has_a_top_level_definition(self) -> None:
         exports = set(_r_namespace_exports())
@@ -342,7 +387,9 @@ class RPublicSurfaceConsistencyTests(unittest.TestCase):
 
         self.assertEqual(len(exports), EXPECTED_R_EXPORT_COUNT)
         undefined = sorted(exports - defined)
-        self.assertEqual(undefined, [], f"exports without an R/*.R definition: {undefined}")
+        self.assertEqual(
+            undefined, [], f"exports without an R/*.R definition: {undefined}"
+        )
 
 
 def _r_namespace_exports() -> list[str]:

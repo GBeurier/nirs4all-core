@@ -146,8 +146,10 @@ binding-specific parity gates.
   methods where that is the natural R interface.
 - Keep native handles opaque and expose provenance in returned objects.
 - Current R package candidates include `nirs4allformats`, `nirs4allio`,
-  `nirs4alldatasets`, `dagmldata`, and `n4m` / `pls4all` for methods. `dag-ml`
-  has no declared R binding yet and remains unavailable in the R aggregate.
+  `nirs4alldatasets`, `dagmldata`, `dagml`, and `n4m` / `pls4all` for methods.
+  `nirs4all_local_implementation_registry()` delegates to the native `dagml`
+  process-local registry; its methods retain the upstream R API, including
+  `size()`.
 
 ## MATLAB/Octave
 
@@ -163,5 +165,8 @@ binding-specific parity gates.
   `+n4m` MEX shims. The aggregate binding still owns only parsing,
   orchestration, and result-shape translation.
 - `nirs4all.upstreams()` keeps metadata rows for `dag_ml`, `dag_ml_data`,
-  `formats`, `io`, and `datasets`, but it does not advertise npm/WASM package
-  names or claim MATLAB/Octave runtime candidates for those domains.
+  `formats`, `io`, and `datasets`. The `dag_ml` row resolves to `+dagml`, and
+  `nirs4all.localImplementationRegistry()` returns the upstream process-local
+  handle whose native MATLAB/Octave inspection method is `count()`.
+  `dag_ml_data`, `formats`, `io`, and `datasets` remain metadata-only because
+  they have no MATLAB/Octave runtime candidate.
