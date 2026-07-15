@@ -59,7 +59,7 @@ COMPAT = ROOT / "compat/upstreams.toml"
 
 EXPECTED_OPERATOR_COUNT = 9
 EXPECTED_UPSTREAM_COUNT = 6
-EXPECTED_R_EXPORT_COUNT = 18
+EXPECTED_R_EXPORT_COUNT = 19
 
 
 def _read(path: Path) -> str:
@@ -306,7 +306,8 @@ class UpstreamRegistryParityTests(unittest.TestCase):
 
         self.assertEqual(len(packages), EXPECTED_UPSTREAM_COUNT, packages)
         self.assertEqual(packages["methods"], "+n4m")
-        metadata_only = {"dag_ml", "dag_ml_data", "formats", "io", "datasets"}
+        self.assertEqual(packages["dag_ml"], "+dagml")
+        metadata_only = {"dag_ml_data", "formats", "io", "datasets"}
         self.assertEqual(
             {key for key, package in packages.items() if package == ""},
             metadata_only,

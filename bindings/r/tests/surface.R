@@ -11,6 +11,7 @@ expected_exports <- c(
   "nirs4all_capability_manifest",
   "nirs4all_controller_capabilities",
   "nirs4all_load_pipeline",
+  "nirs4all_local_implementation_registry",
   "nirs4all_parse_execution_plan",
   "nirs4all_portable_class_names",
   "nirs4all_require",

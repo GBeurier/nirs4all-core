@@ -78,9 +78,10 @@ metadata-only and must fail explicitly if requested as executable capabilities.
 
 Current runtime coverage is intentionally uneven: JavaScript/WASM records npm
 peer candidates for every domain; R reaches only the upstream R packages that
-exist (`dag_ml` is metadata-only today); MATLAB/Octave only has a runtime
-candidate for `methods` via the upstream `+n4m` shims, while
-`dag_ml`, `dag_ml_data`, `formats`, `io`, and `datasets` are metadata-only.
+exist, including the `dagml` process-local loss/metric registry; MATLAB/Octave
+has runtime candidates for DAG-ML local registries through `+dagml` and methods
+through `+n4m`, while `dag_ml_data`, `formats`, `io`, and `datasets` remain
+metadata-only.
 
 External operator support must stay execution-gated. When an upstream executor
 can plan or call an external operator, a binding may add an idiomatic host

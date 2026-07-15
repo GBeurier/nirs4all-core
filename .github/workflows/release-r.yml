@@ -10,7 +10,7 @@
 # R-universe, so this aggregate owns the `nirs4all` R package).
 #
 # Imports are just jsonlite + yaml. The ecosystem bindings (nirs4allformats,
-# nirs4allio, nirs4alldatasets, n4m, dagmldata) are SUGGESTS only and resolved
+# nirs4allio, nirs4alldatasets, n4m, dagml, dagmldata) are SUGGESTS only and resolved
 # from the R-universe via DESCRIPTION's Additional_repositories — so
 # nirs4all-datasets (nirs4alldatasets) stays optional, never a hard dependency.
 # Because those upstreams are not on mainstream CRAN yet, the natural release
@@ -73,7 +73,7 @@ jobs:
           use-public-rspm: true
 
       # nirs4all (core aggregate) is PURE R: its only hard deps are jsonlite + yaml.
-      # The ecosystem packages (nirs4allformats/io/datasets, n4m, dagmldata) are
+      # The ecosystem packages (nirs4allformats/io/datasets, n4m, dagml, dagmldata) are
       # Suggests served from R-universe (Additional_repositories); they are NOT built
       # for every CI R version (e.g. nirs4alldatasets/dagmldata are absent for R-devel),
       # so pak (setup-r-dependencies@v2) cannot solve them and fails the whole job even

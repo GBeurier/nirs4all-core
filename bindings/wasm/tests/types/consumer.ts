@@ -12,6 +12,7 @@ import {
   loadDatasetsWasm,
   loadFormats,
   loadIo,
+  localImplementationRegistry,
   loadMethods,
   loadMethodsWasm,
   loadPipelineDefinition,
@@ -53,6 +54,7 @@ const classes: string[] = portableClassNames(definition);
 const plan = parseExecutionPlan(definition);
 const upstreamList: readonly Upstream[] = upstreams;
 const firstUpstream: Upstream | null = upstream('methods');
+const localRegistry: Promise<unknown> = localImplementationRegistry();
 const proxy: UpstreamProxy = methods;
 const allProxyKeys: string[] = [formats.key, io.key, datasets.key, dagMl.key, dagMlData.key, proxy.key];
 const operatorClasses: readonly string[] = portableOperatorClasses;
@@ -123,6 +125,7 @@ void classes;
 void plan;
 void upstreamList;
 void firstUpstream;
+void localRegistry;
 void allProxyKeys;
 void operatorClasses;
 void fittedPromise;

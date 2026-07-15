@@ -1,4 +1,5 @@
 export(nirs4all_upstreams)
+export(nirs4all_local_implementation_registry)
 export(nirs4all_require)
 export(nirs4all_capability_manifest)
 export(nirs4all_artifact_contracts)

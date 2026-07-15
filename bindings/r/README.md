@@ -8,9 +8,10 @@ bare `nirs4all` name as the R aggregate surface. Python alone uses the
 library.
 
 The R package publishes the aggregate registry and delegates only to upstream R
-bindings that exist and are installed. Domains without an R binding, currently
-`dag_ml`, remain metadata-only until the upstream package is published. Future
-formula/data-frame controllers are gated on those upstream execution paths.
+bindings that exist and are installed. `nirs4all_local_implementation_registry()`
+delegates to the upstream `dagml` package so R functions can be registered as
+process-local losses or metrics. Future formula/data-frame controllers remain
+gated on upstream DAG-ML execution paths.
 
 The portable execution gate is available as
 `nirs4all_run_portable_pipeline()`. It delegates Kennard-Stone, SNV,
