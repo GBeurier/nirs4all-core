@@ -14,4 +14,13 @@ catch cause
         ['The DAG-ML MATLAB/Octave binding is not available. Add its ' ...
         'bindings/matlab directory to the path. Cause: %s'], cause.message);
 end
+
+registryMethods = methods(registry);
+requiredMethods = {'registerLoss', 'registerMetric', 'invokeTrainingLoss'};
+missingMethods = requiredMethods(~ismember(requiredMethods, registryMethods));
+if ~isempty(missingMethods)
+    error('nirs4all:IncompatibleDagMl', ...
+        ['The installed DAG-ML MATLAB/Octave registry does not expose %s; ' ...
+        'upgrade DAG-ML.'], strjoin(missingMethods, ', '));
+end
 end

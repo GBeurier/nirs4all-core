@@ -64,5 +64,19 @@ nirs4all_local_implementation_registry <- function() {
       call. = FALSE
     )
   }
-  factory()
+  registry <- factory()
+  required_methods <- c("register_loss", "register_metric", "invoke_training_loss")
+  missing_methods <- required_methods[!vapply(required_methods, function(name) {
+    is.function(registry[[name]])
+  }, logical(1))]
+  if (length(missing_methods) > 0L) {
+    stop(
+      sprintf(
+        "The installed dagml package local registry does not expose %s; upgrade dagml.",
+        paste(missing_methods, collapse = ", ")
+      ),
+      call. = FALSE
+    )
+  }
+  registry
 }
