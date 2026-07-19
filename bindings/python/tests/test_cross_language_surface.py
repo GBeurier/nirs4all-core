@@ -353,9 +353,14 @@ class LocalImplementationRegistryFacadeParityTests(unittest.TestCase):
                 R_UPSTREAMS,
                 r"nirs4all_local_implementation_registry\s*<-\s*function\(\)",
             ),
+            "r-task-bound-loss": (R_UPSTREAMS, r"\binvoke_training_loss\b"),
             "matlab-delegation": (
                 MATLAB_LOCAL_REGISTRY,
                 r"function registry = localImplementationRegistry\(\)",
+            ),
+            "matlab-task-bound-loss": (
+                MATLAB_LOCAL_REGISTRY,
+                r"\binvokeTrainingLoss\b",
             ),
             "rust-reexport": (RUST_LIB, r"pub use dag_ml_crate::\*;"),
             "rust-facade": (
