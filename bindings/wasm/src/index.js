@@ -331,7 +331,16 @@ export async function localImplementationRegistry(dagMlModule = null) {
       'The loaded dag-ml-wasm binding does not expose LocalImplementationRegistry; upgrade dag-ml-wasm.',
     );
   }
-  return new Registry();
+  const registry = new Registry();
+  const missing = ['register_loss', 'register_metric'].filter(
+    (name) => typeof registry?.[name] !== 'function',
+  );
+  if (missing.length > 0) {
+    throw new TypeError(
+      `The loaded dag-ml-wasm LocalImplementationRegistry does not expose ${missing.join(', ')}; upgrade dag-ml-wasm.`,
+    );
+  }
+  return registry;
 }
 
 let methodsPromise = null;

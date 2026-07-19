@@ -9,7 +9,12 @@ export interface UpstreamProxy {
   import(): Promise<unknown>;
 }
 
-export interface LocalImplementationRegistryModule<T = unknown> {
+export interface LocalImplementationRegistry {
+  register_loss(lossReference: unknown, implementation: unknown): unknown;
+  register_metric(metricReference: unknown, implementation: unknown): unknown;
+}
+
+export interface LocalImplementationRegistryModule<T extends LocalImplementationRegistry = LocalImplementationRegistry> {
   LocalImplementationRegistry: new () => T;
 }
 
@@ -136,7 +141,7 @@ export function loadDatasets(): Promise<unknown>;
 export function loadMethods(): Promise<unknown>;
 export function loadDagMl(): Promise<unknown>;
 export function loadDagMlData(): Promise<unknown>;
-export function localImplementationRegistry<T = unknown>(
+export function localImplementationRegistry<T extends LocalImplementationRegistry = LocalImplementationRegistry>(
   dagMlModule?: LocalImplementationRegistryModule<T> | null,
 ): Promise<T>;
 export function loadPortableStack(keys?: readonly string[]): Promise<Record<string, unknown>>;
