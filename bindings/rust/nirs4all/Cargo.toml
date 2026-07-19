@@ -22,6 +22,10 @@ path = "src/lib.rs"
 # the datasets host at runtime, it never vendors the datasets crate).
 default = []
 datasets = []
+# Temporary source-tree gate for the unreleased DAG-ML typed local loss/metric
+# registry surface. Keep this off by default so cargo package still verifies
+# against the published dag-ml crate until the loss contract release lands.
+dag-ml-local-criteria = []
 
 [dependencies]
 dag_ml_crate = { package = "dag-ml", version = "0.2.7" }
