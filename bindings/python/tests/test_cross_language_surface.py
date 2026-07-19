@@ -356,6 +356,10 @@ class LocalImplementationRegistryFacadeParityTests(unittest.TestCase):
                 r"function registry = localImplementationRegistry\(\)",
             ),
             "rust-reexport": (RUST_LIB, r"pub use dag_ml_crate::\*;"),
+            "rust-facade": (
+                RUST_LIB,
+                r"pub fn local_implementation_registry<T>\(\) -> LocalImplementationRegistry<T>",
+            ),
         }
         for label, (path, pattern) in markers.items():
             with self.subTest(binding=label):

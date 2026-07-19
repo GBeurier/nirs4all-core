@@ -114,6 +114,13 @@ binding-specific parity gates.
 - Future external operator adapters should use traits and typed builder APIs,
   with capabilities declared at compile time or through explicit runtime feature
   checks.
+- With the temporary source-tree `dag-ml-local-criteria` feature,
+  `local_implementation_registry::<T>()` is a thin typed facade over the
+  upstream DAG-ML `LocalImplementationRegistry<T>`. Rust callers own the
+  concrete callback type `T`; DAG-ML owns the loss/metric descriptors,
+  validation, exact resolution and attestation semantics. This feature remains
+  off by default until the DAG-ML loss contract is available from the published
+  crate.
 - Keep FFI handles explicit; never hide ownership transfers.
 - The portable KS/SNV/Savitzky-Golay/PLS subset executes through a caller-supplied
   `libn4m` path and is covered by the shared full-Python `nirs4all` oracle.

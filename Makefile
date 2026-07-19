@@ -35,7 +35,9 @@ test-cross-language-e2e: test-e2e-entrypoints
 test-rust:
 	cargo fmt --all --check
 	cargo clippy --workspace --all-targets -- -D warnings
+	cargo clippy --workspace --all-targets --features dag-ml-local-criteria -- -D warnings
 	cargo test --workspace
+	cargo test --workspace --features dag-ml-local-criteria
 
 test-rust-parity:
 	NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 cargo test -p nirs4all rust_binding_execution_matches_full_python_nirs4all_oracle -- --nocapture
