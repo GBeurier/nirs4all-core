@@ -33,6 +33,7 @@ class UpstreamRegistryTests(unittest.TestCase):
         registry = SimpleNamespace(
             register_loss=lambda *_args, **_kwargs: None,
             register_metric=lambda *_args, **_kwargs: None,
+            bind_training_loss=lambda *_args, **_kwargs: None,
         )
         module = SimpleNamespace(LocalImplementationRegistry=lambda: registry)
         with patch("nirs4all_core._upstreams.require_upstream", return_value=module):
@@ -49,7 +50,7 @@ class UpstreamRegistryTests(unittest.TestCase):
     def test_local_implementation_registry_rejects_old_registry_surface(self) -> None:
         module = SimpleNamespace(LocalImplementationRegistry=lambda: SimpleNamespace())
         with patch("nirs4all_core._upstreams.require_upstream", return_value=module):
-            with self.assertRaisesRegex(ImportError, "register_loss, register_metric"):
+            with self.assertRaisesRegex(ImportError, "register_loss, register_metric, bind_training_loss"):
                 n4core.local_implementation_registry()
 
 

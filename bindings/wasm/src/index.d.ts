@@ -12,6 +12,7 @@ export interface UpstreamProxy {
 export interface LocalImplementationRegistry {
   register_loss(lossReference: unknown, implementation: unknown): unknown;
   register_metric(metricReference: unknown, implementation: unknown): unknown;
+  bind_training_loss(nodeTask: unknown, roleIndex?: number): unknown;
 }
 
 export interface LocalImplementationRegistryModule<T extends LocalImplementationRegistry = LocalImplementationRegistry> {

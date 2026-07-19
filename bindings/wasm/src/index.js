@@ -332,7 +332,7 @@ export async function localImplementationRegistry(dagMlModule = null) {
     );
   }
   const registry = new Registry();
-  const missing = ['register_loss', 'register_metric'].filter(
+  const missing = ['register_loss', 'register_metric', 'bind_training_loss'].filter(
     (name) => typeof registry?.[name] !== 'function',
   );
   if (missing.length > 0) {

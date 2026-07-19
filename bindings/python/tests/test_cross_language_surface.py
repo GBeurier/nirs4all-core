@@ -335,6 +335,7 @@ class LocalImplementationRegistryFacadeParityTests(unittest.TestCase):
                 PYTHON_UPSTREAMS,
                 r"(?s)def local_implementation_registry\(\).*require_upstream\(\"dag_ml\"\)",
             ),
+            "python-task-bound-loss": (PYTHON_UPSTREAMS, r"\bbind_training_loss\b"),
             "wasm-export": (
                 WASM_INDEX,
                 r"export async function localImplementationRegistry\(",
@@ -343,6 +344,7 @@ class LocalImplementationRegistryFacadeParityTests(unittest.TestCase):
                 WASM_TYPES,
                 r"localImplementationRegistry(?:<[^>]+>)?\(",
             ),
+            "wasm-task-bound-loss": (WASM_TYPES, r"\bbind_training_loss\b"),
             "r-export": (
                 R_NAMESPACE,
                 r"export\(nirs4all_local_implementation_registry\)",
