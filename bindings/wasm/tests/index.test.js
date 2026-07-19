@@ -259,11 +259,13 @@ test('local implementation registry delegates to the DAG-ML constructor', async 
   class Registry {
     register_loss() {}
     register_metric() {}
+    bind_training_loss() {}
   }
   const registry = await localImplementationRegistry({ LocalImplementationRegistry: Registry });
   assert.ok(registry instanceof Registry);
   assert.equal(typeof registry.register_loss, 'function');
   assert.equal(typeof registry.register_metric, 'function');
+  assert.equal(typeof registry.bind_training_loss, 'function');
 });
 
 test('local implementation registry rejects an old DAG-ML module', async () => {
@@ -277,7 +279,7 @@ test('local implementation registry rejects an old registry surface', async () =
   class Registry {}
   await assert.rejects(
     () => localImplementationRegistry({ LocalImplementationRegistry: Registry }),
-    /does not expose register_loss, register_metric.*upgrade dag-ml-wasm/s,
+    /does not expose register_loss, register_metric, bind_training_loss.*upgrade dag-ml-wasm/s,
   );
 });
 

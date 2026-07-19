@@ -124,7 +124,7 @@ def local_implementation_registry() -> object:
     registry = registry_type()
     missing = [
         name
-        for name in ("register_loss", "register_metric")
+        for name in ("register_loss", "register_metric", "bind_training_loss")
         if not callable(getattr(registry, name, None))
     ]
     if missing:
