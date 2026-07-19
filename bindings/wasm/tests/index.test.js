@@ -256,15 +256,28 @@ test('public upstream loaders map to the declared V1 upstreams', () => {
 });
 
 test('local implementation registry delegates to the DAG-ML constructor', async () => {
-  class Registry {}
+  class Registry {
+    register_loss() {}
+    register_metric() {}
+  }
   const registry = await localImplementationRegistry({ LocalImplementationRegistry: Registry });
   assert.ok(registry instanceof Registry);
+  assert.equal(typeof registry.register_loss, 'function');
+  assert.equal(typeof registry.register_metric, 'function');
 });
 
 test('local implementation registry rejects an old DAG-ML module', async () => {
   await assert.rejects(
     () => localImplementationRegistry({}),
     /does not expose LocalImplementationRegistry.*upgrade dag-ml-wasm/s,
+  );
+});
+
+test('local implementation registry rejects an old registry surface', async () => {
+  class Registry {}
+  await assert.rejects(
+    () => localImplementationRegistry({ LocalImplementationRegistry: Registry }),
+    /does not expose register_loss, register_metric.*upgrade dag-ml-wasm/s,
   );
 });
 

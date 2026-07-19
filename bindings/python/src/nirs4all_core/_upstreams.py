@@ -121,7 +121,18 @@ def local_implementation_registry() -> object:
             "The installed dag-ml binding does not expose "
             "LocalImplementationRegistry; upgrade dag-ml."
         )
-    return registry_type()
+    registry = registry_type()
+    missing = [
+        name
+        for name in ("register_loss", "register_metric")
+        if not callable(getattr(registry, name, None))
+    ]
+    if missing:
+        raise ImportError(
+            "The installed dag-ml LocalImplementationRegistry does not expose "
+            f"{', '.join(missing)}; upgrade dag-ml."
+        )
+    return registry
 
 
 class LazyUpstream:
