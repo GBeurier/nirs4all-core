@@ -13,6 +13,9 @@ if ~isempty(dag_ml_path)
     addpath(dag_ml_path);
     registry = nirs4all.localImplementationRegistry();
     assert(isa(registry, 'dagml.LocalImplementationRegistry'));
+    registryMethods = methods(registry);
+    assert(any(strcmp(registryMethods, 'registerLoss')));
+    assert(any(strcmp(registryMethods, 'registerMetric')));
     assert(registry.count() == 0);
 end
 

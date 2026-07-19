@@ -30,7 +30,10 @@ class UpstreamRegistryTests(unittest.TestCase):
             n4core.import_upstream("unknown")
 
     def test_local_implementation_registry_delegates_to_dag_ml(self) -> None:
-        registry = object()
+        registry = SimpleNamespace(
+            register_loss=lambda *_args, **_kwargs: None,
+            register_metric=lambda *_args, **_kwargs: None,
+        )
         module = SimpleNamespace(LocalImplementationRegistry=lambda: registry)
         with patch("nirs4all_core._upstreams.require_upstream", return_value=module):
             self.assertIs(n4core.local_implementation_registry(), registry)
@@ -41,6 +44,12 @@ class UpstreamRegistryTests(unittest.TestCase):
             return_value=SimpleNamespace(),
         ):
             with self.assertRaisesRegex(ImportError, "upgrade dag-ml"):
+                n4core.local_implementation_registry()
+
+    def test_local_implementation_registry_rejects_old_registry_surface(self) -> None:
+        module = SimpleNamespace(LocalImplementationRegistry=lambda: SimpleNamespace())
+        with patch("nirs4all_core._upstreams.require_upstream", return_value=module):
+            with self.assertRaisesRegex(ImportError, "register_loss, register_metric"):
                 n4core.local_implementation_registry()
 
 

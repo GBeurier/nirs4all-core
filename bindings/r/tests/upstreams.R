@@ -14,6 +14,8 @@ if (requireNamespace("dagml", quietly = TRUE)) {
   stopifnot(is.environment(nirs4all::dag_ml()))
   registry <- nirs4all::nirs4all_local_implementation_registry()
   stopifnot(inherits(registry, "dagml_local_implementation_registry"))
+  stopifnot(is.function(registry$register_loss))
+  stopifnot(is.function(registry$register_metric))
   stopifnot(registry$size() == 0L)
 } else {
   err <- tryCatch(nirs4all::dag_ml(), error = identity)
