@@ -16,6 +16,7 @@ if ~isempty(dag_ml_path)
     registryMethods = methods(registry);
     assert(any(strcmp(registryMethods, 'registerLoss')));
     assert(any(strcmp(registryMethods, 'registerMetric')));
+    assert(any(strcmp(registryMethods, 'invokeTrainingLoss')));
     assert(registry.count() == 0);
 end
 
