@@ -27,8 +27,10 @@ preserved in the execution plan and forwarded to the upstream binding.
 Rust, JavaScript/WASM, R, and MATLAB/Octave publish as `nirs4all`. That shared
 name is only the package/namespace identity. The full six-domain aggregate is
 metadata plus re-export/load hooks; DAG-ML local loss/metric registries are
-available in R and MATLAB/Octave, but those hosts do not have runtime bindings
-for every `formats` / `io` / `datasets` domain row.
+available in R and MATLAB/Octave, and the Python/JavaScript facades require
+the task-bound `bind_training_loss` method before treating the registry as an
+executable local-loss surface. Those hosts do not have runtime bindings for
+every `formats` / `io` / `datasets` domain row.
 The canonical source repository for every binding remains `nirs4all-core`.
 Python publishes as `nirs4all-core`; non-Python targets publish as `nirs4all`.
 
