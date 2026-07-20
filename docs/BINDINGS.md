@@ -26,8 +26,12 @@ preserved in the execution plan and forwarded to the upstream binding.
 
 Rust, JavaScript/WASM, R, and MATLAB/Octave publish as `nirs4all`. That shared
 name is only the package/namespace identity. The full six-domain aggregate is
-metadata plus re-export/load hooks; R and MATLAB/Octave do not currently have
-runtime bindings for every `dag_ml` / `formats` / `io` / `datasets` domain row.
+metadata plus re-export/load hooks; DAG-ML local loss/metric registries are
+available in R and MATLAB/Octave. The Python/JavaScript facades require the
+task-bound `bind_training_loss` method, R requires `invoke_training_loss`, and
+MATLAB/Octave requires `invokeTrainingLoss` before treating the registry as an
+executable local-loss surface. Those hosts do not have runtime bindings for every
+`formats` / `io` / `datasets` domain row.
 The canonical source repository for every binding remains `nirs4all-core`.
 Python publishes as `nirs4all-core`; non-Python targets publish as `nirs4all`.
 
@@ -113,6 +117,13 @@ binding-specific parity gates.
 - Future external operator adapters should use traits and typed builder APIs,
   with capabilities declared at compile time or through explicit runtime feature
   checks.
+- With the temporary source-tree `dag-ml-local-criteria` feature,
+  `local_implementation_registry::<T>()` is a thin typed facade over the
+  upstream DAG-ML `LocalImplementationRegistry<T>`. Rust callers own the
+  concrete callback type `T`; DAG-ML owns the loss/metric descriptors,
+  validation, exact resolution and attestation semantics. This feature remains
+  off by default until the DAG-ML loss contract is available from the published
+  crate.
 - Keep FFI handles explicit; never hide ownership transfers.
 - The portable KS/SNV/Savitzky-Golay/PLS subset executes through a caller-supplied
   `libn4m` path and is covered by the shared full-Python `nirs4all` oracle.
@@ -145,8 +156,10 @@ binding-specific parity gates.
   methods where that is the natural R interface.
 - Keep native handles opaque and expose provenance in returned objects.
 - Current R package candidates include `nirs4allformats`, `nirs4allio`,
-  `nirs4alldatasets`, `dagmldata`, and `n4m` / `pls4all` for methods. `dag-ml`
-  has no declared R binding yet and remains unavailable in the R aggregate.
+  `nirs4alldatasets`, `dagmldata`, `dagml`, and `n4m` / `pls4all` for methods.
+  `nirs4all_local_implementation_registry()` delegates to the native `dagml`
+  process-local registry; its methods retain the upstream R API, including
+  `size()`.
 
 ## MATLAB/Octave
 
@@ -162,5 +175,8 @@ binding-specific parity gates.
   `+n4m` MEX shims. The aggregate binding still owns only parsing,
   orchestration, and result-shape translation.
 - `nirs4all.upstreams()` keeps metadata rows for `dag_ml`, `dag_ml_data`,
-  `formats`, `io`, and `datasets`, but it does not advertise npm/WASM package
-  names or claim MATLAB/Octave runtime candidates for those domains.
+  `formats`, `io`, and `datasets`. The `dag_ml` row resolves to `+dagml`, and
+  `nirs4all.localImplementationRegistry()` returns the upstream process-local
+  handle whose native MATLAB/Octave inspection method is `count()`.
+  `dag_ml_data`, `formats`, `io`, and `datasets` remain metadata-only because
+  they have no MATLAB/Octave runtime candidate.

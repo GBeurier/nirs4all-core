@@ -6,3 +6,6 @@ members = ["bindings/rust/nirs4all"]
 edition = "2021"
 license = "CECILL-2.1 OR AGPL-3.0-or-later"
 repository = "https://github.com/GBeurier/nirs4all-core"
+
+[patch.crates-io]
+dag-ml = { git = "https://github.com/GBeurier/dag-ml", rev = "a840d1a9868bc0e2d90107b5947296959bb83ab8" }

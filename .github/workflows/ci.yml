@@ -17,7 +17,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo clippy --workspace --all-targets --features dag-ml-local-criteria -- -D warnings
       - run: cargo test --workspace
+      - run: cargo test --workspace --features dag-ml-local-criteria
       - run: cargo package -p nirs4all
       - uses: actions/upload-artifact@v7.0.1
         with:
@@ -163,11 +165,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.0
+      - name: Read pinned DAG-ML ref
+        id: dag-ml-pin
+        shell: python
+        run: |
+          import os
+          from pathlib import Path
+          import tomllib
+
+          upstreams = tomllib.loads(Path("compat/upstreams.toml").read_text())["upstream"]
+          dag_ml = [item for item in upstreams if item.get("key") == "dag_ml"]
+          if len(dag_ml) != 1 or not str(dag_ml[0].get("ref", "")).strip():
+              raise SystemExit("compat/upstreams.toml must pin exactly one dag_ml ref")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"ref={dag_ml[0]['ref'].strip()}\n")
+      - uses: actions/checkout@v7.0.0
+        with:
+          repository: GBeurier/dag-ml
+          path: dag-ml
+          ref: ${{ steps.dag-ml-pin.outputs.ref }}
       - uses: r-lib/actions/setup-r@v2
       - run: Rscript -e 'install.packages(c("jsonlite", "yaml"), repos = "https://cloud.r-project.org")'
+      - run: R CMD INSTALL dag-ml/bindings/r
       - run: mkdir -p dist/r
       - run: cd dist/r && R CMD build ../../bindings/r
-      # The ecosystem bindings (nirs4allformats/io/datasets, n4m, dagmldata) are
+      # The ecosystem bindings (nirs4allformats/io/datasets, n4m, dagml, dagmldata) are
       # Suggests served from R-universe (Additional_repositories), not installed
       # here. _R_CHECK_FORCE_SUGGESTS_=false makes their absence a NOTE rather
       # than an ERROR, exactly as CRAN does, and matching release-r.yml.
@@ -184,12 +206,33 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7.0.0
+      - name: Read pinned DAG-ML ref
+        id: dag-ml-pin
+        shell: python
+        run: |
+          import os
+          from pathlib import Path
+          import tomllib
+
+          upstreams = tomllib.loads(Path("compat/upstreams.toml").read_text())["upstream"]
+          dag_ml = [item for item in upstreams if item.get("key") == "dag_ml"]
+          if len(dag_ml) != 1 or not str(dag_ml[0].get("ref", "")).strip():
+              raise SystemExit("compat/upstreams.toml must pin exactly one dag_ml ref")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"ref={dag_ml[0]['ref'].strip()}\n")
+      - uses: actions/checkout@v7.0.0
+        with:
+          repository: GBeurier/dag-ml
+          path: dag-ml
+          ref: ${{ steps.dag-ml-pin.outputs.ref }}
       - name: Install Octave package tools
         timeout-minutes: 12
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends octave zip
       - name: Run MATLAB/Octave smoke
         timeout-minutes: 3
         run: octave --no-gui --quiet --eval "run('bindings/matlab/tests/smoke.m'); exit(0)"
+        env:
+          NIRS4ALL_DAG_ML_MATLAB_PATH: ${{ github.workspace }}/dag-ml/bindings/matlab
       - name: Build MATLAB/Octave package
         timeout-minutes: 2
         run: scripts/build-matlab-package.sh dist/matlab

@@ -30,6 +30,7 @@ The aggregated upstream R bindings —
 * `nirs4allio` (dataset assembly),
 * `nirs4alldatasets` (DOI-pinned dataset catalog),
 * `n4m` (portable PLS / NIRS numerical engine),
+* `dagml` (process-local DAG-ML loss and metric functions),
 * `dagmldata` (sample-aligned data contracts)
 
 — are listed under **`Suggests`**, not `Imports`. They are used **conditionally,

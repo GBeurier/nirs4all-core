@@ -96,9 +96,9 @@ install.packages(
 
 It is a pure-R package (no compilation) that `Imports` only `jsonlite` and
 `yaml`. The upstream bindings (`nirs4allformats`, `nirs4allio`,
-`nirs4alldatasets`, `n4m`, `dagmldata`) are `Suggests`, resolved from R-universe
-via `Additional_repositories`. `dag_ml` is metadata-only in R until an upstream
-R binding is published.
+`nirs4alldatasets`, `n4m`, `dagml`, `dagmldata`) are `Suggests`, resolved from
+R-universe via `Additional_repositories`. The `dagml` package owns local R loss
+and metric registration.
 
 ## MATLAB / Octave
 
@@ -112,5 +112,6 @@ addpath('/path/to/nirs4all-matlab-octave')
 
 The public subset is Octave-safe. Strict-parity execution additionally requires
 the `nirs4all-methods` `+n4m` MEX shims on the MATLAB/Octave path.
-Other upstream domains are listed as aggregate metadata only; the MATLAB/Octave
+Local custom losses and metrics require the DAG-ML `+dagml` package on that
+path. Other upstream domains are listed as aggregate metadata only; the MATLAB/Octave
 package does not advertise npm/WASM package names as runtime candidates.

@@ -425,6 +425,14 @@ pub fn upstream(key: &str) -> Option<&'static Upstream> {
     UPSTREAMS.iter().find(|item| item.key == key)
 }
 
+#[cfg(feature = "dag-ml-local-criteria")]
+pub type LocalImplementationRegistry<T> = dag_ml::LocalImplementationRegistry<T>;
+
+#[cfg(feature = "dag-ml-local-criteria")]
+pub fn local_implementation_registry<T>() -> LocalImplementationRegistry<T> {
+    LocalImplementationRegistry::new()
+}
+
 pub fn load_pipeline_definition_str(input: &str) -> Result<Value, String> {
     let mut value = match serde_json::from_str::<Value>(input) {
         Ok(value) => value,
@@ -1508,6 +1516,8 @@ unsafe fn c_string(ptr: *const c_char) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(feature = "dag-ml-local-criteria")]
+    use std::collections::BTreeSet;
 
     #[test]
     fn exposes_expected_upstream_keys() {
@@ -1529,6 +1539,27 @@ mod tests {
     fn resolves_upstream_by_key() {
         assert_eq!(upstream("methods").unwrap().package, "nirs4all-methods");
         assert!(upstream("unknown").is_none());
+    }
+
+    #[cfg(feature = "dag-ml-local-criteria")]
+    #[test]
+    fn rust_local_implementation_registry_facade_delegates_to_dag_ml() {
+        type CriterionFn = fn(f64, f64) -> f64;
+
+        let loss = rust_loss_reference();
+        let metric = rust_metric_reference();
+        let mut registry = local_implementation_registry::<CriterionFn>();
+
+        registry
+            .register_loss(&loss, |target, prediction| (prediction - target).abs())
+            .unwrap();
+        registry
+            .register_metric(&metric, |target, prediction| prediction - target)
+            .unwrap();
+
+        assert_eq!(registry.resolve_loss(&loss).unwrap()(2.0, 5.5), 3.5);
+        assert_eq!(registry.resolve_metric(&metric).unwrap()(2.0, 5.5), 3.5);
+        assert_eq!(registry.len(), 2);
     }
 
     #[test]
@@ -1853,6 +1884,85 @@ mod tests {
         assert!(parse_execution_plan(&definition)
             .unwrap_err()
             .contains("start must be <= stop"));
+    }
+
+    #[cfg(feature = "dag-ml-local-criteria")]
+    fn rust_loss_reference() -> dag_ml::LossReference {
+        let spec = dag_ml::LossSpec::new(
+            "example.loss.absolute@1",
+            dag_ml::SemanticSpecKind::Custom,
+            BTreeSet::from([dag_ml::LearningTaskKind::Regression]),
+            BTreeSet::from([dag_ml::PredictionKind::RegressionPoint]),
+            dag_ml::LossReduction::Mean,
+            BTreeSet::from([
+                dag_ml::CriterionInput::Target,
+                dag_ml::CriterionInput::Prediction,
+            ]),
+            BTreeSet::new(),
+            serde_json::json!({}),
+        )
+        .unwrap();
+        let implementation = dag_ml::ImplementationDescriptor::new(
+            dag_ml::ImplementationSemanticKind::Loss,
+            &spec.loss_id,
+            &spec.spec_fingerprint,
+            "provider:rust-local",
+            "binding:rust",
+            "1.0.0",
+            "2".repeat(64),
+            BTreeSet::new(),
+            BTreeSet::new(),
+            BTreeSet::from([dag_ml::ImplementationCapability::Deterministic]),
+            dag_ml::PortabilityClass::HostLocal,
+            dag_ml::ReplayabilityClass::RegistryRequired,
+            Some("loss:nirs4all-core:rust:absolute".to_string()),
+        )
+        .unwrap();
+        dag_ml::LossReference {
+            spec,
+            implementation,
+        }
+    }
+
+    #[cfg(feature = "dag-ml-local-criteria")]
+    fn rust_metric_reference() -> dag_ml::MetricReference {
+        let spec = dag_ml::MetricSpec::new(
+            "example.metric.bias@1",
+            dag_ml::SemanticSpecKind::Custom,
+            BTreeSet::from([dag_ml::LearningTaskKind::Regression]),
+            BTreeSet::from([dag_ml::PredictionKind::RegressionPoint]),
+            dag_ml::MetricObjective::Minimize,
+            BTreeSet::from([dag_ml::PredictionLevel::Sample]),
+            dag_ml::MetricDecomposition::Global,
+            dag_ml::MetricReduction::Global,
+            BTreeSet::from([
+                dag_ml::CriterionInput::Target,
+                dag_ml::CriterionInput::Prediction,
+            ]),
+            BTreeSet::new(),
+            serde_json::json!({}),
+        )
+        .unwrap();
+        let implementation = dag_ml::ImplementationDescriptor::new(
+            dag_ml::ImplementationSemanticKind::Metric,
+            &spec.metric_id,
+            &spec.spec_fingerprint,
+            "provider:rust-local",
+            "binding:rust",
+            "1.0.0",
+            "3".repeat(64),
+            BTreeSet::new(),
+            BTreeSet::new(),
+            BTreeSet::from([dag_ml::ImplementationCapability::Deterministic]),
+            dag_ml::PortabilityClass::HostLocal,
+            dag_ml::ReplayabilityClass::RegistryRequired,
+            Some("metric:nirs4all-core:rust:bias".to_string()),
+        )
+        .unwrap();
+        dag_ml::MetricReference {
+            spec,
+            implementation,
+        }
     }
 
     #[test]

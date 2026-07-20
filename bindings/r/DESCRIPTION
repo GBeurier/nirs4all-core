@@ -21,6 +21,7 @@ Suggests:
     nirs4allio,
     nirs4alldatasets,
     n4m,
+    dagml,
     dagmldata
 Additional_repositories: https://gbeurier.r-universe.dev
 Encoding: UTF-8
