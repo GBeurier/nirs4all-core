@@ -39,7 +39,7 @@ dependencies = [
 [[package]]
 name = "dag-ml"
 version = "0.2.7"
-source = "git+https://github.com/GBeurier/dag-ml?rev=4b156c851b15b3fcbeaf579244ea0122b438c164#4b156c851b15b3fcbeaf579244ea0122b438c164"
+source = "git+https://github.com/GBeurier/dag-ml?rev=a840d1a9868bc0e2d90107b5947296959bb83ab8#a840d1a9868bc0e2d90107b5947296959bb83ab8"
 dependencies = [
  "dag-ml-core",
 ]
@@ -47,7 +47,7 @@ dependencies = [
 [[package]]
 name = "dag-ml-core"
 version = "0.2.7"
-source = "git+https://github.com/GBeurier/dag-ml?rev=4b156c851b15b3fcbeaf579244ea0122b438c164#4b156c851b15b3fcbeaf579244ea0122b438c164"
+source = "git+https://github.com/GBeurier/dag-ml?rev=a840d1a9868bc0e2d90107b5947296959bb83ab8#a840d1a9868bc0e2d90107b5947296959bb83ab8"
 dependencies = [
  "indexmap",
  "serde",
