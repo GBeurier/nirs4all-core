@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nirs4all-core"
-version = "0.3.11"
+version = "0.3.12"
 description = "Portable nirs4all aggregate binding over formats, IO, methods, dag-ml, and dag-ml-data (datasets optional)"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -25,7 +25,7 @@ classifiers = [
 dependencies = ["PyYAML>=6"]
 
 [project.optional-dependencies]
-dag-ml = ["dag-ml>=0.2.7"]
+dag-ml = ["dag-ml>=0.3.0"]
 dag-ml-data = ["dag-ml-data>=0.2.9"]
 formats = ["nirs4all-formats>=0.2.7"]
 io = ["nirs4all-io>=0.1.11"]
@@ -37,7 +37,7 @@ methods = ["nirs4all-methods>=1.0.9", "pls4all>=1.0.9", "scikit-learn>=1.3"]
 # Datasets is deliberately excluded; install nirs4all-core[datasets] (or
 # [everything]) to opt in.
 all = [
-    "dag-ml>=0.2.7",
+    "dag-ml>=0.3.0",
     "dag-ml-data>=0.2.9",
     "nirs4all-formats>=0.2.7",
     "nirs4all-io>=0.1.11",

@@ -425,10 +425,8 @@ pub fn upstream(key: &str) -> Option<&'static Upstream> {
     UPSTREAMS.iter().find(|item| item.key == key)
 }
 
-#[cfg(feature = "dag-ml-local-criteria")]
 pub type LocalImplementationRegistry<T> = dag_ml::LocalImplementationRegistry<T>;
 
-#[cfg(feature = "dag-ml-local-criteria")]
 pub fn local_implementation_registry<T>() -> LocalImplementationRegistry<T> {
     LocalImplementationRegistry::new()
 }
@@ -1516,7 +1514,6 @@ unsafe fn c_string(ptr: *const c_char) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[cfg(feature = "dag-ml-local-criteria")]
     use std::collections::BTreeSet;
 
     #[test]
@@ -1541,7 +1538,6 @@ mod tests {
         assert!(upstream("unknown").is_none());
     }
 
-    #[cfg(feature = "dag-ml-local-criteria")]
     #[test]
     fn rust_local_implementation_registry_facade_delegates_to_dag_ml() {
         type CriterionFn = fn(f64, f64) -> f64;
@@ -1886,7 +1882,6 @@ mod tests {
             .contains("start must be <= stop"));
     }
 
-    #[cfg(feature = "dag-ml-local-criteria")]
     fn rust_loss_reference() -> dag_ml::LossReference {
         let spec = dag_ml::LossSpec::new(
             "example.loss.absolute@1",
@@ -1924,7 +1919,6 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "dag-ml-local-criteria")]
     fn rust_metric_reference() -> dag_ml::MetricReference {
         let spec = dag_ml::MetricSpec::new(
             "example.metric.bias@1",

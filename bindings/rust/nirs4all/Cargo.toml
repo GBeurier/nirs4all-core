@@ -1,6 +1,6 @@
 [package]
 name = "nirs4all"
-version = "0.3.11"
+version = "0.3.12"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -22,13 +22,8 @@ path = "src/lib.rs"
 # the datasets host at runtime, it never vendors the datasets crate).
 default = []
 datasets = []
-# Temporary source-tree gate for the unreleased DAG-ML typed local loss/metric
-# registry surface. Keep this off by default so cargo package still verifies
-# against the published dag-ml crate until the loss contract release lands.
-dag-ml-local-criteria = []
-
 [dependencies]
-dag_ml_crate = { package = "dag-ml", version = "0.2.7" }
+dag_ml_crate = { package = "dag-ml", version = "0.3.0" }
 dag_ml_data_crate = { package = "dag-ml-data", version = "0.2.9" }
 libloading = "0.8"
 serde_json = "1"
