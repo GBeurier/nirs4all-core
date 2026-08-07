@@ -9,6 +9,16 @@ export interface UpstreamProxy {
   import(): Promise<unknown>;
 }
 
+export interface LocalImplementationRegistry {
+  register_loss(lossReference: unknown, implementation: unknown): unknown;
+  register_metric(metricReference: unknown, implementation: unknown): unknown;
+  bind_training_loss(nodeTask: unknown, roleIndex?: number): unknown;
+}
+
+export interface LocalImplementationRegistryModule<T extends LocalImplementationRegistry = LocalImplementationRegistry> {
+  LocalImplementationRegistry: new () => T;
+}
+
 export interface PipelineDefinition {
   name: string;
   description: string;
@@ -132,6 +142,9 @@ export function loadDatasets(): Promise<unknown>;
 export function loadMethods(): Promise<unknown>;
 export function loadDagMl(): Promise<unknown>;
 export function loadDagMlData(): Promise<unknown>;
+export function localImplementationRegistry<T extends LocalImplementationRegistry = LocalImplementationRegistry>(
+  dagMlModule?: LocalImplementationRegistryModule<T> | null,
+): Promise<T>;
 export function loadPortableStack(keys?: readonly string[]): Promise<Record<string, unknown>>;
 export function loadMethodsWasm(): Promise<unknown>;
 export function methodsWasm(): unknown;

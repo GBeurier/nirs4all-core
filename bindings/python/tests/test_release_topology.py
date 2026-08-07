@@ -661,6 +661,9 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
                     component["python"]["imports"],
                 )
                 self.assertEqual(compat_item.get("r_packages", []), packages["r"])
+                self.assertEqual(
+                    compat_item.get("matlab_packages", []), packages["matlab"]
+                )
                 self.assertEqual(compat_item.get("wasm_packages", []), packages["npm"])
                 bindings = set(compat_item.get("bindings", []))
                 if packages["r"]:
