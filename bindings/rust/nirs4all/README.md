@@ -15,12 +15,10 @@ and it only delegates runtime work where an upstream Rust crate or dynamic
 runtime exists. Those capabilities remain owned by the upstream crates and
 bindings.
 
-For DAG-ML local criteria in the source-tree loss release stack, enable the
-temporary `dag-ml-local-criteria` feature and use
+For DAG-ML local criteria, use
 `local_implementation_registry::<T>()`. It returns the upstream typed
 `dag_ml::LocalImplementationRegistry<T>` so Rust callbacks stay process-local
-while DAG-ML owns loss/metric descriptors and validation. The feature stays off
-by default until that DAG-ML surface is published.
+while DAG-ML owns loss/metric descriptors and validation.
 
 For the shared portable parity subset, call
 `run_portable_pipeline_with_library()` with a `libn4m` path. The Rust binding
