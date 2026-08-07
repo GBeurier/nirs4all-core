@@ -8,6 +8,12 @@ binding manifest.
 
 ## [Unreleased]
 
+### Changed
+
+- Exposed the DAG-ML process-local loss and metric registry through the Python,
+  R, Rust, MATLAB/Octave, and WASM aggregate bindings, pinned to the verified
+  DAG-ML `0.3.0` integration commit.
+
 ## [0.3.10] - 2026-07-10
 
 ### Fixed

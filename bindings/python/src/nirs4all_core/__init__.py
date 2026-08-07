@@ -1,6 +1,6 @@
 """Python surface for the nirs4all-core aggregate distribution."""
 
-__version__ = "0.3.11"
+__version__ = "0.3.12"
 
 from ._capabilities import (
     artifact_contracts,
@@ -31,6 +31,7 @@ from ._upstreams import (
     Upstream,
     available_upstreams,
     import_upstream,
+    local_implementation_registry,
     require_upstream,
     upstream_status,
     upstreams,
@@ -67,6 +68,7 @@ __all__ = [
     "import_upstream",
     "io",
     "load_pipeline_definition",
+    "local_implementation_registry",
     "methods",
     "parse_execution_plan",
     "portable_class_names",
