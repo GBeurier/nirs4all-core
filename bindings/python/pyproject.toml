@@ -1,10 +1,10 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["maturin>=1.7,<2"]
+build-backend = "maturin"
 
 [project]
 name = "nirs4all-core"
-version = "0.3.13"
+version = "0.3.14"
 description = "Portable nirs4all aggregate binding over formats, IO, methods, dag-ml, and dag-ml-data (datasets optional)"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -56,5 +56,8 @@ Issues = "https://github.com/GBeurier/nirs4all-core/issues"
 # The wheel ships the canonical aggregate package (`nirs4all_core`) plus the
 # additive, non-shadowing brand facade (`n4a`). The full Python `nirs4all`
 # library remains a separate distribution until its production cutover.
-[tool.hatch.build.targets.wheel]
-packages = ["src/nirs4all_core", "src/n4a"]
+[tool.maturin]
+manifest-path = "../python-native/Cargo.toml"
+module-name = "nirs4all_core._native"
+python-source = "src"
+features = ["pyo3/extension-module"]

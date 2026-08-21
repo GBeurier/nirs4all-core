@@ -14,6 +14,14 @@ An additive import facade is available for governed topology work:
 
 - `n4a` mirrors the full `nirs4all_core` aggregate surface.
 
+## Archive V2 bridge
+
+`nirs4all_core.read_portable_predictor_package_v2(path)` invokes the embedded
+Rust Archive V2 reader and returns the exact validated DAG-ML Package V2 bytes.
+It does not parse ZIP members in Python, deserialize the package, or execute a
+prediction. Pass the returned bytes to DAG-ML's typed package/replay surface;
+the aggregate remains only the container and integrity boundary.
+
 ## Portable Execution
 
 `nirs4all_core.run_portable_pipeline(source, dataset)` executes the shared

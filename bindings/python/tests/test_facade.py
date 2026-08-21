@@ -29,6 +29,7 @@ class FacadeImportSurfaceTests(unittest.TestCase):
     def test_aggregate_public_surface_is_explicit(self) -> None:
         expected_exports = [
             "LazyUpstream",
+            "NativeArchiveUnavailableError",
             "PORTABLE_OPERATOR_CLASSES",
             "PortableDataset",
             "PipelineDefinition",
@@ -54,6 +55,7 @@ class FacadeImportSurfaceTests(unittest.TestCase):
             "parse_execution_plan",
             "portable_class_names",
             "release_topology_manifest",
+            "read_portable_predictor_package_v2",
             "require_upstream",
             "required_keyword_registry_entries",
             "run_portable_pipeline",

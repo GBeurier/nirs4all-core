@@ -7,6 +7,7 @@ from typing import Any
 
 CORE_FACADE_EXPORTS: tuple[str, ...] = (
     "LazyUpstream",
+    "NativeArchiveUnavailableError",
     "PORTABLE_OPERATOR_CLASSES",
     "PipelineDefinition",
     "Upstream",
@@ -25,6 +26,7 @@ CORE_FACADE_EXPORTS: tuple[str, ...] = (
     "methods",
     "portable_class_names",
     "require_upstream",
+    "read_portable_predictor_package_v2",
     "required_keyword_registry_entries",
     "runtime_contracts",
     "runtime_surfaces",

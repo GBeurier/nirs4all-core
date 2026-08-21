@@ -181,23 +181,16 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertNotIn("nirs4all-core", pyproject["project"].get("dependencies", []))
         self.assertNotIn("nirs4all-lite", pyproject["project"].get("dependencies", []))
 
-        packages = pyproject["tool"]["hatch"]["build"]["targets"]["wheel"]["packages"]
-        self.assertEqual(
-            set(packages),
-            {"src/nirs4all_core", "src/n4a"},
-        )
-        self.assertNotIn("src/nirs4all", packages)
-        self.assertNotIn("src/nirs4all_lite", packages)
+        self.assertEqual(pyproject["build-system"]["build-backend"], "maturin")
+        maturin = pyproject["tool"]["maturin"]
+        self.assertEqual(maturin["module-name"], "nirs4all_core._native")
+        self.assertEqual(maturin["python-source"], "src")
+        self.assertEqual(maturin["manifest-path"], "../python-native/Cargo.toml")
 
     def test_namespace_facades_are_machine_readable(self) -> None:
         manifest = n4core.release_topology_manifest()
         pyproject = _load_pyproject()
-        wheel_packages = {
-            Path(package).name
-            for package in pyproject["tool"]["hatch"]["build"]["targets"]["wheel"][
-                "packages"
-            ]
-        }
+        wheel_packages = {"nirs4all_core", "n4a"}
         facades = {
             item["import"]: item for item in manifest["namespace_facades"]["python"]
         }
