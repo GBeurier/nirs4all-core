@@ -25,8 +25,8 @@ pub use archive_v2::{
     LoadedArchive, LoadedArchiveV2,
 };
 pub use archive_view::{
-    archive_view, ArchivePayloadView, ArchiveReplayExecutionStatus, ArchiveReplayView, ArchiveView,
-    ArchiveViewError,
+    archive_v2_view, archive_view, ArchivePayloadView, ArchiveReplayExecutionStatus,
+    ArchiveReplayView, ArchiveView, ArchiveViewError,
 };
 pub use portable_session::{
     PortableSession, PortableSessionError, PortableSessionState, PORTABLE_SESSION_EXPORT_SCHEMA,

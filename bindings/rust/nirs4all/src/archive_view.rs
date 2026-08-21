@@ -10,7 +10,7 @@ use std::fmt;
 use serde::Serialize;
 use serde_json::{Map, Value};
 
-use crate::{ArchiveReference, LoadedArchiveV1};
+use crate::{ArchiveReference, ArchiveV2Reference, LoadedArchiveV1, LoadedArchiveV2};
 
 /// Serializable, read-only summary of an archive's replay and evidence refs.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
@@ -79,6 +79,15 @@ pub fn archive_view(archive: &LoadedArchiveV1) -> Result<ArchiveView, ArchiveVie
     archive_view_from_manifest(archive.reference(), archive.manifest())
 }
 
+/// Project an integrity-checked Archive V2 without parsing or executing its
+/// DAG-ML members. This gives Rust hosts (including the Studio sidecar) the
+/// same reference-only capability as V1 while preserving V2's package-owned
+/// conformal state: `payloads.conformal` remains an ownership marker and is
+/// therefore expected to be null.
+pub fn archive_v2_view(archive: &LoadedArchiveV2) -> Result<ArchiveView, ArchiveViewError> {
+    archive_v2_view_from_manifest(archive.reference(), archive.manifest())
+}
+
 fn archive_view_from_manifest(
     reference: &ArchiveReference,
     manifest: &Value,
@@ -130,6 +139,68 @@ fn archive_view_from_manifest(
             execution_status: ArchiveReplayExecutionStatus::RequiresNativeArtifactExecutor,
         },
         conformal: optional_payload_view(payloads, "conformal", "payloads")?,
+        robustness: optional_payload_view(payloads, "robustness", "payloads")?,
+    })
+}
+
+fn archive_v2_view_from_manifest(
+    reference: &ArchiveV2Reference,
+    manifest: &Value,
+) -> Result<ArchiveView, ArchiveViewError> {
+    let root = object(manifest, "manifest")?;
+    let replay = object(member(root, "replay", "manifest")?, "replay")?;
+    let training_artifacts = object(
+        member(replay, "training_artifacts", "replay")?,
+        "replay.training_artifacts",
+    )?;
+    let payloads = object(member(root, "payloads", "manifest")?, "payloads")?;
+
+    if !member(payloads, "conformal", "payloads")?.is_null() {
+        return Err(ArchiveViewError(
+            "Archive V2 payloads.conformal must be null; conformal state is package-owned"
+                .to_string(),
+        ));
+    }
+
+    Ok(ArchiveView {
+        archive_id: reference.archive_id().to_owned(),
+        schema_version: reference.schema_version(),
+        profile: reference.profile().to_owned(),
+        archive_sha256: reference.archive_sha256().to_owned(),
+        replay: ArchiveReplayView {
+            portable_predictor_package: payload_view(member(
+                replay,
+                "portable_predictor_package",
+                "replay",
+            )?)?,
+            graph: payload_view(member(
+                training_artifacts,
+                "graph",
+                "replay.training_artifacts",
+            )?)?,
+            execution_bundle: payload_view(member(
+                training_artifacts,
+                "execution_bundle",
+                "replay.training_artifacts",
+            )?)?,
+            training_outcome: payload_view(member(
+                training_artifacts,
+                "training_outcome",
+                "replay.training_artifacts",
+            )?)?,
+            prediction_cache_payload_set: payload_view(member(
+                training_artifacts,
+                "prediction_cache_payload_set",
+                "replay.training_artifacts",
+            )?)?,
+            score_set: payload_view(member(
+                training_artifacts,
+                "score_set",
+                "replay.training_artifacts",
+            )?)?,
+            execution_status: ArchiveReplayExecutionStatus::RequiresNativeArtifactExecutor,
+        },
+        conformal: None,
         robustness: optional_payload_view(payloads, "robustness", "payloads")?,
     })
 }
