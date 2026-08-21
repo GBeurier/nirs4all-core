@@ -10,7 +10,11 @@ from ._capabilities import (
     runtime_contracts,
     runtime_surfaces,
 )
-from ._archive import NativeArchiveUnavailableError, read_portable_predictor_package_v2
+from ._archive import (
+    NativeArchiveUnavailableError,
+    read_portable_predictor_package_v2,
+    write_archive_v2_from_native_payloads,
+)
 from ._execution import PortableDataset, parse_execution_plan, run_portable_pipeline
 from ._pipeline import (
     PORTABLE_OPERATOR_CLASSES,
@@ -76,6 +80,7 @@ __all__ = [
     "portable_class_names",
     "release_topology_manifest",
     "read_portable_predictor_package_v2",
+    "write_archive_v2_from_native_payloads",
     "require_upstream",
     "required_keyword_registry_entries",
     "run_portable_pipeline",

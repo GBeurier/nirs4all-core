@@ -9,8 +9,13 @@
 
 use std::path::Path;
 
-use nirs4all::load_archive_v2;
-use pyo3::{exceptions::PyValueError, prelude::*, types::PyBytes};
+use nirs4all::{load_archive_v2, write_archive_v2, ArchivePayload, ArchiveV2WriteRequest};
+use pyo3::{
+    exceptions::PyValueError,
+    prelude::*,
+    types::{PyAny, PyBytes},
+};
+use serde_json::Value;
 
 fn archive_error(error: impl std::fmt::Display) -> PyErr {
     PyValueError::new_err(format!("Archive V2 validation refused: {error}"))
@@ -30,11 +35,45 @@ fn read_portable_predictor_package_v2<'py>(
     Ok(PyBytes::new_bound(py, package))
 }
 
+/// Write a fully assembled Archive V2 without implementing any archive or
+/// DAG-ML semantics in Python. The manifest must come from DAG-ML's native
+/// assembler; Core validates every declaration and derives the inventory/raw
+/// hashes immediately before its atomic no-replace write.
+#[pyfunction]
+fn write_archive_v2_from_native_payloads(
+    path: &str,
+    manifest: &Bound<'_, PyAny>,
+    members: Vec<(String, Vec<u8>)>,
+) -> PyResult<(String, String)> {
+    let manifest: Value = pythonize::depythonize(manifest).map_err(|error| {
+        PyValueError::new_err(format!(
+            "Archive V2 manifest is not JSON-compatible: {error}"
+        ))
+    })?;
+    let payloads = members
+        .into_iter()
+        .map(|(path, bytes)| ArchivePayload { path, bytes })
+        .collect();
+    let reference = write_archive_v2(
+        Path::new(path),
+        ArchiveV2WriteRequest { manifest, payloads },
+    )
+    .map_err(archive_error)?;
+    Ok((
+        reference.archive_id().to_owned(),
+        reference.archive_sha256().to_owned(),
+    ))
+}
+
 /// Python extension module installed as ``nirs4all_core._native``.
 #[pymodule]
 fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(
         read_portable_predictor_package_v2,
+        module
+    )?)?;
+    module.add_function(wrap_pyfunction!(
+        write_archive_v2_from_native_payloads,
         module
     )?)
 }
