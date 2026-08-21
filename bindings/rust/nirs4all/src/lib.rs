@@ -12,6 +12,26 @@ use std::ptr;
 use libloading::{Library, Symbol};
 use serde_json::Value;
 
+mod archive_v1;
+mod archive_v2;
+mod archive_view;
+mod portable_session;
+pub use archive_v1::{
+    load_archive_v1, write_archive_v1, ArchivePayload, ArchiveReference, ArchiveStoreError,
+    ArchiveV1WriteRequest, LoadedArchiveV1,
+};
+pub use archive_v2::{
+    load_archive, load_archive_v2, write_archive_v2, ArchiveV2Reference, ArchiveV2WriteRequest,
+    LoadedArchive, LoadedArchiveV2,
+};
+pub use archive_view::{
+    archive_view, ArchivePayloadView, ArchiveReplayExecutionStatus, ArchiveReplayView, ArchiveView,
+    ArchiveViewError,
+};
+pub use portable_session::{
+    PortableSession, PortableSessionError, PortableSessionState, PORTABLE_SESSION_EXPORT_SCHEMA,
+};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Upstream {
     pub key: &'static str,
@@ -711,15 +731,18 @@ pub fn run_portable_pipeline_with_library(
 
     let mut variants = Vec::new();
     for &n_components in &plan.n_components {
-        let predictions = methods.fit_predict_pls(PlsFitInput {
-            x_train: &x_train,
-            y_train: &y_train,
-            train_rows: split.train_indices.len(),
-            cols: dataset.cols,
-            n_components,
-            x_test: &x_test,
-            test_rows: split.test_indices.len(),
-        })?;
+        let (predictions, _) = methods.fit_predict_pls(
+            PlsFitInput {
+                x_train: &x_train,
+                y_train: &y_train,
+                train_rows: split.train_indices.len(),
+                cols: dataset.cols,
+                n_components,
+                x_test: &x_test,
+                test_rows: split.test_indices.len(),
+            },
+            false,
+        )?;
         variants.push(PortableVariant {
             n_components,
             rmse: rmse(&predictions, &targets)?,
@@ -750,6 +773,102 @@ pub fn run_portable_pipeline_with_library(
         selected,
         targets,
     })
+}
+
+/// Run the portable subset and export the selected native PLS model as an
+/// `N4MM` payload owned by libn4m. The input definition is retained by callers
+/// because its declared preprocessing must be replayed before model prediction.
+pub fn run_portable_pipeline_with_exported_model(
+    input: &str,
+    dataset: &PortableDataset,
+    library_path: impl AsRef<Path>,
+) -> Result<(PortablePipelineResult, Vec<u8>), String> {
+    let result = run_portable_pipeline_with_library(input, dataset, &library_path)?;
+    let definition = load_pipeline_definition_str(input)?;
+    let plan = parse_execution_plan(&definition)?;
+    let methods = MethodsLibrary::load(library_path)?;
+    let split = methods.compute_split(plan.splitter.as_ref(), dataset)?;
+    let mut x_train = select_rows(&dataset.x, dataset.rows, dataset.cols, &split.train_indices)?;
+    let y_train = select_rows(&dataset.y, dataset.rows, 1, &split.train_indices)?;
+    for step in &plan.preprocessing {
+        x_train = match step {
+            PortablePreprocessing::StandardNormalVariate => {
+                methods.snv_transform(&x_train, split.train_indices.len(), dataset.cols)?
+            }
+            PortablePreprocessing::SavitzkyGolay(params) => methods.savgol_transform(
+                &x_train,
+                split.train_indices.len(),
+                dataset.cols,
+                params,
+            )?,
+        };
+    }
+    let (_, model) = methods.fit_predict_pls(
+        PlsFitInput {
+            x_train: &x_train,
+            y_train: &y_train,
+            train_rows: split.train_indices.len(),
+            cols: dataset.cols,
+            n_components: result.selected.n_components,
+            x_test: &x_train,
+            test_rows: split.train_indices.len(),
+        },
+        true,
+    )?;
+    Ok((result, model.expect("model export requested")))
+}
+
+/// Replay a selected `N4MM` model with the preprocessing declared by a
+/// portable definition. This is intentionally limited to the same executable
+/// subset accepted by [`run_portable_pipeline_with_library`].
+pub fn predict_exported_portable_model_with_library(
+    input: &str,
+    model_n4mm: &[u8],
+    x: &[f64],
+    rows: usize,
+    cols: usize,
+    library_path: impl AsRef<Path>,
+) -> Result<Vec<f64>, String> {
+    let definition = load_pipeline_definition_str(input)?;
+    let plan = parse_execution_plan(&definition)?;
+    let mut transformed = x.to_vec();
+    if transformed.len()
+        != rows
+            .checked_mul(cols)
+            .ok_or("prediction matrix dimensions overflow")?
+    {
+        return Err(format!(
+            "prediction matrix length {} does not match {rows}x{cols}",
+            transformed.len()
+        ));
+    }
+    let methods = MethodsLibrary::load(library_path)?;
+    for step in &plan.preprocessing {
+        transformed = match step {
+            PortablePreprocessing::StandardNormalVariate => {
+                methods.snv_transform(&transformed, rows, cols)?
+            }
+            PortablePreprocessing::SavitzkyGolay(params) => {
+                methods.savgol_transform(&transformed, rows, cols, params)?
+            }
+        };
+    }
+    methods.import_predict_pls(model_n4mm, &transformed, rows, cols)
+}
+
+/// Preflight a persisted selected model against an explicit libn4m runtime.
+pub fn validate_exported_portable_model_with_library(
+    input: &str,
+    model_n4mm: &[u8],
+    cols: usize,
+    library_path: impl AsRef<Path>,
+) -> Result<(), String> {
+    let definition = load_pipeline_definition_str(input)?;
+    parse_execution_plan(&definition)?;
+    let methods = MethodsLibrary::load(library_path)?;
+    methods
+        .import_predict_pls(model_n4mm, &vec![0.0; cols], 1, cols)
+        .map(|_| ())
 }
 
 pub mod dag_ml {
@@ -1110,6 +1229,58 @@ fn rmse(predictions: &[f64], targets: &[f64]) -> Result<f64, String> {
 type N4mStatus = c_int;
 type N4mHandle = *mut c_void;
 
+/// Owns one opaque C-ABI handle after its create/import call succeeds.
+///
+/// The guard is deliberately used around every fallible Rust allocation that
+/// follows a native allocation, so an early return or unwind cannot leak it.
+struct NativeHandleGuard {
+    handle: N4mHandle,
+    destroy: unsafe extern "C" fn(N4mHandle),
+}
+
+impl NativeHandleGuard {
+    fn new(destroy: unsafe extern "C" fn(N4mHandle)) -> Self {
+        Self {
+            handle: ptr::null_mut(),
+            destroy,
+        }
+    }
+}
+
+impl Drop for NativeHandleGuard {
+    fn drop(&mut self) {
+        if !self.handle.is_null() {
+            unsafe { (self.destroy)(self.handle) };
+        }
+    }
+}
+
+struct SplitResultGuard {
+    result: N4mSplitResult,
+    destroy: unsafe extern "C" fn(*mut N4mSplitResult),
+}
+
+impl SplitResultGuard {
+    fn new(destroy: unsafe extern "C" fn(*mut N4mSplitResult)) -> Self {
+        Self {
+            result: N4mSplitResult {
+                train_idx: ptr::null_mut(),
+                n_train: 0,
+                test_idx: ptr::null_mut(),
+                n_test: 0,
+                owner: ptr::null_mut(),
+            },
+            destroy,
+        }
+    }
+}
+
+impl Drop for SplitResultGuard {
+    fn drop(&mut self) {
+        unsafe { (self.destroy)(&mut self.result) };
+    }
+}
+
 const N4M_OK: N4mStatus = 0;
 const N4M_DTYPE_F64: c_int = 1;
 
@@ -1181,43 +1352,29 @@ impl MethodsLibrary {
         let result_destroy: Symbol<unsafe extern "C" fn(*mut N4mSplitResult)> =
             self.symbol(b"n4m_split_result_destroy")?;
 
-        let mut handle = ptr::null_mut();
+        let mut x = dataset.x.clone();
+        let x_view = matrix_view(&mut x, dataset.rows, dataset.cols)?;
+        let mut handle = NativeHandleGuard::new(*destroy);
         unsafe {
             self.check(
-                create(&mut handle, splitter.test_size),
+                create(&mut handle.handle, splitter.test_size),
                 "n4m_model_selection_kennard_stone_create",
                 None,
             )?;
         }
-        let mut x = dataset.x.clone();
-        let mut result = N4mSplitResult {
-            train_idx: ptr::null_mut(),
-            n_train: 0,
-            test_idx: ptr::null_mut(),
-            n_test: 0,
-            owner: ptr::null_mut(),
-        };
-        let split_status = unsafe {
-            split_fn(
-                handle,
-                matrix_view(&mut x, dataset.rows, dataset.cols)?,
-                &mut result,
-            )
-        };
+        let mut result = SplitResultGuard::new(*result_destroy);
+        let split_status = unsafe { split_fn(handle.handle, x_view, &mut result.result) };
         let split_result = if let Err(error) = self.check(
             split_status,
             "n4m_model_selection_kennard_stone_split",
             None,
         ) {
-            unsafe { destroy(handle) };
             return Err(error);
         } else {
-            let train = copy_indices(result.train_idx, result.n_train)?;
-            let test = copy_indices(result.test_idx, result.n_test)?;
-            unsafe {
-                result_destroy(&mut result);
-                destroy(handle);
-            }
+            let train = copy_indices(result.result.train_idx, result.result.n_train);
+            let test = copy_indices(result.result.test_idx, result.result.n_test);
+            let train = train?;
+            let test = test?;
             PortableSplitResult {
                 kind: splitter.kind.clone(),
                 train_indices: train,
@@ -1236,24 +1393,19 @@ impl MethodsLibrary {
         let destroy: Symbol<unsafe extern "C" fn(N4mHandle)> =
             self.symbol(b"n4m_transform_snv_destroy")?;
 
-        let mut handle = ptr::null_mut();
+        let mut x = input.to_vec();
+        let mut out = vec![0.0; input.len()];
+        let x_view = matrix_view(&mut x, rows, cols)?;
+        let out_view = matrix_view(&mut out, rows, cols)?;
+        let mut handle = NativeHandleGuard::new(*destroy);
         unsafe {
             self.check(
-                create(&mut handle, 1, 1, 0),
+                create(&mut handle.handle, 1, 1, 0),
                 "n4m_transform_snv_create",
                 None,
             )?;
         }
-        let mut x = input.to_vec();
-        let mut out = vec![0.0; input.len()];
-        let status = unsafe {
-            transform(
-                handle,
-                matrix_view(&mut x, rows, cols)?,
-                matrix_view(&mut out, rows, cols)?,
-            )
-        };
-        unsafe { destroy(handle) };
+        let status = unsafe { transform(handle.handle, x_view, out_view) };
         self.check(status, "n4m_transform_snv_transform", None)?;
         Ok(out)
     }
@@ -1282,11 +1434,15 @@ impl MethodsLibrary {
         let destroy: Symbol<unsafe extern "C" fn(N4mHandle)> =
             self.symbol(b"n4m_transform_savitzky_golay_destroy")?;
 
-        let mut handle = ptr::null_mut();
+        let mut x = input.to_vec();
+        let mut out = vec![0.0; input.len()];
+        let x_view = matrix_view(&mut x, rows, cols)?;
+        let out_view = matrix_view(&mut out, rows, cols)?;
+        let mut handle = NativeHandleGuard::new(*destroy);
         unsafe {
             self.check(
                 create(
-                    &mut handle,
+                    &mut handle.handle,
                     params.window_length,
                     params.polyorder,
                     params.deriv,
@@ -1298,21 +1454,16 @@ impl MethodsLibrary {
                 None,
             )?;
         }
-        let mut x = input.to_vec();
-        let mut out = vec![0.0; input.len()];
-        let status = unsafe {
-            transform(
-                handle,
-                matrix_view(&mut x, rows, cols)?,
-                matrix_view(&mut out, rows, cols)?,
-            )
-        };
-        unsafe { destroy(handle) };
+        let status = unsafe { transform(handle.handle, x_view, out_view) };
         self.check(status, "n4m_transform_savitzky_golay_transform", None)?;
         Ok(out)
     }
 
-    fn fit_predict_pls(&self, input: PlsFitInput<'_>) -> Result<Vec<f64>, String> {
+    fn fit_predict_pls(
+        &self,
+        input: PlsFitInput<'_>,
+        export_model: bool,
+    ) -> Result<(Vec<f64>, Option<Vec<u8>>), String> {
         let context_create: Symbol<unsafe extern "C" fn(*mut N4mHandle) -> N4mStatus> =
             self.symbol(b"n4m_context_create")?;
         let context_destroy: Symbol<unsafe extern "C" fn(N4mHandle)> =
@@ -1357,71 +1508,151 @@ impl MethodsLibrary {
         let model_destroy: Symbol<unsafe extern "C" fn(N4mHandle)> =
             self.symbol(b"n4m_model_destroy")?;
 
-        let mut ctx: N4mHandle = ptr::null_mut();
-        let mut cfg: N4mHandle = ptr::null_mut();
-        let mut model: N4mHandle = ptr::null_mut();
-        unsafe {
-            self.check(context_create(&mut ctx), "n4m_context_create", None)?;
-        }
-        macro_rules! checked {
-            ($status:expr, $name:literal) => {
-                if let Err(error) = self.check(unsafe { $status }, $name, Some(ctx)) {
-                    unsafe {
-                        if !model.is_null() {
-                            model_destroy(model);
-                        }
-                        if !cfg.is_null() {
-                            config_destroy(cfg);
-                        }
-                        if !ctx.is_null() {
-                            context_destroy(ctx);
-                        }
-                    }
-                    return Err(error);
-                }
-            };
-        }
-        checked!(config_create(&mut cfg), "n4m_config_create");
-        checked!(set_algorithm(cfg, 0), "n4m_config_set_algorithm");
-        checked!(set_solver(cfg, 1), "n4m_config_set_solver");
-        checked!(set_deflation(cfg, 0), "n4m_config_set_deflation");
-        checked!(
-            set_n_components(cfg, input.n_components),
-            "n4m_config_set_n_components"
-        );
-        checked!(set_center_x(cfg, 1), "n4m_config_set_center_x");
-        checked!(set_scale_x(cfg, 1), "n4m_config_set_scale_x");
-        checked!(set_center_y(cfg, 1), "n4m_config_set_center_y");
-        checked!(set_scale_y(cfg, 1), "n4m_config_set_scale_y");
-
         let mut x_train = input.x_train.to_vec();
         let mut y_train = input.y_train.to_vec();
         let x_view = matrix_view(&mut x_train, input.train_rows, input.cols)?;
         let y_view = matrix_view(&mut y_train, input.train_rows, 1)?;
-        let fit_status = unsafe { model_fit(ctx, cfg, &x_view, &y_view, &mut model) };
-        if let Err(error) = self.check(fit_status, "n4m_model_fit", Some(ctx)) {
-            unsafe {
-                config_destroy(cfg);
-                context_destroy(ctx);
-            }
-            return Err(error);
-        }
-
         let mut x_test = input.x_test.to_vec();
         let mut predictions = vec![0.0; input.test_rows];
-        let predict_status = unsafe {
-            let x_view = matrix_view(&mut x_test, input.test_rows, input.cols)?;
-            let mut out_view = matrix_view(&mut predictions, input.test_rows, 1)?;
-            model_predict(ctx, model, &x_view, &mut out_view)
-        };
-        let predict_check = self.check(predict_status, "n4m_model_predict", Some(ctx));
+        let test_view = matrix_view(&mut x_test, input.test_rows, input.cols)?;
+        let mut out_view = matrix_view(&mut predictions, input.test_rows, 1)?;
+        let mut ctx = NativeHandleGuard::new(*context_destroy);
+        let mut cfg = NativeHandleGuard::new(*config_destroy);
+        let mut model = NativeHandleGuard::new(*model_destroy);
         unsafe {
-            model_destroy(model);
-            config_destroy(cfg);
-            context_destroy(ctx);
+            self.check(context_create(&mut ctx.handle), "n4m_context_create", None)?;
         }
+        macro_rules! checked {
+            ($status:expr, $name:literal) => {
+                self.check(unsafe { $status }, $name, Some(ctx.handle))?;
+            };
+        }
+        checked!(config_create(&mut cfg.handle), "n4m_config_create");
+        checked!(set_algorithm(cfg.handle, 0), "n4m_config_set_algorithm");
+        checked!(set_solver(cfg.handle, 1), "n4m_config_set_solver");
+        checked!(set_deflation(cfg.handle, 0), "n4m_config_set_deflation");
+        checked!(
+            set_n_components(cfg.handle, input.n_components),
+            "n4m_config_set_n_components"
+        );
+        checked!(set_center_x(cfg.handle, 1), "n4m_config_set_center_x");
+        checked!(set_scale_x(cfg.handle, 1), "n4m_config_set_scale_x");
+        checked!(set_center_y(cfg.handle, 1), "n4m_config_set_center_y");
+        checked!(set_scale_y(cfg.handle, 1), "n4m_config_set_scale_y");
+
+        let fit_status =
+            unsafe { model_fit(ctx.handle, cfg.handle, &x_view, &y_view, &mut model.handle) };
+        self.check(fit_status, "n4m_model_fit", Some(ctx.handle))?;
+
+        let predict_status =
+            unsafe { model_predict(ctx.handle, model.handle, &test_view, &mut out_view) };
+        let predict_check = self.check(predict_status, "n4m_model_predict", Some(ctx.handle));
+        let export_result = if export_model && predict_check.is_ok() {
+            (|| -> Result<Vec<u8>, String> {
+                let export_size: Symbol<unsafe extern "C" fn(N4mHandle, *mut usize) -> N4mStatus> =
+                    self.symbol(b"n4m_model_export_size")?;
+                let export_to: Symbol<
+                    unsafe extern "C" fn(N4mHandle, *mut c_void, usize, *mut usize) -> N4mStatus,
+                > = self.symbol(b"n4m_model_export_to_buffer")?;
+                let mut len = 0usize;
+                unsafe {
+                    self.check(
+                        export_size(model.handle, &mut len),
+                        "n4m_model_export_size",
+                        None,
+                    )?;
+                }
+                if len == 0 || len > 64 * 1024 * 1024 {
+                    return Err("n4m_model_export_size returned an invalid N4MM length".to_string());
+                }
+                let mut bytes = vec![0u8; len];
+                let mut written = 0usize;
+                unsafe {
+                    self.check(
+                        export_to(
+                            model.handle,
+                            bytes.as_mut_ptr().cast(),
+                            bytes.len(),
+                            &mut written,
+                        ),
+                        "n4m_model_export_to_buffer",
+                        None,
+                    )?;
+                }
+                if written == 0 || written > bytes.len() {
+                    return Err(
+                        "n4m_model_export_to_buffer returned an invalid N4MM length".to_string()
+                    );
+                }
+                bytes.truncate(written);
+                Ok(bytes)
+            })()
+        } else {
+            Ok(Vec::new())
+        };
         predict_check?;
-        Ok(predictions)
+        let exported = export_result?;
+        Ok((predictions, export_model.then_some(exported)))
+    }
+
+    fn import_predict_pls(
+        &self,
+        model_n4mm: &[u8],
+        input: &[f64],
+        rows: usize,
+        cols: usize,
+    ) -> Result<Vec<f64>, String> {
+        if model_n4mm.is_empty() || model_n4mm.len() > 64 * 1024 * 1024 {
+            return Err("N4MM model payload is empty or exceeds the portable-session limit".into());
+        }
+        let mut x = input.to_vec();
+        let mut out = vec![0.0; rows];
+        let x_view = matrix_view(&mut x, rows, cols)?;
+        let mut out_view = matrix_view(&mut out, rows, 1)?;
+        let context_create: Symbol<unsafe extern "C" fn(*mut N4mHandle) -> N4mStatus> =
+            self.symbol(b"n4m_context_create")?;
+        let context_destroy: Symbol<unsafe extern "C" fn(N4mHandle)> =
+            self.symbol(b"n4m_context_destroy")?;
+        let import: Symbol<
+            unsafe extern "C" fn(N4mHandle, *const c_void, usize, *mut N4mHandle) -> N4mStatus,
+        > = self.symbol(b"n4m_model_import_from_buffer")?;
+        let predict: Symbol<
+            unsafe extern "C" fn(
+                N4mHandle,
+                N4mHandle,
+                *const N4mMatrixView,
+                *mut N4mMatrixView,
+            ) -> N4mStatus,
+        > = self.symbol(b"n4m_model_predict")?;
+        let model_destroy: Symbol<unsafe extern "C" fn(N4mHandle)> =
+            self.symbol(b"n4m_model_destroy")?;
+        let mut ctx = NativeHandleGuard::new(*context_destroy);
+        unsafe {
+            self.check(context_create(&mut ctx.handle), "n4m_context_create", None)?;
+        }
+        let mut model = NativeHandleGuard::new(*model_destroy);
+        let import_result = unsafe {
+            self.check(
+                import(
+                    ctx.handle,
+                    model_n4mm.as_ptr().cast(),
+                    model_n4mm.len(),
+                    &mut model.handle,
+                ),
+                "n4m_model_import_from_buffer",
+                Some(ctx.handle),
+            )
+        };
+        import_result?;
+        let prediction = unsafe {
+            self.check(
+                predict(ctx.handle, model.handle, &x_view, &mut out_view),
+                "n4m_model_predict",
+                Some(ctx.handle),
+            )
+        };
+        prediction?;
+        Ok(out)
     }
 
     fn symbol<T>(&self, name: &[u8]) -> Result<Symbol<'_, T>, String> {
@@ -1464,7 +1695,10 @@ impl MethodsLibrary {
 }
 
 fn matrix_view(data: &mut [f64], rows: usize, cols: usize) -> Result<N4mMatrixView, String> {
-    if data.len() != rows * cols {
+    let expected = rows
+        .checked_mul(cols)
+        .ok_or_else(|| format!("matrix dimensions {rows}x{cols} overflow usize"))?;
+    if data.len() != expected {
         return Err(format!(
             "matrix length {} does not match {rows}x{cols}",
             data.len()
@@ -1740,8 +1974,8 @@ mod tests {
 
     #[test]
     fn json_and_yaml_pipeline_fixtures_use_same_nirs4all_syntax() {
-        let json = include_str!("../../../../tests/parity/fixtures/portable_methods_pipeline.json");
-        let yaml = include_str!("../../../../tests/parity/fixtures/portable_methods_pipeline.yaml");
+        let json = include_str!("../tests/parity/fixtures/portable_methods_pipeline.json");
+        let yaml = include_str!("../tests/parity/fixtures/portable_methods_pipeline.yaml");
         let json_pipeline = load_pipeline_definition_str(json).unwrap();
         let yaml_pipeline = load_pipeline_definition_str(yaml).unwrap();
 
@@ -1819,6 +2053,20 @@ mod tests {
                 cval: 7.25,
             })]
         );
+    }
+
+    #[test]
+    fn matrix_view_rejects_invalid_input_before_any_native_handle_is_created() {
+        let mut values = Vec::new();
+        let error = matrix_view(&mut values, 1, 1).unwrap_err();
+        assert!(error.contains("does not match"));
+    }
+
+    #[test]
+    fn matrix_view_refuses_dimension_overflow_before_native_handle_creation() {
+        let mut values = Vec::new();
+        let error = matrix_view(&mut values, usize::MAX, 2).unwrap_err();
+        assert!(error.contains("overflow"));
     }
 
     #[test]
@@ -1963,24 +2211,20 @@ mod tests {
     fn all_shared_parity_fixtures_keep_json_and_yaml_in_lockstep() {
         let fixtures = [
             (
-                include_str!(
-                    "../../../../tests/parity/fixtures/portable_kennard_stone_snv_pls.json"
-                ),
-                include_str!(
-                    "../../../../tests/parity/fixtures/portable_kennard_stone_snv_pls.yaml"
-                ),
+                include_str!("../tests/parity/fixtures/portable_kennard_stone_snv_pls.json"),
+                include_str!("../tests/parity/fixtures/portable_kennard_stone_snv_pls.yaml"),
             ),
             (
-                include_str!("../../../../tests/parity/fixtures/portable_methods_pipeline.json"),
-                include_str!("../../../../tests/parity/fixtures/portable_methods_pipeline.yaml"),
+                include_str!("../tests/parity/fixtures/portable_methods_pipeline.json"),
+                include_str!("../tests/parity/fixtures/portable_methods_pipeline.yaml"),
             ),
             (
-                include_str!("../../../../tests/parity/fixtures/portable_savgol_pls.json"),
-                include_str!("../../../../tests/parity/fixtures/portable_savgol_pls.yaml"),
+                include_str!("../tests/parity/fixtures/portable_savgol_pls.json"),
+                include_str!("../tests/parity/fixtures/portable_savgol_pls.yaml"),
             ),
             (
-                include_str!("../../../../tests/parity/fixtures/portable_snv_pls.json"),
-                include_str!("../../../../tests/parity/fixtures/portable_snv_pls.yaml"),
+                include_str!("../tests/parity/fixtures/portable_snv_pls.json"),
+                include_str!("../tests/parity/fixtures/portable_snv_pls.yaml"),
             ),
         ];
 
@@ -1994,7 +2238,7 @@ mod tests {
 
     #[test]
     fn steps_alias_and_direct_arrays_match_nirs4all_loader_surface() {
-        let json = include_str!("../../../../tests/parity/fixtures/portable_methods_pipeline.json");
+        let json = include_str!("../tests/parity/fixtures/portable_methods_pipeline.json");
         let definition = load_pipeline_definition_str(json).unwrap();
 
         let from_steps = load_pipeline_definition_str(
@@ -2022,7 +2266,7 @@ mod tests {
         };
 
         let oracle: Value = serde_json::from_str(include_str!(
-            "../../../../tests/parity/expected/portable_python_oracle.json"
+            "../tests/parity/expected/portable_python_oracle.json"
         ))
         .unwrap();
         let dataset = PortableDataset::from_json_value(&oracle["dataset"]).unwrap();
@@ -2091,16 +2335,16 @@ mod tests {
     fn fixture_for_name(name: &str) -> Option<&'static str> {
         match name {
             "portable_kennard_stone_snv_pls" => Some(include_str!(
-                "../../../../tests/parity/fixtures/portable_kennard_stone_snv_pls.json"
+                "../tests/parity/fixtures/portable_kennard_stone_snv_pls.json"
             )),
             "portable_methods_pipeline" => Some(include_str!(
-                "../../../../tests/parity/fixtures/portable_methods_pipeline.json"
+                "../tests/parity/fixtures/portable_methods_pipeline.json"
             )),
             "portable_savgol_pls" => Some(include_str!(
-                "../../../../tests/parity/fixtures/portable_savgol_pls.json"
+                "../tests/parity/fixtures/portable_savgol_pls.json"
             )),
             "portable_snv_pls" => Some(include_str!(
-                "../../../../tests/parity/fixtures/portable_snv_pls.json"
+                "../tests/parity/fixtures/portable_snv_pls.json"
             )),
             _ => None,
         }
