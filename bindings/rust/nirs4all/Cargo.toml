@@ -9,7 +9,23 @@ readme = "README.md"
 homepage = "https://nirs4all.org"
 documentation = "https://nirs4all-core.readthedocs.io/en/latest/"
 keywords = ["nirs", "spectroscopy", "chemometrics", "bindings"]
-include = ["Cargo.toml", "README.md", "src/**/*.rs"]
+include = [
+    "Cargo.toml",
+    "README.md",
+    "LICENSES/CECILL-2.1.txt",
+    "LICENSES/AGPL-3.0-or-later.txt",
+    "src/**/*.rs",
+    "src/archive_v1_fixtures/**",
+    "tests/parity/fixtures/portable_kennard_stone_snv_pls.json",
+    "tests/parity/fixtures/portable_kennard_stone_snv_pls.yaml",
+    "tests/parity/fixtures/portable_methods_pipeline.json",
+    "tests/parity/fixtures/portable_methods_pipeline.yaml",
+    "tests/parity/fixtures/portable_savgol_pls.json",
+    "tests/parity/fixtures/portable_savgol_pls.yaml",
+    "tests/parity/fixtures/portable_snv_pls.json",
+    "tests/parity/fixtures/portable_snv_pls.yaml",
+    "tests/parity/expected/portable_python_oracle.json",
+]
 
 [lib]
 path = "src/lib.rs"
@@ -26,5 +42,8 @@ datasets = []
 dag_ml_crate = { package = "dag-ml", version = "0.3.0" }
 dag_ml_data_crate = { package = "dag-ml-data", version = "0.2.9" }
 libloading = "0.8"
+serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_yaml = "0.9"
+sha2 = "0.10"
+unicode-normalization = "0.1"

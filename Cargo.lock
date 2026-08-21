@@ -164,8 +164,11 @@ dependencies = [
  "dag-ml",
  "dag-ml-data",
  "libloading",
+ "serde",
  "serde_json",
  "serde_yaml",
+ "sha2",
+ "unicode-normalization",
 ]
 
 [[package]]
