@@ -100,6 +100,9 @@ binding-specific parity gates.
   full brand-aligned aggregate facade (`import n4a`) over `nirs4all_core`.
   `nirs4all_core.__all__` advertises the complete aggregate contract, including
   execution helpers that delegate to upstream projects.
+- `read_portable_predictor_package_v2(path)` validates Archive V2 in Rust and
+  returns exact DAG-ML Package V2 bytes. It is not a Python ZIP parser, package
+  decoder, artifact executor, or prediction API.
 - Framework idioms: sklearn-style estimators, `fit`/`predict`/`transform`,
   NumPy arrays, pandas data frames, and clear optional extras.
 - Future external operator adapters should look like normal sklearn-compatible

@@ -1,0 +1,16 @@
+[package]
+name = "nirs4all-core-python-native"
+version = "0.3.14"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+description = "Native Archive V2 bridge for the nirs4all-core Python facade"
+
+[lib]
+name = "_native"
+crate-type = ["cdylib"]
+
+[dependencies]
+nirs4all = { path = "../rust/nirs4all" }
+pyo3 = { version = "0.22", features = ["abi3-py311", "extension-module"] }

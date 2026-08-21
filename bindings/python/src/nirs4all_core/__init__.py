@@ -1,6 +1,6 @@
 """Python surface for the nirs4all-core aggregate distribution."""
 
-__version__ = "0.3.13"
+__version__ = "0.3.14"
 
 from ._capabilities import (
     artifact_contracts,
@@ -10,6 +10,7 @@ from ._capabilities import (
     runtime_contracts,
     runtime_surfaces,
 )
+from ._archive import NativeArchiveUnavailableError, read_portable_predictor_package_v2
 from ._execution import PortableDataset, parse_execution_plan, run_portable_pipeline
 from ._pipeline import (
     PORTABLE_OPERATOR_CLASSES,
@@ -48,6 +49,7 @@ __aggregate_import__ = __name__
 
 __all__ = [
     "LazyUpstream",
+    "NativeArchiveUnavailableError",
     "PORTABLE_OPERATOR_CLASSES",
     "PortableDataset",
     "PipelineDefinition",
@@ -73,6 +75,7 @@ __all__ = [
     "parse_execution_plan",
     "portable_class_names",
     "release_topology_manifest",
+    "read_portable_predictor_package_v2",
     "require_upstream",
     "required_keyword_registry_entries",
     "run_portable_pipeline",
