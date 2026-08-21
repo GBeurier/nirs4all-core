@@ -189,7 +189,7 @@ dependencies = [
 
 [[package]]
 name = "nirs4all"
-version = "0.3.14"
+version = "0.3.15"
 dependencies = [
  "dag-ml",
  "dag-ml-data",
@@ -203,7 +203,7 @@ dependencies = [
 
 [[package]]
 name = "nirs4all-core-python-native"
-version = "0.3.14"
+version = "0.3.15"
 dependencies = [
  "nirs4all",
  "pyo3",

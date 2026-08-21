@@ -21,6 +21,9 @@
 #                   beta / rc; plain `X.Y.Z` maps to itself.
 #                   bindings/python/pyproject.toml and the Python
 #                   nirs4all_core.__version__ surface.
+#   * Python ABI   : bindings/python-native/Cargo.toml keeps the same Cargo
+#                   version as the public aggregate to make wheel provenance
+#                   unambiguous.
 #   * R           : the plain base `X.Y.Z` for a final release; `X.Y.Z.9000`
 #                   (the canonical R "in-development toward X.Y.Z" spelling)
 #                   for ANY pre-release — CRAN does not accept SemVer
@@ -299,6 +302,12 @@ PY
 fi
 
 # --- PEP 440 target --------------------------------------------------------
+update_with_sed \
+    "bindings/python-native/Cargo.toml" \
+    "${CARGO_VERSION}" \
+    "^version[[:space:]]*=[[:space:]]*\"([0-9A-Za-z.-]+)\"" \
+    "s/^(version[[:space:]]*=[[:space:]]*\")[0-9A-Za-z.-]+(\")/\1${CARGO_VERSION}\2/"
+
 update_with_sed \
     "bindings/python/pyproject.toml" \
     "${PEP440_VERSION}" \
