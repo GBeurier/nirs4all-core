@@ -27,6 +27,7 @@ CORE_FACADE_EXPORTS: tuple[str, ...] = (
     "portable_class_names",
     "require_upstream",
     "read_portable_predictor_package_v2",
+    "write_archive_v2_from_native_payloads",
     "required_keyword_registry_entries",
     "runtime_contracts",
     "runtime_surfaces",

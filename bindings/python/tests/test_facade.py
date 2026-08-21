@@ -56,6 +56,7 @@ class FacadeImportSurfaceTests(unittest.TestCase):
             "portable_class_names",
             "release_topology_manifest",
             "read_portable_predictor_package_v2",
+            "write_archive_v2_from_native_payloads",
             "require_upstream",
             "required_keyword_registry_entries",
             "run_portable_pipeline",

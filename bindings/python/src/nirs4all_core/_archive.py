@@ -8,7 +8,9 @@ replay.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
+from typing import Any
 
 
 class NativeArchiveUnavailableError(RuntimeError):
@@ -32,3 +34,37 @@ def read_portable_predictor_package_v2(path: str | Path) -> bytes:
         ) from error
 
     return bytes(_native.read_portable_predictor_package_v2(str(Path(path))))
+
+
+def write_archive_v2_from_native_payloads(
+    path: str | Path,
+    manifest: Mapping[str, Any],
+    members: Mapping[str, bytes | bytearray | memoryview],
+) -> dict[str, str]:
+    """Atomically write a native Archive V2 from DAG-ML-assembled bytes.
+
+    This facade owns no ZIP format, member hashing or DAG-ML replay semantics.
+    It passes the manifest and exact opaque members to Core, which validates the
+    closed Archive V2 contract and refuses existing targets before publishing.
+    """
+
+    if not isinstance(manifest, Mapping):
+        raise TypeError("Archive V2 manifest must be a mapping")
+    payloads: list[tuple[str, bytes]] = []
+    for member_path, payload in sorted(members.items()):
+        if not isinstance(member_path, str):
+            raise TypeError("Archive V2 member paths must be strings")
+        if not isinstance(payload, (bytes, bytearray, memoryview)):
+            raise TypeError("Archive V2 member payloads must be bytes-like")
+        payloads.append((member_path, bytes(payload)))
+    try:
+        from . import _native
+    except ImportError as error:  # pragma: no cover - depends on wheel build
+        raise NativeArchiveUnavailableError(
+            "Archive V2 access requires the nirs4all-core native wheel; "
+            "install a matching nirs4all-core distribution."
+        ) from error
+    archive_id, archive_sha256 = _native.write_archive_v2_from_native_payloads(
+        str(Path(path)), dict(manifest), payloads
+    )
+    return {"archive_id": str(archive_id), "archive_sha256": str(archive_sha256)}
