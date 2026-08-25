@@ -82,6 +82,7 @@ jobs:
           python -m twine check dist/*.whl
       - name: Validate tag matches the built version
         if: ${{ startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '') }}
+        shell: bash
         run: |
           set -euo pipefail
           # The tag minus the leading 'v' must equal the PEP 440 version baked
