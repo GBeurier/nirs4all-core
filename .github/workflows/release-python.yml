@@ -66,7 +66,11 @@ jobs:
       - uses: PyO3/maturin-action@v1
         with:
           command: build
-          args: --release -m bindings/python-native/Cargo.toml --out dist
+          # The Python project (and its pyproject.toml) is a sibling of the
+          # Rust extension manifest.  Maturin must run from this directory so
+          # both metadata and package sources are included in the wheel.
+          working-directory: bindings/python
+          args: --release -m ../python-native/Cargo.toml --out ../../dist
       - name: twine check
         shell: bash
         run: |
@@ -117,7 +121,8 @@ jobs:
       - uses: PyO3/maturin-action@v1
         with:
           command: sdist
-          args: -m bindings/python-native/Cargo.toml --out dist
+          working-directory: bindings/python
+          args: -m ../python-native/Cargo.toml --out ../../dist
       - run: python -m pip install twine && python -m twine check dist/*.tar.gz
       - uses: actions/upload-artifact@v7.0.1
         with:
