@@ -17,7 +17,10 @@ use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 use unicode_normalization::UnicodeNormalization;
 
-use crate::{load_archive_v1, ArchivePayload, ArchiveStoreError, LoadedArchiveV1};
+use crate::{
+    load_archive_v1, load_archive_v3, ArchivePayload, ArchiveStoreError, LoadedArchiveV1,
+    LoadedArchiveV3,
+};
 
 const PROFILE: &str = "nirs4all.archive_workspace.v2";
 const WRITER_ID: &str = "nirs4all-core.archive_workspace_writer.v2";
@@ -105,6 +108,7 @@ impl LoadedArchiveV2 {
 pub enum LoadedArchive {
     V1(LoadedArchiveV1),
     V2(LoadedArchiveV2),
+    V3(LoadedArchiveV3),
 }
 
 pub fn write_archive_v2(
@@ -176,6 +180,7 @@ pub fn load_archive(path: &Path) -> Result<LoadedArchive, ArchiveStoreError> {
                 members,
             }))
         }
+        3 => Ok(LoadedArchive::V3(load_archive_v3(path)?)),
         other => Err(ArchiveStoreError::Format(format!(
             "archive dispatch refuses schema_version={other}"
         ))),
@@ -979,7 +984,7 @@ fn validate_ref(
     Ok(())
 }
 
-fn stored_zip(
+pub(crate) fn stored_zip(
     manifest: &Value,
     members: &BTreeMap<String, Vec<u8>>,
 ) -> Result<Vec<u8>, ArchiveStoreError> {
@@ -1098,12 +1103,12 @@ struct ZipEntry {
     data_end: usize,
 }
 #[derive(Debug)]
-struct ZipPreflight {
+pub(crate) struct ZipPreflight {
     archive_len: usize,
     entries: Vec<ZipEntry>,
 }
 
-fn open_v2_preflight(path: &Path) -> Result<(File, ZipPreflight), ArchiveStoreError> {
+pub(crate) fn open_v2_preflight(path: &Path) -> Result<(File, ZipPreflight), ArchiveStoreError> {
     let metadata = fs::symlink_metadata(path)?;
     if !metadata.file_type().is_file() {
         return refuse("archive path must be a POSIX regular file");
@@ -1532,7 +1537,7 @@ fn is_json_delimiter(byte: u8) -> bool {
     byte.is_ascii_whitespace() || matches!(byte, b',' | b']' | b'}')
 }
 
-fn read_manifest_member(
+pub(crate) fn read_manifest_member(
     file: &mut File,
     preflight: &ZipPreflight,
 ) -> Result<Value, ArchiveStoreError> {
@@ -1543,6 +1548,27 @@ fn read_manifest_member(
         .ok_or_else(|| fmt_err("ZIP dispatch member manifest.json is absent"))?;
     let bytes = read_zip_member(file, entry)?;
     parse_manifest_json(&bytes)
+}
+
+/// Return bounded central-directory metadata without reading a payload body.
+/// Archive V3 reuses this V2-hardened ZIP preflight but validates its own
+/// manifest family before it asks for any member bytes.
+pub(crate) fn preflight_payload_sizes(preflight: &ZipPreflight) -> BTreeMap<String, usize> {
+    preflight
+        .entries
+        .iter()
+        .filter(|entry| entry.name != MANIFEST)
+        .map(|entry| {
+            (
+                entry.name.clone(),
+                entry.data_end.saturating_sub(entry.data_start),
+            )
+        })
+        .collect()
+}
+
+pub(crate) fn preflight_archive_len(preflight: &ZipPreflight) -> usize {
+    preflight.archive_len
 }
 
 fn validate_manifest_for_dispatch(
@@ -1563,7 +1589,7 @@ fn validate_manifest_for_dispatch(
     validate_manifest_declarations(manifest, &members)
 }
 
-fn read_payload_members(
+pub(crate) fn read_payload_members(
     file: &mut File,
     preflight: &ZipPreflight,
 ) -> Result<BTreeMap<String, Vec<u8>>, ArchiveStoreError> {
@@ -1579,7 +1605,10 @@ fn read_payload_members(
     Ok(members)
 }
 
-fn sha256_file(file: &mut File, expected_len: usize) -> Result<String, ArchiveStoreError> {
+pub(crate) fn sha256_file(
+    file: &mut File,
+    expected_len: usize,
+) -> Result<String, ArchiveStoreError> {
     if usize::try_from(file.metadata()?.len()).ok() != Some(expected_len) {
         return refuse("archive changed while being read");
     }
@@ -1602,7 +1631,7 @@ fn sha256_file(file: &mut File, expected_len: usize) -> Result<String, ArchiveSt
     Ok(format!("{:x}", hasher.finalize()))
 }
 
-fn atomic_create(path: &Path, bytes: &[u8]) -> Result<(), ArchiveStoreError> {
+pub(crate) fn atomic_create(path: &Path, bytes: &[u8]) -> Result<(), ArchiveStoreError> {
     let parent = path
         .parent()
         .filter(|p| !p.as_os_str().is_empty())

@@ -13,7 +13,8 @@ use libloading::{Library, Symbol};
 use serde_json::Value;
 
 mod archive_v1;
-mod archive_v2;
+pub(crate) mod archive_v2;
+mod archive_v3;
 mod archive_view;
 mod portable_session;
 pub use archive_v1::{
@@ -23,6 +24,9 @@ pub use archive_v1::{
 pub use archive_v2::{
     load_archive, load_archive_v2, write_archive_v2, ArchiveV2Reference, ArchiveV2WriteRequest,
     LoadedArchive, LoadedArchiveV2,
+};
+pub use archive_v3::{
+    load_archive_v3, write_archive_v3, ArchiveV3Reference, ArchiveV3WriteRequest, LoadedArchiveV3,
 };
 pub use archive_view::{
     archive_v2_view, archive_view, ArchivePayloadView, ArchiveReplayExecutionStatus,
