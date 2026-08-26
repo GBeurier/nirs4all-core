@@ -13,6 +13,7 @@ from ._capabilities import (
 from ._archive import (
     NativeArchiveUnavailableError,
     read_portable_predictor_package_v2,
+    read_portable_refit_package_v3,
     write_archive_v2_from_native_payloads,
 )
 from ._execution import PortableDataset, parse_execution_plan, run_portable_pipeline
@@ -80,6 +81,7 @@ __all__ = [
     "portable_class_names",
     "release_topology_manifest",
     "read_portable_predictor_package_v2",
+    "read_portable_refit_package_v3",
     "write_archive_v2_from_native_payloads",
     "require_upstream",
     "required_keyword_registry_entries",
