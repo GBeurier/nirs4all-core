@@ -12,6 +12,7 @@ from nirs4all_core import (
     read_portable_predictor_package_v2,
     read_portable_refit_package_v3,
     write_archive_v2_from_native_payloads,
+    write_archive_v3_from_native_payloads,
 )
 
 
@@ -76,4 +77,33 @@ class ArchiveFacadeTests(unittest.TestCase):
         with self.assertRaises(TypeError, msg="non-byte payload must be refused"):
             write_archive_v2_from_native_payloads(
                 "/tmp/model.n4a", {"schema_version": 2}, {"member": "not-bytes"}
+            )
+
+    def test_v3_writer_forwards_opaque_dagml_members_without_zip_logic(self) -> None:
+        observed: list[object] = []
+
+        def write(path: str, manifest: dict[str, object], members: list[tuple[str, bytes]]) -> tuple[str, str]:
+            observed.extend([path, manifest, members])
+            return ("archive:v3", "b" * 64)
+
+        module = types.SimpleNamespace(write_archive_v3_from_native_payloads=write)
+        with patch.dict(sys.modules, {"nirs4all_core._native": module}):
+            reference = write_archive_v3_from_native_payloads(
+                "/tmp/refit.n4a",
+                {"schema_version": 3},
+                {"dagml/refit.json": memoryview(b"refit"), "methods/model.n4mm": b"raw"},
+            )
+
+        self.assertEqual(reference, {"archive_id": "archive:v3", "archive_sha256": "b" * 64})
+        self.assertEqual(observed[0], "/tmp/refit.n4a")
+        self.assertEqual(observed[1], {"schema_version": 3})
+        self.assertEqual(
+            observed[2],
+            [("dagml/refit.json", b"refit"), ("methods/model.n4mm", b"raw")],
+        )
+
+    def test_v3_writer_rejects_non_bytes_before_native_call(self) -> None:
+        with self.assertRaises(TypeError, msg="non-byte payload must be refused"):
+            write_archive_v3_from_native_payloads(
+                "/tmp/refit.n4a", {"schema_version": 3}, {"member": "not-bytes"}
             )
