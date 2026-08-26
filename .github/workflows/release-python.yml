@@ -67,6 +67,10 @@ jobs:
         env:
           CIBW_BUILD: "cp311-*"
           CIBW_SKIP: "*-musllinux_*"
+          # The official n4m Rust binding intentionally rejects 32-bit C
+          # targets: its C ABI transports matrix dimensions as 64-bit values.
+          # Do not ask cibuildwheel for a cp311-win32 wheel it cannot build.
+          CIBW_ARCHS_WINDOWS: "AMD64"
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
           CIBW_TEST_COMMAND: >-
             python -c "import nirs4all_core;
