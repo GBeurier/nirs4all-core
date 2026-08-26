@@ -105,6 +105,7 @@ impl LoadedArchiveV2 {
 pub enum LoadedArchive {
     V1(LoadedArchiveV1),
     V2(LoadedArchiveV2),
+    V3(crate::archive_v3::LoadedArchiveV3),
 }
 
 pub fn write_archive_v2(
@@ -176,6 +177,7 @@ pub fn load_archive(path: &Path) -> Result<LoadedArchive, ArchiveStoreError> {
                 members,
             }))
         }
+        3 => Ok(LoadedArchive::V3(crate::archive_v3::load_archive_v3(path)?)),
         other => Err(ArchiveStoreError::Format(format!(
             "archive dispatch refuses schema_version={other}"
         ))),
@@ -979,7 +981,7 @@ fn validate_ref(
     Ok(())
 }
 
-fn stored_zip(
+pub(crate) fn stored_zip(
     manifest: &Value,
     members: &BTreeMap<String, Vec<u8>>,
 ) -> Result<Vec<u8>, ArchiveStoreError> {
@@ -1098,12 +1100,29 @@ struct ZipEntry {
     data_end: usize,
 }
 #[derive(Debug)]
-struct ZipPreflight {
-    archive_len: usize,
+pub(crate) struct ZipPreflight {
+    pub(crate) archive_len: usize,
     entries: Vec<ZipEntry>,
 }
 
-fn open_v2_preflight(path: &Path) -> Result<(File, ZipPreflight), ArchiveStoreError> {
+/// Bounded central-directory metadata available before any payload byte is
+/// read.  Versioned archive readers use this to reject invalid declarations
+/// before allocating or CRC-checking a payload.
+pub(crate) fn preflight_member_sizes(preflight: &ZipPreflight) -> BTreeMap<String, usize> {
+    preflight
+        .entries
+        .iter()
+        .filter(|entry| entry.name != MANIFEST)
+        .map(|entry| {
+            (
+                entry.name.clone(),
+                entry.data_end.saturating_sub(entry.data_start),
+            )
+        })
+        .collect()
+}
+
+pub(crate) fn open_v2_preflight(path: &Path) -> Result<(File, ZipPreflight), ArchiveStoreError> {
     let metadata = fs::symlink_metadata(path)?;
     if !metadata.file_type().is_file() {
         return refuse("archive path must be a POSIX regular file");
@@ -1532,7 +1551,7 @@ fn is_json_delimiter(byte: u8) -> bool {
     byte.is_ascii_whitespace() || matches!(byte, b',' | b']' | b'}')
 }
 
-fn read_manifest_member(
+pub(crate) fn read_manifest_member(
     file: &mut File,
     preflight: &ZipPreflight,
 ) -> Result<Value, ArchiveStoreError> {
@@ -1563,7 +1582,7 @@ fn validate_manifest_for_dispatch(
     validate_manifest_declarations(manifest, &members)
 }
 
-fn read_payload_members(
+pub(crate) fn read_payload_members(
     file: &mut File,
     preflight: &ZipPreflight,
 ) -> Result<BTreeMap<String, Vec<u8>>, ArchiveStoreError> {
@@ -1579,7 +1598,10 @@ fn read_payload_members(
     Ok(members)
 }
 
-fn sha256_file(file: &mut File, expected_len: usize) -> Result<String, ArchiveStoreError> {
+pub(crate) fn sha256_file(
+    file: &mut File,
+    expected_len: usize,
+) -> Result<String, ArchiveStoreError> {
     if usize::try_from(file.metadata()?.len()).ok() != Some(expected_len) {
         return refuse("archive changed while being read");
     }
@@ -1602,7 +1624,7 @@ fn sha256_file(file: &mut File, expected_len: usize) -> Result<String, ArchiveSt
     Ok(format!("{:x}", hasher.finalize()))
 }
 
-fn atomic_create(path: &Path, bytes: &[u8]) -> Result<(), ArchiveStoreError> {
+pub(crate) fn atomic_create(path: &Path, bytes: &[u8]) -> Result<(), ArchiveStoreError> {
     let parent = path
         .parent()
         .filter(|p| !p.as_os_str().is_empty())
@@ -1652,7 +1674,10 @@ fn atomic_create(path: &Path, bytes: &[u8]) -> Result<(), ArchiveStoreError> {
     }
     Err(fmt_err("unable to allocate temporary archive"))
 }
-fn object<'a>(v: &'a Value, label: &str) -> Result<&'a Map<String, Value>, ArchiveStoreError> {
+pub(crate) fn object<'a>(
+    v: &'a Value,
+    label: &str,
+) -> Result<&'a Map<String, Value>, ArchiveStoreError> {
     v.as_object()
         .ok_or_else(|| fmt_err(&format!("{label} must be object")))
 }
@@ -1674,12 +1699,19 @@ fn required_mut<'a>(
     o.get_mut(key)
         .ok_or_else(|| fmt_err(&format!("{key} is required")))
 }
-fn required_str<'a>(o: &'a Map<String, Value>, key: &str) -> Result<&'a str, ArchiveStoreError> {
+pub(crate) fn required_str<'a>(
+    o: &'a Map<String, Value>,
+    key: &str,
+) -> Result<&'a str, ArchiveStoreError> {
     required(o, key)?
         .as_str()
         .ok_or_else(|| fmt_err(&format!("{key} must be string")))
 }
-fn closed(o: &Map<String, Value>, keys: &[&str], label: &str) -> Result<(), ArchiveStoreError> {
+pub(crate) fn closed(
+    o: &Map<String, Value>,
+    keys: &[&str],
+    label: &str,
+) -> Result<(), ArchiveStoreError> {
     if o.keys().any(|key| !keys.contains(&key.as_str())) {
         return refuse(&format!("{label} has unknown fields"));
     }
@@ -1692,7 +1724,7 @@ fn closed(o: &Map<String, Value>, keys: &[&str], label: &str) -> Result<(), Arch
     }
     Ok(())
 }
-fn id_ok(value: &str, label: &str) -> Result<(), ArchiveStoreError> {
+pub(crate) fn id_ok(value: &str, label: &str) -> Result<(), ArchiveStoreError> {
     if is_id(value) {
         Ok(())
     } else {
@@ -1755,7 +1787,7 @@ fn n4mm_path_ok(path: &str) -> bool {
             .bytes()
             .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'.' | b'-'))
 }
-fn path_ok(path: &str) -> Result<(), ArchiveStoreError> {
+pub(crate) fn path_ok(path: &str) -> Result<(), ArchiveStoreError> {
     if path.is_empty()
         || path.len() > 512
         || path == MANIFEST
@@ -1770,7 +1802,7 @@ fn path_ok(path: &str) -> Result<(), ArchiveStoreError> {
     }
     Ok(())
 }
-fn sha256(bytes: &[u8]) -> String {
+pub(crate) fn sha256(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
 
@@ -1782,10 +1814,10 @@ fn sha256_text(value: Option<&str>) -> bool {
                 .all(|byte| byte.is_ascii_hexdigit() && !byte.is_ascii_uppercase())
     })
 }
-fn refuse<T>(detail: &str) -> Result<T, ArchiveStoreError> {
+pub(crate) fn refuse<T>(detail: &str) -> Result<T, ArchiveStoreError> {
     Err(fmt_err(detail))
 }
-fn fmt_err(detail: &str) -> ArchiveStoreError {
+pub(crate) fn fmt_err(detail: &str) -> ArchiveStoreError {
     ArchiveStoreError::Format(format!("archive V2 format refusal: {detail}"))
 }
 fn u16le(out: &mut Vec<u8>, v: u16) {
