@@ -44,16 +44,16 @@ dependencies = [
 
 [[package]]
 name = "dag-ml"
-version = "0.3.0"
-source = "git+https://github.com/GBeurier/dag-ml?rev=5e4a16240b40a8fa2d732a6b057ecf4a4d6f2031#5e4a16240b40a8fa2d732a6b057ecf4a4d6f2031"
+version = "0.3.10"
+source = "git+https://github.com/GBeurier/dag-ml?rev=f2695d4f6271596db2b8cbb1302bef30c6ff1dc6#f2695d4f6271596db2b8cbb1302bef30c6ff1dc6"
 dependencies = [
  "dag-ml-core",
 ]
 
 [[package]]
 name = "dag-ml-core"
-version = "0.3.0"
-source = "git+https://github.com/GBeurier/dag-ml?rev=5e4a16240b40a8fa2d732a6b057ecf4a4d6f2031#5e4a16240b40a8fa2d732a6b057ecf4a4d6f2031"
+version = "0.3.10"
+source = "git+https://github.com/GBeurier/dag-ml?rev=f2695d4f6271596db2b8cbb1302bef30c6ff1dc6#f2695d4f6271596db2b8cbb1302bef30c6ff1dc6"
 dependencies = [
  "indexmap",
  "serde",
