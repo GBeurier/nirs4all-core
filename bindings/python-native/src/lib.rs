@@ -10,7 +10,8 @@
 use std::path::Path;
 
 use nirs4all::{
-    load_archive_v2, load_archive_v3, write_archive_v2, ArchivePayload, ArchiveV2WriteRequest,
+    load_archive_v2, load_archive_v3, write_archive_v2, write_archive_v3, ArchivePayload,
+    ArchiveV2WriteRequest, ArchiveV3WriteRequest,
 };
 use pyo3::{
     exceptions::PyValueError,
@@ -83,6 +84,36 @@ fn write_archive_v2_from_native_payloads(
     ))
 }
 
+/// Write a fully assembled Archive V3 without giving Python any archive or
+/// DAG-ML execution responsibility.  DAG-ML assembles the signed manifest and
+/// opaque members; Core validates the closed V3 container and publishes it
+/// atomically without replacing an existing target.
+#[pyfunction]
+fn write_archive_v3_from_native_payloads(
+    path: &str,
+    manifest: &Bound<'_, PyAny>,
+    members: Vec<(String, Vec<u8>)>,
+) -> PyResult<(String, String)> {
+    let manifest: Value = pythonize::depythonize(manifest).map_err(|error| {
+        PyValueError::new_err(format!(
+            "Archive V3 manifest is not JSON-compatible: {error}"
+        ))
+    })?;
+    let payloads = members
+        .into_iter()
+        .map(|(path, bytes)| ArchivePayload { path, bytes })
+        .collect();
+    let reference = write_archive_v3(
+        Path::new(path),
+        ArchiveV3WriteRequest { manifest, payloads },
+    )
+    .map_err(|error| PyValueError::new_err(format!("Archive V3 validation refused: {error}")))?;
+    Ok((
+        reference.archive_id().to_owned(),
+        reference.archive_sha256().to_owned(),
+    ))
+}
+
 /// Python extension module installed as ``nirs4all_core._native``.
 #[pymodule]
 fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -93,6 +124,10 @@ fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(read_portable_refit_package_v3, module)?)?;
     module.add_function(wrap_pyfunction!(
         write_archive_v2_from_native_payloads,
+        module
+    )?)?;
+    module.add_function(wrap_pyfunction!(
+        write_archive_v3_from_native_payloads,
         module
     )?)
 }

@@ -87,3 +87,38 @@ def write_archive_v2_from_native_payloads(
         str(Path(path)), dict(manifest), payloads
     )
     return {"archive_id": str(archive_id), "archive_sha256": str(archive_sha256)}
+
+
+def write_archive_v3_from_native_payloads(
+    path: str | Path,
+    manifest: Mapping[str, Any],
+    members: Mapping[str, bytes | bytearray | memoryview],
+) -> dict[str, str]:
+    """Atomically write a native Archive V3 from opaque DAG-ML bytes.
+
+    The aggregate deliberately does not parse the portable refit package or
+    its N4MM payload.  It gives the canonical manifest and bytes to Rust Core,
+    which validates the closed V3 contract, recomputes inventory hashes and
+    publishes only if the destination does not already exist.
+    """
+
+    if not isinstance(manifest, Mapping):
+        raise TypeError("Archive V3 manifest must be a mapping")
+    payloads: list[tuple[str, bytes]] = []
+    for member_path, payload in sorted(members.items()):
+        if not isinstance(member_path, str):
+            raise TypeError("Archive V3 member paths must be strings")
+        if not isinstance(payload, (bytes, bytearray, memoryview)):
+            raise TypeError("Archive V3 member payloads must be bytes-like")
+        payloads.append((member_path, bytes(payload)))
+    try:
+        from . import _native
+    except ImportError as error:  # pragma: no cover - depends on wheel build
+        raise NativeArchiveUnavailableError(
+            "Archive V3 access requires the nirs4all-core native wheel; "
+            "install a matching nirs4all-core distribution."
+        ) from error
+    archive_id, archive_sha256 = _native.write_archive_v3_from_native_payloads(
+        str(Path(path)), dict(manifest), payloads
+    )
+    return {"archive_id": str(archive_id), "archive_sha256": str(archive_sha256)}

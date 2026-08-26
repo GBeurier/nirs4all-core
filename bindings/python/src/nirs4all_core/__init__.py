@@ -1,6 +1,6 @@
 """Python surface for the nirs4all-core aggregate distribution."""
 
-__version__ = "0.3.20"
+__version__ = "0.3.21"
 
 from ._capabilities import (
     artifact_contracts,
@@ -15,6 +15,7 @@ from ._archive import (
     read_portable_predictor_package_v2,
     read_portable_refit_package_v3,
     write_archive_v2_from_native_payloads,
+    write_archive_v3_from_native_payloads,
 )
 from ._execution import PortableDataset, parse_execution_plan, run_portable_pipeline
 from ._pipeline import (
@@ -83,6 +84,7 @@ __all__ = [
     "read_portable_predictor_package_v2",
     "read_portable_refit_package_v3",
     "write_archive_v2_from_native_payloads",
+    "write_archive_v3_from_native_payloads",
     "require_upstream",
     "required_keyword_registry_entries",
     "run_portable_pipeline",
