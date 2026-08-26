@@ -1,4 +1,4 @@
-//! Native Archive V2 access for the Python aggregate facade.
+//! Native Archive V2/V3 access for the Python aggregate facade.
 //!
 //! The extension deliberately exposes validated member bytes only.  ZIP
 //! parsing, schema dispatch, inventory validation, and raw-integrity checks
@@ -9,7 +9,9 @@
 
 use std::path::Path;
 
-use nirs4all::{load_archive_v2, write_archive_v2, ArchivePayload, ArchiveV2WriteRequest};
+use nirs4all::{
+    load_archive_v2, load_archive_v3, write_archive_v2, ArchivePayload, ArchiveV2WriteRequest,
+};
 use pyo3::{
     exceptions::PyValueError,
     prelude::*,
@@ -32,6 +34,22 @@ fn read_portable_predictor_package_v2<'py>(
     let package = archive
         .portable_predictor_package()
         .map_err(archive_error)?;
+    Ok(PyBytes::new_bound(py, package))
+}
+
+/// Return the exact DAG-ML PortableRefitPackage V3 bytes from a validated
+/// Archive V3. This does not parse, deserialize, or execute the package.
+#[pyfunction]
+fn read_portable_refit_package_v3<'py>(
+    py: Python<'py>,
+    path: &str,
+) -> PyResult<Bound<'py, PyBytes>> {
+    let archive = load_archive_v3(Path::new(path)).map_err(|error| {
+        PyValueError::new_err(format!("Archive V3 validation refused: {error}"))
+    })?;
+    let package = archive.portable_refit_package().map_err(|error| {
+        PyValueError::new_err(format!("Archive V3 validation refused: {error}"))
+    })?;
     Ok(PyBytes::new_bound(py, package))
 }
 
@@ -72,6 +90,7 @@ fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
         read_portable_predictor_package_v2,
         module
     )?)?;
+    module.add_function(wrap_pyfunction!(read_portable_refit_package_v3, module)?)?;
     module.add_function(wrap_pyfunction!(
         write_archive_v2_from_native_payloads,
         module
