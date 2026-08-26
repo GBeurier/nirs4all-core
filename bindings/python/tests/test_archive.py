@@ -10,6 +10,7 @@ from unittest.mock import patch
 from nirs4all_core import (
     NativeArchiveUnavailableError,
     read_portable_predictor_package_v2,
+    read_portable_refit_package_v3,
     write_archive_v2_from_native_payloads,
 )
 
@@ -33,6 +34,20 @@ class ArchiveFacadeTests(unittest.TestCase):
         with patch.dict(sys.modules, {"nirs4all_core._native": None}):
             with self.assertRaises(NativeArchiveUnavailableError):
                 read_portable_predictor_package_v2("/tmp/model.n4a")
+
+    def test_returns_exact_native_refit_package_v3_bytes(self) -> None:
+        observed: list[str] = []
+
+        def read(path: str) -> bytes:
+            observed.append(path)
+            return b'{"schema_version":3}'
+
+        module = types.SimpleNamespace(read_portable_refit_package_v3=read)
+        with patch.dict(sys.modules, {"nirs4all_core._native": module}):
+            result = read_portable_refit_package_v3("/tmp/model.n4a")
+
+        self.assertEqual(result, b'{"schema_version":3}')
+        self.assertEqual(observed, ["/tmp/model.n4a"])
 
     def test_writer_forwards_opaque_dagml_members_without_zip_logic(self) -> None:
         observed: list[object] = []
