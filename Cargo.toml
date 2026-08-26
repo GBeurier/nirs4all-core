@@ -8,4 +8,4 @@ license = "CECILL-2.1 OR AGPL-3.0-or-later"
 repository = "https://github.com/GBeurier/nirs4all-core"
 
 [patch.crates-io]
-dag-ml = { git = "https://github.com/GBeurier/dag-ml", rev = "5e4a16240b40a8fa2d732a6b057ecf4a4d6f2031" }
+dag-ml = { git = "https://github.com/GBeurier/dag-ml", rev = "f2695d4f6271596db2b8cbb1302bef30c6ff1dc6" }

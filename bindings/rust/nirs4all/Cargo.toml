@@ -39,7 +39,7 @@ path = "src/lib.rs"
 default = []
 datasets = []
 [dependencies]
-dag_ml_crate = { package = "dag-ml", version = "0.3.0" }
+dag_ml_crate = { package = "dag-ml", version = "0.3.10" }
 dag_ml_data_crate = { package = "dag-ml-data", version = "0.2.9" }
 libloading = "0.8"
 serde = { version = "1", features = ["derive"] }
