@@ -16,6 +16,7 @@ mod archive_v1;
 mod archive_v2;
 mod archive_v3;
 mod archive_view;
+mod native_methods_replay;
 mod portable_session;
 pub use archive_v1::{
     load_archive_v1, write_archive_v1, ArchivePayload, ArchiveReference, ArchiveStoreError,
@@ -31,6 +32,9 @@ pub use archive_v3::{
 pub use archive_view::{
     archive_v2_view, archive_view, ArchivePayloadView, ArchiveReplayExecutionStatus,
     ArchiveReplayView, ArchiveView, ArchiveViewError,
+};
+pub use native_methods_replay::{
+    replay_methods_archive_v2, MethodsArchivePredictRequest, NativeMethodsReplayError,
 };
 pub use portable_session::{
     PortableSession, PortableSessionError, PortableSessionState, PORTABLE_SESSION_EXPORT_SCHEMA,
