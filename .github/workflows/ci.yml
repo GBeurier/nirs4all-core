@@ -142,7 +142,19 @@ jobs:
           NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 \
           python -m unittest bindings/python/tests/test_execution_parity.py -v
       - run: mkdir -p "$R_LIBS_USER"
-      - run: Rscript -e 'install.packages(c("jsonlite", "yaml"), lib = Sys.getenv("R_LIBS_USER"), repos = "https://cloud.r-project.org")'
+      - name: Install and verify R parity dependencies
+        # CRAN mirrors can intermittently return a warning without making Rscript
+        # fail. Retry a bounded number of times and prove both namespaces are in
+        # the job-local library before building the bindings.
+        run: |
+          for attempt in 1 2 3; do
+            Rscript -e 'install.packages(c("jsonlite", "yaml"), lib = Sys.getenv("R_LIBS_USER"), repos = "https://cloud.r-project.org")'
+            Rscript -e 'stopifnot(requireNamespace("jsonlite", quietly = TRUE), requireNamespace("yaml", quietly = TRUE))' && exit 0
+            if [ "$attempt" -lt 3 ]; then
+              sleep 5
+            fi
+          done
+          exit 1
       - run: R CMD INSTALL --preclean --library="$R_LIBS_USER" --no-multiarch --no-staged-install nirs4all-methods/bindings/r/n4m
         env:
           N4M_LIB_DIR: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
