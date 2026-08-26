@@ -1,4 +1,4 @@
-"""Validated native Archive V2 access.
+"""Validated native Archive V2/V3 access.
 
 The Python facade intentionally has no ZIP parser.  The optional Rust
 extension validates Archive V2 and returns the exact persisted DAG-ML package
@@ -14,7 +14,7 @@ from typing import Any
 
 
 class NativeArchiveUnavailableError(RuntimeError):
-    """The installed Python facade has no matching native Archive V2 bridge."""
+    """The installed facade has no matching native archive bridge."""
 
 
 def read_portable_predictor_package_v2(path: str | Path) -> bytes:
@@ -65,6 +65,53 @@ def write_archive_v2_from_native_payloads(
             "install a matching nirs4all-core distribution."
         ) from error
     archive_id, archive_sha256 = _native.write_archive_v2_from_native_payloads(
+        str(Path(path)), dict(manifest), payloads
+    )
+    return {"archive_id": str(archive_id), "archive_sha256": str(archive_sha256)}
+
+
+def read_portable_refit_package_v3(path: str | Path) -> bytes:
+    """Read exact Package V3 bytes from a Rust-validated Archive V3.
+
+    The function is intentionally a transport boundary: Core validates the
+    archive and its raw inventory, while DAG-ML parses the returned strict V3
+    package and owns native replay.
+    """
+
+    try:
+        from . import _native
+    except ImportError as error:  # pragma: no cover - depends on wheel build
+        raise NativeArchiveUnavailableError(
+            "Archive V3 access requires the nirs4all-core native wheel; "
+            "install a matching nirs4all-core distribution."
+        ) from error
+    return bytes(_native.read_portable_refit_package_v3(str(Path(path))))
+
+
+def write_archive_v3_from_native_payloads(
+    path: str | Path,
+    manifest: Mapping[str, Any],
+    members: Mapping[str, bytes | bytearray | memoryview],
+) -> dict[str, str]:
+    """Atomically write a validated native Archive V3 from opaque DAG-ML bytes."""
+
+    if not isinstance(manifest, Mapping):
+        raise TypeError("Archive V3 manifest must be a mapping")
+    payloads: list[tuple[str, bytes]] = []
+    for member_path, payload in sorted(members.items()):
+        if not isinstance(member_path, str):
+            raise TypeError("Archive V3 member paths must be strings")
+        if not isinstance(payload, (bytes, bytearray, memoryview)):
+            raise TypeError("Archive V3 member payloads must be bytes-like")
+        payloads.append((member_path, bytes(payload)))
+    try:
+        from . import _native
+    except ImportError as error:  # pragma: no cover - depends on wheel build
+        raise NativeArchiveUnavailableError(
+            "Archive V3 access requires the nirs4all-core native wheel; "
+            "install a matching nirs4all-core distribution."
+        ) from error
+    archive_id, archive_sha256 = _native.write_archive_v3_from_native_payloads(
         str(Path(path)), dict(manifest), payloads
     )
     return {"archive_id": str(archive_id), "archive_sha256": str(archive_sha256)}
