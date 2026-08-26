@@ -8,6 +8,13 @@ binding manifest.
 
 ## [Unreleased]
 
+### Added
+
+- Added the `Archive V2 → DAG-ML → Methods` replay facade for portable native
+  prediction. Core validates and opens the archive, then delegates Package V2
+  parsing and N4MM execution to the published DAG-ML 0.3.12 runtime; it does
+  not duplicate package parsing or numerical execution.
+
 ### Changed
 
 - Exposed the DAG-ML process-local loss and metric registry through the Python,
