@@ -80,9 +80,9 @@ jobs:
       # with dependencies:"hard". Install the hard deps + rcmdcheck directly from RSPM
       # (pak-free); the check below tolerates the missing Suggests via
       # _R_CHECK_FORCE_SUGGESTS_=false (-> NOTE, not ERROR), exactly as CRAN does.
-      - name: Install hard deps (jsonlite, yaml) + rcmdcheck — pak-free
+      - name: Install hard deps (jsonlite, yaml, curl) + rcmdcheck — pak-free
         shell: Rscript {0}
-        run: install.packages(c("jsonlite", "yaml", "rcmdcheck"))
+        run: install.packages(c("jsonlite", "yaml", "curl", "rcmdcheck"))
 
       - name: R CMD check --as-cran
         uses: r-lib/actions/check-r-package@v2
