@@ -36,6 +36,25 @@ def read_portable_predictor_package_v2(path: str | Path) -> bytes:
     return bytes(_native.read_portable_predictor_package_v2(str(Path(path))))
 
 
+def read_portable_refit_package_v3(path: str | Path) -> bytes:
+    """Read exact Package V3 refit bytes from a Rust-validated Archive V3.
+
+    This function neither opens ZIP members in Python nor decodes the package.
+    Archive integrity and version dispatch remain owned by ``nirs4all-core``;
+    DAG-ML owns the returned package's semantic validation and execution.
+    """
+
+    try:
+        from . import _native
+    except ImportError as error:  # pragma: no cover - depends on wheel build
+        raise NativeArchiveUnavailableError(
+            "Archive V3 access requires the nirs4all-core native wheel; "
+            "install a matching nirs4all-core distribution."
+        ) from error
+
+    return bytes(_native.read_portable_refit_package_v3(str(Path(path))))
+
+
 def write_archive_v2_from_native_payloads(
     path: str | Path,
     manifest: Mapping[str, Any],
