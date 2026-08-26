@@ -1848,6 +1848,9 @@ fn crc32(bytes: &[u8]) -> u32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{replay_methods_archive_v2, MethodsArchivePredictRequest};
+    use dag_ml_core::{Phase, RunId, TrainingReplayRequest};
+    use std::collections::BTreeMap;
     use std::time::{SystemTime, UNIX_EPOCH};
     fn path(name: &str) -> PathBuf {
         std::env::temp_dir().join(format!(
@@ -1905,6 +1908,40 @@ mod tests {
         manifest["payloads"]["methods"]["n4mm"][0]["semantic_fingerprint"] =
             Value::String(sha256(&payloads[6].bytes));
         ArchiveV2WriteRequest { manifest, payloads }
+    }
+
+    #[test]
+    fn archive_v2_storage_fixture_is_semantically_refused_before_methods_runtime() {
+        let target = path("dagml-semantic-boundary");
+        write_archive_v2(&target, request()).unwrap();
+        let archive = load_archive_v2(&target).unwrap();
+        let replay = TrainingReplayRequest {
+            schema_version: 0,
+            request_id: "request:storage-fixture".to_owned(),
+            source_outcome_fingerprint: "0".repeat(64),
+            phase: Phase::Predict,
+            data_envelope_keys: Vec::new(),
+            output_binding_ids: Vec::new(),
+            request_fingerprint: String::new(),
+        };
+        let error = replay_methods_archive_v2(
+            &archive,
+            MethodsArchivePredictRequest {
+                request: replay,
+                data_envelopes: BTreeMap::new(),
+                methods_inputs: BTreeMap::new(),
+                methods_library_path: PathBuf::from("/must-not-open-libn4m"),
+                outcome_id: "outcome:storage-fixture".to_owned(),
+                run_id: RunId::new("run:storage-fixture").unwrap(),
+                warnings: Vec::new(),
+                diagnostics: BTreeMap::new(),
+            },
+        )
+        .unwrap_err();
+        let message = error.to_string();
+        assert!(message.starts_with("DAG-ML rejected Core Archive V2 package:"));
+        assert!(!message.contains("cannot configure the Methods runtime"));
+        let _ = std::fs::remove_file(target);
     }
 
     fn rewrite_manifest_same_length(bytes: &mut [u8], from: &[u8], to: &[u8]) {
