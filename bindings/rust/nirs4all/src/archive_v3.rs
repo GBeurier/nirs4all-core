@@ -780,7 +780,11 @@ fn fmt_err(detail: &str) -> ArchiveStoreError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{load_archive, LoadedArchive};
+    use crate::{
+        load_archive, replay_methods_archive_v3, LoadedArchive, MethodsArchiveRefitRequestV3,
+    };
+    use dag_ml_core::{Phase, RunId, RuntimeControllerRegistry, TrainingReplayRequest};
+    use std::collections::BTreeMap;
     use std::fs;
     use std::path::PathBuf;
     use std::time::{SystemTime, UNIX_EPOCH};
@@ -881,6 +885,41 @@ mod tests {
             LoadedArchive::V3(_)
         ));
         let _ = fs::remove_file(archive);
+    }
+
+    #[test]
+    fn v3_storage_fixture_is_semantically_refused_before_methods_runtime() {
+        let archive_path = path("dagml-semantic-boundary");
+        write_archive_v3(&archive_path, request()).expect("write storage fixture");
+        let archive = load_archive_v3(&archive_path).expect("load storage fixture");
+        let replay = TrainingReplayRequest {
+            schema_version: 0,
+            request_id: "request:v3-storage-fixture".to_owned(),
+            source_outcome_fingerprint: "0".repeat(64),
+            phase: Phase::Predict,
+            data_envelope_keys: Vec::new(),
+            output_binding_ids: Vec::new(),
+            request_fingerprint: String::new(),
+        };
+        let error = replay_methods_archive_v3(
+            &archive,
+            MethodsArchiveRefitRequestV3 {
+                request: replay,
+                data_envelopes: BTreeMap::new(),
+                methods_inputs: BTreeMap::new(),
+                methods_library_path: PathBuf::from("/must-not-open-libn4m"),
+                supplemental_controllers: RuntimeControllerRegistry::new(),
+                outcome_id: "outcome:v3-storage-fixture".to_owned(),
+                run_id: RunId::new("run:v3-storage-fixture").expect("valid run id"),
+                warnings: Vec::new(),
+                diagnostics: BTreeMap::new(),
+            },
+        )
+        .expect_err("opaque storage fixture cannot be a DAG-ML Package V3");
+        let message = error.to_string();
+        assert!(message.starts_with("DAG-ML rejected Core Archive V3 package:"));
+        assert!(!message.contains("cannot configure the Methods runtime"));
+        let _ = fs::remove_file(archive_path);
     }
 
     #[test]
