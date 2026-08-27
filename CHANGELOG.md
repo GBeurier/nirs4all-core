@@ -12,8 +12,12 @@ binding manifest.
 
 - Added the `Archive V2 → DAG-ML → Methods` replay facade for portable native
   prediction. Core validates and opens the archive, then delegates Package V2
-  parsing and N4MM execution to the published DAG-ML 0.3.12 runtime; it does
+  parsing and N4MM execution to the published DAG-ML 0.3.15 runtime; it does
   not duplicate package parsing or numerical execution.
+- Added the `Archive V3 → DAG-ML → Methods` target-bound full-refit replay
+  facade. Core exposes only validated archive bytes and attested current-cohort
+  inputs; DAG-ML remains the owner of Package V3 validation, scheduling and
+  invocation-local N4MM hydration through the published 0.3.15 runtime.
 
 ### Changed
 
