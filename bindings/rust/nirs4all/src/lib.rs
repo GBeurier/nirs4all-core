@@ -34,7 +34,8 @@ pub use archive_view::{
     ArchiveReplayView, ArchiveView, ArchiveViewError,
 };
 pub use native_methods_replay::{
-    replay_methods_archive_v2, MethodsArchivePredictRequest, NativeMethodsReplayError,
+    replay_methods_archive_v2, replay_methods_archive_v3, MethodsArchivePredictRequest,
+    MethodsArchiveRefitRequestV3, NativeMethodsReplayError,
 };
 pub use portable_session::{
     PortableSession, PortableSessionError, PortableSessionState, PORTABLE_SESSION_EXPORT_SCHEMA,
