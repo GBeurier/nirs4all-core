@@ -190,6 +190,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             set(maturin["exclude"]),
             {"**/__pycache__", "**/__pycache__/**", "**/*.pyc", "**/*.pyo"},
         )
+        self.assertEqual(maturin["sbom"], {"rust": False, "auditwheel": True})
         self.assertEqual(maturin["manifest-path"], "../python-native/Cargo.toml")
 
     def test_namespace_facades_are_machine_readable(self) -> None:
