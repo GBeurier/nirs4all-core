@@ -14,6 +14,8 @@ from ._archive import (
     NativeArchiveUnavailableError,
     read_portable_predictor_package_v2,
     read_portable_refit_package_v3,
+    replay_methods_archive_v2,
+    replay_methods_archive_v3,
     write_archive_v2_from_native_payloads,
     write_archive_v3_from_native_payloads,
 )
@@ -83,6 +85,8 @@ __all__ = [
     "release_topology_manifest",
     "read_portable_predictor_package_v2",
     "read_portable_refit_package_v3",
+    "replay_methods_archive_v2",
+    "replay_methods_archive_v3",
     "write_archive_v2_from_native_payloads",
     "write_archive_v3_from_native_payloads",
     "require_upstream",
