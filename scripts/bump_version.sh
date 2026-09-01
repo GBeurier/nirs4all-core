@@ -223,7 +223,7 @@ for block in re.findall(r'\[\[package\]\]\n(?:[^\[]|\[(?!\[))*', text):
     version = re.search(r'^version = "([^"]+)"$', block, re.MULTILINE)
     if name and version:
         versions[name.group(1)] = version.group(1)
-for name in ("nirs4all", "nirs4all-core-python-native"):
+for name in ("nirs4all", "nirs4all-core-python-native", "nirs4all-core-wasm-native"):
     print(f"{name}={versions.get(name, '')}")
 PY
 )
@@ -254,7 +254,11 @@ text = open(path, "r", encoding="utf-8").read()
 
 def update(match: re.Match[str]) -> str:
     block = match.group(0)
-    names = ('name = "nirs4all"', 'name = "nirs4all-core-python-native"')
+    names = (
+        'name = "nirs4all"',
+        'name = "nirs4all-core-python-native"',
+        'name = "nirs4all-core-wasm-native"',
+    )
     if not any(name in block for name in names):
         return block
     return re.sub(r'version = "[^"]+"', f'version = "{version}"', block, count=1)
@@ -321,6 +325,12 @@ PY
 fi
 
 # --- PEP 440 target --------------------------------------------------------
+update_with_sed \
+    "bindings/wasm-native/Cargo.toml" \
+    "${CARGO_VERSION}" \
+    "^version[[:space:]]*=[[:space:]]*\"([0-9A-Za-z.-]+)\"" \
+    "s/^(version[[:space:]]*=[[:space:]]*\")[0-9A-Za-z.-]+(\")/\1${CARGO_VERSION}\2/"
+
 update_with_sed \
     "bindings/python-native/Cargo.toml" \
     "${CARGO_VERSION}" \
