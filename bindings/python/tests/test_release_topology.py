@@ -570,7 +570,10 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertEqual(lock["lockfileVersion"], 3)
         self.assertEqual(package["types"], "./src/index.d.ts")
         self.assertEqual(package["exports"]["."]["types"], package["types"])
-        self.assertEqual(package["scripts"]["test"], "npm run test:js && npm run typecheck")
+        self.assertEqual(
+            package["scripts"]["test"],
+            "npm run build:native && npm run test:js && npm run typecheck",
+        )
         self.assertEqual(package["scripts"]["typecheck"], "tsc --project tsconfig.typecheck.json")
         self.assertEqual(package["devDependencies"]["typescript"], "5.9.3")
         self.assertEqual(set(package["peerDependencies"]), expected_peers)
