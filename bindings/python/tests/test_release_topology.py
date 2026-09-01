@@ -182,6 +182,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertNotIn("nirs4all-lite", pyproject["project"].get("dependencies", []))
 
         self.assertEqual(pyproject["build-system"]["build-backend"], "maturin")
+        self.assertEqual(pyproject["build-system"]["requires"], ["maturin==1.14.1"])
         maturin = pyproject["tool"]["maturin"]
         self.assertEqual(maturin["module-name"], "nirs4all_core._native")
         self.assertEqual(maturin["python-source"], "src")
