@@ -1,17 +1,22 @@
-//! Native Archive V2/V3 access for the Python aggregate facade.
+//! Native Archive V2/V3 access and Methods replay for the Python facade.
 //!
-//! The extension deliberately exposes validated member bytes only.  ZIP
-//! parsing, schema dispatch, inventory validation, and raw-integrity checks
-//! remain in the aggregate Rust reader; DAG-ML remains the sole owner of
-//! package parsing and replay.
+//! ZIP parsing, schema dispatch, inventory validation, and raw-integrity checks
+//! remain in the aggregate Rust reader. DAG-ML remains the sole owner of
+//! package parsing, scheduling, and invocation-local N4MM execution. The
+//! replay functions accept strict JSON and never accept Python callbacks or
+//! serialized host-model handles.
 
 #![allow(clippy::useless_conversion)] // PyO3's exported-function wrapper converts PyErr to itself.
 
 use std::path::Path;
+use std::path::PathBuf;
 
 use nirs4all::{
-    load_archive_v2, load_archive_v3, write_archive_v2, write_archive_v3, ArchivePayload,
-    ArchiveV2WriteRequest, ArchiveV3WriteRequest,
+    load_archive_v2, load_archive_v3,
+    replay_methods_archive_v2_json as core_replay_methods_archive_v2_json,
+    replay_methods_archive_v3_json as core_replay_methods_archive_v3_json, write_archive_v2,
+    write_archive_v3, ArchivePayload, ArchiveV2WriteRequest, ArchiveV3WriteRequest,
+    MethodsArchiveReplayJsonRequest,
 };
 use pyo3::{
     exceptions::PyValueError,
@@ -22,6 +27,33 @@ use serde_json::Value;
 
 fn archive_error(error: impl std::fmt::Display) -> PyErr {
     PyValueError::new_err(format!("Archive V2 validation refused: {error}"))
+}
+
+fn replay_error(error: impl std::fmt::Display) -> PyErr {
+    PyValueError::new_err(format!("native Methods archive replay refused: {error}"))
+}
+
+#[allow(clippy::too_many_arguments)]
+fn replay_json_input(
+    request_json: &str,
+    data_envelopes_json: &str,
+    methods_inputs_json: &str,
+    methods_library_path: &str,
+    outcome_id: &str,
+    run_id: &str,
+    warnings_json: &str,
+    diagnostics_json: &str,
+) -> MethodsArchiveReplayJsonRequest {
+    MethodsArchiveReplayJsonRequest {
+        request_json: request_json.to_owned(),
+        data_envelopes_json: data_envelopes_json.to_owned(),
+        methods_inputs_json: methods_inputs_json.to_owned(),
+        methods_library_path: PathBuf::from(methods_library_path),
+        outcome_id: outcome_id.to_owned(),
+        run_id: run_id.to_owned(),
+        warnings_json: warnings_json.to_owned(),
+        diagnostics_json: diagnostics_json.to_owned(),
+    }
 }
 
 /// Return the exact DAG-ML PortablePredictorPackage V2 bytes from a validated
@@ -52,6 +84,91 @@ fn read_portable_refit_package_v3<'py>(
         PyValueError::new_err(format!("Archive V3 validation refused: {error}"))
     })?;
     Ok(PyBytes::new_bound(py, package))
+}
+
+/// Replay one Core-validated Archive V2 through DAG-ML's callback-free Methods
+/// runtime. All structured values are strict JSON contracts; no Python object,
+/// estimator handle, callback, or joblib payload crosses this boundary.
+#[pyfunction]
+#[pyo3(signature = (
+    path,
+    request_json,
+    data_envelopes_json,
+    methods_inputs_json,
+    methods_library_path,
+    outcome_id,
+    run_id,
+    warnings_json = "[]",
+    diagnostics_json = "{}"
+))]
+#[allow(clippy::too_many_arguments)]
+fn replay_methods_archive_v2_json(
+    py: Python<'_>,
+    path: &str,
+    request_json: &str,
+    data_envelopes_json: &str,
+    methods_inputs_json: &str,
+    methods_library_path: &str,
+    outcome_id: &str,
+    run_id: &str,
+    warnings_json: &str,
+    diagnostics_json: &str,
+) -> PyResult<String> {
+    let archive_path = PathBuf::from(path);
+    let input = replay_json_input(
+        request_json,
+        data_envelopes_json,
+        methods_inputs_json,
+        methods_library_path,
+        outcome_id,
+        run_id,
+        warnings_json,
+        diagnostics_json,
+    );
+    py.allow_threads(move || core_replay_methods_archive_v2_json(&archive_path, input))
+        .map_err(replay_error)
+}
+
+/// Replay one Core-validated Archive V3 through a fresh Methods-only runtime.
+/// Supplemental host controllers are deliberately unavailable from Python.
+#[pyfunction]
+#[pyo3(signature = (
+    path,
+    request_json,
+    data_envelopes_json,
+    methods_inputs_json,
+    methods_library_path,
+    outcome_id,
+    run_id,
+    warnings_json = "[]",
+    diagnostics_json = "{}"
+))]
+#[allow(clippy::too_many_arguments)]
+fn replay_methods_archive_v3_json(
+    py: Python<'_>,
+    path: &str,
+    request_json: &str,
+    data_envelopes_json: &str,
+    methods_inputs_json: &str,
+    methods_library_path: &str,
+    outcome_id: &str,
+    run_id: &str,
+    warnings_json: &str,
+    diagnostics_json: &str,
+) -> PyResult<String> {
+    let archive_path = PathBuf::from(path);
+    let input = replay_json_input(
+        request_json,
+        data_envelopes_json,
+        methods_inputs_json,
+        methods_library_path,
+        outcome_id,
+        run_id,
+        warnings_json,
+        diagnostics_json,
+    );
+    py.allow_threads(move || core_replay_methods_archive_v3_json(&archive_path, input))
+        .map_err(replay_error)
 }
 
 /// Write a fully assembled Archive V2 without implementing any archive or
@@ -122,6 +239,8 @@ fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
         module
     )?)?;
     module.add_function(wrap_pyfunction!(read_portable_refit_package_v3, module)?)?;
+    module.add_function(wrap_pyfunction!(replay_methods_archive_v2_json, module)?)?;
+    module.add_function(wrap_pyfunction!(replay_methods_archive_v3_json, module)?)?;
     module.add_function(wrap_pyfunction!(
         write_archive_v2_from_native_payloads,
         module

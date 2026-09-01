@@ -103,6 +103,11 @@ binding-specific parity gates.
 - `read_portable_predictor_package_v2(path)` validates Archive V2 in Rust and
   returns exact DAG-ML Package V2 bytes. It is not a Python ZIP parser, package
   decoder, artifact executor, or prediction API.
+- `replay_methods_archive_v2(...)` and `replay_methods_archive_v3(...)` validate
+  the archive in Rust, then delegate strict request/envelope semantics and a
+  fresh N4MM runtime to DAG-ML. They accept numeric Methods inputs only: no
+  callback, joblib sidecar, or supplemental Python controller can cross this
+  portable boundary.
 - Framework idioms: sklearn-style estimators, `fit`/`predict`/`transform`,
   NumPy arrays, pandas data frames, and clear optional extras.
 - Future external operator adapters should look like normal sklearn-compatible
