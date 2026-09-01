@@ -63,3 +63,10 @@ python-source = "src"
 python-packages = ["nirs4all_core", "n4a"]
 exclude = ["**/__pycache__", "**/__pycache__/**", "**/*.pyc", "**/*.pyo"]
 features = ["pyo3/extension-module"]
+
+# cargo-cyclonedx currently serializes absolute local path dependencies into
+# its bom-ref fields, making otherwise identical wheels checkout-dependent.
+# Keep auditwheel's OS-package SBOM when repair actually grafts a library.
+[tool.maturin.sbom]
+rust = false
+auditwheel = true
