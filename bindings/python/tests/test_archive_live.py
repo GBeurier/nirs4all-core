@@ -1,9 +1,10 @@
-"""Opt-in live witness for Archive V2 replay through a real Methods runtime.
+"""Opt-in Dag-ML 0.3.18 multi-target Archive V2 replay witness.
 
-Set ``NIRS4ALL_CORE_LIVE_ARCHIVE_V2`` to a valid two-feature, single-output
-Methods Archive V2 and ``NIRS4ALL_CORE_LIVE_METHODS_LIBRARY`` to a compatible
-``libn4m``. The test is intentionally fixture-free: archives and native
-binaries remain release artifacts rather than committed test data.
+Set ``NIRS4ALL_CORE_LIVE_ARCHIVE_V2`` to a valid two-feature, multi-target
+Methods Archive V2 produced by Dag-ML 0.3.18 and
+``NIRS4ALL_CORE_LIVE_METHODS_LIBRARY`` to a compatible ``libn4m``. The test is
+intentionally fixture-free: archives and native binaries remain release
+artifacts rather than committed test data.
 """
 
 from __future__ import annotations
@@ -121,9 +122,13 @@ class LiveArchiveV2ReplayTests(unittest.TestCase):
         self.archive = Path(os.environ[_ARCHIVE_ENV])
         self.library = Path(os.environ[_LIBRARY_ENV])
         package = json.loads(read_portable_predictor_package_v2(self.archive))
+        dag_ml: Any = importlib.import_module("dag_ml")
+        self.assertEqual(dag_ml.__version__, "0.3.18")
+        self.target_names = package["output_bindings"][0]["target_names"]
+        self.assertGreaterEqual(len(self.target_names), 2)
         self.request, self.envelopes, self.inputs = _contracts(package)
 
-    def test_real_wheel_replays_n4mm_with_aligned_finite_output(self) -> None:
+    def test_real_wheel_replays_multi_target_n4mm_with_valid_cross_link(self) -> None:
         outcome = replay_methods_archive_v2(
             self.archive,
             self.request,
@@ -143,6 +148,7 @@ class LiveArchiveV2ReplayTests(unittest.TestCase):
         block = outcome["outputs"][0]["predictions"][0]
         self.assertEqual(block["sample_ids"], ["predict.0", "predict.1"])
         self.assertEqual(len(block["values"]), 2)
+        self.assertTrue(all(len(row) == len(self.target_names) for row in block["values"]))
         self.assertTrue(all(math.isfinite(value) for row in block["values"] for value in row))
 
     def test_tampered_n4mm_is_refused_before_replay(self) -> None:
