@@ -269,6 +269,7 @@ dependencies = [
  "dag-ml-core",
  "dag-ml-data",
  "libloading",
+ "n4m",
  "serde",
  "serde_json",
  "serde_yaml",
