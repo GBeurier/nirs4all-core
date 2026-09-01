@@ -12,6 +12,7 @@ from ._capabilities import (
 )
 from ._archive import (
     NativeArchiveUnavailableError,
+    predict_methods_archive_v2_matrix,
     read_portable_predictor_package_v2,
     read_portable_refit_package_v3,
     replay_methods_archive_v2,
@@ -83,6 +84,7 @@ __all__ = [
     "methods",
     "parse_execution_plan",
     "portable_class_names",
+    "predict_methods_archive_v2_matrix",
     "release_topology_manifest",
     "read_portable_predictor_package_v2",
     "read_portable_refit_package_v3",

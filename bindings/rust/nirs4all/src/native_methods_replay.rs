@@ -61,6 +61,28 @@ pub struct MethodsArchiveMatrixPredictRequest {
     pub diagnostics: BTreeMap<String, serde_json::Value>,
 }
 
+/// Strict host-language contract for one closed Archive V2 matrix prediction.
+///
+/// Bindings transport this JSON shape only; Core constructs the typed run id,
+/// validates the complete matrix/package identity and attests libn4m before
+/// delegating to the typed product surface.
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct MethodsArchiveMatrixPredictJsonRequest {
+    pub sample_ids: Vec<String>,
+    pub x: Vec<Vec<f64>>,
+    pub expected_target_names: Vec<String>,
+    pub methods_library_path: PathBuf,
+    pub methods_library_sha256: String,
+    pub request_id: String,
+    pub outcome_id: String,
+    pub run_id: String,
+    #[serde(default)]
+    pub warnings: Vec<String>,
+    #[serde(default)]
+    pub diagnostics: BTreeMap<String, serde_json::Value>,
+}
+
 struct MethodsArchiveMatrixPredictComposition {
     input: MethodsArchivePredictRequest,
     sample_ids: Vec<SampleId>,
@@ -725,6 +747,43 @@ pub fn predict_methods_archive_v2_matrix(
     Ok(outcome)
 }
 
+/// Execute the closed Archive V2 matrix surface from a strict JSON binding.
+///
+/// The returned JSON is DAG-ML's validated replay outcome. Host bindings do
+/// not compose replay envelopes, choose controllers or post-process values.
+pub fn predict_methods_archive_v2_matrix_json(
+    archive: &LoadedArchiveV2,
+    input_json: &str,
+) -> Result<String, NativeMethodsReplayError> {
+    let input = parse_contract::<MethodsArchiveMatrixPredictJsonRequest>(
+        input_json,
+        "Archive V2 matrix prediction request",
+    )?;
+    let run_id = RunId::new(&input.run_id).map_err(|error| {
+        replay_error(format!("DAG-ML rejected matrix prediction run_id: {error}"))
+    })?;
+    let outcome = predict_methods_archive_v2_matrix(
+        archive,
+        MethodsArchiveMatrixPredictRequest {
+            sample_ids: input.sample_ids,
+            x: input.x,
+            expected_target_names: input.expected_target_names,
+            methods_library_path: input.methods_library_path,
+            methods_library_sha256: input.methods_library_sha256,
+            request_id: input.request_id,
+            outcome_id: input.outcome_id,
+            run_id,
+            warnings: input.warnings,
+            diagnostics: input.diagnostics,
+        },
+    )?;
+    serde_json::to_string(&outcome).map_err(|error| {
+        replay_error(format!(
+            "cannot serialize Archive V2 matrix prediction outcome: {error}"
+        ))
+    })
+}
+
 /// Replay an integrity-checked Archive V2 and project its already-calculated
 /// split-conformal intervals through DAG-ML's closed presentation contract.
 ///
@@ -1064,6 +1123,28 @@ mod json_tests {
     }
 
     #[test]
+    fn matrix_json_input_refuses_injectable_controller_fields() {
+        let error = parse_contract::<MethodsArchiveMatrixPredictJsonRequest>(
+            r#"{
+                "sample_ids":["predict.0"],
+                "x":[[1.0]],
+                "expected_target_names":["protein"],
+                "methods_library_path":"/tmp/libn4m.so",
+                "methods_library_sha256":"0000000000000000000000000000000000000000000000000000000000000000",
+                "request_id":"request:closed",
+                "outcome_id":"outcome:closed",
+                "run_id":"run:closed",
+                "controller_callback":"python:callable"
+            }"#,
+            "Archive V2 matrix prediction input",
+        )
+        .expect_err("controller callbacks are not part of the closed matrix contract");
+        assert!(error
+            .to_string()
+            .contains("unknown field `controller_callback`"));
+    }
+
+    #[test]
     fn methods_input_refuses_ragged_matrix() {
         let raw = parse_contract::<BTreeMap<String, MethodsDatasetJson>>(
             r#"{"input:predict":{"sample_ids":["sample:1","sample:2"],"x":[[1.0],[2.0,3.0]],"target_names":["y"]}}"#,
@@ -1173,6 +1254,26 @@ mod json_tests {
         }
 
         let replacement = b"replacement must never reach the configured native runtime";
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+
+            let mut permissions = std::fs::metadata(&methods_library_path)
+                .expect("inspect mutable source copy permissions")
+                .permissions();
+            permissions.set_mode(permissions.mode() | 0o200);
+            std::fs::set_permissions(&methods_library_path, permissions)
+                .expect("make only the private source copy writable");
+        }
+        #[cfg(not(unix))]
+        {
+            let mut permissions = std::fs::metadata(&methods_library_path)
+                .expect("inspect mutable source copy permissions")
+                .permissions();
+            permissions.set_readonly(false);
+            std::fs::set_permissions(&methods_library_path, permissions)
+                .expect("make only the private source copy writable");
+        }
         std::fs::write(&methods_library_path, replacement)
             .expect("replace only the mutable source copy");
         let replacement_sha256 = format!("{:x}", Sha256::digest(replacement));
