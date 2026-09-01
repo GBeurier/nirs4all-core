@@ -209,24 +209,42 @@ update_with_sed() {
 # 7. The manifest table — every downstream version string lives here.
 # ---------------------------------------------------------------------------
 
-# --- Cargo.lock local crate package entry (Cargo/SemVer spelling verbatim) ---
-lock_ver=$(awk '
-    /^\[\[package\]\]/ { in_pkg = 0 }
-    /^name = "nirs4all"$/ { in_pkg = 1 }
-    in_pkg && /^version = / {
-        gsub(/"/, "", $3)
-        print $3
-        exit
-    }
-' "${ROOT}/Cargo.lock")
-if [[ "${MODE}" == "check" ]]; then
+# --- Cargo.lock local crate package entries (Cargo/SemVer spelling verbatim) --
+mapfile -t local_lock_versions < <(
+    python3 - "${ROOT}/Cargo.lock" <<'PY'
+import re
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    text = handle.read()
+versions = {}
+for block in re.findall(r'\[\[package\]\]\n(?:[^\[]|\[(?!\[))*', text):
+    name = re.search(r'^name = "([^"]+)"$', block, re.MULTILINE)
+    version = re.search(r'^version = "([^"]+)"$', block, re.MULTILINE)
+    if name and version:
+        versions[name.group(1)] = version.group(1)
+for name in ("nirs4all", "nirs4all-core-python-native"):
+    print(f"{name}={versions.get(name, '')}")
+PY
+)
+lock_drift=0
+for entry in "${local_lock_versions[@]}"; do
+    package_name="${entry%%=*}"
+    lock_ver="${entry#*=}"
     if [[ "${lock_ver}" != "${CARGO_VERSION}" ]]; then
-        echo "  DRIFT: Cargo.lock reports '${lock_ver}' (expected '${CARGO_VERSION}')" >&2
+        lock_drift=1
+        if [[ "${MODE}" == "check" ]]; then
+            echo "  DRIFT: Cargo.lock ${package_name} reports '${lock_ver}' (expected '${CARGO_VERSION}')" >&2
+        fi
+    fi
+done
+if [[ "${MODE}" == "check" ]]; then
+    if [[ ${lock_drift} -ne 0 ]]; then
         DRIFTED+=("Cargo.lock")
         EXIT_CODE=1
     fi
 else
-    if [[ "${lock_ver}" != "${CARGO_VERSION}" ]]; then
+    if [[ ${lock_drift} -ne 0 ]]; then
         python3 - "${ROOT}/Cargo.lock" "${CARGO_VERSION}" <<'PY'
 import re
 import sys
@@ -236,7 +254,8 @@ text = open(path, "r", encoding="utf-8").read()
 
 def update(match: re.Match[str]) -> str:
     block = match.group(0)
-    if 'name = "nirs4all"' not in block:
+    names = ('name = "nirs4all"', 'name = "nirs4all-core-python-native"')
+    if not any(name in block for name in names):
         return block
     return re.sub(r'version = "[^"]+"', f'version = "{version}"', block, count=1)
 
@@ -244,7 +263,7 @@ updated = re.sub(r'\[\[package\]\]\n(?:[^\[]|\[(?!\[))*', update, text)
 if updated != text:
     open(path, "w", encoding="utf-8").write(updated)
 PY
-        echo "  updated Cargo.lock: ${lock_ver} -> ${CARGO_VERSION}"
+        echo "  updated Cargo.lock local packages -> ${CARGO_VERSION}"
     fi
 fi
 
