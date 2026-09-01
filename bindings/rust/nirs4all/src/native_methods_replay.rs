@@ -80,6 +80,7 @@ struct ConfiguredMethodsLibrary {
     source_canonical_path: PathBuf,
     sha256: String,
     snapshot_path: PathBuf,
+    abi_error: Option<String>,
     _snapshot_directory: TempDir,
 }
 
@@ -294,6 +295,11 @@ fn ensure_same_configured_methods_library(
             attested.sha256
         )));
     }
+    if let Some(error) = &configured.abi_error {
+        return Err(replay_error(format!(
+            "the configured libn4m process identity failed ABI 2.2 verification: {error}"
+        )));
+    }
     Ok(configured.snapshot_path.clone())
 }
 
@@ -372,13 +378,35 @@ fn configure_attested_methods_library(
             "cannot configure the attested Methods runtime: {error}"
         ))
     })?;
+    let abi_error = n4m::Context::new().err().map(|error| error.to_string());
     *configured = Some(ConfiguredMethodsLibrary {
         source_canonical_path: attested.source_canonical_path,
         sha256: attested.sha256,
         snapshot_path: snapshot_path.clone(),
+        abi_error: abi_error.clone(),
         _snapshot_directory: snapshot_directory,
     });
+    if let Some(error) = abi_error {
+        return Err(replay_error(format!(
+            "the attested libn4m failed ABI 2.2 verification: {error}"
+        )));
+    }
     Ok(snapshot_path)
+}
+
+/// Attest and configure the exact libn4m identity used by Archive V2 replay.
+///
+/// This closed preflight hashes a canonical, non-symlink source file, loads a
+/// private snapshot of those already-attested bytes, and creates then drops a
+/// native context to verify the n4m ABI 2.2 contract. The first successful
+/// call fixes both source path and SHA-256 for the process. No runtime path,
+/// native handle, archive input, callback or numerical result is returned.
+pub fn preflight_methods_archive_v2_library(
+    methods_library_path: impl AsRef<Path>,
+    methods_library_sha256: &str,
+) -> Result<(), NativeMethodsReplayError> {
+    configure_attested_methods_library(methods_library_path.as_ref(), methods_library_sha256)
+        .map(|_| ())
 }
 
 fn require_exactly_one_matrix_data_requirement(
@@ -909,6 +937,7 @@ mod json_tests {
             source_canonical_path: source.clone(),
             sha256: "a".repeat(64),
             snapshot_path: snapshot.clone(),
+            abi_error: None,
             _snapshot_directory: tempfile::tempdir().expect("retained snapshot directory"),
         };
         let matching = AttestedMethodsLibrary {
@@ -944,6 +973,20 @@ mod json_tests {
                 .unwrap_err()
                 .to_string()
                 .contains("process identity is already fixed")
+        );
+
+        let failed_abi = ConfiguredMethodsLibrary {
+            source_canonical_path: source,
+            sha256: "a".repeat(64),
+            snapshot_path: snapshot,
+            abi_error: Some("incompatible ABI".into()),
+            _snapshot_directory: tempfile::tempdir().expect("failed ABI snapshot directory"),
+        };
+        assert!(
+            ensure_same_configured_methods_library(&failed_abi, &matching)
+                .unwrap_err()
+                .to_string()
+                .contains("failed ABI 2.2 verification")
         );
     }
 
@@ -1098,6 +1141,11 @@ mod json_tests {
             .unwrap_err()
             .to_string()
             .contains("libn4m SHA-256 identity mismatch"));
+
+        preflight_methods_archive_v2_library(&methods_library_path, &methods_library_sha256)
+            .expect("closed preflight attests the source snapshot and ABI");
+        preflight_methods_archive_v2_library(&methods_library_path, &methods_library_sha256)
+            .expect("same process identity can be preflighted repeatedly");
 
         let outcome = predict_methods_archive_v2_matrix(
             &archive,
