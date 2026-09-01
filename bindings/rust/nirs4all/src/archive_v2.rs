@@ -7,9 +7,9 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{self, File, OpenOptions};
-use std::io::{Read, Seek, SeekFrom, Write};
+use std::io::{Cursor, Read, Seek, SeekFrom, Write};
 use std::path::Path;
-#[cfg(test)]
+#[cfg(all(test, not(nirs4all_archive_v2_source_consumer)))]
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -84,6 +84,23 @@ pub struct LoadedArchiveV2 {
     members: BTreeMap<String, Vec<u8>>,
 }
 
+/// A manifest-validated portable Methods artifact declaration.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ArchiveV2MethodsArtifact {
+    artifact_id: String,
+    member_path: String,
+}
+
+impl ArchiveV2MethodsArtifact {
+    pub fn artifact_id(&self) -> &str {
+        &self.artifact_id
+    }
+
+    pub fn member_path(&self) -> &str {
+        &self.member_path
+    }
+}
+
 impl LoadedArchiveV2 {
     pub fn reference(&self) -> &ArchiveV2Reference {
         &self.reference
@@ -99,6 +116,32 @@ impl LoadedArchiveV2 {
     }
     pub fn portable_predictor_package(&self) -> Result<&[u8], ArchiveStoreError> {
         self.member(PACKAGE)
+    }
+
+    /// Project the Methods N4MM declarations only after the canonical manifest,
+    /// inventory and raw-member closure has been validated.
+    pub fn methods_n4mm_artifacts(
+        &self,
+    ) -> Result<Vec<ArchiveV2MethodsArtifact>, ArchiveStoreError> {
+        let root = object(&self.manifest, "manifest")?;
+        let payloads = required(root, "payloads")?
+            .as_object()
+            .ok_or_else(|| fmt_err("payloads must be object"))?;
+        let methods = required(payloads, "methods")?
+            .as_object()
+            .ok_or_else(|| fmt_err("payloads.methods must be object"))?;
+        required(methods, "n4mm")?
+            .as_array()
+            .ok_or_else(|| fmt_err("payloads.methods.n4mm must be array"))?
+            .iter()
+            .map(|value| {
+                let item = object(value, "N4MM declaration")?;
+                Ok(ArchiveV2MethodsArtifact {
+                    artifact_id: required_str(item, "artifact_id")?.to_owned(),
+                    member_path: required_str(item, "member_path")?.to_owned(),
+                })
+            })
+            .collect()
     }
 }
 
@@ -146,6 +189,33 @@ pub fn load_archive_v2(path: &Path) -> Result<LoadedArchiveV2, ArchiveStoreError
         reference: ArchiveV2Reference {
             archive_id,
             archive_sha256,
+        },
+        manifest,
+        members,
+    })
+}
+
+/// Validate an in-memory Archive V2 through the same byte-oriented reader used
+/// by the native file surface. This is the canonical browser/WASM entry point:
+/// bindings must not duplicate ZIP, manifest or inventory parsing.
+pub fn load_archive_v2_bytes(bytes: &[u8]) -> Result<LoadedArchiveV2, ArchiveStoreError> {
+    let mut reader = Cursor::new(bytes);
+    let preflight = preflight_zip_reader(&mut reader, bytes.len())?;
+    let manifest = read_manifest_member(&mut reader, &preflight)?;
+    validate_manifest_for_dispatch(&manifest, &preflight)?;
+    let members = read_payload_members(&mut reader, &preflight)?;
+    let (manifest, members, archive_id) = prepare(
+        manifest,
+        members
+            .into_iter()
+            .map(|(path, bytes)| ArchivePayload { path, bytes })
+            .collect(),
+        false,
+    )?;
+    Ok(LoadedArchiveV2 {
+        reference: ArchiveV2Reference {
+            archive_id,
+            archive_sha256: sha256(bytes),
         },
         manifest,
         members,
@@ -1121,13 +1191,20 @@ pub(crate) fn open_v2_preflight(path: &Path) -> Result<(File, ZipPreflight), Arc
 fn preflight_zip_file(file: &mut File) -> Result<ZipPreflight, ArchiveStoreError> {
     let archive_len = usize::try_from(file.metadata()?.len())
         .map_err(|_| fmt_err("archive exceeds platform bounds"))?;
+    preflight_zip_reader(file, archive_len)
+}
+
+fn preflight_zip_reader<R: Read + Seek>(
+    reader: &mut R,
+    archive_len: usize,
+) -> Result<ZipPreflight, ArchiveStoreError> {
     if !(22..=MAX_ARCHIVE).contains(&archive_len) {
         return refuse("archive exceeds V2 on-disk budget");
     }
     let tail_len = archive_len.min(65_557);
-    file.seek(SeekFrom::End(-(tail_len as i64)))?;
+    reader.seek(SeekFrom::End(-(tail_len as i64)))?;
     let mut tail = vec![0; tail_len];
-    file.read_exact(&mut tail)?;
+    reader.read_exact(&mut tail)?;
     let tail_eocd = (0..=tail_len - 22)
         .rev()
         .find(|&at| u32at(&tail, at) == Some(0x0605_4b50))
@@ -1150,16 +1227,16 @@ fn preflight_zip_file(file: &mut File) -> Result<ZipPreflight, ArchiveStoreError
         return refuse("unsupported ZIP central directory");
     }
     let mut central = vec![0; central_size];
-    read_file_exact_at(file, central_offset, &mut central)?;
-    let entries = locate_zip_members(file, &central, count, central_offset)?;
+    read_exact_at(reader, central_offset, &mut central)?;
+    let entries = locate_zip_members(reader, &central, count, central_offset)?;
     Ok(ZipPreflight {
         archive_len,
         entries,
     })
 }
 
-fn locate_zip_members(
-    file: &mut File,
+fn locate_zip_members<R: Read + Seek>(
+    reader: &mut R,
     central: &[u8],
     count: usize,
     central_offset: usize,
@@ -1229,7 +1306,7 @@ fn locate_zip_members(
             return refuse("ZIP total exceeds V2 budget");
         }
         let mut local = [0u8; 30];
-        read_file_exact_at(file, local_offset, &mut local)?;
+        read_exact_at(reader, local_offset, &mut local)?;
         if u32at(&local, 0) != Some(0x0403_4b50)
             || u16at(&local, 4) != Some(version_needed)
             || u16at(&local, 6) != Some(flags)
@@ -1248,7 +1325,7 @@ fn locate_zip_members(
             .checked_add(30)
             .ok_or_else(|| fmt_err("ZIP local offset overflow"))?;
         let mut local_name = vec![0; name_len];
-        read_file_exact_at(file, local_name_offset, &mut local_name)?;
+        read_exact_at(reader, local_name_offset, &mut local_name)?;
         if local_name != name.as_bytes() {
             return refuse("ZIP local member name does not match central directory");
         }
@@ -1281,23 +1358,26 @@ fn locate_zip_members(
     Ok(entries)
 }
 
-fn read_file_exact_at(
-    file: &mut File,
+fn read_exact_at<R: Read + Seek>(
+    reader: &mut R,
     offset: usize,
     bytes: &mut [u8],
 ) -> Result<(), ArchiveStoreError> {
-    file.seek(SeekFrom::Start(offset as u64))?;
-    file.read_exact(bytes)?;
+    reader.seek(SeekFrom::Start(offset as u64))?;
+    reader.read_exact(bytes)?;
     Ok(())
 }
 
-fn read_zip_member(file: &mut File, entry: &ZipEntry) -> Result<Vec<u8>, ArchiveStoreError> {
+fn read_zip_member<R: Read + Seek>(
+    reader: &mut R,
+    entry: &ZipEntry,
+) -> Result<Vec<u8>, ArchiveStoreError> {
     let len = entry
         .data_end
         .checked_sub(entry.data_start)
         .ok_or_else(|| fmt_err("ZIP payload range underflow"))?;
     let mut bytes = vec![0; len];
-    read_file_exact_at(file, entry.data_start, &mut bytes)?;
+    read_exact_at(reader, entry.data_start, &mut bytes)?;
     if crc32(&bytes) != entry.crc {
         return Err(ArchiveStoreError::Integrity(format!(
             "ZIP CRC mismatch for `{}`",
@@ -1537,8 +1617,8 @@ fn is_json_delimiter(byte: u8) -> bool {
     byte.is_ascii_whitespace() || matches!(byte, b',' | b']' | b'}')
 }
 
-pub(crate) fn read_manifest_member(
-    file: &mut File,
+pub(crate) fn read_manifest_member<R: Read + Seek>(
+    reader: &mut R,
     preflight: &ZipPreflight,
 ) -> Result<Value, ArchiveStoreError> {
     let entry = preflight
@@ -1546,7 +1626,7 @@ pub(crate) fn read_manifest_member(
         .iter()
         .find(|entry| entry.name == MANIFEST)
         .ok_or_else(|| fmt_err("ZIP dispatch member manifest.json is absent"))?;
-    let bytes = read_zip_member(file, entry)?;
+    let bytes = read_zip_member(reader, entry)?;
     parse_manifest_json(&bytes)
 }
 
@@ -1589,14 +1669,14 @@ fn validate_manifest_for_dispatch(
     validate_manifest_declarations(manifest, &members)
 }
 
-pub(crate) fn read_payload_members(
-    file: &mut File,
+pub(crate) fn read_payload_members<R: Read + Seek>(
+    reader: &mut R,
     preflight: &ZipPreflight,
 ) -> Result<BTreeMap<String, Vec<u8>>, ArchiveStoreError> {
     let mut members = BTreeMap::new();
     for entry in &preflight.entries {
         if entry.name != MANIFEST {
-            let bytes = read_zip_member(file, entry)?;
+            let bytes = read_zip_member(reader, entry)?;
             if members.insert(entry.name.clone(), bytes).is_some() {
                 return refuse("duplicate ZIP member");
             }
@@ -1845,7 +1925,7 @@ fn crc32(bytes: &[u8]) -> u32 {
     !crc
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(nirs4all_archive_v2_source_consumer)))]
 mod tests {
     use super::*;
     use crate::{
@@ -1981,6 +2061,14 @@ mod tests {
         let a = load_archive_v2(&p).unwrap();
         assert_eq!(a.reference(), &r);
         assert_eq!(a.portable_predictor_package().unwrap(), expected);
+        let raw = fs::read(&p).unwrap();
+        let from_bytes = load_archive_v2_bytes(&raw).unwrap();
+        assert_eq!(from_bytes.reference(), &r);
+        assert_eq!(from_bytes.manifest(), a.manifest());
+        assert_eq!(
+            from_bytes.methods_n4mm_artifacts().unwrap(),
+            a.methods_n4mm_artifacts().unwrap()
+        );
         assert!(matches!(load_archive(&p).unwrap(), LoadedArchive::V2(_)));
         let _ = fs::remove_file(p);
     }
