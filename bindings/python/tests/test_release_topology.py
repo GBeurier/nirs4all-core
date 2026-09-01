@@ -185,6 +185,11 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         maturin = pyproject["tool"]["maturin"]
         self.assertEqual(maturin["module-name"], "nirs4all_core._native")
         self.assertEqual(maturin["python-source"], "src")
+        self.assertEqual(maturin["python-packages"], ["nirs4all_core", "n4a"])
+        self.assertEqual(
+            set(maturin["exclude"]),
+            {"**/__pycache__", "**/__pycache__/**", "**/*.pyc", "**/*.pyo"},
+        )
         self.assertEqual(maturin["manifest-path"], "../python-native/Cargo.toml")
 
     def test_namespace_facades_are_machine_readable(self) -> None:

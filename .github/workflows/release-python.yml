@@ -73,12 +73,15 @@ jobs:
           CIBW_ARCHS_WINDOWS: "AMD64"
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
           CIBW_TEST_COMMAND: >-
-            python -c "import nirs4all_core;
+            python -c "import n4a, nirs4all_core;
+            assert n4a.__aggregate_import__ == 'nirs4all_core';
+            assert n4a.__all__ == nirs4all_core.__all__;
             assert hasattr(nirs4all_core, 'read_portable_predictor_package_v2');
             assert hasattr(nirs4all_core, 'write_archive_v2_from_native_payloads')"
         run: |
           python -m pip install --upgrade pip cibuildwheel
           cibuildwheel --output-dir dist bindings/python
+          python scripts/check_python_wheel.py dist/*.whl
       - name: twine check
         shell: bash
         run: |
