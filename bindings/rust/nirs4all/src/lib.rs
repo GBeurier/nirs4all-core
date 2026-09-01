@@ -35,10 +35,12 @@ pub use archive_view::{
     ArchiveReplayView, ArchiveView, ArchiveViewError,
 };
 pub use native_methods_replay::{
-    replay_methods_archive_v2, replay_methods_archive_v2_conformal_presentation_v1,
+    predict_methods_archive_v2_matrix, replay_methods_archive_v2,
+    replay_methods_archive_v2_conformal_presentation_v1,
     replay_methods_archive_v2_conformal_presentation_v1_json, replay_methods_archive_v2_json,
-    replay_methods_archive_v3, replay_methods_archive_v3_json, MethodsArchivePredictRequest,
-    MethodsArchiveRefitRequestV3, MethodsArchiveReplayJsonRequest, NativeMethodsReplayError,
+    replay_methods_archive_v3, replay_methods_archive_v3_json, MethodsArchiveMatrixPredictRequest,
+    MethodsArchivePredictRequest, MethodsArchiveRefitRequestV3, MethodsArchiveReplayJsonRequest,
+    NativeMethodsReplayError,
 };
 pub use portable_session::{
     PortableSession, PortableSessionError, PortableSessionState, PORTABLE_SESSION_EXPORT_SCHEMA,
