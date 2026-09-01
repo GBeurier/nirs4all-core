@@ -134,6 +134,43 @@ def replay_methods_archive_v2(
     return _decode_replay_outcome(payload, "V2")
 
 
+def replay_methods_archive_v2_conformal_presentation_v1(
+    path: str | Path,
+    request: Any,
+    data_envelopes: Any,
+    methods_inputs: Any,
+    *,
+    methods_library_path: str | Path,
+    outcome_id: str,
+    run_id: str,
+    warnings: Any = (),
+    diagnostics: Any = None,
+) -> dict[str, Any]:
+    """Replay a calibrated Archive V2 into a closed UI presentation.
+
+    The native DAG-ML coordinator computes and validates the complete
+    presentation from the package calibration and replay outcome. Python only
+    serializes input contracts and decodes the returned JSON object; it does
+    not calculate conformal quantiles, bounds, fingerprints, or sample joins.
+    """
+
+    replay = _native_replay(
+        "replay_methods_archive_v2_conformal_presentation_v1_json", "V2 conformal"
+    )
+    payload = replay(
+        str(Path(path)),
+        _contract_json(request, "replay request"),
+        _contract_json(data_envelopes, "data envelopes"),
+        _contract_json(methods_inputs, "Methods inputs"),
+        str(Path(methods_library_path)),
+        outcome_id,
+        run_id,
+        _contract_json(warnings, "warnings"),
+        _contract_json({} if diagnostics is None else diagnostics, "diagnostics"),
+    )
+    return _decode_replay_outcome(payload, "V2 conformal presentation")
+
+
 def replay_methods_archive_v3(
     path: str | Path,
     request: Any,

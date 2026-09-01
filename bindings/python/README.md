@@ -29,6 +29,12 @@ invocation-local N4MM runtime. These functions do not accept Python callbacks,
 estimator handles, pickle, or joblib sidecars; unsupported host controllers are
 refused rather than hydrated implicitly.
 
+For calibrated scalar Package V2 archives,
+`replay_methods_archive_v2_conformal_presentation_v1(...)` returns the exact
+self-validating presentation built by DAG-ML from the native replay. The
+Python layer only transports strict JSON; it does not calculate quantiles,
+interval endpoints, fingerprints, or sample joins.
+
 ## Portable Execution
 
 `nirs4all_core.run_portable_pipeline(source, dataset)` executes the shared

@@ -40,6 +40,20 @@ Compressed ZIP members, workspace snapshots, legacy migration, signatures, and
 declared methods/host-sidecar payloads are deliberately rejected with typed
 capability or format errors; this crate does not silently broaden the format.
 
+## Archive V2 native replay and conformal presentation
+
+`replay_methods_archive_v2()` combines an integrity-checked Archive V2 with a
+typed current-cohort request and an explicit absolute `libn4m` path. Core
+supplies validated package bytes; DAG-ML owns package validation, scheduling,
+N4MM hydration and prediction.
+
+For a calibrated scalar PREDICT replay,
+`replay_methods_archive_v2_conformal_presentation_v1()` returns DAG-ML's
+self-validating presentation, including the package, replay, calibration and
+presentation fingerprints plus the exact sample order. Core does not
+recalculate intervals, choose a target, load a Python host, or search sibling
+checkouts for artifacts.
+
 ## License
 
 `nirs4all` is dual-licensed under `CECILL-2.1 OR AGPL-3.0-or-later`, at your
