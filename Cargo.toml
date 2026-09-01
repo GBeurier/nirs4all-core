@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["bindings/rust/nirs4all", "bindings/python-native"]
+members = ["bindings/rust/nirs4all", "bindings/python-native", "bindings/wasm-native"]
 
 [workspace.package]
 edition = "2021"
