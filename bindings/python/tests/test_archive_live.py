@@ -1,0 +1,166 @@
+"""Opt-in live witness for Archive V2 replay through a real Methods runtime.
+
+Set ``NIRS4ALL_CORE_LIVE_ARCHIVE_V2`` to a valid two-feature, single-output
+Methods Archive V2 and ``NIRS4ALL_CORE_LIVE_METHODS_LIBRARY`` to a compatible
+``libn4m``. The test is intentionally fixture-free: archives and native
+binaries remain release artifacts rather than committed test data.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import importlib
+import json
+import math
+import os
+import struct
+import tempfile
+import unittest
+import zipfile
+from pathlib import Path
+from typing import Any
+
+from nirs4all_core import read_portable_predictor_package_v2, replay_methods_archive_v2
+
+_ARCHIVE_ENV = "NIRS4ALL_CORE_LIVE_ARCHIVE_V2"
+_LIBRARY_ENV = "NIRS4ALL_CORE_LIVE_METHODS_LIBRARY"
+_TMPDIR_ENV = "NIRS4ALL_CORE_LIVE_TMPDIR"
+_FINGERPRINT_PREFIX = b"n4a-matrix-f64-le.v1\0"
+
+
+def _canonical_json(value: Any) -> str:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
+
+
+def _feature_fingerprint(matrix: list[list[float]]) -> str:
+    rows = len(matrix)
+    columns = len(matrix[0])
+    values = [value for row in matrix for value in row]
+    hasher = hashlib.sha256()
+    hasher.update(_FINGERPRINT_PREFIX)
+    hasher.update(struct.pack("<QQ", rows, columns))
+    hasher.update(struct.pack(f"<{len(values)}d", *values))
+    return hasher.hexdigest()
+
+
+def _contracts(package: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    dag_ml: Any = importlib.import_module("dag_ml")
+
+    matrix = [[1.5, 0.5], [3.5, 1.5]]
+    sample_ids = ["predict.0", "predict.1"]
+    records: list[dict[str, Any]] = [
+        {
+            "observation_id": sample_id,
+            "sample_id": sample_id,
+            "target_id": None,
+            "group_id": None,
+            "origin_sample_id": None,
+            "source_id": None,
+            "is_augmented": False,
+            "metadata": {},
+        }
+        for sample_id in sample_ids
+    ]
+    relations = {"records": records}
+    relation_fingerprint = dag_ml.sample_relation_set_fingerprint_json(
+        _canonical_json(relations)
+    )
+    requirements = package["execution_bundle"]["data_requirements"]
+    envelopes: dict[str, Any] = {}
+    inputs: dict[str, Any] = {}
+    for requirement in requirements:
+        key = f"{requirement['node_id']}.{requirement['input_name']}"
+        envelopes[key] = {
+            "schema_version": 1,
+            "schema_fingerprint": requirement["schema_fingerprint"],
+            "plan_fingerprint": requirement["plan_fingerprint"],
+            "relation_fingerprint": relation_fingerprint,
+            "data_content_fingerprint": _feature_fingerprint(matrix),
+            "target_content_fingerprint": None,
+            "coordinator_relations": relations,
+        }
+        inputs[key] = {
+            "sample_ids": sample_ids,
+            "x": matrix,
+            "target_names": package["output_bindings"][0]["target_names"],
+        }
+    request = dag_ml.sign_training_replay_request(
+        {
+            "schema_version": 1,
+            "request_id": "replay:nirs4all.core_live_witness",
+            "source_outcome_fingerprint": package["training_outcome"]["outcome_fingerprint"],
+            "phase": "PREDICT",
+            "data_envelope_keys": sorted(envelopes),
+            "output_binding_ids": [package["output_bindings"][0]["binding_id"]],
+            "request_fingerprint": "0" * 64,
+        }
+    )
+    if hasattr(request, "to_dict"):
+        request = request.to_dict()
+    return request, envelopes, inputs
+
+
+def _tamper_n4mm(source: Path, destination: Path) -> None:
+    with zipfile.ZipFile(source) as archive:
+        manifest = json.loads(archive.read("manifest.json"))
+        member_path = manifest["payloads"]["methods"]["n4mm"][0]["member_path"]
+        with zipfile.ZipFile(destination, "x") as altered:
+            for info in archive.infolist():
+                payload = archive.read(info.filename)
+                if info.filename == member_path:
+                    payload = payload[:-1] + bytes([payload[-1] ^ 1])
+                altered.writestr(info, payload)
+
+
+@unittest.skipUnless(
+    os.environ.get(_ARCHIVE_ENV) and os.environ.get(_LIBRARY_ENV),
+    f"set {_ARCHIVE_ENV} and {_LIBRARY_ENV} to run the native witness",
+)
+class LiveArchiveV2ReplayTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.archive = Path(os.environ[_ARCHIVE_ENV])
+        self.library = Path(os.environ[_LIBRARY_ENV])
+        package = json.loads(read_portable_predictor_package_v2(self.archive))
+        self.request, self.envelopes, self.inputs = _contracts(package)
+
+    def test_real_wheel_replays_n4mm_with_aligned_finite_output(self) -> None:
+        outcome = replay_methods_archive_v2(
+            self.archive,
+            self.request,
+            self.envelopes,
+            self.inputs,
+            methods_library_path=self.library,
+            outcome_id="outcome:core.live_witness",
+            run_id="run:core.live_witness",
+            diagnostics={"proof": "real-wheel-libn4m"},
+        )
+
+        self.assertEqual(outcome["outcome_id"], "outcome:core.live_witness")
+        self.assertEqual(outcome["run_id"], "run:core.live_witness")
+        self.assertEqual(outcome["phase"], "PREDICT")
+        self.assertEqual(outcome["controller_count"], 1)
+        self.assertEqual(outcome["prediction_block_count"], 1)
+        block = outcome["outputs"][0]["predictions"][0]
+        self.assertEqual(block["sample_ids"], ["predict.0", "predict.1"])
+        self.assertEqual(len(block["values"]), 2)
+        self.assertTrue(all(math.isfinite(value) for row in block["values"] for value in row))
+
+    def test_tampered_n4mm_is_refused_before_replay(self) -> None:
+        temporary_root = os.environ.get(_TMPDIR_ENV, "/dev/shm")
+        with tempfile.TemporaryDirectory(dir=temporary_root) as directory:
+            altered = Path(directory) / "tampered.n4a"
+            _tamper_n4mm(self.archive, altered)
+            with self.assertRaisesRegex(ValueError, "refused|mismatch|integrity"):
+                replay_methods_archive_v2(
+                    altered,
+                    self.request,
+                    self.envelopes,
+                    self.inputs,
+                    methods_library_path=self.library,
+                    outcome_id="outcome:core.live_witness.tampered",
+                    run_id="run:core.live_witness.tampered",
+                )
+
+
+if __name__ == "__main__":
+    unittest.main()
