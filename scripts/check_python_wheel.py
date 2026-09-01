@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import re
+import stat
 import sys
 import zipfile
 from collections import Counter
@@ -24,9 +25,21 @@ def validate_wheel(path: Path) -> None:
         unsafe = sorted(
             name
             for name in raw_names
-            if name.startswith("/")
+            if PurePosixPath(name).is_absolute()
             or "\\" in name
-            or ".." in PurePosixPath(name).parts
+            or ":" in name
+            or not name.rstrip("/")
+            or any(
+                segment in {"", ".", ".."}
+                for segment in name.rstrip("/").split("/")
+            )
+        )
+        special = sorted(
+            info.filename
+            for info in archive.infolist()
+            if info.create_system == 3
+            and stat.S_IFMT(info.external_attr >> 16)
+            not in {0, stat.S_IFREG, stat.S_IFDIR}
         )
         metadata_names = sorted(
             name for name in names if name.endswith(".dist-info/METADATA")
@@ -50,8 +63,20 @@ def validate_wheel(path: Path) -> None:
         if "__pycache__/" in name or name.endswith((".pyc", ".pyo"))
     )
     version = metadata.get("Version", "")
+    expected_dist_info = f"nirs4all_core-{version}.dist-info/"
+    unexpected_roots = sorted(
+        name
+        for name in names
+        if not name.startswith(("nirs4all_core/", "n4a/", expected_dist_info))
+    )
     source_version = re.search(r'^__version__ = "([^"]+)"$', init_source, re.MULTILINE)
     version_errors = []
+    if metadata.get("Name") != "nirs4all-core":
+        version_errors.append(
+            f"metadata Name is {metadata.get('Name')!r}, expected 'nirs4all-core'"
+        )
+    if metadata_names[0] != f"{expected_dist_info}METADATA":
+        version_errors.append("dist-info directory does not match metadata version")
     if not path.name.startswith(f"nirs4all_core-{version}-"):
         version_errors.append(f"filename does not encode metadata version {version!r}")
     if source_version is None or source_version.group(1) != version:
@@ -59,7 +84,15 @@ def validate_wheel(path: Path) -> None:
         version_errors.append(
             f"nirs4all_core.__version__ is {observed!r}, expected {version!r}"
         )
-    if missing or contaminated or duplicates or unsafe or version_errors:
+    if (
+        missing
+        or contaminated
+        or duplicates
+        or unsafe
+        or special
+        or unexpected_roots
+        or version_errors
+    ):
         details = []
         if missing:
             details.append(f"missing public packages: {', '.join(missing)}")
@@ -69,6 +102,10 @@ def validate_wheel(path: Path) -> None:
             details.append(f"duplicate ZIP entries: {', '.join(duplicates)}")
         if unsafe:
             details.append(f"unsafe ZIP paths: {', '.join(unsafe)}")
+        if special:
+            details.append(f"special ZIP entries: {', '.join(special)}")
+        if unexpected_roots:
+            details.append(f"unexpected wheel roots: {', '.join(unexpected_roots)}")
         details.extend(version_errors)
         raise ValueError(f"{path}: {'; '.join(details)}")
 
