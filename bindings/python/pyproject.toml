@@ -60,4 +60,6 @@ Issues = "https://github.com/GBeurier/nirs4all-core/issues"
 manifest-path = "../python-native/Cargo.toml"
 module-name = "nirs4all_core._native"
 python-source = "src"
+python-packages = ["nirs4all_core", "n4a"]
+exclude = ["**/__pycache__", "**/__pycache__/**", "**/*.pyc", "**/*.pyo"]
 features = ["pyo3/extension-module"]
