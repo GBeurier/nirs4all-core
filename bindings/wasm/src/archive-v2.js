@@ -2,7 +2,9 @@ import { loadMethodsWasm } from './index.js';
 
 const MAX_ROWS = 4096;
 const MAX_FEATURES = 2048;
+const MAX_TARGETS = 256;
 const MAX_CELLS = 2_097_152;
+const MAX_ARCHIVE_BYTES = 537_938_966;
 
 let archiveNativePromise = null;
 
@@ -35,18 +37,13 @@ export async function loadArchiveV2Native() {
  * arrays, marshals them into the public Methods C ABI and shapes the returned
  * multi-target result. It contains no estimator or prediction implementation.
  */
-export async function replayMethodsArchiveV2(archiveBytes, dataset, options = {}) {
-  if (!options || typeof options !== 'object' || Array.isArray(options)) {
-    throw new TypeError('Archive V2 replay options must be an object.');
-  }
-  const unknownOptions = Object.keys(options)
-    .filter((key) => key !== 'methods' && key !== 'archiveNative');
-  if (unknownOptions.length > 0) {
-    throw new TypeError(`Archive V2 replay options have unknown fields: ${unknownOptions.join(', ')}.`);
-  }
+export async function replayMethodsArchiveV2(archiveBytes, dataset) {
   const bytes = bytesView(archiveBytes, 'Archive V2');
+  if (bytes.byteLength > MAX_ARCHIVE_BYTES) {
+    throw new RangeError('Archive V2 exceeds the canonical Core byte budget.');
+  }
   const input = features(dataset);
-  const archiveNative = options.archiveNative ?? await loadArchiveV2Native();
+  const archiveNative = await loadArchiveV2Native();
   if (typeof archiveNative?.ValidatedMethodsArchiveV2 !== 'function') {
     throw new TypeError('Archive V2 native validator is unavailable or incompatible.');
   }
@@ -55,10 +52,13 @@ export async function replayMethodsArchiveV2(archiveBytes, dataset, options = {}
   const archive = new archiveNative.ValidatedMethodsArchiveV2(bytes);
   try {
     const targetNames = JSON.parse(archive.target_names_json());
-    if (!Array.isArray(targetNames) || targetNames.length === 0) {
-      throw new Error('Archive V2 native validator returned no target names.');
+    if (!Array.isArray(targetNames) || targetNames.length === 0
+      || targetNames.length > MAX_TARGETS || new Set(targetNames).size !== targetNames.length
+      || targetNames.some((name) => typeof name !== 'string' || name.length === 0
+        || name.length > 128 || /[\u0000-\u001f\u007f]/.test(name))) {
+      throw new Error('Archive V2 target names exceed the bounded output contract.');
     }
-    const methods = options.methods ?? await loadMethodsWasm();
+    const methods = await loadMethodsWasm();
     if (typeof methods.loadModule === 'function') {
       await methods.loadModule();
     }
@@ -129,6 +129,10 @@ function predictN4mm(methods, modelBytes, input, expectedTargets) {
         `Archive output binding declares ${expectedTargets} targets; N4MM contains ${nTargets}.`,
       );
     }
+    const outputCells = input.rows * nTargets;
+    if (!Number.isSafeInteger(outputCells) || nTargets > MAX_TARGETS || outputCells > MAX_CELLS) {
+      throw new RangeError('Archive V2 prediction exceeds the bounded WASM output contract.');
+    }
 
     matrix = methods.makeMatrixView(input.X, input.rows, input.cols);
     const outputOut = allocate(module, 4, 'N4MM prediction handle');
@@ -150,7 +154,7 @@ function predictN4mm(methods, modelBytes, input, expectedTargets) {
     const result = methods.readArrayView(output);
     if (result.rows !== input.rows || result.cols !== expectedTargets
       || result.data.length !== input.rows * expectedTargets
-      || Array.from(result.data).some((value) => !Number.isFinite(value))) {
+      || hasNonFinite(result.data)) {
       throw new Error('Methods returned an invalid or non-finite multi-target prediction matrix.');
     }
     return result;
@@ -251,10 +255,13 @@ function features(dataset) {
   }
   const X = numericMatrix(dataset.X, rows, cols);
   const supplied = dataset.sampleIds ?? dataset.sample_ids;
+  if (supplied != null && (!Array.isArray(supplied) || supplied.length !== rows)) {
+    throw new TypeError('Archive V2 sample IDs must be an array matching the row count.');
+  }
   const sampleIds = supplied == null
     ? Array.from({ length: rows }, (_, index) => `sample.${index}`)
-    : [...supplied];
-  if (sampleIds.length !== rows || new Set(sampleIds).size !== rows
+    : supplied.slice();
+  if (new Set(sampleIds).size !== rows
     || sampleIds.some((id) => typeof id !== 'string' || id.length === 0 || id.length > 128
       || !/^[A-Za-z0-9_.:-]+$/.test(id))) {
     throw new TypeError('Archive V2 sample IDs must be distinct bounded identity strings.');
@@ -263,8 +270,12 @@ function features(dataset) {
 }
 
 function numericMatrix(value, rows, cols) {
+  const expected = rows * cols;
   let result;
   if (value instanceof Float64Array) {
+    if (value.length !== expected) {
+      throw new RangeError('Archive V2 feature matrix shape or finite-value contract is invalid.');
+    }
     result = new Float64Array(value);
   } else if (Array.isArray(value) && value.length === rows && value.every(Array.isArray)) {
     if (value.some((row) => row.length !== cols)) {
@@ -272,14 +283,24 @@ function numericMatrix(value, rows, cols) {
     }
     result = Float64Array.from(value.flat());
   } else if (Array.isArray(value) || ArrayBuffer.isView(value)) {
+    if (!Number.isInteger(value.length) || value.length !== expected) {
+      throw new RangeError('Archive V2 feature matrix shape or finite-value contract is invalid.');
+    }
     result = Float64Array.from(value);
   } else {
     throw new TypeError('Archive V2 feature matrix must be numeric array data.');
   }
-  if (result.length !== rows * cols || Array.from(result).some((item) => !Number.isFinite(item))) {
+  if (result.length !== expected || hasNonFinite(result)) {
     throw new RangeError('Archive V2 feature matrix shape or finite-value contract is invalid.');
   }
   return result;
+}
+
+function hasNonFinite(values) {
+  for (let index = 0; index < values.length; index += 1) {
+    if (!Number.isFinite(values[index])) return true;
+  }
+  return false;
 }
 
 function bytesView(value, label) {

@@ -208,5 +208,4 @@ export function loadArchiveV2Native(): Promise<unknown>;
 export function replayMethodsArchiveV2(
   archiveBytes: ArrayBuffer | ArrayBufferView,
   dataset: ArchiveV2ReplayDataset,
-  options?: { methods?: unknown; archiveNative?: unknown },
 ): Promise<ArchiveV2ReplayResult>;

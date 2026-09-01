@@ -20,49 +20,57 @@ test('Archive V2 native surface is a Rust/WASM validator', async () => {
 });
 
 test('invalid Archive V2 refuses before Methods is observed', async () => {
-  let methodsObserved = false;
-  const methods = new Proxy({}, {
-    get() {
-      methodsObserved = true;
-      throw new Error('Methods must not be observed');
-    },
-  });
   await assert.rejects(
-    replayMethodsArchiveV2(new Uint8Array([0x50, 0x4b, 0x03, 0x04]), dataset, { methods }),
+    replayMethodsArchiveV2(new Uint8Array([0x50, 0x4b, 0x03, 0x04]), dataset),
     /Core Archive V2 refusal/,
   );
-  assert.equal(methodsObserved, false);
 });
 
 test('host matrix and identity contracts refuse before archive validation', async () => {
-  let nativeObserved = false;
-  const archiveNative = new Proxy({}, {
-    get() {
-      nativeObserved = true;
-      throw new Error('archive validator must not be observed');
-    },
-  });
   await assert.rejects(
     replayMethodsArchiveV2(new Uint8Array(), {
       ...dataset,
       X: [[Number.NaN, 0.5], [3.5, 1.5]],
-    }, { archiveNative }),
+    }),
     /finite-value contract/,
   );
-  assert.equal(nativeObserved, false);
 
   await assert.rejects(
     replayMethodsArchiveV2(new Uint8Array(), {
       ...dataset,
       sampleIds: ['predict.0', 'predict.0'],
-    }, { archiveNative }),
+    }),
     /distinct bounded identity strings/,
   );
-  assert.equal(nativeObserved, false);
 
+  const neverIterate = {
+    *[Symbol.iterator]() {
+      throw new Error('sample ID iterable must not be consumed');
+    },
+  };
   await assert.rejects(
-    replayMethodsArchiveV2(new Uint8Array(), dataset, { archiveNative, fallback: true }),
-    /options have unknown fields: fallback/,
+    replayMethodsArchiveV2(new Uint8Array(), {
+      ...dataset,
+      sampleIds: neverIterate,
+    }),
+    /sample IDs must be an array matching the row count/,
   );
-  assert.equal(nativeObserved, false);
+});
+
+test('runtime dependency injection cannot bypass Core or Methods authority', async () => {
+  let injectedObserved = false;
+  const injected = new Proxy({}, {
+    get() {
+      injectedObserved = true;
+      throw new Error('injected dependency must never be observed');
+    },
+  });
+  await assert.rejects(
+    replayMethodsArchiveV2(new Uint8Array([0x00]), dataset, {
+      archiveNative: injected,
+      methods: injected,
+    }),
+    /Core Archive V2 refusal/,
+  );
+  assert.equal(injectedObserved, false);
 });

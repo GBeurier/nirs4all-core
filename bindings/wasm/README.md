@@ -45,7 +45,8 @@ npm run qualify:archive-v2 -- /path/to/archive.n4a /path/to/scenario.json
 
 The qualification command asserts the ordered two-dimensional result from one
 model import and one multi-target prediction, checks that no Methods fit symbol
-was called, and proves tampered-digest and missing-Methods refusals.
+was called, and proves tampered-digest and inventory refusals. The isolated
+tarball gate separately proves refusal when the optional Methods peer is absent.
 
 Savitzky-Golay defaults to `mode: "interp"` for full nirs4all parity and
 preserves explicit methods-backed modes (`mirror`, `constant`, `nearest`,
