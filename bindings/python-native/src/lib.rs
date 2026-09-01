@@ -13,6 +13,7 @@ use std::path::PathBuf;
 
 use nirs4all::{
     load_archive_v2, load_archive_v3,
+    predict_methods_archive_v2_matrix_json as core_predict_methods_archive_v2_matrix_json,
     replay_methods_archive_v2_conformal_presentation_v1_json as core_replay_methods_archive_v2_conformal_presentation_v1_json,
     replay_methods_archive_v2_json as core_replay_methods_archive_v2_json,
     replay_methods_archive_v3_json as core_replay_methods_archive_v3_json, write_archive_v2,
@@ -128,6 +129,24 @@ fn replay_methods_archive_v2_json(
     );
     py.allow_threads(move || core_replay_methods_archive_v2_json(&archive_path, input))
         .map_err(replay_error)
+}
+
+/// Execute Core's closed X-only Archive V2 matrix prediction surface.
+///
+/// Core owns request composition, target-order validation, libn4m SHA-256 and
+/// ABI attestation, the private library snapshot and replay outcome checks.
+#[pyfunction]
+fn predict_methods_archive_v2_matrix_json(
+    py: Python<'_>,
+    path: &str,
+    input_json: &str,
+) -> PyResult<String> {
+    let archive_path = PathBuf::from(path);
+    let input_json = input_json.to_owned();
+    py.allow_threads(move || {
+        let archive = load_archive_v2(&archive_path).map_err(archive_error)?;
+        core_predict_methods_archive_v2_matrix_json(&archive, &input_json).map_err(replay_error)
+    })
 }
 
 /// Replay one calibrated Archive V2 and return DAG-ML's self-validating
@@ -286,6 +305,10 @@ fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
     )?)?;
     module.add_function(wrap_pyfunction!(read_portable_refit_package_v3, module)?)?;
     module.add_function(wrap_pyfunction!(replay_methods_archive_v2_json, module)?)?;
+    module.add_function(wrap_pyfunction!(
+        predict_methods_archive_v2_matrix_json,
+        module
+    )?)?;
     module.add_function(wrap_pyfunction!(
         replay_methods_archive_v2_conformal_presentation_v1_json,
         module

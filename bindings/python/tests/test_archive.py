@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 import types
 import unittest
@@ -9,6 +10,7 @@ from unittest.mock import patch
 
 from nirs4all_core import (
     NativeArchiveUnavailableError,
+    predict_methods_archive_v2_matrix,
     read_portable_predictor_package_v2,
     read_portable_refit_package_v3,
     replay_methods_archive_v2,
@@ -89,6 +91,70 @@ class ArchiveFacadeTests(unittest.TestCase):
         self.assertEqual(observed[4:7], ["/opt/lib/libn4m.so", "outcome:predict", "run:predict"])
         self.assertEqual(observed[7], '["portable"]')
         self.assertEqual(observed[8], '{"source":"test"}')
+
+    def test_v2_matrix_prediction_delegates_one_closed_native_contract(self) -> None:
+        observed: list[object] = []
+
+        def predict(*args: object) -> str:
+            observed.extend(args)
+            return '{"outcome_id":"outcome:matrix","schema_version":3}'
+
+        module = types.SimpleNamespace(predict_methods_archive_v2_matrix_json=predict)
+        with patch.dict(sys.modules, {"nirs4all_core._native": module}):
+            outcome = predict_methods_archive_v2_matrix(
+                "/tmp/model.n4a",
+                ["sample:1", "sample:2"],
+                [[1.0, 2.0], [3.0, 4.0]],
+                ["protein", "moisture"],
+                methods_library_path="/opt/lib/libn4m.so",
+                methods_library_sha256="a" * 64,
+                request_id="request:matrix",
+                outcome_id="outcome:matrix",
+                run_id="run:matrix",
+                diagnostics={"source": "test"},
+            )
+
+        self.assertEqual(outcome["outcome_id"], "outcome:matrix")
+        self.assertEqual(observed[0], "/tmp/model.n4a")
+        self.assertEqual(
+            json.loads(str(observed[1])),
+            {
+                "sample_ids": ["sample:1", "sample:2"],
+                "x": [[1.0, 2.0], [3.0, 4.0]],
+                "expected_target_names": ["protein", "moisture"],
+                "methods_library_path": "/opt/lib/libn4m.so",
+                "methods_library_sha256": "a" * 64,
+                "request_id": "request:matrix",
+                "outcome_id": "outcome:matrix",
+                "run_id": "run:matrix",
+                "warnings": [],
+                "diagnostics": {"source": "test"},
+            },
+        )
+
+    def test_v2_matrix_prediction_refuses_non_finite_x_before_native_call(self) -> None:
+        called = False
+
+        def predict(*_: object) -> str:
+            nonlocal called
+            called = True
+            return "{}"
+
+        module = types.SimpleNamespace(predict_methods_archive_v2_matrix_json=predict)
+        with patch.dict(sys.modules, {"nirs4all_core._native": module}):
+            with self.assertRaises(TypeError):
+                predict_methods_archive_v2_matrix(
+                    "/tmp/model.n4a",
+                    ["sample:1"],
+                    [[float("nan")]],
+                    ["protein"],
+                    methods_library_path="/opt/lib/libn4m.so",
+                    methods_library_sha256="a" * 64,
+                    request_id="request:matrix",
+                    outcome_id="outcome:matrix",
+                    run_id="run:matrix",
+                )
+        self.assertFalse(called)
 
     def test_v3_replay_uses_distinct_native_entry_point(self) -> None:
         observed: list[object] = []

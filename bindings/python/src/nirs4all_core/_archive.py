@@ -134,6 +134,51 @@ def replay_methods_archive_v2(
     return _decode_replay_outcome(payload, "V2")
 
 
+def predict_methods_archive_v2_matrix(
+    path: str | Path,
+    sample_ids: list[str],
+    x: list[list[float]],
+    expected_target_names: list[str],
+    *,
+    methods_library_path: str | Path,
+    methods_library_sha256: str,
+    request_id: str,
+    outcome_id: str,
+    run_id: str,
+    warnings: Any = (),
+    diagnostics: Any = None,
+) -> dict[str, Any]:
+    """Execute one closed, attested X-only Archive V2 prediction.
+
+    Core derives every DAG-ML replay contract, requires one finalized output
+    binding and one external data requirement, checks sample/target order, and
+    loads a private snapshot of the exact SHA-256-addressed libn4m after ABI
+    2.2 preflight. Python only transports the host matrix and strict JSON
+    result; it cannot select a fallback, fit/refit phase or callback.
+    """
+
+    predict = _native_replay("predict_methods_archive_v2_matrix_json", "V2 matrix prediction")
+    payload = predict(
+        str(Path(path)),
+        _contract_json(
+            {
+                "sample_ids": sample_ids,
+                "x": x,
+                "expected_target_names": expected_target_names,
+                "methods_library_path": str(Path(methods_library_path)),
+                "methods_library_sha256": methods_library_sha256,
+                "request_id": request_id,
+                "outcome_id": outcome_id,
+                "run_id": run_id,
+                "warnings": warnings,
+                "diagnostics": {} if diagnostics is None else diagnostics,
+            },
+            "Archive V2 matrix prediction request",
+        ),
+    )
+    return _decode_replay_outcome(payload, "V2 matrix prediction")
+
+
 def replay_methods_archive_v2_conformal_presentation_v1(
     path: str | Path,
     request: Any,

@@ -108,6 +108,11 @@ binding-specific parity gates.
   fresh N4MM runtime to DAG-ML. They accept numeric Methods inputs only: no
   callback, joblib sidecar, or supplemental Python controller can cross this
   portable boundary.
+- `predict_methods_archive_v2_matrix(...)` is the closed X-only product path.
+  Core derives the replay contracts, requires one finalized output binding and
+  one external data requirement, validates sample/target order, and loads only
+  a private snapshot of the caller's SHA-256-attested libn4m after ABI 2.2
+  preflight. It exposes no fit/refit, callback or fallback control.
 - Framework idioms: sklearn-style estimators, `fit`/`predict`/`transform`,
   NumPy arrays, pandas data frames, and clear optional extras.
 - Future external operator adapters should look like normal sklearn-compatible
