@@ -6,15 +6,28 @@ from __future__ import annotations
 import re
 import sys
 import zipfile
+from collections import Counter
 from email.parser import BytesParser
 from email.policy import default
 from pathlib import Path
+from pathlib import PurePosixPath
 
 
 def validate_wheel(path: Path) -> None:
     """Validate public package inventory without importing the wheel."""
     with zipfile.ZipFile(path) as archive:
-        names = set(archive.namelist())
+        raw_names = archive.namelist()
+        names = set(raw_names)
+        duplicates = sorted(
+            name for name, count in Counter(raw_names).items() if count > 1
+        )
+        unsafe = sorted(
+            name
+            for name in raw_names
+            if name.startswith("/")
+            or "\\" in name
+            or ".." in PurePosixPath(name).parts
+        )
         metadata_names = sorted(
             name for name in names if name.endswith(".dist-info/METADATA")
         )
@@ -46,12 +59,16 @@ def validate_wheel(path: Path) -> None:
         version_errors.append(
             f"nirs4all_core.__version__ is {observed!r}, expected {version!r}"
         )
-    if missing or contaminated or version_errors:
+    if missing or contaminated or duplicates or unsafe or version_errors:
         details = []
         if missing:
             details.append(f"missing public packages: {', '.join(missing)}")
         if contaminated:
             details.append(f"Python cache entries: {', '.join(contaminated)}")
+        if duplicates:
+            details.append(f"duplicate ZIP entries: {', '.join(duplicates)}")
+        if unsafe:
+            details.append(f"unsafe ZIP paths: {', '.join(unsafe)}")
         details.extend(version_errors)
         raise ValueError(f"{path}: {'; '.join(details)}")
 
