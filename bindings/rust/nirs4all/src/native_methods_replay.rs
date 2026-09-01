@@ -6,9 +6,10 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
-use std::fs::File;
-use std::io::Read;
+use std::fs::{File, OpenOptions};
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use std::sync::{Mutex, OnceLock};
 
 use dag_ml_core::training::PredictionSource;
 use dag_ml_core::{
@@ -25,6 +26,7 @@ use dag_ml_core::{
 };
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use tempfile::TempDir;
 
 use crate::{load_archive_v2, load_archive_v3, LoadedArchiveV2, LoadedArchiveV3};
 
@@ -65,6 +67,24 @@ struct MethodsArchiveMatrixPredictComposition {
     target_names: Vec<String>,
     output_binding_id: String,
 }
+
+const MAX_ATTESTED_METHODS_LIBRARY_BYTES: u64 = 64 * 1024 * 1024;
+
+struct AttestedMethodsLibrary {
+    source_canonical_path: PathBuf,
+    sha256: String,
+    bytes: Vec<u8>,
+}
+
+struct ConfiguredMethodsLibrary {
+    source_canonical_path: PathBuf,
+    sha256: String,
+    snapshot_path: PathBuf,
+    _snapshot_directory: TempDir,
+}
+
+static CONFIGURED_METHODS_LIBRARY: OnceLock<Mutex<Option<ConfiguredMethodsLibrary>>> =
+    OnceLock::new();
 
 /// Typed current-cohort input for a target-bound Archive V3 full-refit replay.
 ///
@@ -180,10 +200,30 @@ fn methods_dataset_from_json(
     Ok(dataset)
 }
 
-fn validate_methods_library_identity(
+fn hash_reader(
+    mut reader: impl Read,
+    label: &str,
+) -> Result<(String, Vec<u8>), NativeMethodsReplayError> {
+    let mut bytes = Vec::new();
+    reader
+        .by_ref()
+        .take(MAX_ATTESTED_METHODS_LIBRARY_BYTES + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|error| replay_error(format!("cannot read {label}: {error}")))?;
+    if bytes.len() as u64 > MAX_ATTESTED_METHODS_LIBRARY_BYTES {
+        return Err(replay_error(format!(
+            "{label} exceeds the {} byte limit",
+            MAX_ATTESTED_METHODS_LIBRARY_BYTES
+        )));
+    }
+    let sha256 = format!("{:x}", Sha256::digest(&bytes));
+    Ok((sha256, bytes))
+}
+
+fn attest_methods_library(
     path: &Path,
     expected_sha256: &str,
-) -> Result<(), NativeMethodsReplayError> {
+) -> Result<AttestedMethodsLibrary, NativeMethodsReplayError> {
     if !path.is_absolute() {
         return Err(replay_error("libn4m path must be absolute"));
     }
@@ -203,7 +243,20 @@ fn validate_methods_library_identity(
             "libn4m identity must name a regular non-symlink file",
         ));
     }
-    let mut file = File::open(path)
+    if link_metadata.len() > MAX_ATTESTED_METHODS_LIBRARY_BYTES {
+        return Err(replay_error(format!(
+            "attested libn4m exceeds the {} byte limit",
+            MAX_ATTESTED_METHODS_LIBRARY_BYTES
+        )));
+    }
+    let source_canonical_path = std::fs::canonicalize(path)
+        .map_err(|error| replay_error(format!("cannot canonicalize libn4m identity: {error}")))?;
+    if source_canonical_path != path {
+        return Err(replay_error(
+            "libn4m path must be canonical and contain no symlink components",
+        ));
+    }
+    let file = File::open(path)
         .map_err(|error| replay_error(format!("cannot open attested libn4m: {error}")))?;
     let opened_metadata = file
         .metadata()
@@ -213,21 +266,127 @@ fn validate_methods_library_identity(
             "libn4m identity changed while opening the attested file",
         ));
     }
-    let mut hasher = Sha256::new();
-    let mut buffer = [0_u8; 64 * 1024];
-    loop {
-        let count = file
-            .read(&mut buffer)
-            .map_err(|error| replay_error(format!("cannot hash attested libn4m: {error}")))?;
-        if count == 0 {
-            break;
-        }
-        hasher.update(&buffer[..count]);
-    }
-    let actual = format!("{:x}", hasher.finalize());
+    let (actual, bytes) = hash_reader(file, "attested libn4m")?;
     if actual != expected_sha256 {
         return Err(replay_error(format!(
             "libn4m SHA-256 identity mismatch: expected {expected_sha256}, got {actual}"
+        )));
+    }
+    Ok(AttestedMethodsLibrary {
+        source_canonical_path,
+        sha256: actual,
+        bytes,
+    })
+}
+
+fn ensure_same_configured_methods_library(
+    configured: &ConfiguredMethodsLibrary,
+    attested: &AttestedMethodsLibrary,
+) -> Result<PathBuf, NativeMethodsReplayError> {
+    if configured.source_canonical_path != attested.source_canonical_path
+        || configured.sha256 != attested.sha256
+    {
+        return Err(replay_error(format!(
+            "libn4m process identity is already fixed to `{}` at SHA-256 {}; requested `{}` at SHA-256 {}",
+            configured.source_canonical_path.display(),
+            configured.sha256,
+            attested.source_canonical_path.display(),
+            attested.sha256
+        )));
+    }
+    Ok(configured.snapshot_path.clone())
+}
+
+fn write_attested_methods_snapshot(
+    attested: &AttestedMethodsLibrary,
+) -> Result<(TempDir, PathBuf), NativeMethodsReplayError> {
+    let directory = tempfile::Builder::new()
+        .prefix("nirs4all-core-libn4m-")
+        .tempdir()
+        .map_err(|error| replay_error(format!("cannot create private libn4m snapshot: {error}")))?;
+    let file_name = attested
+        .source_canonical_path
+        .file_name()
+        .ok_or_else(|| replay_error("attested libn4m path has no file name"))?;
+    let snapshot_path = directory.path().join(file_name);
+    let mut snapshot = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&snapshot_path)
+        .map_err(|error| replay_error(format!("cannot create private libn4m snapshot: {error}")))?;
+    snapshot
+        .write_all(&attested.bytes)
+        .and_then(|()| snapshot.sync_all())
+        .map_err(|error| {
+            replay_error(format!("cannot persist private libn4m snapshot: {error}"))
+        })?;
+    drop(snapshot);
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&snapshot_path, std::fs::Permissions::from_mode(0o400)).map_err(
+            |error| replay_error(format!("cannot protect private libn4m snapshot: {error}")),
+        )?;
+    }
+    #[cfg(not(unix))]
+    {
+        let mut permissions = std::fs::metadata(&snapshot_path)
+            .map_err(|error| replay_error(format!("cannot inspect libn4m snapshot: {error}")))?
+            .permissions();
+        permissions.set_readonly(true);
+        std::fs::set_permissions(&snapshot_path, permissions).map_err(|error| {
+            replay_error(format!("cannot protect private libn4m snapshot: {error}"))
+        })?;
+    }
+
+    let (snapshot_sha256, _) = hash_reader(
+        File::open(&snapshot_path)
+            .map_err(|error| replay_error(format!("cannot reopen libn4m snapshot: {error}")))?,
+        "private libn4m snapshot",
+    )?;
+    if snapshot_sha256 != attested.sha256 {
+        return Err(replay_error(
+            "private libn4m snapshot does not match the attested source bytes",
+        ));
+    }
+    Ok((directory, snapshot_path))
+}
+
+fn configure_attested_methods_library(
+    path: &Path,
+    expected_sha256: &str,
+) -> Result<PathBuf, NativeMethodsReplayError> {
+    let lock = CONFIGURED_METHODS_LIBRARY.get_or_init(|| Mutex::new(None));
+    let mut configured = lock
+        .lock()
+        .map_err(|_| replay_error("libn4m process identity lock is poisoned"))?;
+    let attested = attest_methods_library(path, expected_sha256)?;
+    if let Some(existing) = configured.as_ref() {
+        return ensure_same_configured_methods_library(existing, &attested);
+    }
+
+    let (snapshot_directory, snapshot_path) = write_attested_methods_snapshot(&attested)?;
+    MethodsRuntime::configure(&snapshot_path).map_err(|error| {
+        replay_error(format!(
+            "cannot configure the attested Methods runtime: {error}"
+        ))
+    })?;
+    *configured = Some(ConfiguredMethodsLibrary {
+        source_canonical_path: attested.source_canonical_path,
+        sha256: attested.sha256,
+        snapshot_path: snapshot_path.clone(),
+        _snapshot_directory: snapshot_directory,
+    });
+    Ok(snapshot_path)
+}
+
+fn require_exactly_one_matrix_data_requirement(
+    count: usize,
+) -> Result<(), NativeMethodsReplayError> {
+    if count != 1 {
+        return Err(replay_error(format!(
+            "Archive V2 matrix prediction requires exactly one external data requirement, got {count}"
         )));
     }
     Ok(())
@@ -311,64 +470,52 @@ fn compose_methods_archive_matrix_predict(
             ))
         })?;
 
-    if package.execution_bundle.data_requirements.is_empty() {
-        return Err(replay_error(
-            "Archive V2 matrix prediction requires at least one external data requirement",
-        ));
-    }
+    require_exactly_one_matrix_data_requirement(package.execution_bundle.data_requirements.len())?;
+    let requirement = &package.execution_bundle.data_requirements[0];
     let mut data_envelopes = BTreeMap::new();
     let mut methods_inputs = BTreeMap::new();
-    for requirement in &package.execution_bundle.data_requirements {
-        requirement.validate().map_err(|error| {
-            replay_error(format!(
-                "DAG-ML rejected Archive V2 data requirement: {error}"
-            ))
-        })?;
-        if requirement.output_representation != "tabular_numeric" {
-            return Err(replay_error(format!(
-                "Archive V2 matrix prediction does not support requirement `{}` representation `{}`",
-                requirement.key(),
-                requirement.output_representation
-            )));
-        }
-        let key = requirement.key();
-        let envelope = ExternalDataPlanEnvelope {
-            schema_version: EXTERNAL_DATA_PLAN_ENVELOPE_SCHEMA_VERSION_V1,
-            schema_fingerprint: requirement.schema_fingerprint.clone(),
-            plan_fingerprint: requirement.plan_fingerprint.clone(),
-            relation_fingerprint: Some(relation_fingerprint.clone()),
-            data_content_fingerprint: Some(data_content_fingerprint.clone()),
-            target_content_fingerprint: None,
-            coordinator_relations: Some(relations.clone()),
-            predict_cohort: None,
-        };
-        envelope.validate().map_err(|error| {
-            replay_error(format!(
-                "DAG-ML rejected derived prediction envelope `{key}`: {error}"
-            ))
-        })?;
-        let dataset = MethodsPlsDataset {
-            sample_ids: sample_ids.clone(),
-            x: x.clone(),
-            y: None,
-            target_names: binding.target_names.clone(),
-        };
-        dataset
-            .validate(
-                &format!("Archive V2 matrix prediction input `{key}`"),
-                false,
-            )
-            .map_err(|error| {
-                replay_error(format!("DAG-ML rejected derived Methods input: {error}"))
-            })?;
-        if data_envelopes.insert(key.clone(), envelope).is_some()
-            || methods_inputs.insert(key.clone(), dataset).is_some()
-        {
-            return Err(replay_error(format!(
-                "Archive V2 has ambiguous data requirement key `{key}`"
-            )));
-        }
+    requirement.validate().map_err(|error| {
+        replay_error(format!(
+            "DAG-ML rejected Archive V2 data requirement: {error}"
+        ))
+    })?;
+    if requirement.output_representation != "tabular_numeric" {
+        return Err(replay_error(format!(
+            "Archive V2 matrix prediction does not support requirement `{}` representation `{}`",
+            requirement.key(),
+            requirement.output_representation
+        )));
     }
+    let key = requirement.key();
+    let envelope = ExternalDataPlanEnvelope {
+        schema_version: EXTERNAL_DATA_PLAN_ENVELOPE_SCHEMA_VERSION_V1,
+        schema_fingerprint: requirement.schema_fingerprint.clone(),
+        plan_fingerprint: requirement.plan_fingerprint.clone(),
+        relation_fingerprint: Some(relation_fingerprint),
+        data_content_fingerprint: Some(data_content_fingerprint),
+        target_content_fingerprint: None,
+        coordinator_relations: Some(relations),
+        predict_cohort: None,
+    };
+    envelope.validate().map_err(|error| {
+        replay_error(format!(
+            "DAG-ML rejected derived prediction envelope `{key}`: {error}"
+        ))
+    })?;
+    let dataset = MethodsPlsDataset {
+        sample_ids: sample_ids.clone(),
+        x,
+        y: None,
+        target_names: binding.target_names.clone(),
+    };
+    dataset
+        .validate(
+            &format!("Archive V2 matrix prediction input `{key}`"),
+            false,
+        )
+        .map_err(|error| replay_error(format!("DAG-ML rejected derived Methods input: {error}")))?;
+    data_envelopes.insert(key.clone(), envelope);
+    methods_inputs.insert(key, dataset);
 
     let mut request = TrainingReplayRequest {
         schema_version: TRAINING_REPLAY_REQUEST_SCHEMA_VERSION,
@@ -536,7 +683,10 @@ pub fn predict_methods_archive_v2_matrix(
         target_names,
         output_binding_id,
     } = compose_methods_archive_matrix_predict(&package, input)?;
-    validate_methods_library_identity(&input.methods_library_path, &expected_library_sha256)?;
+    let snapshot_path =
+        configure_attested_methods_library(&input.methods_library_path, &expected_library_sha256)?;
+    let mut input = input;
+    input.methods_library_path = snapshot_path;
     let outcome = replay_methods_predictor_package(&package, input)?;
     validate_methods_archive_matrix_outcome(
         &outcome,
@@ -739,6 +889,64 @@ pub fn replay_methods_archive_v3_json(
 mod json_tests {
     use super::*;
 
+    #[test]
+    fn matrix_product_contract_requires_one_external_requirement() {
+        assert!(require_exactly_one_matrix_data_requirement(1).is_ok());
+        for count in [0, 2, usize::MAX] {
+            let error = require_exactly_one_matrix_data_requirement(count)
+                .expect_err("a single X matrix cannot bind an ambiguous requirement set");
+            assert!(error.to_string().contains("exactly one"));
+            assert!(error.to_string().contains(&count.to_string()));
+        }
+    }
+
+    #[test]
+    fn configured_methods_identity_binds_path_and_sha() {
+        let directory = tempfile::tempdir().expect("private test directory");
+        let source = directory.path().join("libn4m-source.so");
+        let snapshot = directory.path().join("libn4m-snapshot.so");
+        let configured = ConfiguredMethodsLibrary {
+            source_canonical_path: source.clone(),
+            sha256: "a".repeat(64),
+            snapshot_path: snapshot.clone(),
+            _snapshot_directory: tempfile::tempdir().expect("retained snapshot directory"),
+        };
+        let matching = AttestedMethodsLibrary {
+            source_canonical_path: source.clone(),
+            sha256: "a".repeat(64),
+            bytes: Vec::new(),
+        };
+        assert_eq!(
+            ensure_same_configured_methods_library(&configured, &matching)
+                .expect("same process identity remains usable"),
+            snapshot
+        );
+
+        let changed_sha = AttestedMethodsLibrary {
+            source_canonical_path: source.clone(),
+            sha256: "b".repeat(64),
+            bytes: Vec::new(),
+        };
+        assert!(
+            ensure_same_configured_methods_library(&configured, &changed_sha)
+                .unwrap_err()
+                .to_string()
+                .contains("process identity is already fixed")
+        );
+
+        let changed_path = AttestedMethodsLibrary {
+            source_canonical_path: directory.path().join("other-libn4m.so"),
+            sha256: "a".repeat(64),
+            bytes: Vec::new(),
+        };
+        assert!(
+            ensure_same_configured_methods_library(&configured, &changed_path)
+                .unwrap_err()
+                .to_string()
+                .contains("process identity is already fixed")
+        );
+    }
+
     fn matrix_predict_request(
         methods_library_path: PathBuf,
         methods_library_sha256: String,
@@ -834,12 +1042,21 @@ mod json_tests {
             std::env::var("N4A_RT_PRED_ARCHIVE_V2")
                 .expect("N4A_RT_PRED_ARCHIVE_V2 must name the real multi-target witness"),
         );
-        let methods_library_path = PathBuf::from(
+        let methods_library_source = PathBuf::from(
             std::env::var("N4A_RT_PRED_METHODS_LIBRARY")
                 .expect("N4A_RT_PRED_METHODS_LIBRARY must name the real libn4m"),
         );
         let methods_library_sha256 = std::env::var("N4A_RT_PRED_METHODS_SHA256")
             .expect("N4A_RT_PRED_METHODS_SHA256 must attest the real libn4m");
+        let methods_library_directory =
+            tempfile::tempdir().expect("private mutable libn4m source directory");
+        let methods_library_path = methods_library_directory.path().join(
+            methods_library_source
+                .file_name()
+                .expect("real libn4m has a file name"),
+        );
+        std::fs::copy(&methods_library_source, &methods_library_path)
+            .expect("copy real libn4m into the mutable source directory");
         let archive = load_archive_v2(&archive_path).expect("real Archive V2 witness validates");
 
         let mut wrong_targets =
@@ -884,7 +1101,7 @@ mod json_tests {
 
         let outcome = predict_methods_archive_v2_matrix(
             &archive,
-            matrix_predict_request(methods_library_path, methods_library_sha256),
+            matrix_predict_request(methods_library_path.clone(), methods_library_sha256.clone()),
         )
         .expect("real multi-target Archive V2 predicts without fallback");
         let output = outcome.outputs.first().expect("one output binding");
@@ -906,5 +1123,18 @@ mod json_tests {
                 assert!((actual - expected).abs() <= 1.0e-9);
             }
         }
+
+        let replacement = b"replacement must never reach the configured native runtime";
+        std::fs::write(&methods_library_path, replacement)
+            .expect("replace only the mutable source copy");
+        let replacement_sha256 = format!("{:x}", Sha256::digest(replacement));
+        let error = predict_methods_archive_v2_matrix(
+            &archive,
+            matrix_predict_request(methods_library_path, replacement_sha256),
+        )
+        .expect_err("one process cannot change libn4m identity after its first replay");
+        assert!(error
+            .to_string()
+            .contains("process identity is already fixed"));
     }
 }
