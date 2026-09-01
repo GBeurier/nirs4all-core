@@ -64,6 +64,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Build portable wheels
+        shell: bash
         env:
           CIBW_BUILD: "cp311-*"
           CIBW_SKIP: "*-musllinux_*"
