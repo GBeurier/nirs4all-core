@@ -23,21 +23,11 @@ if (scenario?.operation !== 'archive_v2_predict' || scenario?.fallback_allowed !
 await methodsModule.loadModule();
 const ccallCounts = new Map();
 const module = methodsModule.getModule();
-const observedModule = new Proxy(module, {
-  get(target, property, receiver) {
-    if (property !== 'ccall') return Reflect.get(target, property, receiver);
-    return (symbol, ...args) => {
-      ccallCounts.set(symbol, (ccallCounts.get(symbol) ?? 0) + 1);
-      return target.ccall(symbol, ...args);
-    };
-  },
-});
-const methods = new Proxy(methodsModule, {
-  get(target, property, receiver) {
-    if (property === 'getModule') return () => observedModule;
-    return Reflect.get(target, property, receiver);
-  },
-});
+const originalCcall = module.ccall.bind(module);
+module.ccall = (symbol, ...args) => {
+  ccallCounts.set(symbol, (ccallCounts.get(symbol) ?? 0) + 1);
+  return originalCcall(symbol, ...args);
+};
 
 const request = {
   X: prediction.x,
@@ -45,7 +35,7 @@ const request = {
   cols: prediction.x[0].length,
   sampleIds: prediction.sample_ids,
 };
-const result = await replayMethodsArchiveV2(archive, request, { methods });
+const result = await replayMethodsArchiveV2(archive, request);
 
 assert.equal(result.schema, 'nirs4all.core.archive-v2-replay.v1');
 assert.equal(result.engine, 'nirs4all-methods-wasm');
@@ -70,7 +60,7 @@ const tampered = mutateStoredMember(archive, 'methods/model_compat.0.n4mm', (pay
   payload[4] ^= 0x01;
 });
 await assert.rejects(
-  replayMethodsArchiveV2(tampered, request, { methods }),
+  replayMethodsArchiveV2(tampered, request),
   /Core Archive V2 refusal.*inventory (?:identity|hash or size) mismatch/,
 );
 
@@ -78,13 +68,8 @@ const badInventory = mutateStoredMember(archive, 'manifest.json', (payload) => {
   replaceAscii(payload, '"uncompressed_size_bytes":5921', '"uncompressed_size_bytes":5922');
 });
 await assert.rejects(
-  replayMethodsArchiveV2(badInventory, request, { methods }),
+  replayMethodsArchiveV2(badInventory, request),
   /Core Archive V2 refusal.*inventory must contain each payload exactly once/,
-);
-
-await assert.rejects(
-  replayMethodsArchiveV2(archive, request, { methods: {} }),
-  /Methods WASM lacks Archive V2 ABI helpers/,
 );
 
 console.log(JSON.stringify({
@@ -101,7 +86,7 @@ console.log(JSON.stringify({
     + (ccallCounts.get('n4m_wasm_pls_fit') ?? 0),
   digest_refused: true,
   inventory_refused: true,
-  missing_methods_refused: true,
+  methods_peer_loaded: true,
 }));
 
 function mutateStoredMember(source, memberName, mutate) {
