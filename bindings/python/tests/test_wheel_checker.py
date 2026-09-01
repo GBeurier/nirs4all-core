@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import subprocess
+import stat
 import sys
 import tempfile
 import unittest
@@ -51,13 +52,27 @@ class WheelCheckerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             wheel = self._wheel(
                 Path(directory),
-                ("n4a/__init__.py", "n4a/__pycache__/bad.pyc", "../outside.py"),
+                (
+                    "n4a/__init__.py",
+                    "n4a/__pycache__/bad.pyc",
+                    "../outside.py",
+                    "C:/outside.py",
+                    "evilpkg/payload.py",
+                    "n4a\\windows.py",
+                ),
             )
+            with zipfile.ZipFile(wheel, "a") as archive:
+                symlink = zipfile.ZipInfo("n4a/link")
+                symlink.create_system = 3
+                symlink.external_attr = (stat.S_IFLNK | 0o777) << 16
+                archive.writestr(symlink, "../nirs4all_core/__init__.py")
             result = self._check(wheel)
         self.assertEqual(result.returncode, 1)
         self.assertIn("duplicate ZIP entries", result.stderr)
         self.assertIn("Python cache entries", result.stderr)
         self.assertIn("unsafe ZIP paths", result.stderr)
+        self.assertIn("special ZIP entries", result.stderr)
+        self.assertIn("unexpected wheel roots", result.stderr)
 
 
 if __name__ == "__main__":
