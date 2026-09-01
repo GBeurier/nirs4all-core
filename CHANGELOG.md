@@ -10,6 +10,11 @@ binding manifest.
 
 ### Added
 
+- Added the closed Rust `Archive V2` matrix-prediction entry point for product
+  hosts. It derives the signed PREDICT replay from one X-only external data
+  requirement, preserves sample/target order, and loads libn4m from a private
+  content-attested snapshot whose canonical source path and SHA-256 identity
+  cannot change during the process.
 - Added bounded Archive V2 replay to the JavaScript/WASM binding. The existing
   Core Rust reader now exposes its same byte-oriented validation path to WASM,
   closing the stored-ZIP inventory and raw digests before DAG-ML validates the
