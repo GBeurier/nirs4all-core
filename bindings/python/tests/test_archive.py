@@ -12,6 +12,7 @@ from nirs4all_core import (
     read_portable_predictor_package_v2,
     read_portable_refit_package_v3,
     replay_methods_archive_v2,
+    replay_methods_archive_v2_conformal_presentation_v1,
     replay_methods_archive_v3,
     write_archive_v2_from_native_payloads,
     write_archive_v3_from_native_payloads,
@@ -111,6 +112,45 @@ class ArchiveFacadeTests(unittest.TestCase):
         self.assertEqual(outcome, {"outcome_id": "outcome:refit", "schema_version": 3})
         self.assertEqual(observed[0], "/tmp/refit.n4a")
         self.assertEqual(observed[7:], ["[]", "{}"])
+
+    def test_conformal_presentation_uses_distinct_native_entry_point(self) -> None:
+        observed: list[object] = []
+
+        def replay(*args: object) -> str:
+            observed.extend(args)
+            return '{"schema_version":1,"presentation_fingerprint":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}'
+
+        module = types.SimpleNamespace(
+            replay_methods_archive_v2_conformal_presentation_v1_json=replay
+        )
+        with patch.dict(sys.modules, {"nirs4all_core._native": module}):
+            presentation = replay_methods_archive_v2_conformal_presentation_v1(
+                "/tmp/calibrated.n4a",
+                {"schema_version": 1},
+                {"node.input": {"schema_version": 1}},
+                {"node.input": {"sample_ids": ["sample:1"], "x": [[1.0]], "target_names": ["y"]}},
+                methods_library_path="/opt/lib/libn4m.so",
+                outcome_id="outcome:conformal.predict",
+                run_id="run:conformal.predict",
+            )
+
+        self.assertEqual(presentation["schema_version"], 1)
+        self.assertEqual(observed[0], "/tmp/calibrated.n4a")
+        self.assertEqual(observed[4:7], ["/opt/lib/libn4m.so", "outcome:conformal.predict", "run:conformal.predict"])
+
+    def test_conformal_presentation_missing_native_entry_point_fails_closed(self) -> None:
+        module = types.SimpleNamespace(replay_methods_archive_v2_json=lambda *_: "{}")
+        with patch.dict(sys.modules, {"nirs4all_core._native": module}):
+            with self.assertRaises(NativeArchiveUnavailableError):
+                replay_methods_archive_v2_conformal_presentation_v1(
+                    "/tmp/calibrated.n4a",
+                    {},
+                    {},
+                    {},
+                    methods_library_path="/opt/lib/libn4m.so",
+                    outcome_id="outcome:conformal.predict",
+                    run_id="run:conformal.predict",
+                )
 
     def test_replay_missing_native_entry_point_fails_closed(self) -> None:
         module = types.SimpleNamespace(read_portable_predictor_package_v2=lambda _: b"{}")

@@ -9,11 +9,12 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 
 use dag_ml_core::{
-    deserialize_external_contract, execute_loaded_methods_portable_refit_replay_v3,
-    execute_loaded_methods_predictor_replay, ExternalDataPlanEnvelope, MethodsPlsDataset,
-    MethodsPlsMatrix, MethodsPortablePredictorReplayInput, MethodsPortableRefitReplayInputV3,
-    MethodsRuntime, PortablePredictorPackage, PortableRefitPackageV3, PortableRefitReplayOutcomeV3,
-    RunId, RuntimeControllerRegistry, SampleId, TrainingReplayOutcome, TrainingReplayRequest,
+    build_conformal_presentation_v1, deserialize_external_contract,
+    execute_loaded_methods_portable_refit_replay_v3, execute_loaded_methods_predictor_replay,
+    ConformalPresentationV1, ExternalDataPlanEnvelope, MethodsPlsDataset, MethodsPlsMatrix,
+    MethodsPortablePredictorReplayInput, MethodsPortableRefitReplayInputV3, MethodsRuntime, Phase,
+    PortablePredictorPackage, PortableRefitPackageV3, PortableRefitReplayOutcomeV3, RunId,
+    RuntimeControllerRegistry, SampleId, TrainingReplayOutcome, TrainingReplayRequest,
 };
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
@@ -200,6 +201,34 @@ pub fn replay_methods_archive_v2(
     archive: &LoadedArchiveV2,
     input: MethodsArchivePredictRequest,
 ) -> Result<TrainingReplayOutcome, NativeMethodsReplayError> {
+    let package = load_v2_predictor_package(archive)?;
+    replay_methods_predictor_package(&package, input)
+}
+
+/// Replay an integrity-checked Archive V2 and project its already-calculated
+/// split-conformal intervals through DAG-ML's closed presentation contract.
+///
+/// Core keeps the validated package, signed request and resulting replay
+/// together only for this call. DAG-ML validates their complete provenance,
+/// binding, sample-order and interval closure before returning the projection;
+/// Core neither calculates an interval nor selects a target.
+pub fn replay_methods_archive_v2_conformal_presentation_v1(
+    archive: &LoadedArchiveV2,
+    input: MethodsArchivePredictRequest,
+) -> Result<ConformalPresentationV1, NativeMethodsReplayError> {
+    let package = load_v2_predictor_package(archive)?;
+    let request = input.request.clone();
+    let replay = replay_methods_predictor_package(&package, input)?;
+    build_conformal_presentation_v1(&package, &request, &replay).map_err(|error| {
+        replay_error(format!(
+            "DAG-ML could not build Core Archive V2 conformal presentation: {error}"
+        ))
+    })
+}
+
+fn load_v2_predictor_package(
+    archive: &LoadedArchiveV2,
+) -> Result<PortablePredictorPackage, NativeMethodsReplayError> {
     let package_bytes = archive.portable_predictor_package().map_err(|error| {
         NativeMethodsReplayError(format!("Core Archive V2 package read failed: {error}"))
     })?;
@@ -211,11 +240,38 @@ pub fn replay_methods_archive_v2(
     let package = PortablePredictorPackage::from_json(package_json).map_err(|error| {
         NativeMethodsReplayError(format!("DAG-ML rejected Core Archive V2 package: {error}"))
     })?;
+    Ok(package)
+}
+
+fn replay_methods_predictor_package(
+    package: &PortablePredictorPackage,
+    input: MethodsArchivePredictRequest,
+) -> Result<TrainingReplayOutcome, NativeMethodsReplayError> {
+    // Keep structural/package/request/input validation ahead of process-global
+    // libn4m configuration. Cross-contract scheduling and native N4MM hydration
+    // remain DAG-ML-owned below.
+    package.validate().map_err(|error| {
+        replay_error(format!("DAG-ML rejected Core Archive V2 package: {error}"))
+    })?;
+    input
+        .request
+        .validate()
+        .map_err(|error| replay_error(format!("DAG-ML rejected replay request: {error}")))?;
+    if input.request.phase != Phase::Predict {
+        return Err(replay_error(
+            "DAG-ML rejected replay request: callback-free Methods package replay supports PREDICT only",
+        ));
+    }
+    for (key, dataset) in &input.methods_inputs {
+        dataset
+            .validate(&format!("native Methods replay input `{key}`"), false)
+            .map_err(|error| replay_error(format!("DAG-ML rejected Methods input: {error}")))?;
+    }
     let runtime = MethodsRuntime::configure(&input.methods_library_path).map_err(|error| {
         NativeMethodsReplayError(format!("cannot configure the Methods runtime: {error}"))
     })?;
     execute_loaded_methods_predictor_replay(MethodsPortablePredictorReplayInput {
-        package: &package,
+        package,
         request: &input.request,
         data_envelopes: &input.data_envelopes,
         methods_inputs: &input.methods_inputs,
@@ -287,6 +343,23 @@ pub fn replay_methods_archive_v2_json(
     })
 }
 
+/// Open, validate and replay an Archive V2, returning DAG-ML's exact closed
+/// conformal-presentation JSON for binding and Studio transport.
+pub fn replay_methods_archive_v2_conformal_presentation_v1_json(
+    archive_path: &Path,
+    input: MethodsArchiveReplayJsonRequest,
+) -> Result<String, NativeMethodsReplayError> {
+    let archive = load_archive_v2(archive_path)
+        .map_err(|error| replay_error(format!("Core Archive V2 validation refused: {error}")))?;
+    let input = parse_json_request(input)?;
+    let presentation = replay_methods_archive_v2_conformal_presentation_v1(&archive, input)?;
+    serde_json::to_string(&presentation).map_err(|error| {
+        replay_error(format!(
+            "cannot serialize DAG-ML V2 conformal presentation: {error}"
+        ))
+    })
+}
+
 /// Open, validate, and replay an Archive V3 from strict host JSON contracts.
 ///
 /// Python bindings intentionally get an empty supplemental controller registry:
@@ -347,6 +420,14 @@ mod json_tests {
         let v2 = replay_methods_archive_v2_json(&missing, invalid_json_input())
             .expect_err("missing V2 archive must be rejected first");
         assert!(v2
+            .to_string()
+            .starts_with("Core Archive V2 validation refused:"));
+        let conformal = replay_methods_archive_v2_conformal_presentation_v1_json(
+            &missing,
+            invalid_json_input(),
+        )
+        .expect_err("missing conformal V2 archive must be rejected first");
+        assert!(conformal
             .to_string()
             .starts_with("Core Archive V2 validation refused:"));
         let v3 = replay_methods_archive_v3_json(&missing, invalid_json_input())

@@ -1848,7 +1848,10 @@ fn crc32(bytes: &[u8]) -> u32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{replay_methods_archive_v2, MethodsArchivePredictRequest};
+    use crate::{
+        replay_methods_archive_v2, replay_methods_archive_v2_conformal_presentation_v1,
+        MethodsArchivePredictRequest,
+    };
     use dag_ml_core::{Phase, RunId, TrainingReplayRequest};
     use std::collections::BTreeMap;
     use std::time::{SystemTime, UNIX_EPOCH};
@@ -1915,7 +1918,7 @@ mod tests {
         let target = path("dagml-semantic-boundary");
         write_archive_v2(&target, request()).unwrap();
         let archive = load_archive_v2(&target).unwrap();
-        let replay = TrainingReplayRequest {
+        let replay = || TrainingReplayRequest {
             schema_version: 0,
             request_id: "request:storage-fixture".to_owned(),
             source_outcome_fingerprint: "0".repeat(64),
@@ -1924,23 +1927,24 @@ mod tests {
             output_binding_ids: Vec::new(),
             request_fingerprint: String::new(),
         };
-        let error = replay_methods_archive_v2(
-            &archive,
-            MethodsArchivePredictRequest {
-                request: replay,
-                data_envelopes: BTreeMap::new(),
-                methods_inputs: BTreeMap::new(),
-                methods_library_path: PathBuf::from("/must-not-open-libn4m"),
-                outcome_id: "outcome:storage-fixture".to_owned(),
-                run_id: RunId::new("run:storage-fixture").unwrap(),
-                warnings: Vec::new(),
-                diagnostics: BTreeMap::new(),
-            },
-        )
-        .unwrap_err();
-        let message = error.to_string();
-        assert!(message.starts_with("DAG-ML rejected Core Archive V2 package:"));
-        assert!(!message.contains("cannot configure the Methods runtime"));
+        let input = || MethodsArchivePredictRequest {
+            request: replay(),
+            data_envelopes: BTreeMap::new(),
+            methods_inputs: BTreeMap::new(),
+            methods_library_path: PathBuf::from("/must-not-open-libn4m"),
+            outcome_id: "outcome:storage-fixture".to_owned(),
+            run_id: RunId::new("run:storage-fixture").unwrap(),
+            warnings: Vec::new(),
+            diagnostics: BTreeMap::new(),
+        };
+        for error in [
+            replay_methods_archive_v2(&archive, input()).unwrap_err(),
+            replay_methods_archive_v2_conformal_presentation_v1(&archive, input()).unwrap_err(),
+        ] {
+            let message = error.to_string();
+            assert!(message.starts_with("DAG-ML rejected Core Archive V2 package:"));
+            assert!(!message.contains("cannot configure the Methods runtime"));
+        }
         let _ = std::fs::remove_file(target);
     }
 

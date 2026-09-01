@@ -15,15 +15,22 @@ import json
 import math
 import os
 import struct
+import subprocess
+import sys
 import tempfile
 import unittest
 import zipfile
 from pathlib import Path
 from typing import Any
 
-from nirs4all_core import read_portable_predictor_package_v2, replay_methods_archive_v2
+from nirs4all_core import (
+    read_portable_predictor_package_v2,
+    replay_methods_archive_v2,
+    replay_methods_archive_v2_conformal_presentation_v1,
+)
 
 _ARCHIVE_ENV = "NIRS4ALL_CORE_LIVE_ARCHIVE_V2"
+_CONFORMAL_ARCHIVE_ENV = "NIRS4ALL_CORE_LIVE_CONFORMAL_ARCHIVE_V2"
 _LIBRARY_ENV = "NIRS4ALL_CORE_LIVE_METHODS_LIBRARY"
 _TMPDIR_ENV = "NIRS4ALL_CORE_LIVE_TMPDIR"
 _FINGERPRINT_PREFIX = b"n4a-matrix-f64-le.v1\0"
@@ -166,6 +173,111 @@ class LiveArchiveV2ReplayTests(unittest.TestCase):
                     outcome_id="outcome:core.live_witness.tampered",
                     run_id="run:core.live_witness.tampered",
                 )
+
+
+@unittest.skipUnless(
+    os.environ.get(_CONFORMAL_ARCHIVE_ENV) and os.environ.get(_LIBRARY_ENV),
+    f"set {_CONFORMAL_ARCHIVE_ENV} and {_LIBRARY_ENV} to run the conformal child witness",
+)
+class LiveArchiveV2ConformalReplayTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.archive = Path(os.environ[_CONFORMAL_ARCHIVE_ENV])
+        self.library = Path(os.environ[_LIBRARY_ENV])
+        self.package = json.loads(read_portable_predictor_package_v2(self.archive))
+        self.assertIsNotNone(self.package.get("conformal_calibration"))
+        self.assertEqual(len(self.package["output_bindings"][0]["target_names"]), 1)
+        self.request, self.envelopes, self.inputs = _contracts(self.package)
+
+    def test_archive_replays_in_isolated_child_to_closed_presentation(self) -> None:
+        """The producer is gone; a wheel-only child reopens and presents it."""
+
+        temporary_root = os.environ.get(_TMPDIR_ENV, "/dev/shm")
+        with tempfile.TemporaryDirectory(dir=temporary_root) as directory:
+            contract_path = Path(directory) / "contracts.json"
+            contract_path.write_text(
+                _canonical_json(
+                    {
+                        "request": self.request,
+                        "envelopes": self.envelopes,
+                        "inputs": self.inputs,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            child = subprocess.run(
+                [
+                    sys.executable,
+                    "-I",
+                    "-c",
+                    (
+                        "import json,sys; "
+                        "from nirs4all_core import replay_methods_archive_v2_conformal_presentation_v1 as replay; "
+                        "c=json.load(open(sys.argv[3], encoding='utf-8')); "
+                        "p=replay(sys.argv[1],c['request'],c['envelopes'],c['inputs'],"
+                        "methods_library_path=sys.argv[2],outcome_id='outcome:core.conformal.child',"
+                        "run_id='run:core.conformal.child',diagnostics={'proof':'isolated-wheel-child'}); "
+                        "print(json.dumps(p,sort_keys=True,separators=(',',':'),allow_nan=False))"
+                    ),
+                    str(self.archive),
+                    str(self.library),
+                    str(contract_path),
+                ],
+                check=False,
+                cwd=directory,
+                env={"PATH": os.environ.get("PATH", ""), "PYTHONNOUSERSITE": "1"},
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(child.returncode, 0, child.stderr)
+        presentation = json.loads(child.stdout)
+        calibration = self.package["conformal_calibration"]
+        self.assertEqual(presentation["schema_version"], 1)
+        self.assertEqual(
+            presentation["package_fingerprint"], self.package["package_fingerprint"]
+        )
+        self.assertEqual(
+            presentation["calibration_fingerprint"],
+            calibration["calibration_fingerprint"],
+        )
+        self.assertEqual(presentation["sample_ids"], ["predict.0", "predict.1"])
+        self.assertEqual(len(presentation["point_predictions"]), 2)
+        self.assertEqual(
+            [interval["coverage"] for interval in presentation["intervals"]],
+            sorted(calibration["coverages"]),
+        )
+        self.assertRegex(presentation["presentation_fingerprint"], r"^[0-9a-f]{64}$")
+        for interval in presentation["intervals"]:
+            self.assertEqual(len(interval["lower"]), 2)
+            self.assertEqual(len(interval["upper"]), 2)
+            for point, lower, upper in zip(
+                presentation["point_predictions"],
+                interval["lower"],
+                interval["upper"],
+                strict=True,
+            ):
+                if lower is not None:
+                    self.assertLessEqual(lower, point)
+                    self.assertLessEqual(point, upper)
+
+    def test_archive_tamper_precedes_library_configuration(self) -> None:
+        temporary_root = os.environ.get(_TMPDIR_ENV, "/dev/shm")
+        with tempfile.TemporaryDirectory(dir=temporary_root) as directory:
+            altered = Path(directory) / "tampered-conformal.n4a"
+            _tamper_n4mm(self.archive, altered)
+            with self.assertRaises(ValueError) as captured:
+                replay_methods_archive_v2_conformal_presentation_v1(
+                    altered,
+                    self.request,
+                    self.envelopes,
+                    self.inputs,
+                    methods_library_path="/must-not-open-libn4m",
+                    outcome_id="outcome:core.conformal.tampered",
+                    run_id="run:core.conformal.tampered",
+                )
+        message = str(captured.exception)
+        self.assertRegex(message, "refused|mismatch|integrity")
+        self.assertNotIn("cannot configure the Methods runtime", message)
 
 
 if __name__ == "__main__":

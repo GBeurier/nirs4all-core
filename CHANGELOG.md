@@ -18,6 +18,10 @@ binding manifest.
   facade. Core exposes only validated archive bytes and attested current-cohort
   inputs; DAG-ML remains the owner of Package V3 validation, scheduling and
   invocation-local N4MM hydration through the published 0.3.15 runtime.
+- Added closed conformal presentation replay for calibrated Archive V2
+  packages. Rust and Python bindings now return DAG-ML's self-validating,
+  identity-bound `ConformalPresentationV1` without recalculating intervals or
+  accepting a Python model callback.
 
 ### Changed
 
