@@ -290,7 +290,7 @@ dependencies = [
 
 [[package]]
 name = "nirs4all-core-wasm-native"
-version = "0.3.22"
+version = "0.3.24"
 dependencies = [
  "dag-ml-core",
  "serde_json",

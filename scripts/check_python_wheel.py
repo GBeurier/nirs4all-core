@@ -3,8 +3,11 @@
 
 from __future__ import annotations
 
+import re
 import sys
 import zipfile
+from email.parser import BytesParser
+from email.policy import default
 from pathlib import Path
 
 
@@ -12,6 +15,19 @@ def validate_wheel(path: Path) -> None:
     """Validate public package inventory without importing the wheel."""
     with zipfile.ZipFile(path) as archive:
         names = set(archive.namelist())
+        metadata_names = sorted(
+            name for name in names if name.endswith(".dist-info/METADATA")
+        )
+        if len(metadata_names) != 1:
+            raise ValueError(f"{path}: expected exactly one dist-info/METADATA")
+        metadata = BytesParser(policy=default).parsebytes(
+            archive.read(metadata_names[0])
+        )
+        init_source = (
+            archive.read("nirs4all_core/__init__.py").decode("utf-8")
+            if "nirs4all_core/__init__.py" in names
+            else ""
+        )
 
     required = {"nirs4all_core/__init__.py", "n4a/__init__.py"}
     missing = sorted(required - names)
@@ -20,12 +36,23 @@ def validate_wheel(path: Path) -> None:
         for name in names
         if "__pycache__/" in name or name.endswith((".pyc", ".pyo"))
     )
-    if missing or contaminated:
+    version = metadata.get("Version", "")
+    source_version = re.search(r'^__version__ = "([^"]+)"$', init_source, re.MULTILINE)
+    version_errors = []
+    if not path.name.startswith(f"nirs4all_core-{version}-"):
+        version_errors.append(f"filename does not encode metadata version {version!r}")
+    if source_version is None or source_version.group(1) != version:
+        observed = source_version.group(1) if source_version else None
+        version_errors.append(
+            f"nirs4all_core.__version__ is {observed!r}, expected {version!r}"
+        )
+    if missing or contaminated or version_errors:
         details = []
         if missing:
             details.append(f"missing public packages: {', '.join(missing)}")
         if contaminated:
             details.append(f"Python cache entries: {', '.join(contaminated)}")
+        details.extend(version_errors)
         raise ValueError(f"{path}: {'; '.join(details)}")
 
 

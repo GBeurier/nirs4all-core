@@ -46,6 +46,7 @@ WASM_INDEX = ROOT / "bindings/wasm/src/index.js"
 WASM_TYPES = ROOT / "bindings/wasm/src/index.d.ts"
 WASM_PACKAGE = ROOT / "bindings/wasm/package.json"
 WASM_PACKAGE_LOCK = ROOT / "bindings/wasm/package-lock.json"
+WASM_NATIVE_CARGO = ROOT / "bindings/wasm-native/Cargo.toml"
 PYPROJECT = ROOT / "bindings/python/pyproject.toml"
 R_PIPELINE = ROOT / "bindings/r/R/pipeline.R"
 R_UPSTREAMS = ROOT / "bindings/r/R/upstreams.R"
@@ -192,6 +193,7 @@ class VersionMetadataParityTests(unittest.TestCase):
         pyproject = tomllib.loads(_read(PYPROJECT))
         wasm_package = json.loads(_read(WASM_PACKAGE))
         wasm_lock = json.loads(_read(WASM_PACKAGE_LOCK))
+        wasm_native = tomllib.loads(_read(WASM_NATIVE_CARGO))
         r_description = _r_description_fields()
 
         self.assertEqual(
@@ -202,6 +204,7 @@ class VersionMetadataParityTests(unittest.TestCase):
         self.assertEqual(wasm_package["version"], cargo_version)
         self.assertEqual(wasm_lock["version"], cargo_version)
         self.assertEqual(wasm_lock["packages"][""]["version"], cargo_version)
+        self.assertEqual(wasm_native["package"]["version"], cargo_version)
         self.assertEqual(r_description["Version"], _cargo_to_r(cargo_version))
 
     def test_release_surface_version_metadata_covers_all_bindings(self) -> None:

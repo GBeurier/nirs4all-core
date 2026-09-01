@@ -76,6 +76,8 @@ jobs:
             python -c "import n4a, nirs4all_core;
             assert n4a.__aggregate_import__ == 'nirs4all_core';
             assert n4a.__all__ == nirs4all_core.__all__;
+            assert hasattr(nirs4all_core, 'predict_methods_archive_v2_matrix');
+            assert hasattr(n4a, 'predict_methods_archive_v2_matrix');
             assert hasattr(nirs4all_core, 'read_portable_predictor_package_v2');
             assert hasattr(nirs4all_core, 'write_archive_v2_from_native_payloads')"
         run: |
