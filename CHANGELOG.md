@@ -10,6 +10,12 @@ binding manifest.
 
 ### Added
 
+- Added bounded Archive V2 replay to the JavaScript/WASM binding. The existing
+  Core Rust reader now exposes its same byte-oriented validation path to WASM,
+  closing the stored-ZIP inventory and raw digests before DAG-ML validates the
+  package and Methods artifact binding. The JavaScript ownership layer invokes
+  one multi-target prediction through the public Methods C ABI; there is no
+  JavaScript estimator or fallback fit.
 - Added the `Archive V2 → DAG-ML → Methods` replay facade for portable native
   prediction. Core validates and opens the archive, then delegates Package V2
   parsing and N4MM execution to the published DAG-ML 0.3.15 runtime; it does

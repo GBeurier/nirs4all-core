@@ -27,11 +27,13 @@ import {
   loadMethodsWasm,
   loadPipelineDefinition,
   loadPortableStack,
+  loadArchiveV2Native,
   methods,
   methodsWasm,
   portableClassNames,
   portableOperatorClasses,
   predictPortablePipeline,
+  replayMethodsArchiveV2,
   requiredKeywordRegistryEntries,
   runPortablePipeline,
   runtimeContracts,
@@ -57,6 +59,7 @@ test('public V1 WASM surface exports expected names', () => {
       'importUpstream',
       'io',
       'loadDagMl',
+      'loadArchiveV2Native',
       'loadDagMlData',
       'loadDagMlDataWasm',
       'loadDagMlWasm',
@@ -76,6 +79,7 @@ test('public V1 WASM surface exports expected names', () => {
       'portableClassNames',
       'portableOperatorClasses',
       'predictPortablePipeline',
+      'replayMethodsArchiveV2',
       'requiredKeywordRegistryEntries',
       'runPortablePipeline',
       'runtimeContracts',
@@ -87,6 +91,8 @@ test('public V1 WASM surface exports expected names', () => {
   assert.equal(nirs4all.loadPipelineDefinition, loadPipelineDefinition);
   assert.equal(nirs4all.runPortablePipeline, runPortablePipeline);
   assert.equal(nirs4all.predictPortablePipeline, predictPortablePipeline);
+  assert.equal(nirs4all.loadArchiveV2Native, loadArchiveV2Native);
+  assert.equal(nirs4all.replayMethodsArchiveV2, replayMethodsArchiveV2);
   assert.equal(nirs4all.requiredKeywordRegistryEntries, requiredKeywordRegistryEntries);
   assert.equal(nirs4all.portableOperatorClasses, portableOperatorClasses);
   assert.equal(nirs4all.runtimeSurfaces, runtimeSurfaces);
