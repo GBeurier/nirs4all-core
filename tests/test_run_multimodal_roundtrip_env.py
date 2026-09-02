@@ -123,3 +123,16 @@ def test_methods_root_honors_environment_override(tmp_path: Path) -> None:
 
     with mock.patch.dict(os.environ, {"NIRS4ALL_METHODS_ROOT": str(configured)}, clear=False):
         assert module._methods_root(tmp_path / "workspace") == configured.resolve()
+
+
+def test_rscript_executable_honors_environment_override(tmp_path: Path) -> None:
+    module = _load_module()
+    configured = tmp_path / "r toolchain" / "Rscript"
+    configured.parent.mkdir(parents=True)
+    configured.write_text("#!/bin/sh\n", encoding="utf-8")
+
+    with (
+        mock.patch.dict(os.environ, {"NIRS4ALL_RSCRIPT": str(configured)}, clear=False),
+        mock.patch.object(module.shutil, "which", return_value=None),
+    ):
+        assert module._rscript_executable() == str(configured.resolve())

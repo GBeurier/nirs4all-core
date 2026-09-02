@@ -396,11 +396,13 @@ def _run_python_core(
 
 
 def _rscript_executable() -> str | None:
+    configured = os.environ.get("NIRS4ALL_RSCRIPT")
+    if configured:
+        candidate = Path(configured).expanduser()
+        if candidate.is_file():
+            return str(candidate.resolve())
     found = shutil.which("Rscript")
-    if found:
-        return found
-    fallback = Path("/home/delete/miniconda3/envs/pls4all_r/bin/Rscript")
-    return str(fallback) if fallback.exists() else None
+    return found if found else None
 
 
 def _r_executable(rscript: str) -> Path | None:
@@ -487,7 +489,11 @@ def _run_r(
     blocked_json = artifacts_dir / "r-predictions.blocked.json"
     _unlink_outputs(blocked_json, artifacts_dir / "r-result.json", artifacts_dir / "r-predictions.json", artifacts_dir / "r-predictions.parquet")
     if not rscript:
-        return _blocked(runtime, "Rscript is not available on PATH or at /home/delete/miniconda3/envs/pls4all_r/bin/Rscript.", blocked_json)
+        return _blocked(
+            runtime,
+            "Rscript is not available via NIRS4ALL_RSCRIPT or PATH.",
+            blocked_json,
+        )
     r_lib, setup_error = _prepare_r_library(workspace_root, core_root, artifacts_dir, rscript)
     if setup_error is not None:
         return _blocked(runtime, setup_error, blocked_json)
