@@ -101,6 +101,7 @@ pub struct ValidatedMethodsArchiveV2 {
     node_id: String,
     port_name: String,
     target_names_json: String,
+    abi_min_minor: u32,
 }
 
 #[wasm_bindgen]
@@ -152,6 +153,11 @@ impl ValidatedMethodsArchiveV2 {
 
     pub fn target_names_json(&self) -> String {
         self.target_names_json.clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn abi_min_minor(&self) -> u32 {
+        self.abi_min_minor
     }
 }
 
@@ -270,6 +276,7 @@ fn project_archive(bytes: &[u8]) -> Result<ValidatedMethodsArchiveV2, String> {
         node_id: node_id.as_str().to_owned(),
         port_name: output.port_name.clone(),
         target_names_json,
+        abi_min_minor: declaration.abi_min_minor(),
     })
 }
 

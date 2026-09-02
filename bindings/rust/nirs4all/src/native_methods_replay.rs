@@ -91,6 +91,8 @@ struct MethodsArchiveMatrixPredictComposition {
 }
 
 const MAX_ATTESTED_METHODS_LIBRARY_BYTES: u64 = 64 * 1024 * 1024;
+const CORE_METHODS_ABI_MAJOR: u64 = 2;
+const CORE_METHODS_ABI_MINOR: u64 = 3;
 
 struct AttestedMethodsLibrary {
     source_canonical_path: PathBuf,
@@ -319,7 +321,7 @@ fn ensure_same_configured_methods_library(
     }
     if let Some(error) = &configured.abi_error {
         return Err(replay_error(format!(
-            "the configured libn4m process identity failed ABI 2.2 verification: {error}"
+            "the configured libn4m process identity failed ABI 2.3 verification: {error}"
         )));
     }
     Ok(configured.snapshot_path.clone())
@@ -410,7 +412,7 @@ fn configure_attested_methods_library(
     });
     if let Some(error) = abi_error {
         return Err(replay_error(format!(
-            "the attested libn4m failed ABI 2.2 verification: {error}"
+            "the attested libn4m failed ABI 2.3 verification: {error}"
         )));
     }
     Ok(snapshot_path)
@@ -420,7 +422,7 @@ fn configure_attested_methods_library(
 ///
 /// This closed preflight hashes a canonical, non-symlink source file, loads a
 /// private snapshot of those already-attested bytes, and creates then drops a
-/// native context to verify the n4m ABI 2.2 contract. The first successful
+/// native context to verify the n4m ABI 2.3 contract. The first successful
 /// call fixes both source path and SHA-256 for the process. No runtime path,
 /// native handle, archive input, callback or numerical result is returned.
 pub fn preflight_methods_archive_v2_library(
@@ -808,6 +810,7 @@ pub fn replay_methods_archive_v2_conformal_presentation_v1(
 fn load_v2_predictor_package(
     archive: &LoadedArchiveV2,
 ) -> Result<PortablePredictorPackage, NativeMethodsReplayError> {
+    require_archive_methods_abi(archive.manifest(), "Archive V2")?;
     let package_bytes = archive.portable_predictor_package().map_err(|error| {
         NativeMethodsReplayError(format!("Core Archive V2 package read failed: {error}"))
     })?;
@@ -820,6 +823,63 @@ fn load_v2_predictor_package(
         NativeMethodsReplayError(format!("DAG-ML rejected Core Archive V2 package: {error}"))
     })?;
     Ok(package)
+}
+
+/// Refuse a payload before native import when its manifest requires a newer
+/// Methods ABI than the n4m binding compiled into this Core release.
+///
+/// The absent-field fallback is intentionally limited to the historical V2/V3
+/// profile: PLS N4MM existed at ABI 2.0 and usable N4MOPT at ABI 2.2. New writers emit
+/// `abi_min_minor` from the actual payload capability (for example, 3 for an
+/// imported-linear N4MM) rather than from the host runtime version.
+fn require_archive_methods_abi(
+    manifest: &serde_json::Value,
+    archive_label: &str,
+) -> Result<(), NativeMethodsReplayError> {
+    require_archive_methods_abi_for_runtime(
+        manifest,
+        archive_label,
+        CORE_METHODS_ABI_MAJOR,
+        CORE_METHODS_ABI_MINOR,
+    )
+}
+
+fn require_archive_methods_abi_for_runtime(
+    manifest: &serde_json::Value,
+    archive_label: &str,
+    runtime_major: u64,
+    runtime_minor: u64,
+) -> Result<(), NativeMethodsReplayError> {
+    let methods = manifest
+        .get("payloads")
+        .and_then(|value| value.get("methods"))
+        .and_then(serde_json::Value::as_object)
+        .ok_or_else(|| replay_error(format!("{archive_label} Methods manifest is absent")))?;
+    for kind in ["n4mm", "n4mopt"] {
+        let references = methods
+            .get(kind)
+            .and_then(serde_json::Value::as_array)
+            .ok_or_else(|| replay_error(format!("{archive_label} {kind} references are absent")))?;
+        for reference in references {
+            let required_major = reference
+                .get("abi_major")
+                .and_then(serde_json::Value::as_u64)
+                .ok_or_else(|| {
+                    replay_error(format!("{archive_label} {kind} ABI major is absent"))
+                })?;
+            let historical_minimum = if kind == "n4mopt" { 2 } else { 0 };
+            let required_minor = reference
+                .get("abi_min_minor")
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or(historical_minimum);
+            if required_major != runtime_major || runtime_minor < required_minor {
+                return Err(replay_error(format!(
+                    "{archive_label} {kind} payload requires Methods ABI {required_major}.{required_minor} or newer within the same major; Core provides ABI {runtime_major}.{runtime_minor}"
+                )));
+            }
+        }
+    }
+    Ok(())
 }
 
 fn replay_methods_predictor_package(
@@ -873,6 +933,7 @@ pub fn replay_methods_archive_v3(
     archive: &LoadedArchiveV3,
     input: MethodsArchiveRefitRequestV3,
 ) -> Result<PortableRefitReplayOutcomeV3, NativeMethodsReplayError> {
+    require_archive_methods_abi(archive.manifest(), "Archive V3")?;
     let package_bytes = archive.portable_refit_package().map_err(|error| {
         NativeMethodsReplayError(format!("Core Archive V3 package read failed: {error}"))
     })?;
@@ -988,6 +1049,33 @@ mod json_tests {
     }
 
     #[test]
+    fn archive_methods_abi_minimum_is_checked_before_native_import() {
+        let mut manifest = serde_json::json!({
+            "payloads": {"methods": {
+                "n4mm": [{"abi_major": 2}],
+                "n4mopt": []
+            }}
+        });
+        require_archive_methods_abi(&manifest, "Archive V2")
+            .expect("an absent minor is the documented historical PLS ABI 2.0 profile");
+        manifest["payloads"]["methods"]["n4mm"][0]["abi_min_minor"] = serde_json::Value::from(3);
+        require_archive_methods_abi(&manifest, "Archive V2")
+            .expect("Core 0.3.25 provides Methods ABI 2.3");
+        manifest["payloads"]["methods"]["n4mm"][0]["abi_min_minor"] = serde_json::Value::from(4);
+        let error = require_archive_methods_abi(&manifest, "Archive V2")
+            .expect_err("a future Methods minor must be refused before import");
+        assert!(error.to_string().contains("requires Methods ABI 2.4"));
+
+        manifest["payloads"]["methods"]["n4mm"] = serde_json::json!([]);
+        manifest["payloads"]["methods"]["n4mopt"] = serde_json::json!([{"abi_major": 2}]);
+        let error = require_archive_methods_abi_for_runtime(&manifest, "Archive V2", 2, 1)
+            .expect_err("historical N4MOPT requires the first usable optimizer ABI 2.2");
+        assert!(error.to_string().contains("requires Methods ABI 2.2"));
+        require_archive_methods_abi_for_runtime(&manifest, "Archive V2", 2, 2)
+            .expect("Methods ABI 2.2 accepts a historical N4MOPT reference");
+    }
+
+    #[test]
     fn configured_methods_identity_binds_path_and_sha() {
         let directory = tempfile::tempdir().expect("private test directory");
         let source = directory.path().join("libn4m-source.so");
@@ -1045,7 +1133,7 @@ mod json_tests {
             ensure_same_configured_methods_library(&failed_abi, &matching)
                 .unwrap_err()
                 .to_string()
-                .contains("failed ABI 2.2 verification")
+                .contains("failed ABI 2.3 verification")
         );
     }
 

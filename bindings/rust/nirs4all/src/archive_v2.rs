@@ -89,6 +89,7 @@ pub struct LoadedArchiveV2 {
 pub struct ArchiveV2MethodsArtifact {
     artifact_id: String,
     member_path: String,
+    abi_min_minor: u32,
 }
 
 impl ArchiveV2MethodsArtifact {
@@ -98,6 +99,16 @@ impl ArchiveV2MethodsArtifact {
 
     pub fn member_path(&self) -> &str {
         &self.member_path
+    }
+
+    /// Minimum Methods ABI 2 minor required to import this payload.
+    ///
+    /// Archives written before the field was introduced contain only the
+    /// historical PLS N4MM format available since ABI 2.0 and therefore
+    /// project `0` here. New writers must emit the field explicitly from the
+    /// payload capability they selected.
+    pub fn abi_min_minor(&self) -> u32 {
+        self.abi_min_minor
     }
 }
 
@@ -139,6 +150,10 @@ impl LoadedArchiveV2 {
                 Ok(ArchiveV2MethodsArtifact {
                     artifact_id: required_str(item, "artifact_id")?.to_owned(),
                     member_path: required_str(item, "member_path")?.to_owned(),
+                    abi_min_minor: item
+                        .get("abi_min_minor")
+                        .and_then(Value::as_u64)
+                        .unwrap_or(0) as u32,
                 })
             })
             .collect()
@@ -870,8 +885,20 @@ fn validate_reference_declarations(
         .ok_or_else(|| fmt_err("n4mm must be array"))?
     {
         let o = object(item, "n4mm ref")?;
-        closed(
-            o,
+        let fields = if o.contains_key("abi_min_minor") {
+            &[
+                "artifact_id",
+                "kind",
+                "owner",
+                "format_version",
+                "abi_major",
+                "abi_min_minor",
+                "member_path",
+                "raw_sha256",
+                "semantic_fingerprint",
+                "semantic_profile",
+            ][..]
+        } else {
             &[
                 "artifact_id",
                 "kind",
@@ -882,13 +909,15 @@ fn validate_reference_declarations(
                 "raw_sha256",
                 "semantic_fingerprint",
                 "semantic_profile",
-            ],
-            "N4MM reference",
-        )?;
+            ][..]
+        };
+        closed(o, fields, "N4MM reference")?;
         if o.get("kind").and_then(Value::as_str) != Some("N4MM")
             || o.get("owner").and_then(Value::as_str) != Some("nirs4all-methods")
             || o.get("format_version").and_then(Value::as_u64) != Some(1)
             || o.get("abi_major").and_then(Value::as_u64) != Some(2)
+            || o.get("abi_min_minor")
+                .is_some_and(|value| value.as_u64().is_none_or(|minor| minor > u32::MAX as u64))
             || o.get("semantic_profile").and_then(Value::as_str) != Some("n4mm_raw_sha256")
             || o.get("semantic_fingerprint") != o.get("raw_sha256")
         {
@@ -912,8 +941,19 @@ fn validate_reference_declarations(
         .ok_or_else(|| fmt_err("n4mopt must be array"))?
     {
         let o = object(item, "n4mopt ref")?;
-        closed(
-            o,
+        let fields = if o.contains_key("abi_min_minor") {
+            &[
+                "kind",
+                "owner",
+                "format_version",
+                "abi_major",
+                "abi_min_minor",
+                "member_path",
+                "raw_sha256",
+                "semantic_fingerprint",
+                "semantic_profile",
+            ][..]
+        } else {
             &[
                 "kind",
                 "owner",
@@ -923,14 +963,16 @@ fn validate_reference_declarations(
                 "raw_sha256",
                 "semantic_fingerprint",
                 "semantic_profile",
-            ],
-            "N4MOPT reference",
-        )?;
+            ][..]
+        };
+        closed(o, fields, "N4MOPT reference")?;
         let path = required_str(o, "member_path")?;
         if o.get("kind").and_then(Value::as_str) != Some("N4MOPT")
             || o.get("owner").and_then(Value::as_str) != Some("nirs4all-methods")
             || o.get("format_version").and_then(Value::as_u64) != Some(1)
             || o.get("abi_major").and_then(Value::as_u64) != Some(2)
+            || o.get("abi_min_minor")
+                .is_some_and(|value| value.as_u64().is_none_or(|minor| minor > u32::MAX as u64))
             || o.get("semantic_profile").and_then(Value::as_str) != Some("methods_rfc8785_jcs")
             || n4mm_paths.contains(path)
         {
@@ -2071,6 +2113,39 @@ mod tests {
         );
         assert!(matches!(load_archive(&p).unwrap(), LoadedArchive::V2(_)));
         let _ = fs::remove_file(p);
+    }
+    #[test]
+    fn v2_dual_reads_historical_abi_minor_and_projects_new_minimum() {
+        let historical_path = path("historical-abi-minor.n4a");
+        write_archive_v2(&historical_path, request()).unwrap();
+        let historical = load_archive_v2(&historical_path).unwrap();
+        assert_eq!(
+            historical.methods_n4mm_artifacts().unwrap()[0].abi_min_minor(),
+            0
+        );
+        let _ = fs::remove_file(historical_path);
+
+        let current_path = path("current-abi-minor.n4a");
+        let mut current = request();
+        current.manifest["payloads"]["methods"]["n4mm"][0]["abi_min_minor"] = Value::from(3);
+        write_archive_v2(&current_path, current).unwrap();
+        let current = load_archive_v2(&current_path).unwrap();
+        assert_eq!(
+            current.methods_n4mm_artifacts().unwrap()[0].abi_min_minor(),
+            3
+        );
+        let _ = fs::remove_file(current_path);
+    }
+    #[test]
+    fn v2_refuses_non_integer_abi_minimum() {
+        let path = path("invalid-abi-minor.n4a");
+        let mut request = request();
+        request.manifest["payloads"]["methods"]["n4mm"][0]["abi_min_minor"] =
+            Value::String("3".to_owned());
+        assert!(matches!(
+            write_archive_v2(&path, request),
+            Err(ArchiveStoreError::Format(_))
+        ));
     }
     #[test]
     fn v2_refuses_host_and_mixed_package_before_write() {

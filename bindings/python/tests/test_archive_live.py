@@ -1,7 +1,7 @@
-"""Opt-in Dag-ML 0.3.18 multi-target Archive V2 replay witness.
+"""Opt-in Dag-ML 0.3.23 multi-target Archive V2 replay witness.
 
 Set ``NIRS4ALL_CORE_LIVE_ARCHIVE_V2`` to a valid two-feature, multi-target
-Methods Archive V2 produced by Dag-ML 0.3.18 and
+Methods Archive V2 produced by Dag-ML 0.3.23 and
 ``NIRS4ALL_CORE_LIVE_METHODS_LIBRARY`` to a compatible ``libn4m``. The test is
 intentionally fixture-free: archives and native binaries remain release
 artifacts rather than committed test data.
@@ -130,7 +130,7 @@ class LiveArchiveV2ReplayTests(unittest.TestCase):
         self.library = Path(os.environ[_LIBRARY_ENV])
         package = json.loads(read_portable_predictor_package_v2(self.archive))
         dag_ml: Any = importlib.import_module("dag_ml")
-        self.assertEqual(dag_ml.__version__, "0.3.18")
+        self.assertEqual(dag_ml.__version__, "0.3.23")
         self.target_names = package["output_bindings"][0]["target_names"]
         self.assertGreaterEqual(len(self.target_names), 2)
         self.request, self.envelopes, self.inputs = _contracts(package)

@@ -335,8 +335,20 @@ fn validate_declarations(
         .ok_or_else(|| fmt_err("n4mm must be an array"))?
     {
         let reference = object(reference, "N4MM reference")?;
-        closed(
-            reference,
+        let fields = if reference.contains_key("abi_min_minor") {
+            &[
+                "artifact_id",
+                "kind",
+                "owner",
+                "format_version",
+                "abi_major",
+                "abi_min_minor",
+                "member_path",
+                "raw_sha256",
+                "semantic_fingerprint",
+                "semantic_profile",
+            ][..]
+        } else {
             &[
                 "artifact_id",
                 "kind",
@@ -347,9 +359,9 @@ fn validate_declarations(
                 "raw_sha256",
                 "semantic_fingerprint",
                 "semantic_profile",
-            ],
-            "N4MM reference",
-        )?;
+            ][..]
+        };
+        closed(reference, fields, "N4MM reference")?;
         let artifact_id = required_str(reference, "artifact_id")?;
         let path = required_str(reference, "member_path")?;
         if !is_id(artifact_id)
@@ -360,6 +372,9 @@ fn validate_declarations(
             || reference.get("owner").and_then(Value::as_str) != Some("nirs4all-methods")
             || reference.get("format_version").and_then(Value::as_u64) != Some(1)
             || reference.get("abi_major").and_then(Value::as_u64) != Some(2)
+            || reference
+                .get("abi_min_minor")
+                .is_some_and(|value| value.as_u64().is_none_or(|minor| minor > u32::MAX as u64))
             || reference.get("semantic_profile").and_then(Value::as_str) != Some("n4mm_raw_sha256")
             || reference.get("semantic_fingerprint") != reference.get("raw_sha256")
         {
@@ -885,6 +900,23 @@ mod tests {
             LoadedArchive::V3(_)
         ));
         let _ = fs::remove_file(archive);
+    }
+
+    #[test]
+    fn v3_accepts_explicit_abi_minor_and_refuses_invalid_values() {
+        let archive = path("abi-minor.n4a");
+        let mut current = request();
+        current.manifest["payloads"]["methods"]["n4mm"][0]["abi_min_minor"] = Value::from(3);
+        write_archive_v3(&archive, current).expect("write explicit ABI 2.3 minimum");
+        let _ = fs::remove_file(&archive);
+
+        let mut invalid = request();
+        invalid.manifest["payloads"]["methods"]["n4mm"][0]["abi_min_minor"] =
+            Value::String("3".to_owned());
+        assert!(matches!(
+            write_archive_v3(&archive, invalid),
+            Err(ArchiveStoreError::Format(_))
+        ));
     }
 
     #[test]
