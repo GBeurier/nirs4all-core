@@ -1,6 +1,6 @@
 """Python surface for the nirs4all-core aggregate distribution."""
 
-__version__ = "0.3.24"
+__version__ = "0.3.25"
 
 from ._capabilities import (
     artifact_contracts,

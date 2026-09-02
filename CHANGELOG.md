@@ -8,6 +8,18 @@ binding manifest.
 
 ## [Unreleased]
 
+### Changed
+
+- Advanced the native release train to Core 0.3.25 with exact Rust pins on
+  DAG-ML 0.3.23 and n4m 0.1.2. Product replay now preflights the Methods ABI
+  2.3 contract, while the Python extras require the matching DAG-ML 0.3.23 and
+  nirs4all-methods 1.0.13 capability floors.
+- Added dual-read support for capability-derived `abi_min_minor` on native
+  Methods archive references. Historical references without the field retain
+  their payload-family floors (ABI 2.0 for PLS N4MM and 2.2 for N4MOPT);
+  current Rust and WASM replay refuse a payload whose declared minimum is newer
+  than the selected runtime before native import.
+
 ### Added
 
 - Added the closed Rust `Archive V2` matrix-prediction entry point for product
@@ -15,7 +27,7 @@ binding manifest.
   requirement, preserves sample/target order, and loads libn4m from a private
   content-attested snapshot whose canonical source path and SHA-256 identity
   cannot change during the process. Product hosts can run the same closed
-  attestation and ABI 2.2 verification as a preflight without receiving an
+  attestation and ABI 2.3 verification as a preflight without receiving an
   injectable runtime path or native handle.
 - Added bounded Archive V2 replay to the JavaScript/WASM binding. The existing
   Core Rust reader now exposes its same byte-oriented validation path to WASM,
@@ -36,11 +48,9 @@ binding manifest.
   identity-bound `ConformalPresentationV1` without recalculating intervals or
   accepting a Python model callback.
 
-### Changed
-
 - Exposed the DAG-ML process-local loss and metric registry through the Python,
   R, Rust, MATLAB/Octave, and WASM aggregate bindings, pinned to the verified
-  DAG-ML `0.3.0` integration commit.
+  DAG-ML `0.3.23` release contract.
 
 ## [0.3.10] - 2026-07-10
 
