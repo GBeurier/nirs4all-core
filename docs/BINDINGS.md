@@ -103,6 +103,11 @@ binding-specific parity gates.
 - `read_portable_predictor_package_v2(path)` validates Archive V2 in Rust and
   returns exact DAG-ML Package V2 bytes. It is not a Python ZIP parser, package
   decoder, artifact executor, or prediction API.
+- `inspect_methods_archive_v2_predictors(...)` content-attests libn4m, derives
+  `NativePredictorDescriptorV1` from each complete N4MM member through the
+  DAG-ML/Methods inspection contract, and returns typed descriptor data only.
+  Historical V2 packages without an embedded descriptor stay readable; an
+  embedded descriptor must exactly match the native inspection.
 - `replay_methods_archive_v2(...)` and `replay_methods_archive_v3(...)` validate
   the archive in Rust, then delegate strict request/envelope semantics and a
   fresh N4MM runtime to DAG-ML. They accept numeric Methods inputs only: no
@@ -111,7 +116,7 @@ binding-specific parity gates.
 - `predict_methods_archive_v2_matrix(...)` is the closed X-only product path.
   Core derives the replay contracts, requires one finalized output binding and
   one external data requirement, validates sample/target order, and loads only
-  a private snapshot of the caller's SHA-256-attested libn4m after ABI 2.3
+  a private snapshot of the caller's SHA-256-attested libn4m after ABI 2.4
   preflight. It exposes no fit/refit, callback or fallback control.
 - Native Methods references carry `abi_major` plus `abi_min_minor`. Core 0.3.25
   refuses an archive requiring a newer minor before N4MM import; an absent
@@ -119,6 +124,10 @@ binding-specific parity gates.
   capability floor of the old payload family (ABI 2.0 for PLS N4MM, ABI 2.2
   for N4MOPT). New writers always emit the capability-derived minimum (`3` for
   imported-linear N4MM), never the host runtime minor.
+- The descriptor consumer is qualified against unpublished local candidates
+  DAG-ML `189099119b69e74c69466f2308808cb423dc2e94` and Methods
+  `a71ee2927524d03482183de3d6e22661efc05d12`. Those publication holds do not
+  modify the release topology or upstream registry lock.
 - Framework idioms: sklearn-style estimators, `fit`/`predict`/`transform`,
   NumPy arrays, pandas data frames, and clear optional extras.
 - Future external operator adapters should look like normal sklearn-compatible

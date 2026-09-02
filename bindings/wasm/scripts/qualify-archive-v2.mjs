@@ -44,6 +44,15 @@ assert.deepEqual(result.sampleIds, ['predict.0', 'predict.1']);
 assert.deepEqual(result.targetNames, ['protein', 'moisture']);
 assert.equal(result.rows, 2);
 assert.equal(result.cols, 2);
+assert.equal(
+  result.nativePredictorDescriptor.descriptor_type,
+  'dagml.native_predictor_descriptor.v1',
+);
+assert.equal(result.nativePredictorDescriptor.schema_version, 1);
+assert.equal(result.nativePredictorDescriptor.owner_controller, 'controller:methods.pls');
+assert.equal(result.nativePredictorDescriptor.storage_algorithm, 0);
+assert.equal(result.nativePredictorDescriptor.dimensions.n_features, 2);
+assert.equal(result.nativePredictorDescriptor.dimensions.n_targets, 2);
 assert.deepEqual(result.data, [
   1.6363636363636365,
   13.272727272727273,
@@ -51,7 +60,7 @@ assert.deepEqual(result.data, [
   15,
 ]);
 assert.equal(ccallCounts.get('n4m_model_import_from_buffer'), 1);
-assert.equal(ccallCounts.get('n4m_serialization_inspect'), 1);
+assert.equal(ccallCounts.get('n4m_serialization_inspect_model_v1'), 1);
 assert.equal(ccallCounts.get('n4m_model_predict_alloc'), 1);
 assert.equal(ccallCounts.get('n4m_estimators_pls_fit') ?? 0, 0);
 assert.equal(ccallCounts.get('n4m_wasm_pls_fit') ?? 0, 0);
@@ -80,7 +89,7 @@ console.log(JSON.stringify({
   target_names: result.targetNames,
   predictions: result.data,
   methods_import_calls: ccallCounts.get('n4m_model_import_from_buffer'),
-  methods_inspect_calls: ccallCounts.get('n4m_serialization_inspect'),
+  methods_inspect_calls: ccallCounts.get('n4m_serialization_inspect_model_v1'),
   methods_predict_calls: ccallCounts.get('n4m_model_predict_alloc'),
   methods_fit_calls: (ccallCounts.get('n4m_estimators_pls_fit') ?? 0)
     + (ccallCounts.get('n4m_wasm_pls_fit') ?? 0),

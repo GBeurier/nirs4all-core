@@ -4,6 +4,7 @@ import {
   datasets,
   formats,
   importUpstream,
+  inspectMethodsArchiveV2Predictors,
   io,
   loadDagMlDataWasm,
   loadDagMlWasm,
@@ -27,6 +28,7 @@ import {
   upstream,
   upstreams,
   type PipelineDefinition,
+  type NativePredictorDescriptorV1,
   type PortableExecutionResult,
   type PortableMatrixDataset,
   type PortablePredictionResult,
@@ -120,6 +122,8 @@ const loaders: Promise<unknown>[] = [
 const stackPromise: Promise<Record<string, unknown>> = loadPortableStack(['methods', 'formats']);
 const dataIoPromise: Promise<{ formats: unknown; io: unknown }> = loadDataIoWasm();
 const maybeLoadedMethods: unknown = methodsWasm();
+const inspectedPredictors: Promise<readonly NativePredictorDescriptorV1[]> =
+  inspectMethodsArchiveV2Predictors(new Uint8Array());
 
 void classes;
 void plan;
@@ -134,3 +138,4 @@ void loaders;
 void stackPromise;
 void dataIoPromise;
 void maybeLoadedMethods;
+void inspectedPredictors;

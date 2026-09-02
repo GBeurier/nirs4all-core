@@ -11,9 +11,13 @@ use std::{
 };
 
 use dag_ml_core::{
-    ArtifactBackend, ArtifactLoadMode, FittedArtifactMode, OutputOrder, Phase,
-    PortablePredictorPackage, PredictionKind, PredictionLevel,
+    ArtifactBackend, ArtifactLoadMode, ControllerId, FittedArtifactMode,
+    NativePredictorDescriptorV1, NativePredictorDimensionsV1, NativePredictorWriterAbiV1,
+    OutputOrder, Phase, PortablePredictorPackage, PredictionKind, PredictionLevel,
+    NATIVE_PREDICTOR_DESCRIPTOR_SCHEMA_VERSION_V1, NATIVE_PREDICTOR_DESCRIPTOR_TYPE_V1,
+    NATIVE_PREDICTOR_FORMAT_N4MM,
 };
+use sha2::{Digest, Sha256};
 use wasm_bindgen::prelude::*;
 
 // The canonical module's V1/V3 dispatch types live at the aggregate root. They
@@ -102,6 +106,8 @@ pub struct ValidatedMethodsArchiveV2 {
     port_name: String,
     target_names_json: String,
     abi_min_minor: u32,
+    owner_controller: ControllerId,
+    embedded_descriptor: Option<NativePredictorDescriptorV1>,
 }
 
 #[wasm_bindgen]
@@ -158,6 +164,74 @@ impl ValidatedMethodsArchiveV2 {
     #[wasm_bindgen(getter)]
     pub fn abi_min_minor(&self) -> u32 {
         self.abi_min_minor
+    }
+
+    /// Bind authoritative Methods/WASM inspection fields to the inventoried
+    /// N4MM bytes and return DAG-ML's typed descriptor JSON.
+    ///
+    /// The public JavaScript facade obtains these primitive fields only from
+    /// `@nirs4all/methods.inspectN4mm`. Core supplies the artifact hash and
+    /// controller from the validated archive, while DAG-ML owns all pure
+    /// controller/algorithm/capability/dimension policy and TCV1 identity.
+    #[allow(clippy::too_many_arguments)]
+    pub fn bind_inspected_native_predictor_v1(
+        &self,
+        inspection_schema_version: u32,
+        format_version: u32,
+        writer_abi_major: u32,
+        writer_abi_minor: u32,
+        writer_abi_patch: u32,
+        storage_algorithm: i32,
+        training_samples: i64,
+        n_features: i32,
+        n_targets: i32,
+        n_components: i32,
+        capabilities: u64,
+    ) -> Result<String, JsValue> {
+        if inspection_schema_version != 1 {
+            return Err(JsValue::from_str(
+                "Methods returned an unsupported serialized-model inspection schema",
+            ));
+        }
+        let mut descriptor = NativePredictorDescriptorV1 {
+            descriptor_type: NATIVE_PREDICTOR_DESCRIPTOR_TYPE_V1.to_owned(),
+            schema_version: NATIVE_PREDICTOR_DESCRIPTOR_SCHEMA_VERSION_V1,
+            artifact_sha256: format!("{:x}", Sha256::digest(&self.model_bytes)),
+            owner_controller: self.owner_controller.clone(),
+            format: NATIVE_PREDICTOR_FORMAT_N4MM.to_owned(),
+            format_version,
+            writer_abi: NativePredictorWriterAbiV1 {
+                major: writer_abi_major,
+                minor: writer_abi_minor,
+                patch: writer_abi_patch,
+            },
+            storage_algorithm,
+            capabilities,
+            dimensions: NativePredictorDimensionsV1 {
+                training_samples,
+                n_features,
+                n_targets,
+                n_components,
+            },
+            descriptor_fingerprint: String::new(),
+        };
+        descriptor.descriptor_fingerprint = descriptor
+            .compute_fingerprint()
+            .map_err(|error| JsValue::from_str(&error.to_string()))?;
+        descriptor
+            .validate()
+            .map_err(|error| JsValue::from_str(&error.to_string()))?;
+        if self
+            .embedded_descriptor
+            .as_ref()
+            .is_some_and(|embedded| embedded != &descriptor)
+        {
+            return Err(JsValue::from_str(
+                "Archive V2 native predictor descriptor does not match Methods inspection",
+            ));
+        }
+        serde_json::to_string(&descriptor)
+            .map_err(|error| JsValue::from_str(&format!("cannot serialize descriptor: {error}")))
     }
 }
 
@@ -277,6 +351,8 @@ fn project_archive(bytes: &[u8]) -> Result<ValidatedMethodsArchiveV2, String> {
         port_name: output.port_name.clone(),
         target_names_json,
         abi_min_minor: declaration.abi_min_minor(),
+        owner_controller: artifact.controller_id.clone(),
+        embedded_descriptor: artifact.native_predictor_descriptor.clone(),
     })
 }
 

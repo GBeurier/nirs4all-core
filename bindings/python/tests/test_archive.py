@@ -10,6 +10,7 @@ from unittest.mock import patch
 
 from nirs4all_core import (
     NativeArchiveUnavailableError,
+    inspect_methods_archive_v2_predictors,
     predict_methods_archive_v2_matrix,
     read_portable_predictor_package_v2,
     read_portable_refit_package_v3,
@@ -22,6 +23,47 @@ from nirs4all_core import (
 
 
 class ArchiveFacadeTests(unittest.TestCase):
+    def test_v2_native_predictor_inspection_returns_only_native_descriptor_json(self) -> None:
+        observed: list[str] = []
+        descriptor = {
+            "descriptor_type": "dagml.native_predictor_descriptor.v1",
+            "schema_version": 1,
+            "artifact_sha256": "a" * 64,
+            "owner_controller": "controller:methods.pls",
+            "format": "N4MM",
+            "format_version": 1,
+            "writer_abi": {"major": 2, "minor": 4, "patch": 0},
+            "storage_algorithm": 0,
+            "capabilities": 3,
+            "dimensions": {
+                "training_samples": 4,
+                "n_features": 2,
+                "n_targets": 1,
+                "n_components": 1,
+            },
+            "descriptor_fingerprint": "b" * 64,
+        }
+
+        def inspect(path: str, library: str, sha256: str) -> str:
+            observed.extend([path, library, sha256])
+            return json.dumps([descriptor])
+
+        module = types.SimpleNamespace(
+            inspect_methods_archive_v2_predictors_json=inspect
+        )
+        with patch.dict(sys.modules, {"nirs4all_core._native": module}):
+            result = inspect_methods_archive_v2_predictors(
+                "/tmp/model.n4a",
+                methods_library_path="/opt/lib/libn4m.so",
+                methods_library_sha256="c" * 64,
+            )
+
+        self.assertEqual(result, [descriptor])
+        self.assertEqual(
+            observed,
+            ["/tmp/model.n4a", "/opt/lib/libn4m.so", "c" * 64],
+        )
+
     def test_returns_exact_native_package_bytes(self) -> None:
         observed: list[str] = []
 

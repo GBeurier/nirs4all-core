@@ -15,13 +15,14 @@ use dag_ml_core::training::PredictionSource;
 use dag_ml_core::{
     build_conformal_presentation_v1, deserialize_external_contract,
     execute_loaded_methods_portable_refit_replay_v3, execute_loaded_methods_predictor_replay,
+    inspect_methods_native_predictor_descriptor_v1, methods_n4mm_abi_requirement,
     methods_pls_predict_feature_content_fingerprint, ConformalPresentationV1,
     ExternalDataPlanEnvelope, MethodsPlsDataset, MethodsPlsMatrix,
     MethodsPortablePredictorReplayInput, MethodsPortableRefitReplayInputV3, MethodsRuntime,
-    ObservationId, Phase, PortablePredictorPackage, PortableRefitPackageV3,
-    PortableRefitReplayOutcomeV3, PredictionKind, PredictionPartition, RunId,
-    RuntimeControllerRegistry, SampleId, SampleRelation, SampleRelationSet, TrainingReplayOutcome,
-    TrainingReplayRequest, EXTERNAL_DATA_PLAN_ENVELOPE_SCHEMA_VERSION_V1,
+    NativePredictorDescriptorV1, ObservationId, Phase, PortablePredictorPackage,
+    PortableRefitPackageV3, PortableRefitReplayOutcomeV3, PredictionKind, PredictionPartition,
+    RunId, RuntimeControllerRegistry, SampleId, SampleRelation, SampleRelationSet,
+    TrainingReplayOutcome, TrainingReplayRequest, EXTERNAL_DATA_PLAN_ENVELOPE_SCHEMA_VERSION_V1,
     TRAINING_REPLAY_REQUEST_SCHEMA_VERSION,
 };
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
@@ -92,7 +93,7 @@ struct MethodsArchiveMatrixPredictComposition {
 
 const MAX_ATTESTED_METHODS_LIBRARY_BYTES: u64 = 64 * 1024 * 1024;
 const CORE_METHODS_ABI_MAJOR: u64 = 2;
-const CORE_METHODS_ABI_MINOR: u64 = 3;
+const CORE_METHODS_ABI_MINOR: u64 = 4;
 
 struct AttestedMethodsLibrary {
     source_canonical_path: PathBuf,
@@ -321,7 +322,7 @@ fn ensure_same_configured_methods_library(
     }
     if let Some(error) = &configured.abi_error {
         return Err(replay_error(format!(
-            "the configured libn4m process identity failed ABI 2.3 verification: {error}"
+            "the configured libn4m process identity failed ABI 2.4 verification: {error}"
         )));
     }
     Ok(configured.snapshot_path.clone())
@@ -412,7 +413,7 @@ fn configure_attested_methods_library(
     });
     if let Some(error) = abi_error {
         return Err(replay_error(format!(
-            "the attested libn4m failed ABI 2.3 verification: {error}"
+            "the attested libn4m failed ABI 2.4 verification: {error}"
         )));
     }
     Ok(snapshot_path)
@@ -422,7 +423,7 @@ fn configure_attested_methods_library(
 ///
 /// This closed preflight hashes a canonical, non-symlink source file, loads a
 /// private snapshot of those already-attested bytes, and creates then drops a
-/// native context to verify the n4m ABI 2.3 contract. The first successful
+/// native context to verify the n4m ABI 2.4 contract. The first successful
 /// call fixes both source path and SHA-256 for the process. No runtime path,
 /// native handle, archive input, callback or numerical result is returned.
 pub fn preflight_methods_archive_v2_library(
@@ -431,6 +432,119 @@ pub fn preflight_methods_archive_v2_library(
 ) -> Result<(), NativeMethodsReplayError> {
     configure_attested_methods_library(methods_library_path.as_ref(), methods_library_sha256)
         .map(|_| ())
+}
+
+/// Derive and attest every native predictor carried by an Archive V2.
+///
+/// Core binds the inventoried archive member to DAG-ML's artifact reference,
+/// then delegates complete N4MM inspection and controller policy to DAG-ML and
+/// Methods. Historical V2 packages without an embedded descriptor remain
+/// readable: their descriptor is derived from the native bytes here. A newer
+/// embedded descriptor is accepted only when it exactly matches that result.
+pub fn inspect_methods_archive_v2_predictors(
+    archive: &LoadedArchiveV2,
+    methods_library_path: impl AsRef<Path>,
+    methods_library_sha256: &str,
+) -> Result<Vec<NativePredictorDescriptorV1>, NativeMethodsReplayError> {
+    let package = load_v2_predictor_package(archive)?;
+    configure_attested_methods_library(methods_library_path.as_ref(), methods_library_sha256)?;
+    inspect_package_native_predictors(archive, &package)
+}
+
+fn inspect_package_native_predictors(
+    archive: &LoadedArchiveV2,
+    package: &PortablePredictorPackage,
+) -> Result<Vec<NativePredictorDescriptorV1>, NativeMethodsReplayError> {
+    let mut declarations = archive
+        .methods_n4mm_artifacts()
+        .map_err(|error| {
+            replay_error(format!(
+                "Core Archive V2 N4MM declaration read failed: {error}"
+            ))
+        })?
+        .into_iter()
+        .map(|declaration| (declaration.artifact_id().to_owned(), declaration))
+        .collect::<BTreeMap<_, _>>();
+    let mut descriptors = Vec::new();
+
+    for record in &package.execution_bundle.refit_artifacts {
+        let artifact = &record.artifact;
+        if artifact.kind != "n4m_model" {
+            continue;
+        }
+        let declaration = declarations.remove(artifact.id.as_str()).ok_or_else(|| {
+            replay_error(format!(
+                "Core Archive V2 has no N4MM declaration for DAG-ML artifact `{}`",
+                artifact.id
+            ))
+        })?;
+        let (artifact_abi_major, artifact_abi_min_minor) = methods_n4mm_abi_requirement(artifact)
+            .map_err(|error| {
+            replay_error(format!(
+                "DAG-ML refused Archive V2 predictor ABI for `{}`: {error}",
+                artifact.id
+            ))
+        })?;
+        if artifact.backend != Some(dag_ml_core::ArtifactBackend::Raw)
+            || artifact.uri.as_deref() != Some(declaration.member_path())
+            || artifact_abi_major != CORE_METHODS_ABI_MAJOR as u32
+            || artifact_abi_min_minor != declaration.abi_min_minor()
+        {
+            return Err(replay_error(format!(
+                "Core Archive V2 N4MM declaration does not match DAG-ML artifact `{}`",
+                artifact.id
+            )));
+        }
+        let bytes = archive.member(declaration.member_path()).map_err(|error| {
+            replay_error(format!(
+                "Core Archive V2 N4MM member `{}` read failed: {error}",
+                declaration.member_path()
+            ))
+        })?;
+        let embedded = package
+            .execution_bundle
+            .raw_artifact_payloads
+            .get(&artifact.id)
+            .ok_or_else(|| {
+                replay_error(format!(
+                    "DAG-ML package has no detached N4MM bytes for `{}`",
+                    artifact.id
+                ))
+            })?;
+        if embedded.as_slice() != bytes {
+            return Err(replay_error(format!(
+                "DAG-ML N4MM bytes differ from the inventoried Archive V2 member for `{}`",
+                artifact.id
+            )));
+        }
+
+        let derived =
+            inspect_methods_native_predictor_descriptor_v1(&artifact.controller_id, bytes)
+                .map_err(|error| {
+                    replay_error(format!(
+                        "DAG-ML/Methods refused Archive V2 predictor `{}`: {error}",
+                        artifact.id
+                    ))
+                })?;
+        if artifact
+            .native_predictor_descriptor
+            .as_ref()
+            .is_some_and(|embedded| embedded != &derived)
+        {
+            return Err(replay_error(format!(
+                "Archive V2 predictor `{}` does not match its native descriptor",
+                artifact.id
+            )));
+        }
+        descriptors.push(derived);
+    }
+
+    if descriptors.is_empty() || !declarations.is_empty() {
+        return Err(replay_error(
+            "Archive V2 N4MM declarations do not exactly cover DAG-ML refit predictors",
+        ));
+    }
+    Ok(descriptors)
 }
 
 fn require_exactly_one_matrix_data_requirement(
@@ -737,6 +851,7 @@ pub fn predict_methods_archive_v2_matrix(
     } = compose_methods_archive_matrix_predict(&package, input)?;
     let snapshot_path =
         configure_attested_methods_library(&input.methods_library_path, &expected_library_sha256)?;
+    inspect_package_native_predictors(archive, &package)?;
     let mut input = input;
     input.methods_library_path = snapshot_path;
     let outcome = replay_methods_predictor_package(&package, input)?;
@@ -782,6 +897,30 @@ pub fn predict_methods_archive_v2_matrix_json(
     serde_json::to_string(&outcome).map_err(|error| {
         replay_error(format!(
             "cannot serialize Archive V2 matrix prediction outcome: {error}"
+        ))
+    })
+}
+
+/// Open one Archive V2 and return its native predictor descriptors as JSON.
+///
+/// The native Methods library is content-attested before any descriptor is
+/// derived. The returned JSON is serialized from DAG-ML's typed contract; no
+/// host-supplied descriptor or capability metadata is accepted.
+pub fn inspect_methods_archive_v2_predictors_json(
+    archive_path: &Path,
+    methods_library_path: &Path,
+    methods_library_sha256: &str,
+) -> Result<String, NativeMethodsReplayError> {
+    let archive = load_archive_v2(archive_path)
+        .map_err(|error| replay_error(format!("Core Archive V2 validation refused: {error}")))?;
+    let descriptors = inspect_methods_archive_v2_predictors(
+        &archive,
+        methods_library_path,
+        methods_library_sha256,
+    )?;
+    serde_json::to_string(&descriptors).map_err(|error| {
+        replay_error(format!(
+            "cannot serialize Archive V2 native predictor descriptors: {error}"
         ))
     })
 }
@@ -1038,6 +1177,44 @@ mod json_tests {
     use super::*;
 
     #[test]
+    fn live_historical_archive_derives_native_predictor_descriptor() {
+        let Ok(archive_path) = std::env::var("NIRS4ALL_CORE_LIVE_ARCHIVE_V2") else {
+            return;
+        };
+        let Ok(library_path) = std::env::var("NIRS4ALL_CORE_LIVE_METHODS_LIBRARY") else {
+            return;
+        };
+        let library_path = PathBuf::from(library_path)
+            .canonicalize()
+            .expect("live Methods library path is canonicalizable");
+        let library_sha256 = format!(
+            "{:x}",
+            Sha256::digest(std::fs::read(&library_path).expect("live Methods library is readable"))
+        );
+        let archive = load_archive_v2(Path::new(&archive_path)).expect("live Archive V2 is valid");
+        let descriptors =
+            inspect_methods_archive_v2_predictors(&archive, &library_path, &library_sha256)
+                .expect("historical Archive V2 derives a descriptor from native bytes");
+        assert_eq!(descriptors.len(), 1);
+        let descriptor = &descriptors[0];
+        assert_eq!(
+            descriptor.descriptor_type,
+            "dagml.native_predictor_descriptor.v1"
+        );
+        assert_eq!(descriptor.schema_version, 1);
+        assert_eq!(
+            descriptor.owner_controller.as_str(),
+            "controller:methods.pls"
+        );
+        assert_eq!(descriptor.storage_algorithm, 0);
+        assert_eq!(descriptor.dimensions.n_features, 2);
+        assert_eq!(descriptor.dimensions.n_targets, 2);
+        descriptor
+            .validate()
+            .expect("derived descriptor stays valid");
+    }
+
+    #[test]
     fn matrix_product_contract_requires_one_external_requirement() {
         assert!(require_exactly_one_matrix_data_requirement(1).is_ok());
         for count in [0, 2, usize::MAX] {
@@ -1058,13 +1235,13 @@ mod json_tests {
         });
         require_archive_methods_abi(&manifest, "Archive V2")
             .expect("an absent minor is the documented historical PLS ABI 2.0 profile");
-        manifest["payloads"]["methods"]["n4mm"][0]["abi_min_minor"] = serde_json::Value::from(3);
-        require_archive_methods_abi(&manifest, "Archive V2")
-            .expect("Core 0.3.25 provides Methods ABI 2.3");
         manifest["payloads"]["methods"]["n4mm"][0]["abi_min_minor"] = serde_json::Value::from(4);
+        require_archive_methods_abi(&manifest, "Archive V2")
+            .expect("this candidate provides Methods ABI 2.4");
+        manifest["payloads"]["methods"]["n4mm"][0]["abi_min_minor"] = serde_json::Value::from(5);
         let error = require_archive_methods_abi(&manifest, "Archive V2")
             .expect_err("a future Methods minor must be refused before import");
-        assert!(error.to_string().contains("requires Methods ABI 2.4"));
+        assert!(error.to_string().contains("requires Methods ABI 2.5"));
 
         manifest["payloads"]["methods"]["n4mm"] = serde_json::json!([]);
         manifest["payloads"]["methods"]["n4mopt"] = serde_json::json!([{"abi_major": 2}]);
@@ -1133,7 +1310,7 @@ mod json_tests {
             ensure_same_configured_methods_library(&failed_abi, &matching)
                 .unwrap_err()
                 .to_string()
-                .contains("failed ABI 2.3 verification")
+                .contains("failed ABI 2.4 verification")
         );
     }
 
