@@ -22,8 +22,8 @@ Rust, and R binding execution parity tests in
 Regenerate it with:
 
 ```bash
-PYTHONPATH=/home/delete/nirs4all/nirs4all \
-  /home/delete/nirs4all/nirs4all/.venv/bin/python \
+PYTHONPATH=/path/to/nirs4all \
+  /path/to/nirs4all/.venv/bin/python \
   scripts/parity/generate_python_oracle.py
 ```
 

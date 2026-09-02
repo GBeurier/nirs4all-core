@@ -1,9 +1,9 @@
 # Build, smoke-test, and publish the `nirs4all` npm package.
 #
-# nirs4all-core's JS/WASM binding (bindings/wasm) is PURE JavaScript: a small
-# ES-module surface + .d.ts that loads the upstream @nirs4all/* WASM packages
-# as OPTIONAL peer dependencies. There is no wasm-pack / Rust build here (unlike
-# nirs4all-io / nirs4all-methods), so we publish the source tree directly.
+# nirs4all-core's JS/WASM binding (bindings/wasm) combines an ES-module surface
+# with the Rust Archive V2 validator built by its prepack hook. Numerical
+# execution remains delegated to optional upstream @nirs4all/* WASM peer
+# dependencies; the aggregate does not vendor their kernels.
 #
 # npm package name is `nirs4all` (there is no "full" nirs4all on npm, so this
 # aggregate owns the `nirs4all` umbrella in JS). nirs4all-datasets stays

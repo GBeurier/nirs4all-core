@@ -68,6 +68,21 @@ def _runtime(surface: str, predictions: list[float]) -> dict[str, object]:
 
 
 class RepositoryDescriptorConsumerTests(unittest.TestCase):
+    def test_find_rscript_honors_environment_override(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            configured = Path(tmp) / "r toolchain" / "Rscript"
+            configured.parent.mkdir(parents=True)
+            configured.write_text("#!/bin/sh\n", encoding="utf-8")
+            with (
+                mock.patch.dict(
+                    os.environ,
+                    {"NIRS4ALL_RSCRIPT": str(configured)},
+                    clear=False,
+                ),
+                mock.patch.object(consumer.shutil, "which", return_value=None),
+            ):
+                self.assertEqual(consumer._find_rscript(), configured.resolve())
+
     def test_consume_records_passed_runtime_execution_evidence(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             artifacts_dir = Path(tmp)

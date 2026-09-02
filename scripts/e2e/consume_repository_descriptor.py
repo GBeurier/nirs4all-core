@@ -227,12 +227,14 @@ def _run_python_execution(pipeline_path: Path, dataset: dict[str, Any]) -> dict[
 
 def _find_rscript() -> Path | None:
     candidates = [
+        os.environ.get("NIRS4ALL_RSCRIPT"),
         shutil.which("Rscript"),
-        "/home/delete/miniconda3/envs/pls4all_r/bin/Rscript",
     ]
     for candidate in candidates:
-        if candidate and Path(candidate).is_file():
-            return Path(candidate)
+        if candidate:
+            path = Path(candidate).expanduser()
+            if path.is_file():
+                return path.resolve()
     return None
 
 

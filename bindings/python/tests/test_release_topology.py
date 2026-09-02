@@ -183,6 +183,10 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
 
         self.assertEqual(pyproject["build-system"]["build-backend"], "maturin")
         self.assertEqual(pyproject["build-system"]["requires"], ["maturin==1.14.1"])
+        self.assertEqual(
+            pyproject["project"]["license-files"],
+            ["LICENSE", "LICENSES/*", "LICENSING.md", "THIRD_PARTY_NOTICES.md"],
+        )
         maturin = pyproject["tool"]["maturin"]
         self.assertEqual(maturin["module-name"], "nirs4all_core._native")
         self.assertEqual(maturin["python-source"], "src")
@@ -427,6 +431,49 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         matlab_builder = (ROOT / "scripts/build-matlab-package.sh").read_text()
         self.assertIn("bindings/rust/nirs4all/Cargo.toml", matlab_builder)
         self.assertIn('archive="nirs4all-matlab-octave-${version}.zip"', matlab_builder)
+        self.assertIn("bindings/matlab/LICENSES", matlab_builder)
+        self.assertIn("bindings/matlab/LICENSING.md", matlab_builder)
+        self.assertIn("bindings/matlab/THIRD_PARTY_NOTICES.md", matlab_builder)
+        self.assertIn("LICENSES", wasm_package["files"])
+        self.assertIn("LICENSING.md", wasm_package["files"])
+        self.assertIn("THIRD_PARTY_NOTICES.md", wasm_package["files"])
+
+        expected_license_hashes = {
+            path.name: path.read_bytes()
+            for path in (ROOT / "LICENSES").iterdir()
+            if path.is_file()
+        }
+        for binding_dir in (
+            ROOT / "bindings/python/LICENSES",
+            ROOT / "bindings/wasm/LICENSES",
+            ROOT / "bindings/matlab/LICENSES",
+            ROOT / "bindings/r/inst/LICENSES",
+        ):
+            for name, expected in expected_license_hashes.items():
+                with self.subTest(binding_dir=binding_dir, license=name):
+                    self.assertEqual((binding_dir / name).read_bytes(), expected)
+        for relative in (
+            "bindings/python/LICENSING.md",
+            "bindings/wasm/LICENSING.md",
+            "bindings/matlab/LICENSING.md",
+            "bindings/r/inst/LICENSING.md",
+        ):
+            with self.subTest(licensing_notice=relative):
+                self.assertEqual(
+                    (ROOT / relative).read_bytes(),
+                    (ROOT / "LICENSING.md").read_bytes(),
+                )
+        for relative in (
+            "bindings/python/THIRD_PARTY_NOTICES.md",
+            "bindings/wasm/THIRD_PARTY_NOTICES.md",
+            "bindings/matlab/THIRD_PARTY_NOTICES.md",
+            "bindings/r/inst/THIRD_PARTY_NOTICES.md",
+        ):
+            with self.subTest(third_party_notice=relative):
+                self.assertEqual(
+                    (ROOT / relative).read_bytes(),
+                    (ROOT / "THIRD_PARTY_NOTICES.md").read_bytes(),
+                )
 
     def test_binding_versions_stay_in_sync_with_rust_source_of_truth(self) -> None:
         rust_version = str(_load_rust_cargo()["package"]["version"])

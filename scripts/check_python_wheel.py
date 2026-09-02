@@ -55,15 +55,28 @@ def validate_wheel(path: Path) -> None:
             else ""
         )
 
-    required = {"nirs4all_core/__init__.py", "n4a/__init__.py"}
+    version = metadata.get("Version", "")
+    expected_dist_info = f"nirs4all_core-{version}.dist-info/"
+    required = {
+        "nirs4all_core/__init__.py",
+        "n4a/__init__.py",
+        f"{expected_dist_info}licenses/LICENSE",
+        f"{expected_dist_info}licenses/LICENSES/AGPL-3.0-or-later.txt",
+        f"{expected_dist_info}licenses/LICENSES/Apache-2.0.txt",
+        f"{expected_dist_info}licenses/LICENSES/BSD-3-Clause.txt",
+        f"{expected_dist_info}licenses/LICENSES/COMMERCIAL-LICENSE.md",
+        f"{expected_dist_info}licenses/LICENSES/COMMERCIAL-LICENSE_FR.md",
+        f"{expected_dist_info}licenses/LICENSES/CeCILL-2.1.txt",
+        f"{expected_dist_info}licenses/LICENSES/MIT.txt",
+        f"{expected_dist_info}licenses/LICENSING.md",
+        f"{expected_dist_info}licenses/THIRD_PARTY_NOTICES.md",
+    }
     missing = sorted(required - names)
     contaminated = sorted(
         name
         for name in names
         if "__pycache__/" in name or name.endswith((".pyc", ".pyo"))
     )
-    version = metadata.get("Version", "")
-    expected_dist_info = f"nirs4all_core-{version}.dist-info/"
     unexpected_roots = sorted(
         name
         for name in names
@@ -74,6 +87,10 @@ def validate_wheel(path: Path) -> None:
     if metadata.get("Name") != "nirs4all-core":
         version_errors.append(
             f"metadata Name is {metadata.get('Name')!r}, expected 'nirs4all-core'"
+        )
+    if metadata.get("License-Expression") != "CECILL-2.1 OR AGPL-3.0-or-later":
+        version_errors.append(
+            "metadata License-Expression does not match the shipped dual-license texts"
         )
     if metadata_names[0] != f"{expected_dist_info}METADATA":
         version_errors.append("dist-info directory does not match metadata version")

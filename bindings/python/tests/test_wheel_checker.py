@@ -23,12 +23,30 @@ class WheelCheckerTests(unittest.TestCase):
         with zipfile.ZipFile(wheel, "w") as archive:
             archive.writestr(
                 f"nirs4all_core-{VERSION}.dist-info/METADATA",
-                f"Metadata-Version: 2.4\nName: nirs4all-core\nVersion: {VERSION}\n",
+                f"Metadata-Version: 2.4\nName: nirs4all-core\nVersion: {VERSION}\n"
+                "License-Expression: CECILL-2.1 OR AGPL-3.0-or-later\n",
             )
             archive.writestr(
                 "nirs4all_core/__init__.py", f'__version__ = "{VERSION}"\n'
             )
             archive.writestr("n4a/__init__.py", "from nirs4all_core import *\n")
+            archive.writestr(
+                f"nirs4all_core-{VERSION}.dist-info/licenses/LICENSE",
+                (ROOT / "LICENSE").read_bytes(),
+            )
+            for license_path in sorted((ROOT / "LICENSES").iterdir()):
+                archive.writestr(
+                    f"nirs4all_core-{VERSION}.dist-info/licenses/LICENSES/{license_path.name}",
+                    license_path.read_bytes(),
+                )
+            archive.writestr(
+                f"nirs4all_core-{VERSION}.dist-info/licenses/LICENSING.md",
+                (ROOT / "LICENSING.md").read_bytes(),
+            )
+            archive.writestr(
+                f"nirs4all_core-{VERSION}.dist-info/licenses/THIRD_PARTY_NOTICES.md",
+                (ROOT / "THIRD_PARTY_NOTICES.md").read_bytes(),
+            )
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", UserWarning)
                 for name in extra_names:

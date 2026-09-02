@@ -20,6 +20,9 @@ mkdir -p "$tmp_dir/nirs4all"
 cp -R bindings/matlab/+nirs4all "$tmp_dir/nirs4all/"
 cp bindings/matlab/README.md "$tmp_dir/nirs4all/"
 cp bindings/matlab/LICENSE "$tmp_dir/nirs4all/"
+cp -R bindings/matlab/LICENSES "$tmp_dir/nirs4all/"
+cp bindings/matlab/LICENSING.md "$tmp_dir/nirs4all/"
+cp bindings/matlab/THIRD_PARTY_NOTICES.md "$tmp_dir/nirs4all/"
 
 # ZIP stores wall-clock mtimes and host-specific extra fields by default.  Pin
 # all entries to SOURCE_DATE_EPOCH (or the ZIP epoch when it is unset), omit
