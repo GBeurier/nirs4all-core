@@ -21,5 +21,25 @@ cp -R bindings/matlab/+nirs4all "$tmp_dir/nirs4all/"
 cp bindings/matlab/README.md "$tmp_dir/nirs4all/"
 cp bindings/matlab/LICENSE "$tmp_dir/nirs4all/"
 
-(cd "$tmp_dir" && zip -qr "$archive_path" nirs4all)
+# ZIP stores wall-clock mtimes and host-specific extra fields by default.  Pin
+# all entries to SOURCE_DATE_EPOCH (or the ZIP epoch when it is unset), omit
+# those extra fields, and feed a byte-sorted file list so repeated release
+# builds are byte-for-byte identical.
+source_date_epoch="${SOURCE_DATE_EPOCH:-315532800}"
+case "$source_date_epoch" in
+  ''|*[!0-9]*)
+    echo "SOURCE_DATE_EPOCH must be an integer Unix timestamp" >&2
+    exit 2
+    ;;
+esac
+if (( source_date_epoch < 315532800 )); then
+  echo "SOURCE_DATE_EPOCH must be on or after 1980-01-01 for ZIP" >&2
+  exit 2
+fi
+
+find "$tmp_dir/nirs4all" -type f -exec touch -d "@$source_date_epoch" {} +
+(
+  cd "$tmp_dir"
+  find nirs4all -type f -print | LC_ALL=C sort | TZ=UTC zip -q -X "$archive_path" -@
+)
 echo "$archive_path"
