@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { loadArchiveV2Native, replayMethodsArchiveV2 } from '../src/index.js';
+import {
+  inspectMethodsArchiveV2Predictors,
+  loadArchiveV2Native,
+  replayMethodsArchiveV2,
+} from '../src/index.js';
 
 const dataset = {
   X: [[1.5, 0.5], [3.5, 1.5]],
@@ -15,6 +19,13 @@ test('Archive V2 native surface is a Rust/WASM validator', async () => {
   assert.equal(typeof native.ValidatedMethodsArchiveV2, 'function');
   assert.throws(
     () => new native.ValidatedMethodsArchiveV2(new Uint8Array([0x4e, 0x34, 0x61])),
+    /Core Archive V2 refusal/,
+  );
+});
+
+test('standalone descriptor inspection preserves Core-first refusal', async () => {
+  await assert.rejects(
+    inspectMethodsArchiveV2Predictors(new Uint8Array([0x50, 0x4b, 0x03, 0x04])),
     /Core Archive V2 refusal/,
   );
 });

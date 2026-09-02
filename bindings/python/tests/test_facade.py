@@ -48,6 +48,7 @@ class FacadeImportSurfaceTests(unittest.TestCase):
             "execution_engine_exports",
             "formats",
             "import_upstream",
+            "inspect_methods_archive_v2_predictors",
             "io",
             "load_pipeline_definition",
             "local_implementation_registry",

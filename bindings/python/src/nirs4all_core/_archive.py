@@ -99,6 +99,39 @@ def read_portable_refit_package_v3(path: str | Path) -> bytes:
     return bytes(_native.read_portable_refit_package_v3(str(Path(path))))
 
 
+def inspect_methods_archive_v2_predictors(
+    path: str | Path,
+    *,
+    methods_library_path: str | Path,
+    methods_library_sha256: str,
+) -> list[dict[str, Any]]:
+    """Return native predictor descriptors derived from Archive V2 bytes.
+
+    Rust validates the archive and attests the selected libn4m before DAG-ML
+    derives each descriptor through Methods' complete N4MM inspection API.
+    Historical Archive V2 packages without an embedded descriptor remain
+    supported; Python never reconstructs or trusts descriptor metadata.
+    """
+
+    inspect = _native_replay("inspect_methods_archive_v2_predictors_json", "V2 inspection")
+    payload = inspect(
+        str(Path(path)),
+        str(Path(methods_library_path)),
+        methods_library_sha256,
+    )
+    if not isinstance(payload, str):
+        raise RuntimeError("native Archive V2 inspection returned a non-JSON payload")
+    try:
+        descriptors = json.loads(payload)
+    except json.JSONDecodeError as error:
+        raise RuntimeError("native Archive V2 inspection returned invalid JSON") from error
+    if not isinstance(descriptors, list) or not all(
+        isinstance(descriptor, dict) for descriptor in descriptors
+    ):
+        raise RuntimeError("native Archive V2 inspection returned an invalid descriptor list")
+    return descriptors
+
+
 def replay_methods_archive_v2(
     path: str | Path,
     request: Any,

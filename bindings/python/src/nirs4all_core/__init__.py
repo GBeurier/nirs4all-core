@@ -12,6 +12,7 @@ from ._capabilities import (
 )
 from ._archive import (
     NativeArchiveUnavailableError,
+    inspect_methods_archive_v2_predictors,
     predict_methods_archive_v2_matrix,
     read_portable_predictor_package_v2,
     read_portable_refit_package_v3,
@@ -78,6 +79,7 @@ __all__ = [
     "execution_engine_exports",
     "formats",
     "import_upstream",
+    "inspect_methods_archive_v2_predictors",
     "io",
     "load_pipeline_definition",
     "local_implementation_registry",

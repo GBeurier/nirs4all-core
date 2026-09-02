@@ -12,6 +12,7 @@ use std::path::Path;
 use std::path::PathBuf;
 
 use nirs4all::{
+    inspect_methods_archive_v2_predictors_json as core_inspect_methods_archive_v2_predictors_json,
     load_archive_v2, load_archive_v3,
     predict_methods_archive_v2_matrix_json as core_predict_methods_archive_v2_matrix_json,
     replay_methods_archive_v2_conformal_presentation_v1_json as core_replay_methods_archive_v2_conformal_presentation_v1_json,
@@ -86,6 +87,31 @@ fn read_portable_refit_package_v3<'py>(
         PyValueError::new_err(format!("Archive V3 validation refused: {error}"))
     })?;
     Ok(PyBytes::new_bound(py, package))
+}
+
+/// Inspect every native predictor in a validated Archive V2.
+///
+/// The descriptor JSON is emitted from DAG-ML's typed contract after Core has
+/// attested the exact libn4m bytes and Methods has inspected each complete
+/// N4MM payload. Python neither supplies nor reconstructs descriptor fields.
+#[pyfunction]
+fn inspect_methods_archive_v2_predictors_json(
+    py: Python<'_>,
+    path: &str,
+    methods_library_path: &str,
+    methods_library_sha256: &str,
+) -> PyResult<String> {
+    let archive_path = PathBuf::from(path);
+    let library_path = PathBuf::from(methods_library_path);
+    let library_sha256 = methods_library_sha256.to_owned();
+    py.allow_threads(move || {
+        core_inspect_methods_archive_v2_predictors_json(
+            &archive_path,
+            &library_path,
+            &library_sha256,
+        )
+        .map_err(replay_error)
+    })
 }
 
 /// Replay one Core-validated Archive V2 through DAG-ML's callback-free Methods
@@ -304,6 +330,10 @@ fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
         module
     )?)?;
     module.add_function(wrap_pyfunction!(read_portable_refit_package_v3, module)?)?;
+    module.add_function(wrap_pyfunction!(
+        inspect_methods_archive_v2_predictors_json,
+        module
+    )?)?;
     module.add_function(wrap_pyfunction!(replay_methods_archive_v2_json, module)?)?;
     module.add_function(wrap_pyfunction!(
         predict_methods_archive_v2_matrix_json,
