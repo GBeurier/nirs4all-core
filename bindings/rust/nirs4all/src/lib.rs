@@ -953,7 +953,7 @@ pub(crate) fn inspect_portable_model_descriptor(
             library_path.display()
         )
     })?;
-    dag_ml_core::MethodsRuntime::configure(&canonical)
+    native_methods_replay::configure_methods_runtime_for_source(&canonical)
         .map_err(|error| format!("cannot configure Methods for N4MM inspection: {error}"))?;
     let controller = dag_ml_core::ControllerId::new("controller:methods.pls")
         .map_err(|error| error.to_string())?;
