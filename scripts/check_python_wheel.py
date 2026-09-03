@@ -82,7 +82,9 @@ def validate_wheel(path: Path) -> None:
         for name in names
         if not name.startswith(("nirs4all_core/", "n4a/", expected_dist_info))
     )
-    source_version = re.search(r'^__version__ = "([^"]+)"$', init_source, re.MULTILINE)
+    source_version = re.search(
+        r'^__version__ = "([^"]+)"\r?$', init_source, re.MULTILINE
+    )
     version_errors = []
     if metadata.get("Name") != "nirs4all-core":
         version_errors.append(

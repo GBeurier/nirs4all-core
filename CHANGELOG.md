@@ -13,8 +13,11 @@ binding manifest.
 - Repaired the 0.3.25 post-tag qualification path: the release topology now
   includes the native predictor inspection export, CI installs wasm-pack
   0.15.0 explicitly, and Rust integration tests build libn4m from the exact
-  published n4m 0.1.4 source tag. Manual repair runs are restricted to a
-  0.3.25 descendant so the immutable release tag is never moved.
+  published n4m 0.1.4 source tag. The wheel validator accepts Windows CRLF
+  source files, and a PyPI repair rebuilds the immutable 0.3.25 source while
+  loading its corrected validator from the descendant repair commit. Manual
+  repair runs are restricted to a 0.3.25 descendant so the release tag is
+  never moved.
 - Advanced the native release candidate from Core 0.3.25 with exact Rust pins
   on DAG-ML 0.3.23, dag-ml-data 0.2.10, nirs4all-formats 0.2.8,
   nirs4all-io 0.1.12, and n4m 0.1.4. The release lock now resolves those
