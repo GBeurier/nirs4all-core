@@ -18,7 +18,13 @@ VERSION = "0.3.25"
 
 
 class WheelCheckerTests(unittest.TestCase):
-    def _wheel(self, directory: Path, extra_names: tuple[str, ...] = ()) -> Path:
+    def _wheel(
+        self,
+        directory: Path,
+        extra_names: tuple[str, ...] = (),
+        *,
+        init_newline: str = "\n",
+    ) -> Path:
         wheel = directory / f"nirs4all_core-{VERSION}-cp311-abi3-linux_x86_64.whl"
         with zipfile.ZipFile(wheel, "w") as archive:
             archive.writestr(
@@ -27,7 +33,8 @@ class WheelCheckerTests(unittest.TestCase):
                 "License-Expression: CECILL-2.1 OR AGPL-3.0-or-later\n",
             )
             archive.writestr(
-                "nirs4all_core/__init__.py", f'__version__ = "{VERSION}"\n'
+                "nirs4all_core/__init__.py",
+                f'__version__ = "{VERSION}"{init_newline}',
             )
             archive.writestr("n4a/__init__.py", "from nirs4all_core import *\n")
             archive.writestr(
@@ -64,6 +71,12 @@ class WheelCheckerTests(unittest.TestCase):
     def test_accepts_closed_public_inventory(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             result = self._check(self._wheel(Path(directory)))
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_accepts_windows_crlf_version_source(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            wheel = self._wheel(Path(directory), init_newline="\r\n")
+            result = self._check(wheel)
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_refuses_cache_duplicate_and_traversal_entries(self) -> None:
