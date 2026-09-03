@@ -45,10 +45,12 @@ pub use io_training::{
 };
 pub use native_methods_replay::{
     inspect_methods_archive_v2_predictors, inspect_methods_archive_v2_predictors_json,
-    predict_methods_archive_v2_matrix, predict_methods_archive_v2_matrix_json,
-    preflight_methods_archive_v2_library, replay_methods_archive_v2,
-    replay_methods_archive_v2_conformal_presentation_v1,
-    replay_methods_archive_v2_conformal_presentation_v1_json, replay_methods_archive_v2_json,
+    load_methods_archive_v2_conformal_presentation_v2, predict_methods_archive_v2_matrix,
+    predict_methods_archive_v2_matrix_conformal_presentation_v2,
+    predict_methods_archive_v2_matrix_json, preflight_methods_archive_v2_library,
+    replay_methods_archive_v2, replay_methods_archive_v2_conformal_presentation_v1,
+    replay_methods_archive_v2_conformal_presentation_v1_json,
+    replay_methods_archive_v2_conformal_presentation_v2, replay_methods_archive_v2_json,
     replay_methods_archive_v3, replay_methods_archive_v3_json,
     MethodsArchiveMatrixPredictJsonRequest, MethodsArchiveMatrixPredictRequest,
     MethodsArchivePredictRequest, MethodsArchiveRefitRequestV3, MethodsArchiveReplayJsonRequest,
