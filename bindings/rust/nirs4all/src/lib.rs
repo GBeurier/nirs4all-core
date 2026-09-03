@@ -18,6 +18,7 @@ mod archive_v1;
 pub(crate) mod archive_v2;
 mod archive_v3;
 mod archive_view;
+mod formats_io;
 mod io_training;
 mod native_methods_replay;
 mod portable_session;
@@ -38,6 +39,10 @@ pub use archive_view::{
     ArchiveReplayView, ArchiveView, ArchiveViewError,
 };
 pub use dag_ml_core::NativePredictorDescriptorV1;
+pub use formats_io::{
+    load_spectrum_dataset_package, load_spectrum_methods_provider, FormatsIoError,
+    LoadedSpectrumDataset,
+};
 pub use io_training::{
     train_dataset_package_methods_archive_v2, train_dataset_package_methods_conformal_archive_v2,
     DatasetPackage, DatasetPackageMethodsArchiveV2Outcome, DatasetPackageMethodsArchiveV2Request,
@@ -1005,10 +1010,14 @@ pub mod datasets {
 }
 
 pub mod formats {
+    pub use nirs4all_formats_crate::*;
+
     pub const UPSTREAM_KEY: &str = "formats";
 }
 
 pub mod io {
+    pub use nirs4all_io_crate::*;
+
     pub const UPSTREAM_KEY: &str = "io";
 }
 
