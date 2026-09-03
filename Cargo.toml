@@ -10,8 +10,8 @@ repository = "https://github.com/GBeurier/nirs4all-core"
 # Local release-candidate qualification. These exact candidates are not
 # published yet; keep the patch explicit until their release closure lands.
 [patch.crates-io]
-dag-ml = { path = "/home/delete/nirs4all/_worktrees/DAG-methods-pipeline-v2/crates/dag-ml" }
-dag-ml-core = { path = "/home/delete/nirs4all/_worktrees/DAG-methods-pipeline-v2/crates/dag-ml-core" }
+dag-ml = { path = "/home/delete/nirs4all/_worktrees/CONF001-dag/crates/dag-ml" }
+dag-ml-core = { path = "/home/delete/nirs4all/_worktrees/CONF001-dag/crates/dag-ml-core" }
 dag-ml-data = { path = "/home/delete/nirs4all/_worktrees/RC-v1-dagml-data-0.2.10/crates/dag-ml-data" }
 dag-ml-data-core = { path = "/home/delete/nirs4all/_worktrees/RC-v1-dagml-data-0.2.10/crates/dag-ml-data-core" }
 dag-ml-data-provider = { path = "/home/delete/nirs4all/_worktrees/RC-v1-dagml-data-0.2.10/crates/dag-ml-data-provider" }
