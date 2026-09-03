@@ -93,7 +93,7 @@ struct MethodsArchiveMatrixPredictComposition {
 
 const MAX_ATTESTED_METHODS_LIBRARY_BYTES: u64 = 64 * 1024 * 1024;
 const CORE_METHODS_ABI_MAJOR: u64 = 2;
-const CORE_METHODS_ABI_MINOR: u64 = 4;
+const CORE_METHODS_ABI_MINOR: u64 = 5;
 
 struct AttestedMethodsLibrary {
     source_canonical_path: PathBuf,
@@ -322,7 +322,7 @@ fn ensure_same_configured_methods_library(
     }
     if let Some(error) = &configured.abi_error {
         return Err(replay_error(format!(
-            "the configured libn4m process identity failed ABI 2.4 verification: {error}"
+            "the configured libn4m process identity failed ABI 2.5 verification: {error}"
         )));
     }
     Ok(configured.snapshot_path.clone())
@@ -413,7 +413,7 @@ fn configure_attested_methods_library(
     });
     if let Some(error) = abi_error {
         return Err(replay_error(format!(
-            "the attested libn4m failed ABI 2.4 verification: {error}"
+            "the attested libn4m failed ABI 2.5 verification: {error}"
         )));
     }
     Ok(snapshot_path)
@@ -423,7 +423,7 @@ fn configure_attested_methods_library(
 ///
 /// This closed preflight hashes a canonical, non-symlink source file, loads a
 /// private snapshot of those already-attested bytes, and creates then drops a
-/// native context to verify the n4m ABI 2.4 contract. The first successful
+/// native context to verify the n4m ABI 2.5 contract. The first successful
 /// call fixes both source path and SHA-256 for the process. No runtime path,
 /// native handle, archive input, callback or numerical result is returned.
 pub fn preflight_methods_archive_v2_library(
@@ -526,6 +526,12 @@ fn inspect_package_native_predictors(
                         artifact.id
                     ))
                 })?;
+        if derived.format_version != declaration.format_version() {
+            return Err(replay_error(format!(
+                "Core Archive V2 N4MM declaration format does not match inspected artifact `{}`",
+                artifact.id
+            )));
+        }
         if artifact
             .native_predictor_descriptor
             .as_ref()
@@ -533,6 +539,17 @@ fn inspect_package_native_predictors(
         {
             return Err(replay_error(format!(
                 "Archive V2 predictor `{}` does not match its native descriptor",
+                artifact.id
+            )));
+        }
+        if declaration.format_version() == 2
+            && artifact
+                .native_predictor_descriptor
+                .as_ref()
+                .is_none_or(|embedded| embedded.pipeline.is_none())
+        {
+            return Err(replay_error(format!(
+                "Core Archive V2 pipeline N4MM `{}` requires its content-bound embedded descriptor",
                 artifact.id
             )));
         }
@@ -1235,13 +1252,13 @@ mod json_tests {
         });
         require_archive_methods_abi(&manifest, "Archive V2")
             .expect("an absent minor is the documented historical PLS ABI 2.0 profile");
-        manifest["payloads"]["methods"]["n4mm"][0]["abi_min_minor"] = serde_json::Value::from(4);
-        require_archive_methods_abi(&manifest, "Archive V2")
-            .expect("this candidate provides Methods ABI 2.4");
         manifest["payloads"]["methods"]["n4mm"][0]["abi_min_minor"] = serde_json::Value::from(5);
+        require_archive_methods_abi(&manifest, "Archive V2")
+            .expect("this candidate provides Methods ABI 2.5");
+        manifest["payloads"]["methods"]["n4mm"][0]["abi_min_minor"] = serde_json::Value::from(6);
         let error = require_archive_methods_abi(&manifest, "Archive V2")
             .expect_err("a future Methods minor must be refused before import");
-        assert!(error.to_string().contains("requires Methods ABI 2.5"));
+        assert!(error.to_string().contains("requires Methods ABI 2.6"));
 
         manifest["payloads"]["methods"]["n4mm"] = serde_json::json!([]);
         manifest["payloads"]["methods"]["n4mopt"] = serde_json::json!([{"abi_major": 2}]);
@@ -1310,7 +1327,7 @@ mod json_tests {
             ensure_same_configured_methods_library(&failed_abi, &matching)
                 .unwrap_err()
                 .to_string()
-                .contains("failed ABI 2.4 verification")
+                .contains("failed ABI 2.5 verification")
         );
     }
 

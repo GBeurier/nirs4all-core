@@ -11,11 +11,13 @@ use std::{
 };
 
 use dag_ml_core::{
-    ArtifactBackend, ArtifactLoadMode, ControllerId, FittedArtifactMode,
-    NativePredictorDescriptorV1, NativePredictorDimensionsV1, NativePredictorWriterAbiV1,
-    OutputOrder, Phase, PortablePredictorPackage, PredictionKind, PredictionLevel,
+    methods_n4mm_abi_requirement, ArtifactBackend, ArtifactLoadMode, ControllerId,
+    FittedArtifactMode, NativePredictorDescriptorV1, NativePredictorDimensionsV1,
+    NativePredictorPipelineV1, NativePredictorWriterAbiV1, OutputOrder, Phase,
+    PortablePredictorPackage, PredictionKind, PredictionLevel,
     NATIVE_PREDICTOR_DESCRIPTOR_SCHEMA_VERSION_V1, NATIVE_PREDICTOR_DESCRIPTOR_TYPE_V1,
-    NATIVE_PREDICTOR_FORMAT_N4MM,
+    NATIVE_PREDICTOR_FORMAT_N4MM, NATIVE_PREDICTOR_PIPELINE_FINGERPRINT_FNV1A64_V1,
+    NATIVE_PREDICTOR_PIPELINE_TYPE_SNV_SAVGOL_V1,
 };
 use sha2::{Digest, Sha256};
 use wasm_bindgen::prelude::*;
@@ -105,6 +107,7 @@ pub struct ValidatedMethodsArchiveV2 {
     node_id: String,
     port_name: String,
     target_names_json: String,
+    format_version: u32,
     abi_min_minor: u32,
     owner_controller: ControllerId,
     embedded_descriptor: Option<NativePredictorDescriptorV1>,
@@ -166,6 +169,11 @@ impl ValidatedMethodsArchiveV2 {
         self.abi_min_minor
     }
 
+    #[wasm_bindgen(getter)]
+    pub fn format_version(&self) -> u32 {
+        self.format_version
+    }
+
     /// Bind authoritative Methods/WASM inspection fields to the inventoried
     /// N4MM bytes and return DAG-ML's typed descriptor JSON.
     ///
@@ -187,12 +195,71 @@ impl ValidatedMethodsArchiveV2 {
         n_targets: i32,
         n_components: i32,
         capabilities: u64,
+        pipeline_present: bool,
+        pipeline_schema_version: u32,
+        pipeline_operator_count: u32,
+        pipeline_first_operator: i32,
+        pipeline_second_operator: i32,
+        savgol_window: i32,
+        savgol_poly_degree: i32,
+        savgol_derivative: i32,
+        pipeline_semantic_profile: u32,
+        savgol_delta: f64,
+        pipeline_raw_n_features: i32,
+        pipeline_model_n_features: i32,
+        pipeline_fingerprint_algorithm: u32,
+        pipeline_fingerprint: u64,
+        snv_axis: i32,
+        snv_with_mean: bool,
+        snv_with_std: bool,
+        snv_ddof: i32,
+        savgol_mode: i32,
+        savgol_cval: f64,
     ) -> Result<String, JsValue> {
         if inspection_schema_version != 1 {
             return Err(JsValue::from_str(
                 "Methods returned an unsupported serialized-model inspection schema",
             ));
         }
+        if format_version != self.format_version {
+            return Err(JsValue::from_str(
+                "Methods inspection does not match the Archive V2 N4MM format declaration",
+            ));
+        }
+        let pipeline = if pipeline_present {
+            if pipeline_schema_version != 1
+                || pipeline_operator_count != 2
+                || pipeline_first_operator != 4
+                || pipeline_second_operator != 8
+                || savgol_derivative != 0
+                || pipeline_semantic_profile != 1
+                || savgol_delta.to_bits() != 1.0f64.to_bits()
+                || pipeline_fingerprint_algorithm != 1
+                || snv_axis != 1
+                || !snv_with_mean
+                || !snv_with_std
+                || snv_ddof != 0
+                || savgol_mode != 4
+                || savgol_cval.to_bits() != 0.0f64.to_bits()
+            {
+                return Err(JsValue::from_str(
+                    "Methods returned an unsupported native predictor pipeline",
+                ));
+            }
+            Some(NativePredictorPipelineV1 {
+                pipeline_type: NATIVE_PREDICTOR_PIPELINE_TYPE_SNV_SAVGOL_V1.to_owned(),
+                schema_version: pipeline_schema_version,
+                operator_count: pipeline_operator_count,
+                raw_n_features: pipeline_raw_n_features,
+                model_n_features: pipeline_model_n_features,
+                fingerprint_algorithm: NATIVE_PREDICTOR_PIPELINE_FINGERPRINT_FNV1A64_V1.to_owned(),
+                native_fingerprint: format!("{pipeline_fingerprint:016x}"),
+                savgol_window,
+                savgol_poly_degree,
+            })
+        } else {
+            None
+        };
         let mut descriptor = NativePredictorDescriptorV1 {
             descriptor_type: NATIVE_PREDICTOR_DESCRIPTOR_TYPE_V1.to_owned(),
             schema_version: NATIVE_PREDICTOR_DESCRIPTOR_SCHEMA_VERSION_V1,
@@ -213,6 +280,7 @@ impl ValidatedMethodsArchiveV2 {
                 n_targets,
                 n_components,
             },
+            pipeline,
             descriptor_fingerprint: String::new(),
         };
         descriptor.descriptor_fingerprint = descriptor
@@ -315,6 +383,8 @@ fn project_archive(bytes: &[u8]) -> Result<ValidatedMethodsArchiveV2, String> {
 
     let record = &package.execution_bundle.refit_artifacts[0];
     let artifact = &record.artifact;
+    let (artifact_abi_major, artifact_abi_min_minor) =
+        methods_n4mm_abi_requirement(artifact).map_err(|error| error.to_string())?;
     if record.node_id != *node_id
         || artifact.id != binding.artifact_id
         || artifact.id.as_str() != declaration.artifact_id()
@@ -323,8 +393,25 @@ fn project_archive(bytes: &[u8]) -> Result<ValidatedMethodsArchiveV2, String> {
         || artifact.plugin.is_some()
         || artifact.plugin_version.is_some()
         || artifact.uri.as_deref() != Some(declaration.member_path())
+        || artifact_abi_major != 2
+        || artifact_abi_min_minor != declaration.abi_min_minor()
     {
         return refuse("refit artifact does not cross-link the portable N4MM member");
+    }
+    match (
+        declaration.format_version(),
+        artifact.native_predictor_descriptor.as_ref(),
+    ) {
+        (1, None) => {}
+        (1, Some(descriptor))
+            if descriptor.format_version == 1 && descriptor.pipeline.is_none() => {}
+        (2, Some(descriptor))
+            if descriptor.format_version == 2 && descriptor.pipeline.is_some() => {}
+        _ => {
+            return refuse(
+                "N4MM format declaration does not match its content-bound predictor descriptor",
+            )
+        }
     }
     let embedded = package
         .execution_bundle
@@ -350,6 +437,7 @@ fn project_archive(bytes: &[u8]) -> Result<ValidatedMethodsArchiveV2, String> {
         node_id: node_id.as_str().to_owned(),
         port_name: output.port_name.clone(),
         target_names_json,
+        format_version: declaration.format_version(),
         abi_min_minor: declaration.abi_min_minor(),
         owner_controller: artifact.controller_id.clone(),
         embedded_descriptor: artifact.native_predictor_descriptor.clone(),

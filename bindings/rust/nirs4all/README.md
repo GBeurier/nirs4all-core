@@ -29,8 +29,10 @@ loads the C ABI dynamically and compares against the same full Python
 native session export for that run. The export includes the normalized portable
 definition and the selected native `N4MM` model; load it with an explicit
 compatible `libn4m` path through `PortableSession::load_with_library()`, then
-`predict()` replays only the declared SNV/Savitzky-Golay preprocessing and
-native model prediction. It never falls back to Python or a host executor.
+`predict()` follows the content-inspected ownership contract. Historical v1
+models replay their declared preprocessing once in Core; v2 models receive raw
+input and apply their embedded Methods SNV/Savitzky-Golay pipeline once. It
+never falls back to Python or a host executor.
 
 ## Archive V1
 

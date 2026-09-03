@@ -116,17 +116,18 @@ binding-specific parity gates.
 - `predict_methods_archive_v2_matrix(...)` is the closed X-only product path.
   Core derives the replay contracts, requires one finalized output binding and
   one external data requirement, validates sample/target order, and loads only
-  a private snapshot of the caller's SHA-256-attested libn4m after ABI 2.4
+  a private snapshot of the caller's SHA-256-attested libn4m after ABI 2.5
   preflight. It exposes no fit/refit, callback or fallback control.
 - Native Methods references carry `abi_major` plus `abi_min_minor`. Core 0.3.25
   refuses an archive requiring a newer minor before N4MM import; an absent
   minor is accepted only for immutable historical V2/V3 archives and means the
   capability floor of the old payload family (ABI 2.0 for PLS N4MM, ABI 2.2
   for N4MOPT). New writers always emit the capability-derived minimum (`3` for
-  imported-linear N4MM), never the host runtime minor.
+  imported-linear N4MM and `5` for embedded SNV -> Savitzky-Golay N4MM v2),
+  never the host runtime minor.
 - The descriptor consumer is qualified against unpublished local candidates
-  DAG-ML `189099119b69e74c69466f2308808cb423dc2e94` and Methods
-  `a71ee2927524d03482183de3d6e22661efc05d12`. Those publication holds do not
+  DAG-ML `6800c4fd0ec8b13b171cec9ed4a9b2ccdbabca0d` and Methods
+  `48ad1e5a50844f68c2b99e93b02ad6a3b491c07b`. Those publication holds do not
   modify the release topology or upstream registry lock.
 - Framework idioms: sklearn-style estimators, `fit`/`predict`/`transform`,
   NumPy arrays, pandas data frames, and clear optional extras.

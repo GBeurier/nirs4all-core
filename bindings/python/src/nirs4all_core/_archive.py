@@ -186,7 +186,7 @@ def predict_methods_archive_v2_matrix(
     Core derives every DAG-ML replay contract, requires one finalized output
     binding and one external data requirement, checks sample/target order, and
     loads a private snapshot of the exact SHA-256-addressed libn4m after ABI
-    2.3 preflight. Python only transports the host matrix and strict JSON
+    2.5 preflight. Python only transports the host matrix and strict JSON
     result; it cannot select a fallback, fit/refit phase or callback.
     """
 

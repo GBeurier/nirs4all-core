@@ -89,6 +89,7 @@ pub struct LoadedArchiveV2 {
 pub struct ArchiveV2MethodsArtifact {
     artifact_id: String,
     member_path: String,
+    format_version: u32,
     abi_min_minor: u32,
 }
 
@@ -99,6 +100,11 @@ impl ArchiveV2MethodsArtifact {
 
     pub fn member_path(&self) -> &str {
         &self.member_path
+    }
+
+    /// Native N4MM wire format inspected and declared by the archive writer.
+    pub fn format_version(&self) -> u32 {
+        self.format_version
     }
 
     /// Minimum Methods ABI 2 minor required to import this payload.
@@ -150,6 +156,11 @@ impl LoadedArchiveV2 {
                 Ok(ArchiveV2MethodsArtifact {
                     artifact_id: required_str(item, "artifact_id")?.to_owned(),
                     member_path: required_str(item, "member_path")?.to_owned(),
+                    format_version: item
+                        .get("format_version")
+                        .and_then(Value::as_u64)
+                        .ok_or_else(|| fmt_err("N4MM format_version must be an integer"))?
+                        as u32,
                     abi_min_minor: item
                         .get("abi_min_minor")
                         .and_then(Value::as_u64)
@@ -912,16 +923,19 @@ fn validate_reference_declarations(
             ][..]
         };
         closed(o, fields, "N4MM reference")?;
+        let format_version = o.get("format_version").and_then(Value::as_u64);
+        let abi_min_minor = o.get("abi_min_minor").and_then(Value::as_u64);
         if o.get("kind").and_then(Value::as_str) != Some("N4MM")
             || o.get("owner").and_then(Value::as_str) != Some("nirs4all-methods")
-            || o.get("format_version").and_then(Value::as_u64) != Some(1)
+            || !matches!(format_version, Some(1 | 2))
             || o.get("abi_major").and_then(Value::as_u64) != Some(2)
             || o.get("abi_min_minor")
                 .is_some_and(|value| value.as_u64().is_none_or(|minor| minor > u32::MAX as u64))
+            || (format_version == Some(2) && abi_min_minor != Some(5))
             || o.get("semantic_profile").and_then(Value::as_str) != Some("n4mm_raw_sha256")
             || o.get("semantic_fingerprint") != o.get("raw_sha256")
         {
-            return refuse("N4MM reference is not exact Methods ABI 2 data");
+            return refuse("N4MM reference is not exact Methods ABI 2 format-1/format-2 data");
         }
         let path = required_str(o, "member_path")?;
         let artifact_id = o
@@ -2123,6 +2137,10 @@ mod tests {
             historical.methods_n4mm_artifacts().unwrap()[0].abi_min_minor(),
             0
         );
+        assert_eq!(
+            historical.methods_n4mm_artifacts().unwrap()[0].format_version(),
+            1
+        );
         let _ = fs::remove_file(historical_path);
 
         let current_path = path("current-abi-minor.n4a");
@@ -2135,6 +2153,17 @@ mod tests {
             3
         );
         let _ = fs::remove_file(current_path);
+
+        let pipeline_path = path("pipeline-format-v2.n4a");
+        let mut pipeline = request();
+        pipeline.manifest["payloads"]["methods"]["n4mm"][0]["format_version"] = Value::from(2);
+        pipeline.manifest["payloads"]["methods"]["n4mm"][0]["abi_min_minor"] = Value::from(5);
+        write_archive_v2(&pipeline_path, pipeline).unwrap();
+        let pipeline = load_archive_v2(&pipeline_path).unwrap();
+        let declaration = &pipeline.methods_n4mm_artifacts().unwrap()[0];
+        assert_eq!(declaration.format_version(), 2);
+        assert_eq!(declaration.abi_min_minor(), 5);
+        let _ = fs::remove_file(pipeline_path);
     }
     #[test]
     fn v2_refuses_non_integer_abi_minimum() {
@@ -2146,6 +2175,31 @@ mod tests {
             write_archive_v2(&path, request),
             Err(ArchiveStoreError::Format(_))
         ));
+    }
+
+    #[test]
+    fn v2_pipeline_format_requires_methods_abi_2_5() {
+        for minor in [None, Some(4), Some(6)] {
+            let target = path("pipeline-wrong-abi.n4a");
+            let mut request = request();
+            request.manifest["payloads"]["methods"]["n4mm"][0]["format_version"] = Value::from(2);
+            match minor {
+                Some(minor) => {
+                    request.manifest["payloads"]["methods"]["n4mm"][0]["abi_min_minor"] =
+                        Value::from(minor);
+                }
+                None => {
+                    request.manifest["payloads"]["methods"]["n4mm"][0]
+                        .as_object_mut()
+                        .unwrap()
+                        .remove("abi_min_minor");
+                }
+            }
+            assert!(matches!(
+                write_archive_v2(&target, request),
+                Err(ArchiveStoreError::Format(_))
+            ));
+        }
     }
     #[test]
     fn v2_refuses_host_and_mixed_package_before_write() {
