@@ -260,6 +260,61 @@ fn attest_methods_library(
     Ok(attested)
 }
 
+fn canonical_path_matches_request(canonical: &Path, requested: &Path) -> bool {
+    if canonical == requested {
+        return true;
+    }
+
+    #[cfg(windows)]
+    {
+        differs_only_by_windows_verbatim_prefix(canonical, requested)
+    }
+    #[cfg(not(windows))]
+    {
+        false
+    }
+}
+
+#[cfg(windows)]
+fn differs_only_by_windows_verbatim_prefix(canonical: &Path, requested: &Path) -> bool {
+    use std::os::windows::ffi::OsStrExt;
+
+    let canonical = canonical.as_os_str().encode_wide().collect::<Vec<_>>();
+    let requested = requested.as_os_str().encode_wide().collect::<Vec<_>>();
+    windows_verbatim_prefix_matches(&canonical, &requested)
+}
+
+#[cfg(any(windows, test))]
+fn windows_verbatim_prefix_matches(canonical: &[u16], requested: &[u16]) -> bool {
+    const VERBATIM: &[u16] = &[b'\\' as u16, b'\\' as u16, b'?' as u16, b'\\' as u16];
+    const VERBATIM_UNC: &[u16] = &[
+        b'\\' as u16,
+        b'\\' as u16,
+        b'?' as u16,
+        b'\\' as u16,
+        b'U' as u16,
+        b'N' as u16,
+        b'C' as u16,
+        b'\\' as u16,
+    ];
+    const UNC: &[u16] = &[b'\\' as u16, b'\\' as u16];
+
+    if let Some(rest) = canonical.strip_prefix(VERBATIM_UNC) {
+        return requested
+            .strip_prefix(UNC)
+            .is_some_and(|requested_rest| requested_rest == rest);
+    }
+    let Some(rest) = canonical.strip_prefix(VERBATIM) else {
+        return false;
+    };
+    let drive_absolute = rest.len() >= 3
+        && ((b'A' as u16..=b'Z' as u16).contains(&rest[0])
+            || (b'a' as u16..=b'z' as u16).contains(&rest[0]))
+        && rest[1] == b':' as u16
+        && rest[2] == b'\\' as u16;
+    drive_absolute && rest == requested
+}
+
 fn read_methods_library_identity(
     path: &Path,
 ) -> Result<AttestedMethodsLibrary, NativeMethodsReplayError> {
@@ -281,7 +336,7 @@ fn read_methods_library_identity(
     }
     let source_canonical_path = std::fs::canonicalize(path)
         .map_err(|error| replay_error(format!("cannot canonicalize libn4m identity: {error}")))?;
-    if source_canonical_path != path {
+    if !canonical_path_matches_request(&source_canonical_path, path) {
         return Err(replay_error(
             "libn4m path must be canonical and contain no symlink components",
         ));
@@ -1355,6 +1410,64 @@ pub fn replay_methods_archive_v3_json(
 #[cfg(test)]
 mod json_tests {
     use super::*;
+
+    #[test]
+    fn windows_verbatim_path_compatibility_is_prefix_only() {
+        let utf16 = |value: &str| value.encode_utf16().collect::<Vec<_>>();
+        assert!(windows_verbatim_prefix_matches(
+            &utf16(r"\\?\D:\runtime\n4m.dll"),
+            &utf16(r"D:\runtime\n4m.dll")
+        ));
+        assert!(windows_verbatim_prefix_matches(
+            &utf16(r"\\?\UNC\server\share\n4m.dll"),
+            &utf16(r"\\server\share\n4m.dll")
+        ));
+        assert!(!windows_verbatim_prefix_matches(
+            &utf16(r"\\?\D:\runtime\n4m.dll"),
+            &utf16(r"d:\runtime\n4m.dll")
+        ));
+        assert!(!windows_verbatim_prefix_matches(
+            &utf16(r"\\?\D:\runtime\n4m.dll"),
+            &utf16(r"D:\alias\..\runtime\n4m.dll")
+        ));
+        assert!(!windows_verbatim_prefix_matches(
+            &utf16(r"\\?\GLOBALROOT\Device\n4m.dll"),
+            &utf16(r"GLOBALROOT\Device\n4m.dll")
+        ));
+    }
+
+    #[test]
+    fn methods_identity_rejects_a_parent_directory_alias() {
+        let directory = tempfile::tempdir().expect("private test directory");
+        let nested = directory.path().join("nested");
+        std::fs::create_dir(&nested).expect("nested fixture directory");
+        let library = directory.path().join("libn4m.fixture");
+        std::fs::write(&library, b"fixture").expect("Methods fixture");
+        let aliased = nested.join("..").join("libn4m.fixture");
+
+        let error = match read_methods_library_identity(&aliased) {
+            Ok(_) => panic!("a non-canonical parent-directory alias must remain refused"),
+            Err(error) => error,
+        };
+        assert!(error.to_string().contains("canonical"));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn methods_identity_accepts_an_ordinary_absolute_windows_path() {
+        let directory = tempfile::tempdir().expect("private test directory");
+        let library = directory.path().join("n4m.dll");
+        std::fs::write(&library, b"fixture").expect("Methods fixture");
+        let std_canonical = std::fs::canonicalize(&library).expect("Windows canonical path");
+        assert_ne!(
+            std_canonical, library,
+            "the regression fixture must exercise Windows' verbatim path spelling"
+        );
+
+        let identity = read_methods_library_identity(&library)
+            .expect("an ordinary absolute Windows path is a canonical product input");
+        assert_eq!(identity.source_canonical_path, std_canonical);
+    }
 
     #[test]
     fn live_historical_archive_derives_native_predictor_descriptor() {
