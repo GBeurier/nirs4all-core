@@ -37,7 +37,7 @@ wasm_packages = ["@nirs4all/formats-wasm"]
 [[upstream]]
 key = "io"
 repo = "GBeurier/nirs4all-io"
-ref = "16c1efdfcd98b3861c550b6609a69a9995793301"
+ref = "0b7d39ee2264fb2fe13a68a540f7297658bfcd6d"
 role = "Dataset assembly bridge"
 bindings = ["rust", "python", "r", "wasm", "c"]
 python_imports = ["nirs4all_io", "nirs4all.io"]
