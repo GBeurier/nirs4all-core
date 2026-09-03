@@ -44,8 +44,9 @@ pub use formats_io::{
     LoadedSpectrumDataset,
 };
 pub use io_training::{
-    train_dataset_package_methods_archive_v2, train_dataset_package_methods_conformal_archive_v2,
-    DatasetPackage, DatasetPackageMethodsArchiveV2Outcome, DatasetPackageMethodsArchiveV2Request,
+    canonical_pls_training_request, train_dataset_package_methods_archive_v2,
+    train_dataset_package_methods_conformal_archive_v2, CanonicalPlsProfile, DatasetPackage,
+    DatasetPackageMethodsArchiveV2Outcome, DatasetPackageMethodsArchiveV2Request,
     DatasetPackageMethodsConformalArchiveV2Outcome, DatasetPackageMethodsConformalArchiveV2Request,
     DatasetPackageMethodsProvider,
 };

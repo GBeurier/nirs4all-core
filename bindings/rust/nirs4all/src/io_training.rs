@@ -16,12 +16,13 @@ use dag_ml_core::{
     AttachedTrainingReplayInput, BundleDataRequirement, BundleId, ConformalCalibration,
     ConformalCalibrationTruth, ConformalMultiTargetPolicy, ConformalSmallSamplePolicy,
     ControllerId, DataBinding, DataMaterializationRequest, DataProviderViewSpec, DataViewRequest,
-    EntityUnitLevel, ExternalDataPlanEnvelope, FittedArtifactMode, HandleKind, HandleRef,
-    InMemoryArtifactStore, MethodsPlsController, MethodsPlsData, MethodsPlsDataRequest,
+    EntityUnitLevel, ExternalDataPlanEnvelope, FittedArtifactMode, GraphSpec, HandleKind,
+    HandleRef, InMemoryArtifactStore, MethodsPlsController, MethodsPlsData, MethodsPlsDataRequest,
     MethodsPlsDataset, MethodsPlsMatrix, Phase, RunId, RuntimeControllerRegistry,
     RuntimeDataProvider, SampleRelation, SampleRelationSet, TrainingDataIdentity,
     TrainingExecutionInput, TrainingInfluenceManifest, TrainingOutcome, TrainingReplayOutcome,
     TrainingReplayRequest, TrainingRequest, TRAINING_REPLAY_REQUEST_SCHEMA_VERSION,
+    TRAINING_REQUEST_SCHEMA_VERSION,
 };
 use dag_ml_data_crate::{
     CoordinatorDataMaterializationRequest, CoordinatorHandleKind, DataView, SampleId as IoSampleId,
@@ -386,6 +387,251 @@ impl Drop for DatasetPackageMethodsProvider {
     fn drop(&mut self) {
         self.release_all();
     }
+}
+
+/// Closed PLS profiles exposed by the aggregate's canonical request builder.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CanonicalPlsProfile {
+    /// PLS over the raw numeric spectrum matrix (N4MM format 1).
+    Raw,
+    /// Native SNV → Savitzky-Golay → PLS over raw caller input (N4MM format 2).
+    SnvSavitzkyGolay,
+}
+
+/// Build the aggregate's bounded single-source PLS training request.
+///
+/// The provider remains authoritative for source, schema, relation and target
+/// identities. The request contains one `pls` node with one component, either
+/// raw or with the fixed native SNV + SG(window=5, degree=2) pipeline, and a
+/// deterministic two-fold sample split. Augmented, excluded, origin-linked,
+/// duplicate or undersized cohorts are refused instead of being silently
+/// reshaped into this narrow profile.
+pub fn canonical_pls_training_request(
+    provider: &DatasetPackageMethodsProvider,
+    profile: CanonicalPlsProfile,
+) -> Result<TrainingRequest, String> {
+    let mut sample_ids = Vec::new();
+    let mut seen = BTreeSet::new();
+    for relation in &provider.relations.records {
+        if relation.is_augmented || relation.excluded || relation.origin_sample_id.is_some() {
+            return Err(
+                "canonical PLS requires unaugmented, included, origin-free samples".to_string(),
+            );
+        }
+        let sample_id = relation.sample_id.to_string();
+        if !seen.insert(sample_id.clone()) {
+            return Err(format!(
+                "canonical PLS requires one relation per sample; `{sample_id}` is duplicated"
+            ));
+        }
+        sample_ids.push(sample_id);
+    }
+    if sample_ids.len() < 4 {
+        return Err(format!(
+            "canonical PLS requires at least four samples, got {}",
+            sample_ids.len()
+        ));
+    }
+    let validation_0 = sample_ids.iter().step_by(2).cloned().collect::<Vec<_>>();
+    let training_0 = sample_ids
+        .iter()
+        .skip(1)
+        .step_by(2)
+        .cloned()
+        .collect::<Vec<_>>();
+    let envelope = provider.external_envelope();
+    let relation_fingerprint = envelope
+        .relation_fingerprint
+        .clone()
+        .ok_or("canonical PLS requires a relation fingerprint")?;
+    let binding: DataBinding = serde_json::from_value(serde_json::json!({
+        "node_id": "model:pls",
+        "input_name": "x",
+        "request_id": "io:canonical-raw-pls",
+        "schema_fingerprint": envelope.schema_fingerprint,
+        "plan_fingerprint": envelope.plan_fingerprint,
+        "relation_fingerprint": relation_fingerprint,
+        "output_representation": "tabular_numeric",
+        "feature_set_id": provider.provider.feature_set_id(),
+        "source_ids": [provider.source_id()],
+        "require_relations": true,
+        "view_policy": {
+            "fit_partition": "fold_train",
+            "predict_partition": "fold_validation",
+            "include_augmented_train": false,
+            "include_augmented_validation": false,
+            "include_excluded": false,
+            "require_sample_ids": true
+        },
+        "metadata": {}
+    }))
+    .map_err(|error| error.to_string())?;
+    let identity = TrainingDataIdentity::from_binding_envelope(&binding, envelope)
+        .map_err(|error| error.to_string())?;
+    let node_params = match profile {
+        CanonicalPlsProfile::Raw => serde_json::json!({"n_components": 1}),
+        CanonicalPlsProfile::SnvSavitzkyGolay => serde_json::json!({
+            "n_components": 1,
+            "pipeline": {
+                "schema_version": 1,
+                "pipeline_type": "n4m.snv_savgol_smooth.v1",
+                "savgol_window": 5,
+                "savgol_poly_degree": 2
+            }
+        }),
+    };
+    let graph: GraphSpec = serde_json::from_value(serde_json::json!({
+        "id": "core-canonical-raw-pls",
+        "interface": {
+            "inputs": [{"name": "x", "kind": "data", "representation": "tabular_numeric", "cardinality": "one", "description": "selected IO numeric source"}],
+            "outputs": [{"name": "prediction", "kind": "prediction", "representation": null, "cardinality": "one", "description": "PLS prediction"}]
+        },
+        "nodes": [{
+            "id": "model:pls",
+            "kind": "model",
+            "operator": "pls",
+            "params": node_params,
+            "ports": {
+                "inputs": [{"name": "x", "kind": "data", "representation": "tabular_numeric", "cardinality": "one", "description": ""}],
+                "outputs": [{"name": "oof", "kind": "prediction", "representation": null, "cardinality": "one", "description": ""}]
+            },
+            "metadata": {},
+            "seed_label": null
+        }],
+        "edges": [],
+        "search_space_fingerprint": null,
+        "metadata": {}
+    }))
+    .map_err(|error| error.to_string())?;
+    let campaign = serde_json::from_value(serde_json::json!({
+        "id": "campaign:core:canonical-raw-pls",
+        "root_seed": 91,
+        "leakage_policy": {
+            "split_unit": "sample",
+            "forbid_origin_cross_fold": true,
+            "allow_observation_split_with_shared_target": false,
+            "require_group_ids": false,
+            "unsafe_flags": []
+        },
+        "aggregation_policy": {
+            "aggregation_level": "sample",
+            "method": "mean",
+            "weights": "none",
+            "emit_parallel_metrics": true,
+            "selection_metric_level": "sample",
+            "store_raw_predictions": true,
+            "store_aggregated_predictions": true
+        },
+        "split_invocation": {
+            "id": "core:canonical:two-fold",
+            "controller_id": null,
+            "leakage_policy": {
+                "split_unit": "sample",
+                "forbid_origin_cross_fold": true,
+                "allow_observation_split_with_shared_target": false,
+                "require_group_ids": false,
+                "unsafe_flags": []
+            },
+            "params": {"kind": "precomputed"},
+            "fold_set": {
+                "id": "core:canonical:two-fold",
+                "sample_ids": sample_ids,
+                "folds": [
+                    {"fold_id": "core.fold.0", "train_sample_ids": training_0, "validation_sample_ids": validation_0},
+                    {"fold_id": "core.fold.1", "train_sample_ids": validation_0, "validation_sample_ids": training_0}
+                ],
+                "sample_groups": {}
+            }
+        },
+        "generation": {"strategy": "none", "dimensions": [], "max_variants": 1},
+        "shape_plans": {
+            "model:pls": {
+                "node_id": "model:pls",
+                "input_granularity": "sample",
+                "target_granularity": "sample",
+                "fit_rows": "fold_train",
+                "predict_rows": "fold_validation",
+                "feature_namespace": provider.source_id(),
+                "feature_schema_fingerprint": null,
+                "target_space": "raw",
+                "aggregation_policy": {
+                    "aggregation_level": "sample", "method": "mean", "weights": "none",
+                    "emit_parallel_metrics": true, "selection_metric_level": "sample",
+                    "store_raw_predictions": true, "store_aggregated_predictions": true
+                },
+                "augmentation_policy": {
+                    "sample_scope": "train_only", "feature_scope": "train_only",
+                    "require_origin_id": true, "inherit_group": true, "inherit_target": true
+                },
+                "selection_policy": {"scope": "none", "store_masks": true, "allow_schema_mismatch_on_join": false}
+            }
+        },
+        "data_bindings": {"model:pls": [binding]},
+        "metadata": {}
+    }))
+    .map_err(|error| error.to_string())?;
+    let controller_manifests = serde_json::from_value(serde_json::json!([{
+        "controller_id": "controller:methods.pls",
+        "controller_version": "libn4m-2.5",
+        "operator_kind": "model",
+        "priority": 0,
+        "supported_phases": ["FIT_CV", "REFIT", "PREDICT"],
+        "input_ports": [{"name": "x", "kind": "data", "representation": "tabular_numeric", "cardinality": "one", "description": ""}],
+        "output_ports": [{"name": "oof", "kind": "prediction", "representation": null, "cardinality": "one", "description": ""}],
+        "data_requirements": null,
+        "capabilities": ["deterministic", "thread_safe", "process_safe", "emits_predictions", "emits_artifacts", "stateful", "supports_portable_full_refit"],
+        "fit_scope": "fold_train",
+        "rng_policy": "uses_core_seed",
+        "artifact_policy": "serializable"
+    }]))
+    .map_err(|error| error.to_string())?;
+    let target_names = provider.provider.target_names().to_vec();
+    let target_units = vec![None::<String>; target_names.len()];
+    let class_labels = vec![Vec::<String>::new(); target_names.len()];
+    let options = serde_json::from_value(serde_json::json!({
+        "refit": true,
+        "refit_strategy": "refit_one",
+        "seed": 91,
+        "selection": {
+            "id": "selection:rmse",
+            "metric": {"name": "rmse", "objective": "minimize"},
+            "required_metric_level": "sample",
+            "require_finite": true,
+            "evaluation_scope": "oof"
+        },
+        "selection_output_id": "output:prediction",
+        "outputs": [{
+            "output_id": "output:prediction", "node_id": "model:pls", "port_name": "oof",
+            "prediction_level": "sample", "unit_level": "physical_sample",
+            "prediction_kind": "regression_point", "target_names": target_names,
+            "target_units": target_units, "class_labels": class_labels,
+            "output_order": "target_order", "target_space": "raw"
+        }],
+        "scheduler": {"kind": "sequential", "backend": null, "workers": 1},
+        "resources": {"cpu_threads": 1, "memory_bytes": null, "gpu_devices": [], "wall_time_ms": null},
+        "artifacts": {"cv_artifacts": "discard", "prediction_caches": "retain", "fitted_artifacts": "portable_required"}
+    }))
+    .map_err(|error| error.to_string())?;
+    let mut request = TrainingRequest {
+        schema_version: TRAINING_REQUEST_SCHEMA_VERSION,
+        request_id: "training:core:canonical-raw-pls".into(),
+        plan_id: "plan:core:canonical-raw-pls".into(),
+        graph,
+        campaign,
+        controller_manifests,
+        data_identities: vec![identity],
+        parameter_patches: vec![],
+        patch_policies: vec![],
+        influence_requirements: vec![],
+        training_losses: vec![],
+        options,
+        request_fingerprint: "0".repeat(64),
+    };
+    request.request_fingerprint = request
+        .compute_fingerprint()
+        .map_err(|error| error.to_string())?;
+    request.validate().map_err(|error| error.to_string())?;
+    Ok(request)
 }
 
 impl RuntimeDataProvider for DatasetPackageMethodsProvider {
