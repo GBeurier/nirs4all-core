@@ -20,6 +20,7 @@ CORE_FACADE_EXPORTS: tuple[str, ...] = (
     "datasets",
     "formats",
     "import_upstream",
+    "inspect_methods_archive_v2_predictors",
     "io",
     "load_pipeline_definition",
     "local_implementation_registry",
