@@ -1263,6 +1263,23 @@ pub fn replay_methods_archive_v2_conformal_presentation_v1_json(
     })
 }
 
+/// Open, validate and replay an Archive V2, returning DAG-ML's exact
+/// content-bound multi-target conformal-presentation V2 JSON.
+pub fn replay_methods_archive_v2_conformal_presentation_v2_json(
+    archive_path: &Path,
+    input: MethodsArchiveReplayJsonRequest,
+) -> Result<String, NativeMethodsReplayError> {
+    let archive = load_archive_v2(archive_path)
+        .map_err(|error| replay_error(format!("Core Archive V2 validation refused: {error}")))?;
+    let input = parse_json_request(input)?;
+    let presentation = replay_methods_archive_v2_conformal_presentation_v2(&archive, input)?;
+    serde_json::to_string(&presentation).map_err(|error| {
+        replay_error(format!(
+            "cannot serialize DAG-ML V2 conformal presentation V2: {error}"
+        ))
+    })
+}
+
 /// Open, validate, and replay an Archive V3 from strict host JSON contracts.
 ///
 /// Python bindings intentionally get an empty supplemental controller registry:
