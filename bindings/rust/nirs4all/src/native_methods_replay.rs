@@ -308,8 +308,14 @@ fn ensure_same_configured_methods_library(
     configured: &ConfiguredMethodsLibrary,
     attested: &AttestedMethodsLibrary,
 ) -> Result<PathBuf, NativeMethodsReplayError> {
+    let snapshot_path = std::fs::canonicalize(&configured.snapshot_path).map_err(|error| {
+        replay_error(format!(
+            "cannot canonicalize configured libn4m snapshot `{}`: {error}",
+            configured.snapshot_path.display()
+        ))
+    })?;
     let path_matches = configured.source_canonical_path == attested.source_canonical_path
-        || configured.snapshot_path == attested.source_canonical_path;
+        || snapshot_path == attested.source_canonical_path;
     if !path_matches || configured.sha256 != attested.sha256 {
         return Err(replay_error(format!(
             "libn4m process identity is already fixed to `{}` at SHA-256 {}; requested `{}` at SHA-256 {}",
@@ -324,7 +330,7 @@ fn ensure_same_configured_methods_library(
             "the configured libn4m process identity failed ABI 2.5 verification: {error}"
         )));
     }
-    Ok(configured.snapshot_path.clone())
+    Ok(snapshot_path)
 }
 
 fn write_attested_methods_snapshot(
@@ -380,6 +386,11 @@ fn write_attested_methods_snapshot(
             "private libn4m snapshot does not match the attested source bytes",
         ));
     }
+    let snapshot_path = std::fs::canonicalize(&snapshot_path).map_err(|error| {
+        replay_error(format!(
+            "cannot canonicalize private libn4m snapshot: {error}"
+        ))
+    })?;
     Ok((directory, snapshot_path))
 }
 
@@ -1438,6 +1449,7 @@ mod json_tests {
         let directory = tempfile::tempdir().expect("private test directory");
         let source = directory.path().join("libn4m-source.so");
         let snapshot = directory.path().join("libn4m-snapshot.so");
+        std::fs::write(&snapshot, b"private snapshot").expect("snapshot fixture");
         let configured = ConfiguredMethodsLibrary {
             source_canonical_path: source.clone(),
             sha256: "a".repeat(64),
@@ -1492,6 +1504,41 @@ mod json_tests {
                 .unwrap_err()
                 .to_string()
                 .contains("failed ABI 2.5 verification")
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn configured_methods_identity_normalizes_two_aliases_of_the_snapshot() {
+        use std::os::unix::fs::symlink;
+
+        let directory = tempfile::tempdir().expect("private test directory");
+        let canonical_directory = directory.path().join("canonical");
+        let alias_directory = directory.path().join("alias");
+        std::fs::create_dir(&canonical_directory).expect("canonical fixture directory");
+        symlink(&canonical_directory, &alias_directory).expect("directory alias");
+
+        let aliased_snapshot = alias_directory.join("libn4m-snapshot.so");
+        std::fs::write(&aliased_snapshot, b"private snapshot").expect("snapshot fixture");
+        let canonical_snapshot =
+            std::fs::canonicalize(&aliased_snapshot).expect("canonical snapshot");
+        let configured = ConfiguredMethodsLibrary {
+            source_canonical_path: directory.path().join("different-source.so"),
+            sha256: "a".repeat(64),
+            snapshot_path: aliased_snapshot,
+            abi_error: None,
+            _snapshot_directory: tempfile::tempdir().expect("retained snapshot directory"),
+        };
+        let matching = AttestedMethodsLibrary {
+            source_canonical_path: canonical_snapshot.clone(),
+            sha256: "a".repeat(64),
+            bytes: Vec::new(),
+        };
+
+        assert_eq!(
+            ensure_same_configured_methods_library(&configured, &matching)
+                .expect("filesystem aliases of the same snapshot remain usable"),
+            canonical_snapshot
         );
     }
 
