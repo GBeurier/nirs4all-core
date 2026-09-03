@@ -57,6 +57,7 @@ test('public V1 WASM surface exports expected names', () => {
       'datasets',
       'formats',
       'importUpstream',
+      'inspectMethodsArchiveV2Predictors',
       'io',
       'loadDagMl',
       'loadArchiveV2Native',
