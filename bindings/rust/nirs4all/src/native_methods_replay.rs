@@ -13,13 +13,13 @@ use std::sync::{Mutex, OnceLock};
 
 use dag_ml_core::training::PredictionSource;
 use dag_ml_core::{
-    build_conformal_presentation_v1, deserialize_external_contract,
-    execute_loaded_methods_portable_refit_replay_v3, execute_loaded_methods_predictor_replay,
-    inspect_methods_native_predictor_descriptor_v1, methods_n4mm_abi_requirement,
-    methods_pls_predict_feature_content_fingerprint, ConformalPresentationV1,
-    ExternalDataPlanEnvelope, MethodsPlsDataset, MethodsPlsMatrix,
-    MethodsPortablePredictorReplayInput, MethodsPortableRefitReplayInputV3, MethodsRuntime,
-    NativePredictorDescriptorV1, ObservationId, Phase, PortablePredictorPackage,
+    build_conformal_presentation_v1, build_conformal_presentation_v2,
+    deserialize_external_contract, execute_loaded_methods_portable_refit_replay_v3,
+    execute_loaded_methods_predictor_replay, inspect_methods_native_predictor_descriptor_v1,
+    methods_n4mm_abi_requirement, methods_pls_predict_feature_content_fingerprint,
+    ConformalPresentationV1, ConformalPresentationV2, ExternalDataPlanEnvelope, MethodsPlsDataset,
+    MethodsPlsMatrix, MethodsPortablePredictorReplayInput, MethodsPortableRefitReplayInputV3,
+    MethodsRuntime, NativePredictorDescriptorV1, ObservationId, Phase, PortablePredictorPackage,
     PortableRefitPackageV3, PortableRefitReplayOutcomeV3, PredictionKind, PredictionPartition,
     RunId, RuntimeControllerRegistry, SampleId, SampleRelation, SampleRelationSet,
     TrainingReplayOutcome, TrainingReplayRequest, EXTERNAL_DATA_PLAN_ENVELOPE_SCHEMA_VERSION_V1,
@@ -881,6 +881,49 @@ pub fn predict_methods_archive_v2_matrix(
     Ok(outcome)
 }
 
+/// Execute the closed X-only product surface and return DAG-ML's Archive-bound
+/// multi-target conformal presentation. Core supplies the archive digest and
+/// descriptors inspected from the inventoried N4MM bytes; it does not
+/// calculate or reshape intervals.
+pub fn predict_methods_archive_v2_matrix_conformal_presentation_v2(
+    archive: &LoadedArchiveV2,
+    input: MethodsArchiveMatrixPredictRequest,
+) -> Result<ConformalPresentationV2, NativeMethodsReplayError> {
+    let package = load_v2_predictor_package(archive)?;
+    let expected_library_sha256 = input.methods_library_sha256.clone();
+    let MethodsArchiveMatrixPredictComposition {
+        input,
+        sample_ids,
+        target_names,
+        output_binding_id,
+    } = compose_methods_archive_matrix_predict(&package, input)?;
+    let request = input.request.clone();
+    let snapshot_path =
+        configure_attested_methods_library(&input.methods_library_path, &expected_library_sha256)?;
+    let native_predictors = inspect_package_native_predictors(archive, &package)?;
+    let mut input = input;
+    input.methods_library_path = snapshot_path;
+    let outcome = replay_methods_predictor_package(&package, input)?;
+    validate_methods_archive_matrix_outcome(
+        &outcome,
+        &sample_ids,
+        &target_names,
+        &output_binding_id,
+    )?;
+    build_conformal_presentation_v2(
+        archive.reference().archive_sha256(),
+        &package,
+        &request,
+        &outcome,
+        &native_predictors,
+    )
+    .map_err(|error| {
+        replay_error(format!(
+            "DAG-ML could not build Core Archive V2 conformal presentation V2: {error}"
+        ))
+    })
+}
+
 /// Execute the closed Archive V2 matrix surface from a strict JSON binding.
 ///
 /// The returned JSON is DAG-ML's validated replay outcome. Host bindings do
@@ -961,6 +1004,70 @@ pub fn replay_methods_archive_v2_conformal_presentation_v1(
             "DAG-ML could not build Core Archive V2 conformal presentation: {error}"
         ))
     })
+}
+
+/// Replay an integrity-checked Archive V2 and project the complete persisted
+/// multi-target conformal result. V1 remains unchanged for scalar consumers.
+pub fn replay_methods_archive_v2_conformal_presentation_v2(
+    archive: &LoadedArchiveV2,
+    input: MethodsArchivePredictRequest,
+) -> Result<ConformalPresentationV2, NativeMethodsReplayError> {
+    let package = load_v2_predictor_package(archive)?;
+    let request = input.request.clone();
+    let replay = replay_methods_predictor_package(&package, input)?;
+    let native_predictors = inspect_package_native_predictors(archive, &package)?;
+    build_conformal_presentation_v2(
+        archive.reference().archive_sha256(),
+        &package,
+        &request,
+        &replay,
+        &native_predictors,
+    )
+    .map_err(|error| {
+        replay_error(format!(
+            "DAG-ML could not build Core Archive V2 conformal presentation V2: {error}"
+        ))
+    })
+}
+
+/// Parse persisted presentation JSON only in the presence of its exact
+/// integrity-checked archive and byte-attested Methods library.
+pub fn load_methods_archive_v2_conformal_presentation_v2(
+    archive: &LoadedArchiveV2,
+    presentation_json: &str,
+    methods_library_path: impl AsRef<Path>,
+    methods_library_sha256: &str,
+) -> Result<ConformalPresentationV2, NativeMethodsReplayError> {
+    let package = load_v2_predictor_package(archive)?;
+    configure_attested_methods_library(methods_library_path.as_ref(), methods_library_sha256)?;
+    let native_predictors = inspect_package_native_predictors(archive, &package)?;
+    let presentation = ConformalPresentationV2::from_json_for_package(
+        presentation_json,
+        &package,
+        &native_predictors,
+    )
+    .map_err(|error| {
+        replay_error(format!(
+            "DAG-ML rejected Core Archive V2 conformal presentation V2: {error}"
+        ))
+    })?;
+    require_conformal_archive_identity(
+        &presentation.archive_sha256,
+        archive.reference().archive_sha256(),
+    )?;
+    Ok(presentation)
+}
+
+fn require_conformal_archive_identity(
+    presentation_archive_sha256: &str,
+    loaded_archive_sha256: &str,
+) -> Result<(), NativeMethodsReplayError> {
+    if presentation_archive_sha256 != loaded_archive_sha256 {
+        return Err(replay_error(
+            "conformal presentation V2 archive SHA-256 does not match validated Archive V2 bytes",
+        ));
+    }
+    Ok(())
 }
 
 fn load_v2_predictor_package(
@@ -1240,6 +1347,18 @@ mod json_tests {
             assert!(error.to_string().contains("exactly one"));
             assert!(error.to_string().contains(&count.to_string()));
         }
+    }
+
+    #[test]
+    fn conformal_presentation_v2_archive_identity_is_exact() {
+        let digest = "a".repeat(64);
+        require_conformal_archive_identity(&digest, &digest)
+            .expect("the exact validated archive identity is accepted");
+        let error = require_conformal_archive_identity(&digest, &"b".repeat(64))
+            .expect_err("a presentation from another archive must be refused");
+        assert!(error
+            .to_string()
+            .contains("does not match validated Archive V2 bytes"));
     }
 
     #[test]
