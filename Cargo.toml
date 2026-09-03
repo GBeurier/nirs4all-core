@@ -12,4 +12,10 @@ repository = "https://github.com/GBeurier/nirs4all-core"
 [patch.crates-io]
 dag-ml = { path = "/home/delete/nirs4all/_worktrees/DAG-methods-pipeline-v2/crates/dag-ml" }
 dag-ml-core = { path = "/home/delete/nirs4all/_worktrees/DAG-methods-pipeline-v2/crates/dag-ml-core" }
+dag-ml-data = { path = "/home/delete/nirs4all/_worktrees/RC-v1-dagml-data-0.2.10/crates/dag-ml-data" }
+dag-ml-data-core = { path = "/home/delete/nirs4all/_worktrees/RC-v1-dagml-data-0.2.10/crates/dag-ml-data-core" }
+dag-ml-data-provider = { path = "/home/delete/nirs4all/_worktrees/RC-v1-dagml-data-0.2.10/crates/dag-ml-data-provider" }
 n4m = { path = "/home/delete/nirs4all/_worktrees/MTH-abi24-inspect/bindings/rust/n4m" }
+nirs4all-io = { path = "/home/delete/nirs4all/_worktrees/IO-DATA002-core-consumer/crates/nirs4all-io" }
+nirs4all-io-core = { path = "/home/delete/nirs4all/_worktrees/IO-DATA002-core-consumer/crates/nirs4all-io-core" }
+nirs4all-io-dagml = { path = "/home/delete/nirs4all/_worktrees/IO-DATA002-core-consumer/crates/nirs4all-io-dagml" }

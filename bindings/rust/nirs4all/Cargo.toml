@@ -42,12 +42,17 @@ datasets = []
 [dependencies]
 dag_ml_crate = { package = "dag-ml", version = "=0.3.23" }
 dag_ml_core = { package = "dag-ml-core", version = "=0.3.23", features = ["methods-optimizer"] }
-dag_ml_data_crate = { package = "dag-ml-data", version = "0.2.9" }
+dag_ml_data_crate = { package = "dag-ml-data", version = "=0.2.10" }
+dag_ml_data_provider_crate = { package = "dag-ml-data-provider", version = "=0.2.10" }
 libloading = "0.8"
 n4m = { version = "=0.1.4", features = ["dynamic"], default-features = false }
+nirs4all_io_dagml = { package = "nirs4all-io-dagml", version = "=0.1.12" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_yaml = "0.9"
 sha2 = "0.10"
 tempfile = "3"
 unicode-normalization = "0.1"
+
+[dev-dependencies]
+nirs4all_io_crate = { package = "nirs4all-io", version = "=0.1.12" }
