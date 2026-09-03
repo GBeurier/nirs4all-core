@@ -10,6 +10,9 @@ binding manifest.
 
 ### Changed
 
+- Canonicalized the private libn4m snapshot path before storing, comparing,
+  and returning it. This keeps macOS `/var` and `/private/var` aliases from
+  being mistaken for two different process-wide Methods library identities.
 - Bumped the aggregate to 0.3.26 and repinned both `nirs4all-io` and
   `nirs4all-io-dagml` to 0.1.13 so downstream products resolve the restored
   bounded `RoleTaggedReadLimits` API from one coherent IO family. The Python
