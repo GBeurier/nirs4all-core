@@ -10,6 +10,10 @@ binding manifest.
 
 ### Changed
 
+- Bumped the aggregate to 0.3.26 and repinned both `nirs4all-io` and
+  `nirs4all-io-dagml` to 0.1.13 so downstream products resolve the restored
+  bounded `RoleTaggedReadLimits` API from one coherent IO family. The Python
+  IO extra now carries the same 0.1.13 minimum.
 - Repaired the 0.3.25 post-tag qualification path: the release topology now
   includes the native predictor inspection export, CI installs wasm-pack
   0.15.0 explicitly, and Rust integration tests build libn4m from the exact

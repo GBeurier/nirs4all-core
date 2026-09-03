@@ -122,7 +122,7 @@ binding-specific parity gates.
   one external data requirement, validates sample/target order, and loads only
   a private snapshot of the caller's SHA-256-attested libn4m after ABI 2.5
   preflight. It exposes no fit/refit, callback or fallback control.
-- Native Methods references carry `abi_major` plus `abi_min_minor`. Core 0.3.25
+- Native Methods references carry `abi_major` plus `abi_min_minor`. Core 0.3.26
   refuses an archive requiring a newer minor before N4MM import; an absent
   minor is accepted only for immutable historical V2/V3 archives and means the
   capability floor of the old payload family (ABI 2.0 for PLS N4MM, ABI 2.2
