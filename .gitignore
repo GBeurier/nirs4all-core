@@ -7,6 +7,9 @@ coverage.xml
 .ruff_cache/
 .codegraph/
 target/
+fuzz/artifacts/
+fuzz/corpus/
+fuzz/target/
 bindings/wasm/native/
 node_modules/
 dist/
