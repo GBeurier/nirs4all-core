@@ -1,6 +1,13 @@
 name: CI
 
 on:
+  workflow_dispatch:
+    inputs:
+      repair_tag:
+        description: "Immutable release tag qualified by this repair run"
+        required: true
+        type: string
+        default: "v0.3.25"
   push:
     branches:
       - main
@@ -10,11 +17,75 @@ on:
   pull_request:
 
 jobs:
+  repair-guard:
+    name: Guard manual v0.3.25 repair
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.0
+        with:
+          fetch-depth: 0
+      - name: Validate repair source and version
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          set -euo pipefail
+          repair_tag="${{ inputs.repair_tag }}"
+          if [ "${repair_tag}" != "v0.3.25" ]; then
+            echo "::error::This repair workflow is restricted to immutable tag v0.3.25, got ${repair_tag}." >&2
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "refs/tags/${repair_tag}" HEAD; then
+            echo "::error::Repair ref ${GITHUB_SHA} is not a descendant of ${repair_tag}." >&2
+            exit 1
+          fi
+          scripts/bump_version.sh --check
+          crate_version=$(sed -nE '/^\[package\]/,/^\[/{s/^version[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p}' bindings/rust/nirs4all/Cargo.toml | head -n1)
+          if [ "${crate_version}" != "${repair_tag#v}" ]; then
+            echo "::error::Repair manifests report ${crate_version}, expected ${repair_tag#v}." >&2
+            exit 1
+          fi
+
   rust:
+    needs: repair-guard
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.0
       - uses: dtolnay/rust-toolchain@stable
+      - name: Resolve published n4m source tag
+        id: n4m-release
+        shell: python
+        run: |
+          import os
+          from pathlib import Path
+          import tomllib
+
+          manifest = tomllib.loads(Path("bindings/rust/nirs4all/Cargo.toml").read_text())
+          requirement = manifest["dependencies"]["n4m"]["version"]
+          if not requirement.startswith("="):
+              raise SystemExit(f"n4m must remain exactly pinned, got {requirement!r}")
+          version = requirement.removeprefix("=")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"tag=n4m-v{version}\n")
+      - uses: actions/checkout@v7.0.0
+        with:
+          repository: GBeurier/nirs4all-methods
+          ref: ${{ steps.n4m-release.outputs.tag }}
+          path: nirs4all-methods
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends cmake ninja-build
+      - name: Build libn4m from its published n4m release tag
+        run: |
+          cmake --preset dev-release
+          cmake --build --preset dev-release --target n4m_c --parallel
+        working-directory: nirs4all-methods
+      - name: Resolve the regular libn4m identity
+        run: |
+          set -euo pipefail
+          library=$(realpath nirs4all-methods/build/dev-release/cpp/src/libn4m.so)
+          if [ ! -f "${library}" ] || [ -L "${library}" ]; then
+            echo "::error::Resolved libn4m must be a regular non-symlink file: ${library}" >&2
+            exit 1
+          fi
+          echo "N4M_LIBRARY_PATH=${library}" >> "${GITHUB_ENV}"
+          echo "LD_LIBRARY_PATH=$(dirname "${library}")" >> "${GITHUB_ENV}"
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
@@ -25,6 +96,7 @@ jobs:
           path: target/package/*.crate
 
   python:
+    needs: repair-guard
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -45,6 +117,7 @@ jobs:
           path: dist/python/*
 
   npm:
+    needs: repair-guard
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.0
@@ -52,6 +125,13 @@ jobs:
         with:
           node-version: "22"
           package-manager-cache: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: Install wasm-pack
+        uses: jetli/wasm-pack-action@0d096b08b4e5a7de8c28de67e11e945404e9eefa # v0.4.0
+        with:
+          version: "v0.15.0"
       - run: npm ci --prefix bindings/wasm
       - run: npm test --prefix bindings/wasm
       - run: mkdir -p dist/npm && npm pack ./bindings/wasm --pack-destination dist/npm
@@ -61,6 +141,7 @@ jobs:
           path: dist/npm/*
 
   strict-parity:
+    needs: repair-guard
     runs-on: ubuntu-latest
     env:
       R_LIBS_USER: /tmp/nirs4all-core-r-library
@@ -95,6 +176,13 @@ jobs:
         with:
           node-version: "22"
           package-manager-cache: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: Install wasm-pack
+        uses: jetli/wasm-pack-action@0d096b08b4e5a7de8c28de67e11e945404e9eefa # v0.4.0
+        with:
+          version: "v0.15.0"
       - name: Install Emscripten SDK
         run: |
           git clone --depth 1 https://github.com/emscripten-core/emsdk.git "$RUNNER_TEMP/emsdk"
@@ -172,6 +260,7 @@ jobs:
           OCTAVE_PATH: ${{ github.workspace }}/nirs4all-methods/bindings/matlab
 
   r:
+    needs: repair-guard
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.0
@@ -212,6 +301,7 @@ jobs:
           path: dist/r/nirs4all_*.tar.gz
 
   matlab-octave:
+    needs: repair-guard
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
