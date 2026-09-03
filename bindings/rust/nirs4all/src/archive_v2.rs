@@ -2294,12 +2294,9 @@ mod tests {
         let mut bytes = fs::read(&p).unwrap();
         let manifest_start = 30 + u16at(&bytes, 26).unwrap() as usize;
         let manifest_end = manifest_start + u32at(&bytes, 22).unwrap() as usize;
-        let version = bytes[manifest_start..manifest_end]
-            .windows(b"\"schema_version\":2".len())
-            .rposition(|window| window == b"\"schema_version\":2")
-            .unwrap()
-            + manifest_start;
-        bytes[version + b"\"schema_version\":".len()] = b'9';
+        let root_prefix = b"{\"schema_version\":2";
+        assert!(bytes[manifest_start..manifest_end].starts_with(root_prefix));
+        bytes[manifest_start + b"{\"schema_version\":".len()] = b'9';
         // Preserve the manifest's physical CRC so dispatch reaches the
         // unknown-version refusal; the independently corrupted payload must
         // remain unread at that point.
