@@ -104,6 +104,18 @@ The shared numeric oracle is
 `tests/parity/expected/portable_python_oracle.json`, generated from the full
 Python `nirs4all` library (see [`PARITY.md`](PARITY.md)).
 
+## Native Archive V2 execution and presentation
+
+These operational APIs are separate from the full-Python metadata contracts
+below and do not alter `compat/capabilities.toml`.
+
+| Binding | Native Archive V2 surface | Explicit boundary |
+| --- | --- | --- |
+| Rust | Validate/replay N4MM format 1 raw PLS and format 2 `SNV(ddof=0) -> SG(mode=interp) -> PLS`; train one selected dense IO package source; optionally calibrate from a disjoint package; return conformal presentation V1/V2. | DAG-ML owns scheduling/calibration, Methods owns numerics, IO owns package buffers, and Core owns the archive. No Python callbacks, implicit fusion, N-D flattening, or host recalibration. |
+| Python | Validate/replay the same native Methods archives and return scalar V1 or named multi-target V2 conformal presentations. | No native package-training facade and no Python preprocessing/model fallback. |
+| JavaScript/WASM | Validate/replay the bounded Methods Archive V2 path documented by the WASM binding. | Calibrated/conformal archives remain refused; no conformal presentation API. |
+| R / MATLAB/Octave | No Archive V2 execution API. | Aggregate registry/portable-pipeline surfaces do not imply archive replay. |
+
 ## Upstream domains
 
 The other upstream domains — `formats`, `io`, `datasets`, `dag_ml`,

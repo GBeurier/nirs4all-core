@@ -35,6 +35,18 @@ self-validating presentation built by DAG-ML from the native replay. The
 Python layer only transports strict JSON; it does not calculate quantiles,
 interval endpoints, fingerprints, or sample joins.
 
+For named multi-target outputs,
+`replay_methods_archive_v2_conformal_presentation_v2(...)` returns the
+additive, archive-bound `ConformalPresentationV2`. It preserves predictor,
+archive, calibration and presentation fingerprints and applies the same
+no-recalculation rule. V1 remains the scalar compatibility surface.
+
+Archive replay accepts raw PLS N4MM format 1 and the exact embedded format 2
+`SNV(ddof=0) -> Savitzky-Golay(mode=interp) -> PLS` profile. Format 2 requires
+its typed ABI 2.5 descriptor and never falls back to Python preprocessing.
+Training an IO `DatasetPackage` into Archive V2 is currently a Rust aggregate
+surface, not a Python API.
+
 ## Portable Execution
 
 `nirs4all_core.run_portable_pipeline(source, dataset)` executes the shared
