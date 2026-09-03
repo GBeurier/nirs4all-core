@@ -39,8 +39,9 @@ pub use archive_view::{
 };
 pub use dag_ml_core::NativePredictorDescriptorV1;
 pub use io_training::{
-    train_dataset_package_methods_archive_v2, DatasetPackage,
-    DatasetPackageMethodsArchiveV2Outcome, DatasetPackageMethodsArchiveV2Request,
+    train_dataset_package_methods_archive_v2, train_dataset_package_methods_conformal_archive_v2,
+    DatasetPackage, DatasetPackageMethodsArchiveV2Outcome, DatasetPackageMethodsArchiveV2Request,
+    DatasetPackageMethodsConformalArchiveV2Outcome, DatasetPackageMethodsConformalArchiveV2Request,
     DatasetPackageMethodsProvider,
 };
 pub use native_methods_replay::{
@@ -50,7 +51,8 @@ pub use native_methods_replay::{
     predict_methods_archive_v2_matrix_json, preflight_methods_archive_v2_library,
     replay_methods_archive_v2, replay_methods_archive_v2_conformal_presentation_v1,
     replay_methods_archive_v2_conformal_presentation_v1_json,
-    replay_methods_archive_v2_conformal_presentation_v2, replay_methods_archive_v2_json,
+    replay_methods_archive_v2_conformal_presentation_v2,
+    replay_methods_archive_v2_conformal_presentation_v2_json, replay_methods_archive_v2_json,
     replay_methods_archive_v3, replay_methods_archive_v3_json,
     MethodsArchiveMatrixPredictJsonRequest, MethodsArchiveMatrixPredictRequest,
     MethodsArchivePredictRequest, MethodsArchiveRefitRequestV3, MethodsArchiveReplayJsonRequest,
