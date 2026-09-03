@@ -1,0 +1,23 @@
+[package]
+name = "nirs4all-core-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+nirs4all = { path = "../bindings/rust/nirs4all" }
+
+[[bin]]
+name = "archive_v2_bytes"
+path = "fuzz_targets/archive_v2_bytes.rs"
+test = false
+doc = false
+bench = false
+
+# Keep the developer-only fuzz package outside the release workspace.
+[workspace]
+members = ["."]
