@@ -11,10 +11,11 @@ binding manifest.
 ### Changed
 
 - Advanced the native release candidate from Core 0.3.25 with exact Rust pins
-  on DAG-ML 0.3.23 and n4m 0.1.4. Product replay now preflights the Methods ABI
-  2.5 contract. The final local qualification uses nirs4all-methods 1.0.15;
-  published Python extras retain their 1.0.13 compatibility floor until the
-  candidate is published and the release lock can be advanced.
+  on DAG-ML 0.3.23, dag-ml-data 0.2.10, nirs4all-formats 0.2.8,
+  nirs4all-io 0.1.12, and n4m 0.1.4. The release lock now resolves those
+  published crates directly from crates.io, with no checkout-local patches.
+  Product replay preflights the Methods ABI 2.5 contract; published Python
+  extras retain their existing compatibility floors.
 - Added dual-read support for capability-derived `abi_min_minor` on native
   Methods archive references. Historical references without the field retain
   their payload-family floors (ABI 2.0 for PLS N4MM and 2.2 for N4MOPT);
