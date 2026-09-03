@@ -18,7 +18,7 @@ use dag_ml_core::{
     ControllerId, DataBinding, DataMaterializationRequest, DataProviderViewSpec, DataViewRequest,
     EntityUnitLevel, ExternalDataPlanEnvelope, FittedArtifactMode, HandleKind, HandleRef,
     InMemoryArtifactStore, MethodsPlsController, MethodsPlsData, MethodsPlsDataRequest,
-    MethodsPlsDataset, MethodsPlsMatrix, MethodsRuntime, Phase, RunId, RuntimeControllerRegistry,
+    MethodsPlsDataset, MethodsPlsMatrix, Phase, RunId, RuntimeControllerRegistry,
     RuntimeDataProvider, SampleRelation, SampleRelationSet, TrainingDataIdentity,
     TrainingExecutionInput, TrainingInfluenceManifest, TrainingOutcome, TrainingReplayOutcome,
     TrainingReplayRequest, TrainingRequest, TRAINING_REPLAY_REQUEST_SCHEMA_VERSION,
@@ -31,6 +31,7 @@ use dag_ml_data_provider_crate::DagMlDataProvider;
 pub use nirs4all_io_dagml::DatasetPackage;
 use nirs4all_io_dagml::PackageProvider;
 
+use crate::native_methods_replay::configure_methods_runtime_for_source;
 use crate::{write_archive_v2, ArchivePayload, ArchiveV2Reference, ArchiveV2WriteRequest};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -688,8 +689,8 @@ fn execute_dataset_package_methods_training(
         provider.relations(),
     )
     .map_err(|error| error.to_string())?;
-    let runtime =
-        MethodsRuntime::configure(methods_library_path).map_err(|error| error.to_string())?;
+    let runtime = configure_methods_runtime_for_source(methods_library_path)
+        .map_err(|error| error.to_string())?;
     let mut controllers = RuntimeControllerRegistry::new();
     controllers
         .register(Box::new(MethodsPlsController::new(runtime)))
@@ -820,8 +821,8 @@ pub fn train_dataset_package_methods_conformal_archive_v2(
     replay_request
         .validate()
         .map_err(|error| error.to_string())?;
-    let runtime =
-        MethodsRuntime::configure(input.methods_library_path).map_err(|error| error.to_string())?;
+    let runtime = configure_methods_runtime_for_source(input.methods_library_path)
+        .map_err(|error| error.to_string())?;
     let mut controllers = RuntimeControllerRegistry::new();
     controllers
         .register(Box::new(MethodsPlsController::new(runtime)))
@@ -945,7 +946,7 @@ mod tests {
     use crate::{
         load_archive_v2, predict_methods_archive_v2_matrix,
         predict_methods_archive_v2_matrix_conformal_presentation_v2,
-        MethodsArchiveMatrixPredictRequest,
+        preflight_methods_archive_v2_library, MethodsArchiveMatrixPredictRequest,
     };
 
     fn matrix(rows: usize, columns: usize, values: &[f32]) -> Matrix {
@@ -1425,16 +1426,11 @@ mod tests {
 
     #[test]
     fn numeric_package_provider_trains_archives_and_fresh_predicts() {
-        if let (Some(archive), Some(library)) = (
-            std::env::var_os("N4A_DATA002_CHILD_ARCHIVE"),
-            std::env::var_os("N4A_DATA002_CHILD_LIBRARY"),
-        ) {
-            assert_fresh_prediction(Path::new(&archive), Path::new(&library));
-            return;
-        }
         let library = PathBuf::from(
             std::env::var_os("N4M_LIBRARY_PATH").expect("N4M_LIBRARY_PATH must name libn4m"),
         );
+        let library_sha256 = sha256(&library);
+        preflight_methods_archive_v2_library(&library, &library_sha256).unwrap();
         let package = numeric_multi_source_package();
         let provider = DatasetPackageMethodsProvider::new(&package, "spectra").unwrap();
         assert_eq!(provider.source_id(), "spectra");
@@ -1467,14 +1463,7 @@ mod tests {
         assert_eq!(trained.training.execution_bundle.data_requirements.len(), 1);
         assert_eq!(trained.training.execution_bundle.refit_artifacts.len(), 1);
 
-        let status = std::process::Command::new(std::env::current_exe().unwrap())
-            .arg("io_training::tests::numeric_package_provider_trains_archives_and_fresh_predicts")
-            .arg("--exact")
-            .env("N4A_DATA002_CHILD_ARCHIVE", &archive_path)
-            .env("N4A_DATA002_CHILD_LIBRARY", &library)
-            .status()
-            .unwrap();
-        assert!(status.success(), "fresh-process Archive V2 replay failed");
+        assert_fresh_prediction(&archive_path, &library);
 
         let mut unsupported = package.to_assembled();
         unsupported.blocks.get_mut("train").unwrap().processings[0]
@@ -1488,16 +1477,11 @@ mod tests {
 
     #[test]
     fn numeric_packages_train_calibrate_archive_and_present_multi_target() {
-        if let (Some(archive), Some(library)) = (
-            std::env::var_os("N4A_CONFORMAL_CHILD_ARCHIVE"),
-            std::env::var_os("N4A_CONFORMAL_CHILD_LIBRARY"),
-        ) {
-            assert_fresh_conformal_presentation(Path::new(&archive), Path::new(&library));
-            return;
-        }
         let library = PathBuf::from(
             std::env::var_os("N4M_LIBRARY_PATH").expect("N4M_LIBRARY_PATH must name libn4m"),
         );
+        let library_sha256 = sha256(&library);
+        preflight_methods_archive_v2_library(&library, &library_sha256).unwrap();
         let training_package = numeric_multi_target_package("", 0.0);
         let calibration_package = numeric_multi_target_package("calibration", 0.25);
         let provider = DatasetPackageMethodsProvider::new(&training_package, "spectra").unwrap();
@@ -1538,16 +1522,7 @@ mod tests {
             Some(&produced.calibration)
         );
         drop(produced);
-        let status = std::process::Command::new(std::env::current_exe().unwrap())
-            .arg(
-                "io_training::tests::numeric_packages_train_calibrate_archive_and_present_multi_target",
-            )
-            .arg("--exact")
-            .env("N4A_CONFORMAL_CHILD_ARCHIVE", &archive_path)
-            .env("N4A_CONFORMAL_CHILD_LIBRARY", &library)
-            .status()
-            .unwrap();
-        assert!(status.success(), "fresh-process conformal replay failed");
+        assert_fresh_conformal_presentation(&archive_path, &library);
 
         let overlap_path = directory.path().join("overlap.n4a");
         let overlap = match train_dataset_package_methods_conformal_archive_v2(
