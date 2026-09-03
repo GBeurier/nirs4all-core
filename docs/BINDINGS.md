@@ -113,6 +113,10 @@ binding-specific parity gates.
   fresh N4MM runtime to DAG-ML. They accept numeric Methods inputs only: no
   callback, joblib sidecar, or supplemental Python controller can cross this
   portable boundary.
+- Archive V2 accepts raw PLS N4MM format 1 and the exact embedded format 2
+  `SNV(ddof=0) -> Savitzky-Golay(mode=interp) -> PLS` profile. Format 2
+  requires the typed ABI 2.5 pipeline descriptor; Python preprocessing is not
+  a fallback for a missing or contradictory descriptor.
 - `predict_methods_archive_v2_matrix(...)` is the closed X-only product path.
   Core derives the replay contracts, requires one finalized output binding and
   one external data requirement, validates sample/target order, and loads only
@@ -126,9 +130,13 @@ binding-specific parity gates.
   imported-linear N4MM and `5` for embedded SNV -> Savitzky-Golay N4MM v2),
   never the host runtime minor.
 - The descriptor consumer is qualified against unpublished local candidates
-  DAG-ML `6800c4fd0ec8b13b171cec9ed4a9b2ccdbabca0d` and Methods
+  DAG-ML `dafb8b6fb98f9d380d30559a3f4b868c91e5b5c4` and Methods
   `48ad1e5a50844f68c2b99e93b02ad6a3b491c07b`. Those publication holds do not
   modify the release topology or upstream registry lock.
+- `replay_methods_archive_v2_conformal_presentation_v2(...)` exposes the
+  additive, content-bound multi-target presentation. The scalar V1 entry point
+  remains unchanged; neither path recalculates quantiles, endpoints, or joins
+  in Python.
 - Framework idioms: sklearn-style estimators, `fit`/`predict`/`transform`,
   NumPy arrays, pandas data frames, and clear optional extras.
 - Future external operator adapters should look like normal sklearn-compatible
@@ -154,6 +162,15 @@ binding-specific parity gates.
 - Keep FFI handles explicit; never hide ownership transfers.
 - The portable KS/SNV/Savitzky-Golay/PLS subset executes through a caller-supplied
   `libn4m` path and is covered by the shared full-Python `nirs4all` oracle.
+- `train_dataset_package_methods_archive_v2(...)` composes one selected dense
+  IO `DatasetPackage` source with DAG-ML training and Methods numerics, then
+  persists the portable Package V2 as Core Archive V2. The conformal variant
+  requires a distinct calibration package with matching target order and
+  delegates interval derivation to DAG-ML. Multi-source fusion, N-D payloads,
+  Python callbacks, and hidden preprocessing remain outside this route.
+- `predict_methods_archive_v2_matrix_conformal_presentation_v2(...)` and the
+  replay/load V2 functions expose validated named multi-target presentations;
+  Core supplies archive and predictor identity but does not recalibrate.
 
 ## JavaScript/WASM
 

@@ -127,12 +127,21 @@ tests/parity/  # Cross-runtime parity fixture plan
 
 ## Current status
 
-This repository is now a buildable aggregate scaffold. It exposes the upstream
-domain registry in each target language, builds package artifacts for Python,
-npm, R, MATLAB/Octave, and Rust, and wires CI gates for those targets. Runtime
-execution is limited to the upstream bindings that exist in each host; the
-numerical and parsing behavior is still delegated to the upstream packages, and
-`nirs4all-core` does not vendor or reimplement those engines.
+This repository is a buildable aggregate with a bounded native Archive V2
+slice. Rust, Python, and JavaScript/WASM can validate and replay portable
+Methods archives according to their documented binding limits: raw PLS uses
+N4MM format 1, while the embedded
+`SNV(ddof=0) -> Savitzky-Golay(mode=interp) -> PLS` pipeline uses format 2 and
+ABI 2.5. Rust can also train one selected dense IO `DatasetPackage` source into
+Archive V2 and produce a calibrated archive from a disjoint package; Rust and
+Python expose the identity-bound multi-target conformal presentation V2 without
+recalculating calibration in the host.
+
+The broader aggregate surface remains intentionally uneven across Python, npm,
+R, MATLAB/Octave, and Rust. Runtime execution is limited to upstream bindings
+that actually exist in each host; numerical and parsing behavior stays
+delegated to those upstream packages, and `nirs4all-core` does not vendor or
+reimplement their engines.
 
 ## Local checks
 
