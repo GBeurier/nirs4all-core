@@ -18,6 +18,7 @@ mod archive_v1;
 pub(crate) mod archive_v2;
 mod archive_v3;
 mod archive_view;
+mod io_training;
 mod native_methods_replay;
 mod portable_session;
 pub use archive_v1::{
@@ -37,6 +38,11 @@ pub use archive_view::{
     ArchiveReplayView, ArchiveView, ArchiveViewError,
 };
 pub use dag_ml_core::NativePredictorDescriptorV1;
+pub use io_training::{
+    train_dataset_package_methods_archive_v2, DatasetPackage,
+    DatasetPackageMethodsArchiveV2Outcome, DatasetPackageMethodsArchiveV2Request,
+    DatasetPackageMethodsProvider,
+};
 pub use native_methods_replay::{
     inspect_methods_archive_v2_predictors, inspect_methods_archive_v2_predictors_json,
     predict_methods_archive_v2_matrix, predict_methods_archive_v2_matrix_json,
