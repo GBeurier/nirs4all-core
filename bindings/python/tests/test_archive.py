@@ -31,8 +31,8 @@ class ArchiveFacadeTests(unittest.TestCase):
             "artifact_sha256": "a" * 64,
             "owner_controller": "controller:methods.pls",
             "format": "N4MM",
-            "format_version": 1,
-            "writer_abi": {"major": 2, "minor": 4, "patch": 0},
+            "format_version": 2,
+            "writer_abi": {"major": 2, "minor": 5, "patch": 0},
             "storage_algorithm": 0,
             "capabilities": 3,
             "dimensions": {
@@ -40,6 +40,17 @@ class ArchiveFacadeTests(unittest.TestCase):
                 "n_features": 2,
                 "n_targets": 1,
                 "n_components": 1,
+            },
+            "pipeline": {
+                "pipeline_type": "n4m.snv_savgol_smooth.v1",
+                "schema_version": 1,
+                "operator_count": 2,
+                "raw_n_features": 2,
+                "model_n_features": 2,
+                "fingerprint_algorithm": "fnv1a64.v1",
+                "native_fingerprint": "0123456789abcdef",
+                "savgol_window": 11,
+                "savgol_poly_degree": 2,
             },
             "descriptor_fingerprint": "b" * 64,
         }

@@ -3,6 +3,8 @@
 //! This crate intentionally starts as a registry and namespace layer. Runtime
 //! functionality must delegate to the owning upstream crates.
 
+#[cfg(test)]
+use std::cell::Cell;
 use std::cmp::Ordering;
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_double, c_int, c_void};
@@ -48,6 +50,7 @@ pub use native_methods_replay::{
 };
 pub use portable_session::{
     PortableSession, PortableSessionError, PortableSessionState, PORTABLE_SESSION_EXPORT_SCHEMA,
+    PORTABLE_SESSION_EXPORT_SCHEMA_V2,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -588,6 +591,12 @@ pub struct SavitzkyGolayParams {
     pub cval: f64,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct EmbeddedPipelineSpec {
+    savgol_window: i32,
+    savgol_poly_degree: i32,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct PortablePipelineResult {
     pub name: String,
@@ -758,6 +767,7 @@ pub fn run_portable_pipeline_with_library(
                 n_components,
                 x_test: &x_test,
                 test_rows: split.test_indices.len(),
+                embedded_pipeline: None,
             },
             false,
         )?;
@@ -794,8 +804,9 @@ pub fn run_portable_pipeline_with_library(
 }
 
 /// Run the portable subset and export the selected native PLS model as an
-/// `N4MM` payload owned by libn4m. The input definition is retained by callers
-/// because its declared preprocessing must be replayed before model prediction.
+/// `N4MM` payload owned by libn4m. The exact SNV -> Savitzky-Golay smoothing
+/// lane is embedded by Methods as N4MM v2; other historical portable plans
+/// remain N4MM v1 and replay their declared preprocessing externally.
 pub fn run_portable_pipeline_with_exported_model(
     input: &str,
     dataset: &PortableDataset,
@@ -808,18 +819,21 @@ pub fn run_portable_pipeline_with_exported_model(
     let split = methods.compute_split(plan.splitter.as_ref(), dataset)?;
     let mut x_train = select_rows(&dataset.x, dataset.rows, dataset.cols, &split.train_indices)?;
     let y_train = select_rows(&dataset.y, dataset.rows, 1, &split.train_indices)?;
-    for step in &plan.preprocessing {
-        x_train = match step {
-            PortablePreprocessing::StandardNormalVariate => {
-                methods.snv_transform(&x_train, split.train_indices.len(), dataset.cols)?
-            }
-            PortablePreprocessing::SavitzkyGolay(params) => methods.savgol_transform(
-                &x_train,
-                split.train_indices.len(),
-                dataset.cols,
-                params,
-            )?,
-        };
+    let embedded_pipeline = embedded_pipeline_spec(&plan);
+    if embedded_pipeline.is_none() {
+        for step in &plan.preprocessing {
+            x_train = match step {
+                PortablePreprocessing::StandardNormalVariate => {
+                    methods.snv_transform(&x_train, split.train_indices.len(), dataset.cols)?
+                }
+                PortablePreprocessing::SavitzkyGolay(params) => methods.savgol_transform(
+                    &x_train,
+                    split.train_indices.len(),
+                    dataset.cols,
+                    params,
+                )?,
+            };
+        }
     }
     let (_, model) = methods.fit_predict_pls(
         PlsFitInput {
@@ -830,15 +844,18 @@ pub fn run_portable_pipeline_with_exported_model(
             n_components: result.selected.n_components,
             x_test: &x_train,
             test_rows: split.train_indices.len(),
+            embedded_pipeline,
         },
         true,
     )?;
     Ok((result, model.expect("model export requested")))
 }
 
-/// Replay a selected `N4MM` model with the preprocessing declared by a
-/// portable definition. This is intentionally limited to the same executable
-/// subset accepted by [`run_portable_pipeline_with_library`].
+/// Replay a selected `N4MM` model under the content-inspected preprocessing
+/// contract. Historical model-only payloads apply the portable definition;
+/// embedded Methods pipelines consume raw input directly. This is intentionally
+/// limited to the same executable subset accepted by
+/// [`run_portable_pipeline_with_library`].
 pub fn predict_exported_portable_model_with_library(
     input: &str,
     model_n4mm: &[u8],
@@ -860,16 +877,21 @@ pub fn predict_exported_portable_model_with_library(
             transformed.len()
         ));
     }
+    let library_path = library_path.as_ref();
+    let descriptor = inspect_portable_model_descriptor(model_n4mm, library_path)?;
+    validate_portable_model_plan(&plan, &descriptor)?;
     let methods = MethodsLibrary::load(library_path)?;
-    for step in &plan.preprocessing {
-        transformed = match step {
-            PortablePreprocessing::StandardNormalVariate => {
-                methods.snv_transform(&transformed, rows, cols)?
-            }
-            PortablePreprocessing::SavitzkyGolay(params) => {
-                methods.savgol_transform(&transformed, rows, cols, params)?
-            }
-        };
+    if descriptor.pipeline.is_none() {
+        for step in &plan.preprocessing {
+            transformed = match step {
+                PortablePreprocessing::StandardNormalVariate => {
+                    methods.snv_transform(&transformed, rows, cols)?
+                }
+                PortablePreprocessing::SavitzkyGolay(params) => {
+                    methods.savgol_transform(&transformed, rows, cols, params)?
+                }
+            };
+        }
     }
     methods.import_predict_pls(model_n4mm, &transformed, rows, cols)
 }
@@ -882,11 +904,71 @@ pub fn validate_exported_portable_model_with_library(
     library_path: impl AsRef<Path>,
 ) -> Result<(), String> {
     let definition = load_pipeline_definition_str(input)?;
-    parse_execution_plan(&definition)?;
+    let plan = parse_execution_plan(&definition)?;
+    let library_path = library_path.as_ref();
+    let descriptor = inspect_portable_model_descriptor(model_n4mm, library_path)?;
+    validate_portable_model_plan(&plan, &descriptor)?;
     let methods = MethodsLibrary::load(library_path)?;
     methods
         .import_predict_pls(model_n4mm, &vec![0.0; cols], 1, cols)
         .map(|_| ())
+}
+
+fn embedded_pipeline_spec(plan: &ExecutionPlan) -> Option<EmbeddedPipelineSpec> {
+    let [PortablePreprocessing::StandardNormalVariate, PortablePreprocessing::SavitzkyGolay(sg)] =
+        plan.preprocessing.as_slice()
+    else {
+        return None;
+    };
+    (sg.deriv == 0
+        && sg.mode == 4
+        && sg.cval.to_bits() == 0.0f64.to_bits()
+        && (3..=501).contains(&sg.window_length)
+        && sg.window_length % 2 == 1
+        && sg.polyorder >= 0
+        && sg.polyorder < sg.window_length)
+        .then_some(EmbeddedPipelineSpec {
+            savgol_window: sg.window_length,
+            savgol_poly_degree: sg.polyorder,
+        })
+}
+
+pub(crate) fn inspect_portable_model_descriptor(
+    model_n4mm: &[u8],
+    library_path: &Path,
+) -> Result<NativePredictorDescriptorV1, String> {
+    let canonical = std::fs::canonicalize(library_path).map_err(|error| {
+        format!(
+            "cannot resolve libn4m at {} for N4MM inspection: {error}",
+            library_path.display()
+        )
+    })?;
+    dag_ml_core::MethodsRuntime::configure(&canonical)
+        .map_err(|error| format!("cannot configure Methods for N4MM inspection: {error}"))?;
+    let controller = dag_ml_core::ControllerId::new("controller:methods.pls")
+        .map_err(|error| error.to_string())?;
+    dag_ml_core::inspect_methods_native_predictor_descriptor_v1(&controller, model_n4mm)
+        .map_err(|error| format!("native Methods predictor inspection failed: {error}"))
+}
+
+pub(crate) fn validate_portable_model_plan(
+    plan: &ExecutionPlan,
+    descriptor: &NativePredictorDescriptorV1,
+) -> Result<(), String> {
+    if let Some(pipeline) = &descriptor.pipeline {
+        let expected = embedded_pipeline_spec(plan).ok_or_else(|| {
+            "embedded Methods preprocessing contradicts the portable definition".to_string()
+        })?;
+        if pipeline.savgol_window != expected.savgol_window
+            || pipeline.savgol_poly_degree != expected.savgol_poly_degree
+        {
+            return Err(
+                "embedded Methods pipeline fingerprint parameters contradict the portable definition"
+                    .to_string(),
+            );
+        }
+    }
+    Ok(())
 }
 
 pub mod dag_ml {
@@ -1328,6 +1410,32 @@ struct MethodsLibrary {
     library: Library,
 }
 
+#[cfg(test)]
+thread_local! {
+    static HOST_SNV_TRANSFORMS: Cell<usize> = const { Cell::new(0) };
+    static HOST_SAVGOL_TRANSFORMS: Cell<usize> = const { Cell::new(0) };
+    static NATIVE_MODEL_IMPORTS: Cell<usize> = const { Cell::new(0) };
+    static NATIVE_MODEL_PREDICTS: Cell<usize> = const { Cell::new(0) };
+}
+
+#[cfg(test)]
+pub(crate) fn reset_portable_replay_call_counts() {
+    HOST_SNV_TRANSFORMS.set(0);
+    HOST_SAVGOL_TRANSFORMS.set(0);
+    NATIVE_MODEL_IMPORTS.set(0);
+    NATIVE_MODEL_PREDICTS.set(0);
+}
+
+#[cfg(test)]
+pub(crate) fn portable_replay_call_counts() -> (usize, usize, usize, usize) {
+    (
+        HOST_SNV_TRANSFORMS.get(),
+        HOST_SAVGOL_TRANSFORMS.get(),
+        NATIVE_MODEL_IMPORTS.get(),
+        NATIVE_MODEL_PREDICTS.get(),
+    )
+}
+
 struct PlsFitInput<'a> {
     x_train: &'a [f64],
     y_train: &'a [f64],
@@ -1336,6 +1444,7 @@ struct PlsFitInput<'a> {
     n_components: i32,
     x_test: &'a [f64],
     test_rows: usize,
+    embedded_pipeline: Option<EmbeddedPipelineSpec>,
 }
 
 impl MethodsLibrary {
@@ -1403,6 +1512,8 @@ impl MethodsLibrary {
     }
 
     fn snv_transform(&self, input: &[f64], rows: usize, cols: usize) -> Result<Vec<f64>, String> {
+        #[cfg(test)]
+        HOST_SNV_TRANSFORMS.set(HOST_SNV_TRANSFORMS.get() + 1);
         let create: Symbol<unsafe extern "C" fn(*mut N4mHandle, c_int, c_int, c_int) -> N4mStatus> =
             self.symbol(b"n4m_transform_snv_create")?;
         let transform: Symbol<
@@ -1435,6 +1546,8 @@ impl MethodsLibrary {
         cols: usize,
         params: &SavitzkyGolayParams,
     ) -> Result<Vec<f64>, String> {
+        #[cfg(test)]
+        HOST_SAVGOL_TRANSFORMS.set(HOST_SAVGOL_TRANSFORMS.get() + 1);
         let create: Symbol<
             unsafe extern "C" fn(
                 *mut N4mHandle,
@@ -1558,6 +1671,40 @@ impl MethodsLibrary {
         checked!(set_center_y(cfg.handle, 1), "n4m_config_set_center_y");
         checked!(set_scale_y(cfg.handle, 1), "n4m_config_set_scale_y");
 
+        let _pipeline = if let Some(spec) = input.embedded_pipeline {
+            let pipeline_create: Symbol<unsafe extern "C" fn(*mut N4mHandle) -> N4mStatus> =
+                self.symbol(b"n4m_pipeline_create")?;
+            let pipeline_destroy: Symbol<unsafe extern "C" fn(N4mHandle)> =
+                self.symbol(b"n4m_pipeline_destroy")?;
+            let pipeline_add: Symbol<
+                unsafe extern "C" fn(N4mHandle, c_int, *const c_double, c_int) -> N4mStatus,
+            > = self.symbol(b"n4m_pipeline_add_operator")?;
+            let config_set_pipeline: Symbol<
+                unsafe extern "C" fn(N4mHandle, N4mHandle) -> N4mStatus,
+            > = self.symbol(b"n4m_config_set_pipeline")?;
+            let mut pipeline = NativeHandleGuard::new(*pipeline_destroy);
+            checked!(pipeline_create(&mut pipeline.handle), "n4m_pipeline_create");
+            checked!(
+                pipeline_add(pipeline.handle, 4, ptr::null(), 0),
+                "n4m_pipeline_add_operator(SNV)"
+            );
+            let savgol = [
+                f64::from(spec.savgol_window),
+                f64::from(spec.savgol_poly_degree),
+            ];
+            checked!(
+                pipeline_add(pipeline.handle, 8, savgol.as_ptr(), savgol.len() as c_int,),
+                "n4m_pipeline_add_operator(SavitzkyGolay)"
+            );
+            checked!(
+                config_set_pipeline(cfg.handle, pipeline.handle),
+                "n4m_config_set_pipeline"
+            );
+            Some(pipeline)
+        } else {
+            None
+        };
+
         let fit_status =
             unsafe { model_fit(ctx.handle, cfg.handle, &x_view, &y_view, &mut model.handle) };
         self.check(fit_status, "n4m_model_fit", Some(ctx.handle))?;
@@ -1662,6 +1809,8 @@ impl MethodsLibrary {
             )
         };
         import_result?;
+        #[cfg(test)]
+        NATIVE_MODEL_IMPORTS.set(NATIVE_MODEL_IMPORTS.get() + 1);
         let prediction = unsafe {
             self.check(
                 predict(ctx.handle, model.handle, &x_view, &mut out_view),
@@ -1670,6 +1819,8 @@ impl MethodsLibrary {
             )
         };
         prediction?;
+        #[cfg(test)]
+        NATIVE_MODEL_PREDICTS.set(NATIVE_MODEL_PREDICTS.get() + 1);
         Ok(out)
     }
 

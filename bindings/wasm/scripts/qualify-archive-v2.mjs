@@ -53,6 +53,18 @@ assert.equal(result.nativePredictorDescriptor.owner_controller, 'controller:meth
 assert.equal(result.nativePredictorDescriptor.storage_algorithm, 0);
 assert.equal(result.nativePredictorDescriptor.dimensions.n_features, 2);
 assert.equal(result.nativePredictorDescriptor.dimensions.n_targets, 2);
+if (result.nativePredictorDescriptor.format_version === 2) {
+  assert.equal(result.nativePredictorDescriptor.writer_abi.minor, 5);
+  assert.equal(
+    result.nativePredictorDescriptor.pipeline?.pipeline_type,
+    'n4m.snv_savgol_smooth.v1',
+  );
+  assert.equal(result.nativePredictorDescriptor.pipeline?.fingerprint_algorithm, 'fnv1a64.v1');
+  assert.match(result.nativePredictorDescriptor.pipeline?.native_fingerprint ?? '', /^[0-9a-f]{16}$/);
+} else {
+  assert.equal(result.nativePredictorDescriptor.format_version, 1);
+  assert.equal(result.nativePredictorDescriptor.pipeline, undefined);
+}
 assert.deepEqual(result.data, [
   1.6363636363636365,
   13.272727272727273,
@@ -61,6 +73,7 @@ assert.deepEqual(result.data, [
 ]);
 assert.equal(ccallCounts.get('n4m_model_import_from_buffer'), 1);
 assert.equal(ccallCounts.get('n4m_serialization_inspect_model_v1'), 1);
+assert.equal(ccallCounts.get('n4m_serialization_inspect_pipeline_v1'), 1);
 assert.equal(ccallCounts.get('n4m_model_predict_alloc'), 1);
 assert.equal(ccallCounts.get('n4m_estimators_pls_fit') ?? 0, 0);
 assert.equal(ccallCounts.get('n4m_wasm_pls_fit') ?? 0, 0);
@@ -90,6 +103,7 @@ console.log(JSON.stringify({
   predictions: result.data,
   methods_import_calls: ccallCounts.get('n4m_model_import_from_buffer'),
   methods_inspect_calls: ccallCounts.get('n4m_serialization_inspect_model_v1'),
+  methods_pipeline_inspect_calls: ccallCounts.get('n4m_serialization_inspect_pipeline_v1'),
   methods_predict_calls: ccallCounts.get('n4m_model_predict_alloc'),
   methods_fit_calls: (ccallCounts.get('n4m_estimators_pls_fit') ?? 0)
     + (ccallCounts.get('n4m_wasm_pls_fit') ?? 0),

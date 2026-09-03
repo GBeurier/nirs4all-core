@@ -10,11 +10,15 @@ use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 
 use crate::{
-    predict_exported_portable_model_with_library, run_portable_pipeline_with_exported_model,
-    validate_exported_portable_model_with_library, PortableDataset, PortablePipelineResult,
+    inspect_portable_model_descriptor, predict_exported_portable_model_with_library,
+    run_portable_pipeline_with_exported_model, validate_exported_portable_model_with_library,
+    validate_portable_model_plan, PortableDataset, PortablePipelineResult,
 };
 
 pub const PORTABLE_SESSION_EXPORT_SCHEMA: &str = "nirs4all-core.portable-session-export.v1";
+pub const PORTABLE_SESSION_EXPORT_SCHEMA_V2: &str = "nirs4all-core.portable-session-export.v2";
+const EMBEDDED_PREPROCESSING_OWNER: &str = "embedded_methods";
+const RAW_INPUT_DOMAIN: &str = "raw";
 const MAX_EXPORT_BYTES: u64 = 64 * 1024 * 1024;
 const MAX_TEMP_ATTEMPTS: u64 = 64;
 static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
@@ -80,8 +84,12 @@ impl PortableSession {
                 .map_err(PortableSessionError::Run)?;
         let definition =
             crate::load_pipeline_definition_str(input).map_err(PortableSessionError::Run)?;
+        let descriptor = inspect_portable_model_descriptor(&model_n4mm, &library_path)
+            .map_err(PortableSessionError::Run)?;
+        let plan = crate::parse_execution_plan(&definition).map_err(PortableSessionError::Run)?;
+        validate_portable_model_plan(&plan, &descriptor).map_err(PortableSessionError::Run)?;
         Ok(Self {
-            export: export_from_result(definition, model_n4mm, result, dataset),
+            export: export_from_result(definition, model_n4mm, result, dataset, &descriptor),
             library_path,
             state: PortableSessionState::Open,
         })
@@ -119,6 +127,9 @@ impl PortableSession {
             .map(|value| value.as_u64().expect("validated export") as u8)
             .collect::<Vec<_>>();
         let cols = root["result"]["cols"].as_u64().expect("validated export") as usize;
+        let descriptor = inspect_portable_model_descriptor(&model, library_path.as_ref())
+            .map_err(PortableSessionError::Format)?;
+        validate_export_preprocessing_contract(&export, &descriptor)?;
         validate_exported_portable_model_with_library(
             root["definition"].as_str().expect("validated export"),
             &model,
@@ -255,15 +266,28 @@ fn export_from_result(
     model: Vec<u8>,
     result: PortablePipelineResult,
     dataset: &PortableDataset,
+    descriptor: &dag_ml_core::NativePredictorDescriptorV1,
 ) -> Value {
     let definition = serde_json::to_string(&definition).expect("JSON definition");
-    json!({"schema": PORTABLE_SESSION_EXPORT_SCHEMA, "definition": definition, "definition_sha256": sha256(definition.as_bytes()), "dataset_sha256": dataset_sha256(dataset), "selected_model_n4mm": model, "result": {"name": result.name, "rows": result.rows, "cols": result.cols, "selected": {"n_components": result.selected.n_components, "rmse": result.selected.rmse, "predictions": result.selected.predictions}, "targets": result.targets}})
+    let mut export = json!({"schema": PORTABLE_SESSION_EXPORT_SCHEMA, "definition": definition, "definition_sha256": sha256(definition.as_bytes()), "dataset_sha256": dataset_sha256(dataset), "selected_model_n4mm": model, "result": {"name": result.name, "rows": result.rows, "cols": result.cols, "selected": {"n_components": result.selected.n_components, "rmse": result.selected.rmse, "predictions": result.selected.predictions}, "targets": result.targets}});
+    if let Some(pipeline) = &descriptor.pipeline {
+        export["schema"] = Value::String(PORTABLE_SESSION_EXPORT_SCHEMA_V2.to_string());
+        export["preprocessing_owner"] = Value::String(EMBEDDED_PREPROCESSING_OWNER.to_string());
+        export["input_domain"] = Value::String(RAW_INPUT_DOMAIN.to_string());
+        export["pipeline_fingerprint_algorithm"] =
+            Value::String(pipeline.fingerprint_algorithm.clone());
+        export["pipeline_fingerprint"] = Value::String(pipeline.native_fingerprint.clone());
+    }
+    export
 }
 fn validate_export(export: &Value) -> Result<(), PortableSessionError> {
     let root = export
         .as_object()
         .ok_or_else(|| PortableSessionError::Format("export root must be an object".into()))?;
-    if root.get("schema").and_then(Value::as_str) != Some(PORTABLE_SESSION_EXPORT_SCHEMA) {
+    if !matches!(
+        root.get("schema").and_then(Value::as_str),
+        Some(PORTABLE_SESSION_EXPORT_SCHEMA | PORTABLE_SESSION_EXPORT_SCHEMA_V2)
+    ) {
         return Err(PortableSessionError::Format(
             "unsupported session schema".into(),
         ));
@@ -330,6 +354,63 @@ fn validate_export(export: &Value) -> Result<(), PortableSessionError> {
     Ok(())
 }
 
+fn validate_export_preprocessing_contract(
+    export: &Value,
+    descriptor: &dag_ml_core::NativePredictorDescriptorV1,
+) -> Result<(), PortableSessionError> {
+    let root = export.as_object().expect("validated export");
+    let definition = root["definition"].as_str().expect("validated export");
+    let plan = crate::parse_execution_plan_str(definition).map_err(PortableSessionError::Format)?;
+    validate_portable_model_plan(&plan, descriptor).map_err(PortableSessionError::Format)?;
+    match (root["schema"].as_str(), descriptor.pipeline.as_ref()) {
+        (Some(PORTABLE_SESSION_EXPORT_SCHEMA), None) => {
+            for key in [
+                "preprocessing_owner",
+                "input_domain",
+                "pipeline_fingerprint_algorithm",
+                "pipeline_fingerprint",
+            ] {
+                if root.contains_key(key) {
+                    return Err(PortableSessionError::Format(format!(
+                        "historical session schema must not declare {key}"
+                    )));
+                }
+            }
+        }
+        (Some(PORTABLE_SESSION_EXPORT_SCHEMA_V2), Some(pipeline)) => {
+            if root.get("preprocessing_owner").and_then(Value::as_str)
+                != Some(EMBEDDED_PREPROCESSING_OWNER)
+                || root.get("input_domain").and_then(Value::as_str) != Some(RAW_INPUT_DOMAIN)
+                || root
+                    .get("pipeline_fingerprint_algorithm")
+                    .and_then(Value::as_str)
+                    != Some(pipeline.fingerprint_algorithm.as_str())
+                || root.get("pipeline_fingerprint").and_then(Value::as_str)
+                    != Some(pipeline.native_fingerprint.as_str())
+            {
+                return Err(PortableSessionError::Format(
+                    "embedded Methods preprocessing ownership or fingerprint contradicts N4MM"
+                        .to_string(),
+                ));
+            }
+        }
+        (Some(PORTABLE_SESSION_EXPORT_SCHEMA), Some(_)) => {
+            return Err(PortableSessionError::Format(
+                "historical session schema cannot contain embedded Methods preprocessing"
+                    .to_string(),
+            ));
+        }
+        (Some(PORTABLE_SESSION_EXPORT_SCHEMA_V2), None) => {
+            return Err(PortableSessionError::Format(
+                "session schema v2 requires content-inspected embedded Methods preprocessing"
+                    .to_string(),
+            ));
+        }
+        _ => unreachable!("validated session schema"),
+    }
+    Ok(())
+}
+
 fn sha256(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
@@ -356,8 +437,9 @@ mod tests {
             NEXT.fetch_add(1, Ordering::Relaxed)
         ))
     }
+
     #[test]
-    fn native_run_save_load_and_predict_round_trip() {
+    fn native_v2_run_save_load_and_predict_round_trip() {
         let Ok(lib) = std::env::var("NIRS4ALL_METHODS_LIB") else {
             return;
         };
@@ -374,19 +456,120 @@ mod tests {
             x_test.extend_from_slice(&dataset.x[index * dataset.cols..(index + 1) * dataset.cols]);
         }
         let mut session = PortableSession::run_with_library(input, &dataset, &lib).unwrap();
+        let export = session.export().unwrap();
+        assert_eq!(export["schema"], PORTABLE_SESSION_EXPORT_SCHEMA_V2);
+        assert_eq!(export["preprocessing_owner"], EMBEDDED_PREPROCESSING_OWNER);
+        assert_eq!(export["input_domain"], RAW_INPUT_DOMAIN);
+        assert_eq!(export["pipeline_fingerprint"].as_str().unwrap().len(), 16);
         let p = path();
         session.save(&p).unwrap();
         session.close();
         let loaded = PortableSession::load_with_library(&p, &lib).unwrap();
+        crate::reset_portable_replay_call_counts();
         let actual = loaded
             .predict(&x_test, expected.len(), dataset.cols)
             .unwrap();
+        assert_eq!(crate::portable_replay_call_counts(), (0, 0, 1, 1));
         assert_eq!(actual.len(), expected.len());
+        let max_abs_diff = actual
+            .iter()
+            .zip(&expected)
+            .map(|(actual, expected)| (actual - expected).abs())
+            .fold(0.0_f64, f64::max);
+        assert!(
+            max_abs_diff <= 1e-12,
+            "embedded/external prediction max_abs_diff={max_abs_diff:.17e}; actual={actual:?}; expected={expected:?}"
+        );
+        fs::remove_file(p).unwrap();
+    }
+
+    #[test]
+    fn native_v1_session_keeps_external_preprocessing_compatibility() {
+        let Ok(lib) = std::env::var("NIRS4ALL_METHODS_LIB") else {
+            return;
+        };
+        let oracle: Value = serde_json::from_str(include_str!(
+            "../tests/parity/expected/portable_python_oracle.json"
+        ))
+        .unwrap();
+        let dataset = PortableDataset::from_json_value(&oracle["dataset"]).unwrap();
+        let input = include_str!("../tests/parity/fixtures/portable_snv_pls.json");
+        let run = crate::run_portable_pipeline_with_library(input, &dataset, &lib).unwrap();
+        let expected = run.selected.predictions;
+        let mut x_test = Vec::new();
+        for index in run.split.test_indices {
+            x_test.extend_from_slice(&dataset.x[index * dataset.cols..(index + 1) * dataset.cols]);
+        }
+        let session = PortableSession::run_with_library(input, &dataset, &lib).unwrap();
+        assert_eq!(
+            session.export().unwrap()["schema"],
+            PORTABLE_SESSION_EXPORT_SCHEMA
+        );
+        crate::reset_portable_replay_call_counts();
+        let actual = session
+            .predict(&x_test, expected.len(), dataset.cols)
+            .unwrap();
+        assert_eq!(crate::portable_replay_call_counts(), (1, 0, 1, 1));
         assert!(actual
             .iter()
             .zip(expected)
             .all(|(actual, expected)| (actual - expected).abs() <= 1e-12));
-        fs::remove_file(p).unwrap();
+    }
+
+    #[test]
+    fn native_v2_session_refuses_contract_contradiction_and_tamper() {
+        let Ok(lib) = std::env::var("NIRS4ALL_METHODS_LIB") else {
+            return;
+        };
+        let oracle: Value = serde_json::from_str(include_str!(
+            "../tests/parity/expected/portable_python_oracle.json"
+        ))
+        .unwrap();
+        let dataset = PortableDataset::from_json_value(&oracle["dataset"]).unwrap();
+        let input = include_str!("../tests/parity/fixtures/portable_methods_pipeline.json");
+
+        let mut bad_fingerprint = PortableSession::run_with_library(input, &dataset, &lib).unwrap();
+        bad_fingerprint.export["pipeline_fingerprint"] = Value::String("0".repeat(16));
+        let fingerprint_path = path();
+        bad_fingerprint.save(&fingerprint_path).unwrap();
+        assert!(matches!(
+            PortableSession::load_with_library(&fingerprint_path, &lib),
+            Err(PortableSessionError::Format(detail)) if detail.contains("fingerprint contradicts")
+        ));
+        fs::remove_file(fingerprint_path).unwrap();
+
+        let mut bad_definition = PortableSession::run_with_library(input, &dataset, &lib).unwrap();
+        let root = bad_definition.export.as_object_mut().unwrap();
+        let mut definition: Value =
+            serde_json::from_str(root["definition"].as_str().unwrap()).unwrap();
+        definition["pipeline"][2]["params"]["window_length"] = Value::from(9);
+        let definition = serde_json::to_string(&definition).unwrap();
+        root.insert(
+            "definition_sha256".to_string(),
+            Value::String(sha256(definition.as_bytes())),
+        );
+        root.insert("definition".to_string(), Value::String(definition));
+        let definition_path = path();
+        bad_definition.save(&definition_path).unwrap();
+        assert!(matches!(
+            PortableSession::load_with_library(&definition_path, &lib),
+            Err(PortableSessionError::Format(detail)) if detail.contains("contradict")
+        ));
+        fs::remove_file(definition_path).unwrap();
+
+        let mut tampered = PortableSession::run_with_library(input, &dataset, &lib).unwrap();
+        let bytes = tampered.export["selected_model_n4mm"]
+            .as_array_mut()
+            .unwrap();
+        let last = bytes.len() - 1;
+        bytes[last] = Value::from(bytes[last].as_u64().unwrap() ^ 1);
+        let tampered_path = path();
+        tampered.save(&tampered_path).unwrap();
+        assert!(matches!(
+            PortableSession::load_with_library(&tampered_path, &lib),
+            Err(PortableSessionError::Format(_))
+        ));
+        fs::remove_file(tampered_path).unwrap();
     }
 
     #[test]
