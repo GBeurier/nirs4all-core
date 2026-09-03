@@ -7,15 +7,20 @@ edition = "2021"
 license = "CECILL-2.1 OR AGPL-3.0-or-later"
 repository = "https://github.com/GBeurier/nirs4all-core"
 
-# Local release-candidate qualification. These exact candidates are not
-# published yet; keep the patch explicit until their release closure lands.
+# Local release-candidate qualification. Formats is exactly
+# 2d46285843dc366da1d38f133131b5329c886b12 / tree
+# 2ee12c035db8a78721315ee65cf684d811552aa9. IO is 54fa4f5 plus the
+# owner-side row-provenance adapter commit; DAG-ML is dafb8b6 and Methods is
+# 48ad1e5. Keep these patches explicit until their coordinated releases land.
 [patch.crates-io]
-dag-ml = { path = "/home/delete/nirs4all/_worktrees/CONF001-dag/crates/dag-ml" }
-dag-ml-core = { path = "/home/delete/nirs4all/_worktrees/CONF001-dag/crates/dag-ml-core" }
+dag-ml = { path = "/home/delete/nirs4all/_worktrees/CORE001-dag-dafb8b6/crates/dag-ml" }
+dag-ml-core = { path = "/home/delete/nirs4all/_worktrees/CORE001-dag-dafb8b6/crates/dag-ml-core" }
 dag-ml-data = { path = "/home/delete/nirs4all/_worktrees/RC-v1-dagml-data-0.2.10/crates/dag-ml-data" }
 dag-ml-data-core = { path = "/home/delete/nirs4all/_worktrees/RC-v1-dagml-data-0.2.10/crates/dag-ml-data-core" }
 dag-ml-data-provider = { path = "/home/delete/nirs4all/_worktrees/RC-v1-dagml-data-0.2.10/crates/dag-ml-data-provider" }
-n4m = { path = "/home/delete/nirs4all/_worktrees/MTH-abi24-inspect/bindings/rust/n4m" }
-nirs4all-io = { path = "/home/delete/nirs4all/_worktrees/IO-DATA002-core-consumer/crates/nirs4all-io" }
-nirs4all-io-core = { path = "/home/delete/nirs4all/_worktrees/IO-DATA002-core-consumer/crates/nirs4all-io-core" }
-nirs4all-io-dagml = { path = "/home/delete/nirs4all/_worktrees/IO-DATA002-core-consumer/crates/nirs4all-io-dagml" }
+n4m = { path = "/home/delete/nirs4all/_worktrees/CORE001-methods-48ad1e5/bindings/rust/n4m" }
+nirs4all-formats = { path = "/home/delete/nirs4all/_worktrees/CORE001-formats-2d462858/crates/nirs4all-formats" }
+nirs4all-formats-core = { path = "/home/delete/nirs4all/_worktrees/CORE001-formats-2d462858/crates/nirs4all-formats-core" }
+nirs4all-io = { path = "/home/delete/nirs4all/_worktrees/CORE001-io-54fa4f5/crates/nirs4all-io" }
+nirs4all-io-core = { path = "/home/delete/nirs4all/_worktrees/CORE001-io-54fa4f5/crates/nirs4all-io-core" }
+nirs4all-io-dagml = { path = "/home/delete/nirs4all/_worktrees/CORE001-io-54fa4f5/crates/nirs4all-io-dagml" }
