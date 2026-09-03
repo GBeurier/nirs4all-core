@@ -10,6 +10,11 @@ binding manifest.
 
 ### Changed
 
+- Repinned the native aggregate to `nirs4all-formats` 0.2.9 and the coherent
+  `nirs4all-io` / `nirs4all-io-dagml` 0.1.14 family. The Python Formats and IO
+  extras now carry the same security-release floors. Upgraded the native
+  Python bridge to PyO3/pythonize 0.29 to remove the two RustSec advisories in
+  the prior PyO3 0.22 dependency.
 - Canonicalized the private libn4m snapshot path before storing, comparing,
   and returning it. This keeps macOS `/var` and `/private/var` aliases from
   being mistaken for two different process-wide Methods library identities.

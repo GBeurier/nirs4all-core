@@ -71,7 +71,7 @@ fn read_portable_predictor_package_v2<'py>(
     let package = archive
         .portable_predictor_package()
         .map_err(archive_error)?;
-    Ok(PyBytes::new_bound(py, package))
+    Ok(PyBytes::new(py, package))
 }
 
 /// Return the exact DAG-ML PortableRefitPackage V3 bytes from a validated
@@ -87,7 +87,7 @@ fn read_portable_refit_package_v3<'py>(
     let package = archive.portable_refit_package().map_err(|error| {
         PyValueError::new_err(format!("Archive V3 validation refused: {error}"))
     })?;
-    Ok(PyBytes::new_bound(py, package))
+    Ok(PyBytes::new(py, package))
 }
 
 /// Inspect every native predictor in a validated Archive V2.
@@ -105,7 +105,7 @@ fn inspect_methods_archive_v2_predictors_json(
     let archive_path = PathBuf::from(path);
     let library_path = PathBuf::from(methods_library_path);
     let library_sha256 = methods_library_sha256.to_owned();
-    py.allow_threads(move || {
+    py.detach(move || {
         core_inspect_methods_archive_v2_predictors_json(
             &archive_path,
             &library_path,
@@ -154,7 +154,7 @@ fn replay_methods_archive_v2_json(
         warnings_json,
         diagnostics_json,
     );
-    py.allow_threads(move || core_replay_methods_archive_v2_json(&archive_path, input))
+    py.detach(move || core_replay_methods_archive_v2_json(&archive_path, input))
         .map_err(replay_error)
 }
 
@@ -170,7 +170,7 @@ fn predict_methods_archive_v2_matrix_json(
 ) -> PyResult<String> {
     let archive_path = PathBuf::from(path);
     let input_json = input_json.to_owned();
-    py.allow_threads(move || {
+    py.detach(move || {
         let archive = load_archive_v2(&archive_path).map_err(archive_error)?;
         core_predict_methods_archive_v2_matrix_json(&archive, &input_json).map_err(replay_error)
     })
@@ -215,7 +215,7 @@ fn replay_methods_archive_v2_conformal_presentation_v1_json(
         warnings_json,
         diagnostics_json,
     );
-    py.allow_threads(move || {
+    py.detach(move || {
         core_replay_methods_archive_v2_conformal_presentation_v1_json(&archive_path, input)
     })
     .map_err(replay_error)
@@ -260,7 +260,7 @@ fn replay_methods_archive_v2_conformal_presentation_v2_json(
         warnings_json,
         diagnostics_json,
     );
-    py.allow_threads(move || {
+    py.detach(move || {
         core_replay_methods_archive_v2_conformal_presentation_v2_json(&archive_path, input)
     })
     .map_err(replay_error)
@@ -304,7 +304,7 @@ fn replay_methods_archive_v3_json(
         warnings_json,
         diagnostics_json,
     );
-    py.allow_threads(move || core_replay_methods_archive_v3_json(&archive_path, input))
+    py.detach(move || core_replay_methods_archive_v3_json(&archive_path, input))
         .map_err(replay_error)
 }
 

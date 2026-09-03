@@ -27,8 +27,8 @@ dependencies = ["PyYAML>=6"]
 [project.optional-dependencies]
 dag-ml = ["dag-ml>=0.3.23,<0.4"]
 dag-ml-data = ["dag-ml-data>=0.2.9"]
-formats = ["nirs4all-formats>=0.2.7"]
-io = ["nirs4all-io>=0.1.13"]
+formats = ["nirs4all-formats>=0.2.9"]
+io = ["nirs4all-io>=0.1.14"]
 # nirs4all-datasets is kept EXTERNAL/OPTIONAL (to avoid bloat): it is its own
 # extra and is intentionally NOT part of the bundled `all` aggregate below.
 datasets = ["nirs4all-datasets>=0.3.5"]
@@ -39,8 +39,8 @@ methods = ["nirs4all-methods>=1.0.13,<2", "pls4all>=1.0.13,<2", "scikit-learn>=1
 all = [
     "dag-ml>=0.3.23,<0.4",
     "dag-ml-data>=0.2.9",
-    "nirs4all-formats>=0.2.7",
-    "nirs4all-io>=0.1.13",
+    "nirs4all-formats>=0.2.9",
+    "nirs4all-io>=0.1.14",
     "nirs4all-methods>=1.0.13,<2",
     "pls4all>=1.0.13,<2",
     "scikit-learn>=1.3",
