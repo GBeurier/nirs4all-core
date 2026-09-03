@@ -10,6 +10,11 @@ binding manifest.
 
 ### Changed
 
+- Bumped the aggregate to 0.3.28 and made the libn4m canonical-path check
+  accept the ordinary absolute spelling returned by Windows applications when
+  it differs from `std::fs::canonicalize` only by the verbatim `\\?\` or
+  `\\?\UNC\` prefix. Other lexical aliases and symlink-resolved paths remain
+  refused.
 - Repinned the native aggregate to `nirs4all-formats` 0.2.9 and the coherent
   `nirs4all-io` / `nirs4all-io-dagml` 0.1.14 family. The Python Formats and IO
   extras now carry the same security-release floors. Upgraded the native

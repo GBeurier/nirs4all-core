@@ -14,7 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 CHECKER = ROOT / "scripts" / "check_python_wheel.py"
-VERSION = "0.3.27"
+VERSION = "0.3.28"
 
 
 class WheelCheckerTests(unittest.TestCase):
