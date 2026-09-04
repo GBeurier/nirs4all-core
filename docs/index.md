@@ -90,6 +90,7 @@ against the full Python `nirs4all` oracle in every binding. See
 
 installation
 getting_started
+README
 ```
 
 ```{toctree}
@@ -98,6 +99,7 @@ getting_started
 
 ARCHITECTURE
 BINDINGS
+CAPABILITIES
 NAMING
 OPERATORS
 COMPATIBILITY
