@@ -18,3 +18,9 @@ docs/_build/
 *.tar.gz
 *.mex*
 *.oct
+
+# Local developer records and checkout/build artifacts.
+/.dev/
+/.worktrees/
+/bindings/python/src/nirs4all_core/_native*.so
+/bindings/python/src/nirs4all_core/_native*.pyd
