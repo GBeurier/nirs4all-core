@@ -10,6 +10,10 @@ binding manifest.
 
 ### Changed
 
+- Bumped the aggregate to 0.3.29 and pinned the corrected V1 release train:
+  DAG-ML 0.3.25, dag-ml-data 0.2.11, nirs4all-io 0.1.18, and
+  nirs4all-methods/pls4all 1.0.18. The immutable upstream revisions and every
+  Python/Rust/WASM dependency floor now describe the same qualified stack.
 - Bumped the aggregate to 0.3.28 and made the libn4m canonical-path check
   accept the ordinary absolute spelling returned by Windows applications when
   it differs from `std::fs::canonicalize` only by the verbatim `\\?\` or
