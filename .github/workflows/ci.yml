@@ -4,45 +4,44 @@ on:
   workflow_dispatch:
     inputs:
       repair_tag:
-        description: "Immutable release tag qualified by this repair run"
-        required: true
+        description: "Optional immutable tag repair; leave empty for ordinary qualification"
+        required: false
         type: string
-        default: "v0.3.25"
+        default: ""
+      methods_ref:
+        description: "Optional immutable Methods commit for coordinated pre-release qualification"
+        required: false
+        type: string
+        default: ""
   push:
     branches:
       - main
       - "rc/**"
+      - "fix/v1-stability-core"
     tags:
       - "v[0-9]*.[0-9]*.[0-9]*"
   pull_request:
 
 jobs:
   repair-guard:
-    name: Guard manual v0.3.25 repair
+    name: Guard qualification source
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.0
         with:
           fetch-depth: 0
+      - uses: actions/setup-python@v6.3.0
+        with:
+          python-version: "3.12"
       - name: Validate repair source and version
-        if: ${{ github.event_name == 'workflow_dispatch' }}
+        env:
+          REPAIR_TAG: ${{ inputs.repair_tag }}
+          METHODS_REF: ${{ inputs.methods_ref }}
         run: |
           set -euo pipefail
-          repair_tag="${{ inputs.repair_tag }}"
-          if [ "${repair_tag}" != "v0.3.25" ]; then
-            echo "::error::This repair workflow is restricted to immutable tag v0.3.25, got ${repair_tag}." >&2
-            exit 1
-          fi
-          if ! git merge-base --is-ancestor "refs/tags/${repair_tag}" HEAD; then
-            echo "::error::Repair ref ${GITHUB_SHA} is not a descendant of ${repair_tag}." >&2
-            exit 1
-          fi
           scripts/bump_version.sh --check
-          crate_version=$(sed -nE '/^\[package\]/,/^\[/{s/^version[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p}' bindings/rust/nirs4all/Cargo.toml | head -n1)
-          if [ "${crate_version}" != "${repair_tag#v}" ]; then
-            echo "::error::Repair manifests report ${crate_version}, expected ${repair_tag#v}." >&2
-            exit 1
-          fi
+          python3 scripts/check_ci_source.py --repair-tag "$REPAIR_TAG" --methods-ref "$METHODS_REF"
+          python3 -m unittest discover -s tests -p test_ci_source.py
 
   rust:
     needs: repair-guard
@@ -68,7 +67,7 @@ jobs:
       - uses: actions/checkout@v7.0.0
         with:
           repository: GBeurier/nirs4all-methods
-          ref: ${{ steps.n4m-release.outputs.tag }}
+          ref: ${{ inputs.methods_ref || steps.n4m-release.outputs.tag }}
           path: nirs4all-methods
       - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends cmake ninja-build
       - name: Build libn4m from its published n4m release tag
@@ -169,7 +168,7 @@ jobs:
       - uses: actions/checkout@v7.0.0
         with:
           repository: GBeurier/nirs4all-methods
-          ref: ${{ steps.methods-pin.outputs.ref }}
+          ref: ${{ inputs.methods_ref || steps.methods-pin.outputs.ref }}
           path: nirs4all-methods
       - uses: actions/setup-python@v6.3.0
         with:
