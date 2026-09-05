@@ -20,6 +20,8 @@ use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 use unicode_normalization::UnicodeNormalization;
 
+use crate::durability::sync_directory;
+
 const PROFILE: &str = "nirs4all.archive_workspace.v1";
 const WRITER_ID: &str = "nirs4all-core.archive_workspace_writer.v1";
 const MANIFEST_MEMBER: &str = "manifest.json";
@@ -2506,8 +2508,7 @@ fn atomic_create(path: &Path, bytes: &[u8]) -> Result<(), ArchiveStoreError> {
             }
             Err(error) => return Err(ArchiveStoreError::Io(error)),
         }
-        let cleanup = fs::remove_file(&temp)
-            .and_then(|()| File::open(parent).and_then(|directory| directory.sync_all()));
+        let cleanup = fs::remove_file(&temp).and_then(|()| sync_directory(parent));
         match cleanup {
             Ok(()) => Ok(()),
             Err(error) => Err(ArchiveStoreError::PublishedWithCleanupError {

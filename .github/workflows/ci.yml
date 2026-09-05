@@ -96,6 +96,19 @@ jobs:
           name: rust-crate
           path: target/package/*.crate
 
+  windows-archive-durability:
+    name: Windows archive durability
+    needs: repair-guard
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7.0.0
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Exercise the Windows directory flush and both atomic writers
+        run: |
+          cargo test -p nirs4all durability::tests::directory_metadata_can_be_flushed_after_publication
+          cargo test -p nirs4all archive_v1_publishes_a_relative_target_without_cleanup_error
+          cargo test -p nirs4all v2_round_trips_exact_opaque_package_bytes_and_dual_dispatches
+
   python:
     needs: repair-guard
     runs-on: ubuntu-latest

@@ -508,6 +508,23 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertIn("bindings/python/src/nirs4all_core/__init__.py", syncer)
         self.assertIn("root_lock_ver", syncer)
 
+    def test_ci_exercises_atomic_archive_publication_on_windows(self) -> None:
+        workflow = _load_workflow_yaml("ci.yml")
+        job = workflow["jobs"]["windows-archive-durability"]
+        runs = _job_run_text(job)
+
+        self.assertEqual(job["runs-on"], "windows-latest")
+        self.assertEqual(job["needs"], "repair-guard")
+        self.assertIn(
+            "durability::tests::directory_metadata_can_be_flushed_after_publication",
+            runs,
+        )
+        self.assertIn("archive_v1_publishes_a_relative_target_without_cleanup_error", runs)
+        self.assertIn(
+            "v2_round_trips_exact_opaque_package_bytes_and_dual_dispatches",
+            runs,
+        )
+
     def test_python_release_workflow_uses_current_repo_trusted_publisher_tuple(self) -> None:
         workflow = _load_workflow_yaml("release-python.yml")
         publish = workflow["jobs"]["publish-pypi"]

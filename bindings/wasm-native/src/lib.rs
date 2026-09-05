@@ -94,6 +94,8 @@ pub fn load_archive_v3(_path: &Path) -> Result<LoadedArchiveV3, ArchiveStoreErro
 #[allow(dead_code, clippy::drop_non_drop)]
 #[path = "../../rust/nirs4all/src/archive_v2.rs"]
 mod core_archive_v2;
+#[path = "../../rust/nirs4all/src/durability.rs"]
+mod durability;
 
 /// A fully validated, single-model Methods Archive V2 projection.
 #[wasm_bindgen]
