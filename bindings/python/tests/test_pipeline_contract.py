@@ -1,13 +1,36 @@
+import json
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import nirs4all_core as n4core
 
 
-FIXTURE_DIR = Path(__file__).resolve().parents[3] / "tests" / "parity" / "fixtures"
+ROOT = Path(__file__).resolve().parents[3]
+FIXTURE_DIR = ROOT / "tests" / "parity" / "fixtures"
 
 
 class PipelineContractTests(unittest.TestCase):
+    def test_shared_execution_contract_cases(self) -> None:
+        corpus_path = FIXTURE_DIR / "execution_contract_cases.json"
+        cases = json.loads(corpus_path.read_text(encoding="utf-8"))
+        for case in cases["invalid"]:
+            with self.subTest(case=case["name"]):
+                with self.assertRaises((ValueError, TypeError)):
+                    n4core.parse_execution_plan(case)
+                with patch("nirs4all_core._execution._load_methods_surface") as load_methods:
+                    with self.assertRaises((ValueError, TypeError)):
+                        n4core.run_portable_pipeline(case, {})
+                    load_methods.assert_not_called()
+        for case in cases["valid"]:
+            with self.subTest(case=case["name"]):
+                self.assertEqual(n4core.parse_execution_plan(case)["nComponents"], case["components"])
+        for copy in (
+            ROOT / "bindings/r/inst/extdata/execution_contract_cases.json",
+            ROOT / "bindings/rust/nirs4all/tests/parity/fixtures/execution_contract_cases.json",
+        ):
+            self.assertEqual(copy.read_bytes(), corpus_path.read_bytes())
+
     def test_all_shared_json_and_yaml_fixtures_normalize_to_same_pipeline(self) -> None:
         fixture_names = sorted(path.stem for path in FIXTURE_DIR.glob("portable_*.json"))
 

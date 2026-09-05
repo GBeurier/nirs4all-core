@@ -87,6 +87,16 @@ if (!requireNamespace("n4m", quietly = TRUE)) {
       fixture <- file.path(fixture_root, paste0(expected$name, ".json"))
       stopifnot(file.exists(fixture))
       actual <- nirs4all::nirs4all_run_portable_pipeline(fixture, dataset)
+      if (!identical(actual$split$kind, "all")) {
+        alternate <- nirs4all::nirs4all_load_pipeline(fixture)
+        steps <- alternate$pipeline
+        alternate$pipeline <- append(steps[-1L], steps[1L], after = length(steps) - 2L)
+        stopifnot(isTRUE(all.equal(
+          nirs4all::nirs4all_run_portable_pipeline(alternate, dataset), actual)))
+      }
+      stopifnot(identical(actual$evaluation$independent_test, FALSE))
+      stopifnot(identical(actual$evaluation$scope,
+        if (identical(actual$split$kind, "all")) "training" else "selection_validation"))
 
       expect_same_split(actual$split, expected$split)
       target_delta <- max_abs_diff(actual$targets, expected$targets)

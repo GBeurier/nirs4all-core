@@ -405,7 +405,7 @@ class CustomHostCapabilityManifestTests(unittest.TestCase):
         ]
         self.assertEqual(
             [item["surface"] for item in predict_rows],
-            ["javascript_wasm"],
+            ["javascript_wasm", "rust"],
         )
         wasm_row = toml_rows["javascript_wasm"]
         self.assertEqual(wasm_row["predict_entrypoint"], "predictPortablePipeline")
@@ -413,6 +413,11 @@ class CustomHostCapabilityManifestTests(unittest.TestCase):
         gate = ROOT / wasm_row["predict_parity_gate"]
         self.assertTrue(gate.exists(), gate)
         self.assertIn(wasm_row["predict_entrypoint"], _read(gate))
+        rust_row = toml_rows["rust"]
+        self.assertIn(rust_row["predict_entrypoint"], _read(RUST_LIB))
+        rust_gate = _read(ROOT / rust_row["predict_parity_gate"])
+        self.assertIn(rust_row["predict_entrypoint"], rust_gate)
+        self.assertIn("native_v2_run_save_load_and_predict_round_trip", rust_gate)
 
     def test_controller_ids_and_composition_are_stable(self) -> None:
         controllers = n4core.controller_capabilities()

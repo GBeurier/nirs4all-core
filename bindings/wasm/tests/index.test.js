@@ -219,7 +219,7 @@ test('capability manifest describes portable custom app host controllers', () =>
   );
   assert.deepEqual(
     manifest.runtimeContracts.filter((item) => item.serializedModelPredict).map((item) => item.surface),
-    ['javascript_wasm'],
+    ['javascript_wasm', 'rust'],
   );
   assert.equal(
     manifest.runtimeContracts.find((item) => item.surface === 'javascript_wasm').predictEntrypoint,

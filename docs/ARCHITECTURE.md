@@ -34,7 +34,8 @@ its other domain rows remain metadata-only.
 
 ## Strategic Python path
 
-The Python binding is expected to become good enough to replace the core of the
-full Python `nirs4all` library later. Until that migration is explicit,
-`nirs4all-core` must avoid importing itself as `nirs4all` in Python so both
-packages can coexist during parity checks.
+The full Python `nirs4all` V1 library consumes the native stack through its
+declared DAG-ML/Core execution paths and retains Python-owned controllers.
+The aggregate imports as `nirs4all_core`, so both packages coexist. The bounded
+`run_portable_pipeline` convenience API is separate from full-library DAG-ML
+execution; its selection-score contract is documented in [Parity](PARITY.md).

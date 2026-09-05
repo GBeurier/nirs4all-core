@@ -44,8 +44,8 @@ nirs4all_runtime_contracts <- function() {
       surface = "rust",
       pipeline_execution = "parity-validated",
       pipeline_entrypoint = "run_portable_pipeline_with_library",
-      serialized_model_predict = FALSE,
-      predict_entrypoint = NULL
+      serialized_model_predict = TRUE,
+      predict_entrypoint = "predict_exported_portable_model_with_library"
     ),
     list(
       surface = "matlab_octave",

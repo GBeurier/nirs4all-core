@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from typing import Any
 
 from ._pipeline import PipelineDefinition, load_pipeline_definition
@@ -65,10 +66,10 @@ def run_portable_pipeline(
     contract as the npm/WASM binding.
     """
 
-    np, KennardStoneSplitter, SNV, SavitzkyGolay, PLSRegression = _load_methods_surface()
     definition = source if isinstance(source, PipelineDefinition) else load_pipeline_definition(source)
-    input_data = _coerce_dataset(dataset, np)
     plan = parse_execution_plan(definition)
+    np, KennardStoneSplitter, SNV, SavitzkyGolay, PLSRegression = _load_methods_surface()
+    input_data = _coerce_dataset(dataset, np)
 
     split = _compute_split(plan["splitter"], input_data, KennardStoneSplitter, np)
     train_indices = np.asarray(split["trainIndices"], dtype=np.int64)
@@ -117,6 +118,10 @@ def run_portable_pipeline(
         "variants": variants,
         "selected": selected,
         "targets": y_test.reshape(-1).tolist(),
+        "evaluation": {
+            "scope": "training" if split["kind"] == "all" else "selection_validation",
+            "independent_test": False,
+        },
     }
 
 
@@ -134,10 +139,19 @@ def parse_execution_plan(
         if not isinstance(step, dict):
             raise TypeError("Portable pipeline steps must be mapping objects.")
 
+        if model_step is not None:
+            raise ValueError("The model must be the final portable pipeline step.")
+        if "class" in step and "model" in step:
+            raise ValueError("A portable step cannot contain both class and model.")
+
         class_name = step.get("class")
         if isinstance(class_name, str):
             if class_name in KENNARD_STONE_CLASSES:
-                splitter = {"type": "KennardStone", "params": dict(step.get("params") or {})}
+                if splitter is not None:
+                    raise ValueError("The optional splitter must appear once, before the model.")
+                params = dict(step.get("params") or {})
+                params["test_size"] = _number_param(params.get("test_size"), 0.25)
+                splitter = {"type": "KennardStone", "params": params}
             elif class_name in SNV_CLASSES:
                 preprocessing.append({"type": "StandardNormalVariate", "params": []})
             elif class_name in SAVGOL_CLASSES:
@@ -251,15 +265,15 @@ def _make_transformer(step: dict[str, Any], snv_cls, savgol_cls):
 
 
 def _savgol_params(params: dict[str, Any]) -> list[float | int]:
-    delta = float(params.get("delta", 1.0))
+    delta = _number_param(params.get("delta"), 1.0)
     if delta != 1.0:
         raise ValueError("Portable Savitzky-Golay execution currently supports delta=1 only.")
     return [
-        int(params.get("window_length", params.get("window", 11))),
-        int(params.get("polyorder", 3)),
-        int(params.get("deriv", 0)),
-        _savgol_mode(params.get("mode", "interp")),
-        float(params.get("cval", 0.0)),
+        _integer_param(params.get("window_length", params.get("window")), 11, minimum=1),
+        _integer_param(params.get("polyorder"), 3, minimum=0),
+        _integer_param(params.get("deriv"), 0, minimum=0),
+        _savgol_mode(params.get("mode") if params.get("mode") is not None else "interp"),
+        _number_param(params.get("cval"), 0.0),
     ]
 
 
@@ -269,7 +283,7 @@ def _savgol_mode(value: Any) -> int:
         if key in SAVGOL_MODES:
             return SAVGOL_MODES[key]
         raise ValueError(f"Unsupported Savitzky-Golay mode: {value!r}")
-    mode = int(value)
+    mode = _integer_param(value, 4, minimum=0)
     if 0 <= mode < len(SAVGOL_MODE_NAMES):
         return mode
     raise ValueError(f"Unsupported Savitzky-Golay mode: {value!r}")
@@ -284,9 +298,32 @@ def _component_values(step: dict[str, Any]) -> list[int]:
     if "_range_" in step:
         if step.get("param") != "n_components":
             raise ValueError("Portable execution only supports _range_ sweeps over 'n_components'.")
-        start, stop, stride = [int(value) for value in step["_range_"]]
-        if stride <= 0:
+        values = step["_range_"]
+        if not isinstance(values, (list, tuple)) or len(values) != 3 or any(value is None for value in values):
             raise ValueError("Invalid n_components _range_; expected [start, stop, positive_step].")
+        start, stop, stride = [_integer_param(value, 0, minimum=1) for value in values]
+        if start > stop:
+            raise ValueError("Invalid n_components _range_; start must be <= stop.")
+        if (stop - start) // stride + 1 > 10_000:
+            raise ValueError("Portable n_components sweep exceeds 10000 variants.")
         return list(range(start, stop + 1, stride))
-    params = step.get("model", {}).get("params", {})
-    return [max(1, int(params.get("n_components", 2)))]
+    params = step.get("model", {}).get("params") or {}
+    return [_integer_param(params.get("n_components"), 2, minimum=1)]
+
+
+def _number_param(value: Any, fallback: float) -> float:
+    if value is None:
+        return fallback
+    if isinstance(value, bool) or not isinstance(value, (int, float, str)):
+        raise TypeError("Portable numeric parameter must be a number or numeric string.")
+    number = float(value)
+    if not math.isfinite(number):
+        raise ValueError("Portable numeric parameter must be finite.")
+    return number
+
+
+def _integer_param(value: Any, fallback: int, *, minimum: int) -> int:
+    number = _number_param(value, fallback)
+    if number != math.trunc(number) or number < minimum or number > 2_147_483_647:
+        raise ValueError(f"Portable integer parameter must be an integer in {minimum}..2147483647.")
+    return int(number)

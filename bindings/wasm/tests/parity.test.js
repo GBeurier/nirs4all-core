@@ -36,6 +36,16 @@ test('portable WASM execution matches the full Python nirs4all oracle', async (t
   for (const expected of oracle.cases) {
     const fixture = readFileSync(new URL(`${expected.name}.json`, fixtureDir), 'utf8');
     const actual = await runPortablePipeline(fixture, dataset, { methods });
+    if (actual.split.kind !== 'all') {
+      const alternate = JSON.parse(fixture);
+      const splitter = alternate.pipeline.shift();
+      alternate.pipeline.splice(alternate.pipeline.length - 1, 0, splitter);
+      assert.deepEqual(await runPortablePipeline(alternate, dataset, { methods }), actual);
+    }
+    assert.deepEqual(actual.evaluation, {
+      scope: actual.split.kind === 'all' ? 'training' : 'selection_validation',
+      independent_test: false,
+    });
 
     assert.deepEqual(actual.split, expected.split, `${expected.name}: split mismatch`);
     assert.ok(

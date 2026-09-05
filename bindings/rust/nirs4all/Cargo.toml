@@ -25,6 +25,7 @@ include = [
     "tests/parity/fixtures/portable_savgol_pls.yaml",
     "tests/parity/fixtures/portable_snv_pls.json",
     "tests/parity/fixtures/portable_snv_pls.yaml",
+    "tests/parity/fixtures/execution_contract_cases.json",
     "tests/parity/expected/portable_python_oracle.json",
 ]
 

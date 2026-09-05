@@ -62,15 +62,15 @@ merge accidentally:
 | Python | `parity-validated` via `run_portable_pipeline()` | not exposed |
 | R | `parity-validated` via `nirs4all_run_portable_pipeline()` | not exposed |
 | JavaScript/WASM | `parity-validated` via `runPortablePipeline()` | `parity-validated` via `predictPortablePipeline()` |
-| Rust | `parity-validated` via `run_portable_pipeline_with_library()` | not exposed |
+| Rust | `parity-validated` via `run_portable_pipeline_with_library()` | `predict_exported_portable_model_with_library()` and `PortableSession::load_with_library()` / `predict()` |
 | MATLAB/Octave | `parity-validated` via `nirs4all.runPortablePipeline()` | not exposed |
 
-Only JavaScript/WASM currently exposes a standalone API that hydrates the
-serialized selected model from a previous run and predicts on a later dataset.
-The other bindings remain parity-validated for executing the portable pipeline,
-but a host must rerun the pipeline or use a language-specific model object
-there; it must not infer a cross-runtime replay-predict API from the controller
-level alone.
+JavaScript/WASM reloads its selected-model result through `predictPortablePipeline()`.
+Rust reloads content-inspected Methods N4MM payloads directly or through a saved
+`PortableSession`; those encodings are distinct and are not interchangeable.
+Python, R and MATLAB/Octave do not expose that portable-runner selected-model
+contract. The separate Archive V2/V3 product APIs, including Python prediction,
+are described below; their availability is not inferred from the runner row.
 
 ## Portable operator subset
 

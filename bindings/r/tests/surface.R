@@ -91,7 +91,7 @@ stopifnot(identical(
 ))
 stopifnot(identical(
   vapply(contracts, function(item) isTRUE(item$serialized_model_predict), logical(1)),
-  c(FALSE, FALSE, TRUE, FALSE, FALSE)
+  c(FALSE, FALSE, TRUE, TRUE, FALSE)
 ))
 stopifnot(identical(
   nirs4all::nirs4all_runtime_surfaces(),

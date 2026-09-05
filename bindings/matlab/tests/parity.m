@@ -70,6 +70,19 @@ for idx = 1:numel(cases)
     fixture = fullfile(fixtureRoot, [expected.name '.json']);
     assert(exist(fixture, 'file') == 2);
     actual = nirs4all.runPortablePipeline(fixture, dataset);
+    if ~strcmp(actual.split.kind, 'all')
+        alternate = nirs4all.loadPipelineDefinition(fixture);
+        steps = alternate.pipeline;
+        alternate.pipeline = [steps(2:end-1), steps(1), steps(end)];
+        reordered = nirs4all.runPortablePipeline(alternate, dataset);
+        assert(isequal(reordered, actual));
+    end
+    assert(~actual.evaluation.independent_test);
+    if strcmp(actual.split.kind, 'all')
+        assert(strcmp(actual.evaluation.scope, 'training'));
+    else
+        assert(strcmp(actual.evaluation.scope, 'selection_validation'));
+    end
 
     assert(strcmp(actual.split.kind, expected.split.kind));
     assert(isequal(double(actual.split.trainIndices(:)), double(expected.split.trainIndices(:))));

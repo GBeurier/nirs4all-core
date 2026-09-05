@@ -158,8 +158,8 @@ pub const RUNTIME_CONTRACTS: &[RuntimeContract] = &[
         surface: "rust",
         pipeline_execution: "parity-validated",
         pipeline_entrypoint: "run_portable_pipeline_with_library",
-        serialized_model_predict: false,
-        predict_entrypoint: None,
+        serialized_model_predict: true,
+        predict_entrypoint: Some("predict_exported_portable_model_with_library"),
     },
     RuntimeContract {
         surface: "matlab_octave",
@@ -625,6 +625,17 @@ pub struct PortablePipelineResult {
     pub targets: Vec<f64>,
 }
 
+impl PortablePipelineResult {
+    /// The reported RMSE is a training or selection score, never an independent test.
+    pub fn evaluation_scope(&self) -> &'static str {
+        if self.split.kind == "all" {
+            "training"
+        } else {
+            "selection_validation"
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct PortableSplitResult {
     pub kind: String,
@@ -664,8 +675,20 @@ pub fn parse_execution_plan(definition: &Value) -> Result<ExecutionPlan, String>
             .as_object()
             .ok_or_else(|| "portable pipeline steps must be mapping objects".to_string())?;
 
+        if model_step.is_some() {
+            return Err("the model must be the final portable pipeline step".to_string());
+        }
+        if step_obj.contains_key("class") && step_obj.contains_key("model") {
+            return Err("a portable step cannot contain both class and model".to_string());
+        }
+
         if let Some(class_name) = step_obj.get("class").and_then(Value::as_str) {
             if KENNARD_STONE_CLASSES.contains(&class_name) {
+                if splitter.is_some() {
+                    return Err(
+                        "the optional splitter must appear once, before the model".to_string()
+                    );
+                }
                 let params = step_obj.get("params").unwrap_or(&Value::Null);
                 splitter = Some(PortableSplitter {
                     kind: "KennardStone".to_string(),
@@ -1095,7 +1118,7 @@ fn collect_classes(value: &Value, output: &mut Vec<String>) {
 
 fn savgol_params(params: &Value) -> Result<SavitzkyGolayParams, String> {
     let delta = number_param(params.get("delta"), 1.0)?;
-    if (delta - 1.0).abs() > f64::EPSILON {
+    if delta != 1.0 {
         return Err(
             "portable Savitzky-Golay execution currently supports delta=1 only".to_string(),
         );
@@ -1173,13 +1196,15 @@ fn component_values(step: &Value) -> Result<Vec<i32>, String> {
         if start > stop {
             return Err("invalid n_components _range_; start must be <= stop".to_string());
         }
-        let mut out = Vec::new();
-        let mut value = start;
-        while value <= stop {
-            out.push(value);
-            value += stride;
+        // Count and iterate in i64: even a single i32::MAX candidate must not
+        // overflow while advancing past the final value.
+        let count = (i64::from(stop) - i64::from(start)) / i64::from(stride) + 1;
+        if count > 10_000 {
+            return Err("portable n_components sweep exceeds 10000 variants".to_string());
         }
-        return Ok(out);
+        return Ok((0..count)
+            .map(|index| (i64::from(start) + index * i64::from(stride)) as i32)
+            .collect());
     }
     let params = step
         .get("model")
@@ -1193,16 +1218,21 @@ fn component_values(step: &Value) -> Result<Vec<i32>, String> {
 }
 
 fn number_param(value: Option<&Value>, fallback: f64) -> Result<f64, String> {
-    match value {
+    let number = match value {
         None | Some(Value::Null) => Ok(fallback),
         Some(Value::Number(number)) => number
             .as_f64()
             .ok_or_else(|| "numeric parameter is outside f64 range".to_string()),
         Some(Value::String(text)) => text
+            .trim()
             .parse::<f64>()
             .map_err(|error| format!("invalid numeric parameter '{text}': {error}")),
         Some(other) => Err(format!("expected numeric parameter, got {other}")),
+    }?;
+    if !number.is_finite() {
+        return Err("numeric parameter must be finite".to_string());
     }
+    Ok(number)
 }
 
 fn int_param(value: Option<&Value>, fallback: i32) -> Result<i32, String> {
@@ -1940,6 +1970,30 @@ mod tests {
     use std::collections::BTreeSet;
 
     #[test]
+    fn portable_execution_contract_cases_are_shared_and_bounded() {
+        let cases: Value = serde_json::from_str(include_str!(
+            "../tests/parity/fixtures/execution_contract_cases.json"
+        ))
+        .unwrap();
+        for case in cases["invalid"].as_array().unwrap() {
+            assert!(
+                parse_execution_plan(case).is_err(),
+                "accepted {}",
+                case["name"]
+            );
+        }
+        for case in cases["valid"].as_array().unwrap() {
+            let plan = parse_execution_plan(case).unwrap();
+            assert_eq!(
+                serde_json::json!(plan.n_components),
+                case["components"],
+                "{}",
+                case["name"]
+            );
+        }
+    }
+
+    #[test]
     fn exposes_expected_upstream_keys() {
         let keys: Vec<_> = UPSTREAMS.iter().map(|item| item.key).collect();
         assert_eq!(
@@ -2035,8 +2089,8 @@ mod tests {
                     "surface": "rust",
                     "pipeline_execution": "parity-validated",
                     "pipeline_entrypoint": "run_portable_pipeline_with_library",
-                    "serialized_model_predict": false,
-                    "predict_entrypoint": null
+                    "serialized_model_predict": true,
+                    "predict_entrypoint": "predict_exported_portable_model_with_library"
                 },
                 {
                     "surface": "matlab_octave",
@@ -2472,6 +2526,29 @@ mod tests {
                 fixture_for_name(name).unwrap_or_else(|| panic!("missing fixture {name}"));
             let actual =
                 run_portable_pipeline_with_library(fixture, &dataset, &library_path).unwrap();
+            if actual.split.kind != "all" {
+                let mut alternate = load_pipeline_definition_str(fixture).unwrap();
+                let steps = alternate["pipeline"].as_array_mut().unwrap();
+                let splitter = steps.remove(0);
+                steps.insert(steps.len() - 1, splitter);
+                assert_eq!(
+                    run_portable_pipeline_with_library(
+                        &alternate.to_string(),
+                        &dataset,
+                        &library_path
+                    )
+                    .unwrap(),
+                    actual
+                );
+            }
+            assert_eq!(
+                actual.evaluation_scope(),
+                if actual.split.kind == "all" {
+                    "training"
+                } else {
+                    "selection_validation"
+                }
+            );
 
             assert_eq!(
                 actual.split.kind,

@@ -117,6 +117,11 @@ export interface PortableExecutionResult {
   selected: PortableVariantResult;
   model: PortablePlsModel;
   targets: number[];
+  /** Present on current runs; older persisted results may omit this metadata. */
+  evaluation?: {
+    scope: 'training' | 'selection_validation';
+    independent_test: false;
+  };
 }
 
 export interface PortablePredictionResult {
