@@ -20,6 +20,8 @@ NIRS4ALL_PLS_CLASSES <- c(
 )
 
 nirs4all_run_portable_pipeline <- function(source, dataset) {
+  definition <- nirs4all_load_pipeline(source)
+  plan <- parse_execution_plan(definition)
   engine <- methods()
   required <- c("kennard_stone_split", "snv_transform", "savgol_transform",
                 "n4m_fit", "n4m_predict")
@@ -31,9 +33,7 @@ nirs4all_run_portable_pipeline <- function(source, dataset) {
     ), call. = FALSE)
   }
 
-  definition <- nirs4all_load_pipeline(source)
   data <- coerce_portable_dataset(dataset)
-  plan <- parse_execution_plan(definition)
 
   split <- compute_portable_split(plan$splitter, data$X, engine)
   train_rows <- split$trainIndices + 1L
@@ -103,7 +103,11 @@ nirs4all_run_portable_pipeline <- function(source, dataset) {
     preprocessing = preprocessing,
     variants = variants,
     selected = variants[[which.min(rmses)]],
-    targets = as.numeric(y_test)
+    targets = as.numeric(y_test),
+    evaluation = list(
+      scope = if (identical(split$kind, "all")) "training" else "selection_validation",
+      independent_test = FALSE
+    )
   )
 }
 
@@ -156,11 +160,21 @@ parse_execution_plan <- function(definition) {
     if (!is.list(step)) {
       stop("Portable pipeline steps must be mapping/list objects.", call. = FALSE)
     }
+    if (!is.null(model_step)) {
+      stop("The model must be the final portable pipeline step.", call. = FALSE)
+    }
+    if (all(c("class", "model") %in% names(step))) {
+      stop("A portable step cannot contain both class and model.", call. = FALSE)
+    }
 
     class_name <- step$class
     if (is.character(class_name) && length(class_name) == 1L) {
       if (class_name %in% NIRS4ALL_KENNARD_STONE_CLASSES) {
+        if (!is.null(splitter)) {
+          stop("The optional splitter must appear once, before the model.", call. = FALSE)
+        }
         splitter <- list(type = "KennardStone", params = step$params %||% list())
+        splitter$params$test_size <- numeric_param(splitter$params$test_size, 0.25, "test_size")
       } else if (class_name %in% NIRS4ALL_SNV_CLASSES) {
         preprocessing[[length(preprocessing) + 1L]] <- list(
           type = "StandardNormalVariate",
@@ -222,7 +236,7 @@ compute_portable_split <- function(splitter, X, engine) {
 
 savgol_params <- function(params) {
   delta <- numeric_param(params$delta, 1.0, "delta")
-  if (!identical(delta, 1.0) && !isTRUE(all.equal(delta, 1.0))) {
+  if (delta != 1.0) {
     stop("Portable Savitzky-Golay execution currently supports delta=1 only.", call. = FALSE)
   }
   list(
@@ -257,23 +271,26 @@ savgol_mode_name <- function(value) {
 
 component_values <- function(step) {
   range_values <- step$`_range_`
-  if (!is.null(range_values)) {
+  if ("_range_" %in% names(step)) {
     if (!identical(step$param, "n_components")) {
       stop("Portable execution only supports _range_ sweeps over 'n_components'.", call. = FALSE)
     }
-    raw_values <- unlist(range_values, use.names = FALSE)
-    if (length(raw_values) != 3L) {
+    if (length(range_values) != 3L) {
       stop("Invalid n_components _range_; expected [start, stop, positive_step].", call. = FALSE)
     }
     values <- c(
-      integer_param(raw_values[[1L]], NULL, "n_components range start", min = 1L),
-      integer_param(raw_values[[2L]], NULL, "n_components range stop", min = 1L),
-      integer_param(raw_values[[3L]], NULL, "n_components range step", min = 1L)
+      integer_param(range_values[[1L]], NULL, "n_components range start", min = 1L),
+      integer_param(range_values[[2L]], NULL, "n_components range stop", min = 1L),
+      integer_param(range_values[[3L]], NULL, "n_components range step", min = 1L)
     )
     if (values[[1L]] > values[[2L]]) {
       stop("Invalid n_components _range_; start must be <= stop.", call. = FALSE)
     }
-    return(seq.int(values[[1L]], values[[2L]], by = values[[3L]]))
+    count <- floor((as.double(values[[2L]]) - values[[1L]]) / values[[3L]]) + 1
+    if (count > 10000) {
+      stop("Portable n_components sweep exceeds 10000 variants.", call. = FALSE)
+    }
+    return(as.integer(as.double(values[[1L]]) + (seq_len(count) - 1) * as.double(values[[3L]])))
   }
   params <- step$model$params %||% list()
   integer_param(params$n_components, 2L, "n_components", min = 1L)

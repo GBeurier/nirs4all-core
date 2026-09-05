@@ -1470,13 +1470,12 @@ mod json_tests {
     }
 
     #[test]
+    #[ignore = "requires NIRS4ALL_CORE_LIVE_ARCHIVE_V2 and NIRS4ALL_CORE_LIVE_METHODS_LIBRARY"]
     fn live_historical_archive_derives_native_predictor_descriptor() {
-        let Ok(archive_path) = std::env::var("NIRS4ALL_CORE_LIVE_ARCHIVE_V2") else {
-            return;
-        };
-        let Ok(library_path) = std::env::var("NIRS4ALL_CORE_LIVE_METHODS_LIBRARY") else {
-            return;
-        };
+        let archive_path = std::env::var("NIRS4ALL_CORE_LIVE_ARCHIVE_V2")
+            .expect("NIRS4ALL_CORE_LIVE_ARCHIVE_V2 must name the historical witness");
+        let library_path = std::env::var("NIRS4ALL_CORE_LIVE_METHODS_LIBRARY")
+            .expect("NIRS4ALL_CORE_LIVE_METHODS_LIBRARY must name libn4m");
         let library_path = PathBuf::from(library_path)
             .canonicalize()
             .expect("live Methods library path is canonicalizable");

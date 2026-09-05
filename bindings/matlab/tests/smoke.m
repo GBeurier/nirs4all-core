@@ -28,7 +28,7 @@ assert(isequal(manifest.runtimeContracts, contracts));
 contractSurfaces = cellfun(@(item) item.surface, contracts, 'UniformOutput', false);
 assert(isequal(contractSurfaces, {'python', 'r', 'javascript_wasm', 'rust', 'matlab_octave'}));
 predictFlags = cellfun(@(item) item.serializedModelPredict, contracts);
-assert(isequal(predictFlags, [false, false, true, false, false]));
+assert(isequal(predictFlags, [false, false, true, true, false]));
 controllers = nirs4all.controllerCapabilities();
 controllerIds = cellfun(@(item) item.id, controllers, 'UniformOutput', false);
 assert(isequal(controllerIds, { ...
@@ -86,6 +86,22 @@ catch err
 end
 
 fixture_dir = fullfile(fileparts(mfilename('fullpath')), '..', '..', '..', 'tests', 'parity', 'fixtures');
+contractCases = jsondecode(fileread(fullfile(fixture_dir, 'execution_contract_cases.json')));
+for idx = 1:numel(contractCases.invalid)
+    if iscell(contractCases.invalid)
+        contractCase = contractCases.invalid{idx};
+    else
+        contractCase = contractCases.invalid(idx);
+    end
+    refused = false;
+    try
+        nirs4all.runPortablePipeline(contractCase, struct());
+    catch err
+        % Validation runs before Methods discovery or dataset materialization.
+        refused = any(strcmp(err.identifier, {'nirs4all:InvalidPipeline', 'nirs4all:UnsupportedOperator'}));
+    end
+    assert(refused, ['Accepted invalid contract: ' contractCase.name]);
+end
 fixture_files = dir(fullfile(fixture_dir, 'portable_*.json'));
 assert(numel(fixture_files) >= 4);
 for i = 1:numel(fixture_files)

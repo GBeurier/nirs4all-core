@@ -2,6 +2,16 @@ fixture <- system.file("extdata", "portable_methods_pipeline.json", package = "n
 yaml_fixture <- system.file("extdata", "portable_methods_pipeline.yaml", package = "nirs4all")
 fixture_dir <- dirname(fixture)
 
+contract_cases <- jsonlite::fromJSON(file.path(fixture_dir, "execution_contract_cases.json"), simplifyVector = FALSE)
+for (case in contract_cases$invalid) {
+  err <- tryCatch(nirs4all::nirs4all_parse_execution_plan(case), error = identity)
+  if (!inherits(err, "error")) stop(paste("Accepted invalid contract", case$name))
+}
+for (case in contract_cases$valid) {
+  actual <- nirs4all::nirs4all_parse_execution_plan(case)$n_components
+  stopifnot(identical(as.integer(actual), as.integer(unlist(case$components))))
+}
+
 fixture_names <- sort(sub("\\.json$", "", basename(list.files(fixture_dir, pattern = "^portable_.*\\.json$", full.names = TRUE))))
 stopifnot(length(fixture_names) >= 4L)
 for (fixture_name in fixture_names) {

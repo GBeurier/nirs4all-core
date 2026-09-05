@@ -67,6 +67,7 @@ definition = n4core.load_pipeline_definition(
     {
         "name": "snv-pls",
         "pipeline": [
+            {"class": "nirs4all.operators.splitters.KennardStoneSplitter", "params": {"test_size": 0.25}},
             {"class": "nirs4all.operators.transforms.StandardNormalVariate"},
             {
                 "model": {
@@ -103,7 +104,13 @@ dataset = n4core.PortableDataset(
 )
 
 result = n4core.run_portable_pipeline(definition, dataset)
+print(result["evaluation"])  # scope=selection_validation, independent_test=False
 ```
+
+The reported RMSE is the score used to select a component count. It is not an
+independent test estimate after selection. With no splitter, the runner fits
+and scores the same rows and reports `scope="training"`. Use the full-library
+DAG-ML validation/test paths when an independent evaluation is required.
 
 See [PARITY.md](PARITY.md) for the exact fixtures and the strict
 execution-parity gates, and [BINDINGS.md](BINDINGS.md) for the equivalent entry

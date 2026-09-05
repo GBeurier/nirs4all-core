@@ -52,6 +52,15 @@ class ExecutionParityTests(unittest.TestCase):
             with self.subTest(case=expected["name"]):
                 fixture = FIXTURE_DIR / f"{expected['name']}.json"
                 actual = n4core.run_portable_pipeline(fixture, dataset)
+                definition = n4core.load_pipeline_definition(fixture).as_dict()
+                if actual["split"]["kind"] != "all":
+                    splitter = definition["pipeline"].pop(0)
+                    definition["pipeline"].insert(len(definition["pipeline"]) - 1, splitter)
+                    self.assertEqual(n4core.run_portable_pipeline(definition, dataset), actual)
+                self.assertEqual(actual["evaluation"], {
+                    "scope": "training" if actual["split"]["kind"] == "all" else "selection_validation",
+                    "independent_test": False,
+                })
 
                 self.assertEqual(actual["split"], expected["split"])
                 self.assertLessEqual(

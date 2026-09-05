@@ -45,8 +45,8 @@ _RUNTIME_CONTRACTS: tuple[dict[str, Any], ...] = (
         "surface": "rust",
         "pipeline_execution": "parity-validated",
         "pipeline_entrypoint": "run_portable_pipeline_with_library",
-        "serialized_model_predict": False,
-        "predict_entrypoint": None,
+        "serialized_model_predict": True,
+        "predict_entrypoint": "predict_exported_portable_model_with_library",
     },
     {
         "surface": "matlab_octave",

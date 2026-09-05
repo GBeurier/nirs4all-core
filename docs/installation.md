@@ -3,7 +3,7 @@
 `nirs4all-core` ships one aggregate surface across five host languages. Each
 binding installs through that language's native registry and delegates work to
 upstream packages only where matching runtime bindings exist. Install only the
-upstream extras you need - the aggregate itself adds no engines.
+upstream extras you need; the Python wheel includes its native archive bridge.
 
 The canonical source repository is `GBeurier/nirs4all-core`. Registry names are
 ecosystem-specific: Python installs as `nirs4all-core`, while Rust, npm, R, and
@@ -23,8 +23,9 @@ Distribution name `nirs4all-core`, imported as `nirs4all_core`.
 pip install nirs4all-core
 ```
 
-The base install pulls in only `PyYAML`. The upstream engines are optional
-extras, so you choose what to bring in:
+The base install declares only `PyYAML` as a Python package dependency and
+includes the compiled Rust archive bridge. Host-language upstream packages
+are optional extras, so you choose what to bring in:
 
 ```bash
 # Individual upstreams
@@ -65,6 +66,22 @@ datasets API (it pulls in no extra compiled dependency):
 [dependencies]
 nirs4all = { version = "0.1", features = ["datasets"] }
 ```
+
+For attested native Archive V2 prediction, supply a canonical absolute regular
+libn4m path and its SHA-256. Core loads a protected private snapshot of these
+bytes and preserves its process identity checks. A library extracted from a
+Python wheel is not a standalone runtime: the wheel may place Fortran/BLAS
+dependencies in `nirs4all_methods.libs` and refer to them with `$ORIGIN`-relative
+paths. Copying libn4m alone does not preserve that dependency layout.
+
+A Rust application using such an artifact must deploy its complete native
+dependency closure and make it resolvable by the platform loader before the
+process starts. For the Linux Methods wheel this can mean placing the wheel's
+`nirs4all_methods.libs` directory on `LD_LIBRARY_PATH`, or using the supported
+application packaging layout. Record hashes and provenance for those binaries
+in application release evidence. Core's libn4m hash does not attest unrelated
+loader dependencies, and Core does not preload an unverified original library
+or weaken the snapshot checks to work around a missing dependency.
 
 ## JavaScript / WASM
 

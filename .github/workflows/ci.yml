@@ -85,6 +85,8 @@ jobs:
             exit 1
           fi
           echo "N4M_LIBRARY_PATH=${library}" >> "${GITHUB_ENV}"
+          echo "NIRS4ALL_METHODS_LIB=${library}" >> "${GITHUB_ENV}"
+          echo "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1" >> "${GITHUB_ENV}"
           echo "LD_LIBRARY_PATH=$(dirname "${library}")" >> "${GITHUB_ENV}"
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets -- -D warnings

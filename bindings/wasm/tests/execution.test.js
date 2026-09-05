@@ -7,6 +7,16 @@ import { requireMethodsArtifact } from './methods-artifact.js';
 
 const fixtureUrl = new URL('../../../tests/parity/fixtures/portable_methods_pipeline.json', import.meta.url);
 
+test('portable parsers share bounded positive and negative contract cases', () => {
+  const cases = JSON.parse(readFileSync(new URL('../../../tests/parity/fixtures/execution_contract_cases.json', import.meta.url), 'utf8'));
+  for (const item of cases.invalid) {
+    assert.throws(() => parseExecutionPlan(item), undefined, item.name);
+  }
+  for (const item of cases.valid) {
+    assert.deepEqual(parseExecutionPlan(item).nComponents, item.components, item.name);
+  }
+});
+
 function deterministicNoise(row, col) {
   let state = ((row + 1) * 73856093) ^ ((col + 1) * 19349663);
   state >>>= 0;
@@ -147,6 +157,7 @@ test('portable WASM execution delegates the shared pipeline to nirs4all-methods'
   const result = await runPortablePipeline(readFileSync(fixtureUrl, 'utf8'), dataset, { methods });
 
   assert.equal(result.name, 'portable_methods_pipeline');
+  assert.deepEqual(result.evaluation, { scope: 'selection_validation', independent_test: false });
   assert.equal(result.split.kind, 'KennardStone');
   assert.equal(result.variants.length, 5);
   assert.equal(result.targets.length, result.split.testIndices.length);

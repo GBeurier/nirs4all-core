@@ -15,6 +15,37 @@ core behind multiple host-language APIs.
 
 ## Static surface parity (no runtime required)
 
+### Portable execution input and score contract
+
+The bounded KS/SNV/SG/PLS runner accepts one optional splitter anywhere before
+the final PLS model, including after SNV/SG preprocessing declarations. It
+preserves the relative transform order and applies transforms separately to the
+resulting train and validation rows. Ambiguous steps,
+duplicate splitters and steps after a model are refused before runtime loading.
+Integer parameters accept finite integral numbers or numeric strings in the
+signed 32-bit range; booleans and lossy conversions are refused. Component
+counts are positive. Inclusive `_range_` sweeps have a positive stride,
+ascending bounds and at most 10,000 variants. Their terminal addition never
+overflows, including a single `2147483647` candidate. Methods still validates
+whether a component count is valid for the actual matrix.
+
+`tests/parity/fixtures/execution_contract_cases.json` is the shared positive
+and negative input corpus. Copies shipped in Rust and R are checked for byte
+equality by the Python gate. This complements the numerical oracle fixtures.
+
+The runner's scores describe **training** when there is no splitter and
+**selection_validation** when Kennard-Stone reserves rows. The selected
+component minimizes the same reported RMSE, so this result provides **no
+independent test estimate after selection**. Python/R/JS/MATLAB return
+`evaluation = {scope, independent_test: false}`; Rust exposes
+`PortablePipelineResult::evaluation_scope()`. Existing `testIndices` identifies
+the scored rows for compatibility; its name does not establish independence.
+Predictions, variants and split indices retain their established numerical
+contract. Full Python `nirs4all.run` / DAG-ML validation and independent test
+paths are separate APIs and are not replaced by this convenience runner.
+
+### Registered operator surface
+
 Before any numeric gate runs, the public *surface* must be identical across
 bindings. `bindings/python/tests/test_cross_language_surface.py` proves, in pure
 Python by reading the binding sources, that the portable operator subset and the

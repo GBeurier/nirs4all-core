@@ -79,8 +79,8 @@ export const runtimeContracts = Object.freeze([
     surface: 'rust',
     pipelineExecution: 'parity-validated',
     pipelineEntrypoint: 'run_portable_pipeline_with_library',
-    serializedModelPredict: false,
-    predictEntrypoint: null,
+    serializedModelPredict: true,
+    predictEntrypoint: 'predict_exported_portable_model_with_library',
   }),
   Object.freeze({
     surface: 'matlab_octave',

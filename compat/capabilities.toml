@@ -90,7 +90,7 @@ execution = "nirs4all-methods +n4m MATLAB/Octave MEX shims"
 
 # Runtime host contracts separate portable pipeline parity from the narrower
 # ability to hydrate a serialized selected model and run prediction later. Only
-# JavaScript/WASM exposes that standalone predict contract today.
+# JavaScript/WASM and Rust expose selected-model prediction contracts.
 [[runtime_contract]]
 surface = "python"
 pipeline_execution = "parity-validated"
@@ -115,7 +115,9 @@ predict_parity_gate = "bindings/wasm/tests/parity.test.js"
 surface = "rust"
 pipeline_execution = "parity-validated"
 pipeline_entrypoint = "run_portable_pipeline_with_library"
-serialized_model_predict = false
+serialized_model_predict = true
+predict_entrypoint = "predict_exported_portable_model_with_library"
+predict_parity_gate = "bindings/rust/nirs4all/src/portable_session.rs"
 
 [[runtime_contract]]
 surface = "matlab_octave"

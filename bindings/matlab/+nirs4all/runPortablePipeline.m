@@ -4,14 +4,14 @@ function result = runPortablePipeline(source, dataset)
 % This binding delegates numerical work to the +n4m MATLAB/Octave MEX
 % wrappers from nirs4all-methods. It does not implement kernels locally.
 
+definition = nirs4all.loadPipelineDefinition(source);
+plan = parseExecutionPlan(definition);
 if isempty(which('n4m.pls_fit'))
     error('nirs4all:MissingMethods', ...
         'Portable execution requires the nirs4all-methods +n4m MATLAB/Octave binding on the path.');
 end
 
-definition = nirs4all.loadPipelineDefinition(source);
 data = coerceDataset(dataset);
-plan = parseExecutionPlan(definition);
 
 split = computeSplit(plan.splitter, data.X);
 trainRows = double(split.trainIndices(:)) + 1;
@@ -74,6 +74,12 @@ result.split = split;
 result.preprocessing = preprocessing;
 result.variants = variants;
 result.selected = variants{bestIdx};
+if strcmp(split.kind, 'all')
+    evaluationScope = 'training';
+else
+    evaluationScope = 'selection_validation';
+end
+result.evaluation = struct('scope', evaluationScope, 'independent_test', false);
 result.targets = ytest(:).';
 end
 
@@ -124,13 +130,23 @@ for idx = 1:numel(definition.pipeline)
     if ~isstruct(step)
         error('nirs4all:InvalidPipeline', 'Portable pipeline steps must be mapping objects.');
     end
+    if ~isempty(modelStep)
+        error('nirs4all:InvalidPipeline', 'The model must be the final portable pipeline step.');
+    end
+    if isfield(step, 'class') && isfield(step, 'model')
+        error('nirs4all:InvalidPipeline', 'A portable step cannot contain both class and model.');
+    end
 
     if isfield(step, 'class') && ischar(step.('class'))
         className = step.('class');
         if any(strcmp(className, { ...
                 'nirs4all.operators.splitters.KennardStoneSplitter', ...
                 'nirs4all.operators.splitters.splitters.KennardStoneSplitter'}))
+            if ~isempty(splitter)
+                error('nirs4all:InvalidPipeline', 'The optional splitter must appear once, before the model.');
+            end
             splitter = struct('type', 'KennardStone', 'params', getFieldOrDefault(step, 'params', struct()));
+            splitter.params.test_size = numericParam(getFieldOrDefault(splitter.params, 'test_size', 0.25));
         elseif any(strcmp(className, { ...
                 'nirs4all.operators.transforms.SNV', ...
                 'nirs4all.operators.transforms.StandardNormalVariate', ...
@@ -194,8 +210,8 @@ split = struct( ...
 end
 
 function params = savgolParams(input)
-delta = getFieldOrDefault(input, 'delta', 1.0);
-if abs(double(delta) - 1.0) > 1e-15
+delta = numericParam(getFieldOrDefault(input, 'delta', 1.0));
+if delta ~= 1.0
     error('nirs4all:UnsupportedOperator', ...
         'Portable Savitzky-Golay execution currently supports delta=1 only.');
 end
@@ -204,11 +220,11 @@ if isempty(windowLength)
     windowLength = getFieldOrDefault(input, 'window', 11);
 end
 params = [ ...
-    double(windowLength), ...
-    double(getFieldOrDefault(input, 'polyorder', 3)), ...
-    double(getFieldOrDefault(input, 'deriv', 0)), ...
+    integerParam(windowLength, 1), ...
+    integerParam(getFieldOrDefault(input, 'polyorder', 3), 0), ...
+    integerParam(getFieldOrDefault(input, 'deriv', 0), 0), ...
     double(modeToInt(getFieldOrDefault(input, 'mode', 'interp'))), ...
-    double(getFieldOrDefault(input, 'cval', 0.0)) ...
+    numericParam(getFieldOrDefault(input, 'cval', 0.0)) ...
 ];
 end
 
@@ -234,7 +250,7 @@ if ischar(mode)
     end
     return
 end
-value = double(mode);
+value = integerParam(mode, 0);
 if value < 0 || value > 4 || value ~= fix(value)
     error('nirs4all:UnsupportedOperator', ...
         'Unsupported Savitzky-Golay mode: %g', value);
@@ -253,17 +269,54 @@ if isfield(step, '_range_')
         error('nirs4all:InvalidPipeline', ...
             'Portable execution only supports _range_ sweeps over ''n_components''.');
     end
-    rangeValues = double(step.('_range_'));
-    rangeValues = rangeValues(:).';
-    if numel(rangeValues) ~= 3 || rangeValues(3) <= 0 || rangeValues(1) > rangeValues(2)
+    rawValues = step.('_range_');
+    if ~(isnumeric(rawValues) || iscell(rawValues)) || numel(rawValues) ~= 3
         error('nirs4all:InvalidPipeline', ...
             'Invalid n_components _range_; expected [start, stop, positive_step].');
     end
-    values = int32(rangeValues(1):rangeValues(3):rangeValues(2));
+    rangeValues = zeros(1, 3);
+    for idx = 1:3
+        if iscell(rawValues)
+            rangeValues(idx) = integerParam(rawValues{idx}, 1);
+        else
+            rangeValues(idx) = integerParam(rawValues(idx), 1);
+        end
+    end
+    if rangeValues(1) > rangeValues(2)
+        error('nirs4all:InvalidPipeline', 'Invalid n_components _range_; start must be <= stop.');
+    end
+    count = floor((rangeValues(2) - rangeValues(1)) / rangeValues(3)) + 1;
+    if count > 10000
+        error('nirs4all:InvalidPipeline', 'Portable n_components sweep exceeds 10000 variants.');
+    end
+    values = int32(rangeValues(1) + (0:(count - 1)) * rangeValues(3));
     return
 end
 params = getFieldOrDefault(step.model, 'params', struct());
-values = int32(max(1, getFieldOrDefault(params, 'n_components', 2)));
+values = int32(integerParam(getFieldOrDefault(params, 'n_components', 2), 1));
+end
+
+function number = numericParam(value)
+if isstring(value) && isscalar(value)
+    value = char(value);
+end
+if ischar(value)
+    number = str2double(strtrim(value));
+elseif isnumeric(value) && isscalar(value) && isreal(value)
+    number = double(value);
+else
+    error('nirs4all:InvalidPipeline', 'Portable numeric parameter must be a finite number.');
+end
+if ~isscalar(number) || ~isfinite(number)
+    error('nirs4all:InvalidPipeline', 'Portable numeric parameter must be finite.');
+end
+end
+
+function number = integerParam(value, minimum)
+number = numericParam(value);
+if number ~= fix(number) || number < minimum || number > 2147483647
+    error('nirs4all:InvalidPipeline', 'Portable integer parameter must be an integer in %g..2147483647.', minimum);
+end
 end
 
 function predictions = predictFromCoefficients(X, coefs, xMean, yMean)
