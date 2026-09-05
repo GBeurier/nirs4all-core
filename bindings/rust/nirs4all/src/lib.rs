@@ -18,6 +18,7 @@ mod archive_v1;
 pub(crate) mod archive_v2;
 mod archive_v3;
 mod archive_view;
+mod durability;
 mod formats_io;
 mod io_training;
 mod native_methods_replay;

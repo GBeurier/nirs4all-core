@@ -17,6 +17,7 @@ use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 use unicode_normalization::UnicodeNormalization;
 
+use crate::durability::sync_directory;
 use crate::{
     load_archive_v1, load_archive_v3, ArchivePayload, ArchiveStoreError, LoadedArchiveV1,
     LoadedArchiveV3,
@@ -1793,9 +1794,7 @@ pub(crate) fn atomic_create(path: &Path, bytes: &[u8]) -> Result<(), ArchiveStor
                             ArchiveStoreError::Io(e)
                         }
                     })?;
-                    match fs::remove_file(&temp).and_then(|()| {
-                        File::open(parent).and_then(|directory| directory.sync_all())
-                    }) {
+                    match fs::remove_file(&temp).and_then(|()| sync_directory(parent)) {
                         Ok(()) => Ok(()),
                         Err(error) => Err(ArchiveStoreError::PublishedWithCleanupError {
                             path: path.to_path_buf(),

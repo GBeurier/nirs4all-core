@@ -10,6 +10,13 @@ binding manifest.
 
 ### Changed
 
+- Bumped the aggregate to 0.3.30 and repaired atomic Archive V1/V2 publication
+  on Windows. Core now opens the parent directory with write access and
+  `FILE_FLAG_BACKUP_SEMANTICS` before flushing its metadata, instead of using
+  the read-only directory handle that made `FlushFileBuffers` fail with
+  `ERROR_ACCESS_DENIED` after the archive had already become visible. Cleanup
+  and durability errors remain fail-closed, and CI now exercises both archive
+  writers on a real Windows runner.
 - Bumped the aggregate to 0.3.29 and pinned the corrected V1 release train:
   DAG-ML 0.3.25, dag-ml-data 0.2.11, nirs4all-io 0.1.18, and
   nirs4all-methods/pls4all 1.0.18. The immutable upstream revisions and every
