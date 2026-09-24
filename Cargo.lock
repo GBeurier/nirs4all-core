@@ -507,18 +507,18 @@ dependencies = [
 
 [[package]]
 name = "dag-ml"
-version = "0.3.25"
+version = "0.3.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec4476ba8c1ed27fad13259f9ce6e3e7e5fbc1049b1dc0116c6c6fd323eccf95"
+checksum = "04ce0811971426ea5f5f2b48599d3c23e6b930627a7c5ae28efbbdfd13a2cf06"
 dependencies = [
  "dag-ml-core",
 ]
 
 [[package]]
 name = "dag-ml-core"
-version = "0.3.25"
+version = "0.3.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8c53fda2a54d1d3d245848d02c2c851f75bd3f390e24450855654e5664e031d2"
+checksum = "f6c889e60cec9024577e5a3e3915cbcebb97a40efe237840f286597a54ef9464"
 dependencies = [
  "indexmap",
  "n4m",
@@ -534,18 +534,18 @@ dependencies = [
 
 [[package]]
 name = "dag-ml-data"
-version = "0.2.11"
+version = "0.2.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c957ca4bb18a2012e6f7d648f2b300b70faa516133a004c19bab89ae4672884b"
+checksum = "276602bd79764f2384c66ecaf2da41c5db0e2d2b63fd6284c3d4ad8438bd9fb4"
 dependencies = [
  "dag-ml-data-core",
 ]
 
 [[package]]
 name = "dag-ml-data-core"
-version = "0.2.11"
+version = "0.2.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f88f28ad7d4bc9617443da03c0e7e6db4feaa224e697da09e1f0a5fa007b36f"
+checksum = "fa49f11f4abbed4f8181ba5efd04a05a45a80d0e413503b49a7c5e2823d6cf07"
 dependencies = [
  "serde",
  "serde_json",
@@ -555,9 +555,9 @@ dependencies = [
 
 [[package]]
 name = "dag-ml-data-provider"
-version = "0.2.11"
+version = "0.2.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a806973713639e291bd1175278ba62ae3b488c82154af23c3d003760d5ec184"
+checksum = "6525865f306c6214f3ad922e94bf09d05b5dce76029a3c48544e6b8e0cd007ac"
 dependencies = [
  "dag-ml-data-core",
  "serde",
@@ -972,7 +972,7 @@ dependencies = [
 
 [[package]]
 name = "nirs4all"
-version = "0.3.30"
+version = "0.3.31"
 dependencies = [
  "dag-ml",
  "dag-ml-core",
@@ -993,7 +993,7 @@ dependencies = [
 
 [[package]]
 name = "nirs4all-core-python-native"
-version = "0.3.30"
+version = "0.3.31"
 dependencies = [
  "nirs4all",
  "pyo3",
@@ -1003,7 +1003,7 @@ dependencies = [
 
 [[package]]
 name = "nirs4all-core-wasm-native"
-version = "0.3.30"
+version = "0.3.31"
 dependencies = [
  "dag-ml-core",
  "serde_json",
