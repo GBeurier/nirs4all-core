@@ -6,7 +6,7 @@
 [[upstream]]
 key = "dag_ml"
 repo = "GBeurier/dag-ml"
-ref = "233d4ecdae14d2a810f9b01b4ce7c15bdedc9d27"
+ref = "d351c33caf7264a9ed5faf7ad6223c5b492b9fb1"
 role = "Leakage-safe DAG/ML execution coordinator"
 bindings = ["rust", "c", "python", "r", "matlab", "octave", "wasm"]
 python_imports = ["dag_ml"]
@@ -17,7 +17,7 @@ wasm_packages = ["dag-ml-wasm"]
 [[upstream]]
 key = "dag_ml_data"
 repo = "GBeurier/dag-ml-data"
-ref = "ffe533704a1a0b0c7bb7d97a997caade3f4ba36e"
+ref = "6a71216176556a582ba9b684cda37403014e41c2"
 role = "Sample-aligned data contracts for DAG/ML runtimes"
 bindings = ["rust", "c", "python", "r", "wasm"]
 python_imports = ["dag_ml_data"]

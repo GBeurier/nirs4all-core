@@ -1,6 +1,6 @@
 [package]
 name = "nirs4all"
-version = "0.3.30"
+version = "0.3.31"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -41,10 +41,10 @@ path = "src/lib.rs"
 default = []
 datasets = []
 [dependencies]
-dag_ml_crate = { package = "dag-ml", version = "=0.3.25" }
-dag_ml_core = { package = "dag-ml-core", version = "=0.3.25", features = ["methods-optimizer"] }
-dag_ml_data_crate = { package = "dag-ml-data", version = "=0.2.11" }
-dag_ml_data_provider_crate = { package = "dag-ml-data-provider", version = "=0.2.11" }
+dag_ml_crate = { package = "dag-ml", version = "=0.3.27" }
+dag_ml_core = { package = "dag-ml-core", version = "=0.3.27", features = ["methods-optimizer"] }
+dag_ml_data_crate = { package = "dag-ml-data", version = "=0.2.12" }
+dag_ml_data_provider_crate = { package = "dag-ml-data-provider", version = "=0.2.12" }
 libloading = "0.8"
 n4m = { version = "=0.1.4", features = ["dynamic"], default-features = false }
 nirs4all_formats_crate = { package = "nirs4all-formats", version = "=0.2.9", default-features = false }

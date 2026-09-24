@@ -8,6 +8,16 @@ binding manifest.
 
 ## [Unreleased]
 
+## [0.3.31] - 2026-09-24
+
+### Changed
+
+- Align the portable aggregate with DAG-ML 0.3.27 and DAG-ML Data 0.2.12.
+  Rust pins and Python dependency floors now select the parity-qualified
+  coordinator and the same unchanged data contracts across bindings.
+
+## [0.3.30] - 2026-09-23
+
 ### Changed
 
 - Bumped the aggregate to 0.3.30 and repaired atomic Archive V1/V2 publication
