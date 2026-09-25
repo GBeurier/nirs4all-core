@@ -623,7 +623,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         package = _load_wasm_package()
         lock = _load_wasm_package_lock()
         root_lock = lock["packages"][""]
-        expected_peers = {
+        upstream_peers = {
             "@nirs4all/datasets-wasm",
             "@nirs4all/formats-wasm",
             "@nirs4all/io-wasm",
@@ -631,6 +631,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             "dag-ml-data-wasm",
             "dag-ml-wasm",
         }
+        expected_peers = upstream_peers | {"ml-random-forest"}
 
         self.assertEqual(lock["lockfileVersion"], 3)
         self.assertEqual(package["types"], "./src/index.d.ts")
@@ -646,11 +647,17 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertEqual(set(root_lock["peerDependencies"]), expected_peers)
         self.assertEqual(set(root_lock["peerDependenciesMeta"]), expected_peers)
         self.assertEqual(root_lock["license"], package["license"])
-        for peer in expected_peers:
+        for peer in upstream_peers:
             self.assertEqual(package["peerDependencies"][peer], "*")
             self.assertTrue(package["peerDependenciesMeta"][peer]["optional"])
             self.assertEqual(root_lock["peerDependencies"][peer], "*")
             self.assertTrue(root_lock["peerDependenciesMeta"][peer]["optional"])
+        self.assertEqual(package["peerDependencies"]["ml-random-forest"], "^2.1.0")
+        self.assertEqual(root_lock["peerDependencies"]["ml-random-forest"], "^2.1.0")
+        self.assertTrue(package["peerDependenciesMeta"]["ml-random-forest"]["optional"])
+        self.assertTrue(root_lock["peerDependenciesMeta"]["ml-random-forest"]["optional"])
+        self.assertEqual(package["devDependencies"]["ml-random-forest"], "^2.1.0")
+        self.assertEqual(package["devDependencies"]["dag-ml-wasm"], "^0.3.27")
 
         typescript = lock["packages"]["node_modules/typescript"]
         self.assertEqual(typescript["version"], package["devDependencies"]["typescript"])
