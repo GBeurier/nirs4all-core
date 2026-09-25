@@ -43,6 +43,11 @@ export const portableOperatorClasses = Object.freeze([
   'nirs4all.operators.transforms.nirs.SavitzkyGolay',
   'sklearn.cross_decomposition.PLSRegression',
   'sklearn.cross_decomposition._pls.PLSRegression',
+  'n4m.KennardStone',
+  'n4m.SNV',
+  'n4m.SavitzkyGolay',
+  'n4m.PLS',
+  'n4m.PLSRegression',
 ]);
 
 export const runtimeSurfaces = Object.freeze([
@@ -173,6 +178,7 @@ export const controllerCapabilities = Object.freeze([
     operatorClasses: Object.freeze([
       'nirs4all.operators.splitters.KennardStoneSplitter',
       'nirs4all.operators.splitters.splitters.KennardStoneSplitter',
+      'n4m.KennardStone',
     ]),
     ports: Object.freeze({
       inputs: Object.freeze(['X']),
@@ -191,6 +197,7 @@ export const controllerCapabilities = Object.freeze([
       'nirs4all.operators.transforms.SNV',
       'nirs4all.operators.transforms.StandardNormalVariate',
       'nirs4all.operators.transforms.scalers.StandardNormalVariate',
+      'n4m.SNV',
     ]),
     ports: Object.freeze({
       inputs: Object.freeze(['X']),
@@ -208,6 +215,7 @@ export const controllerCapabilities = Object.freeze([
     operatorClasses: Object.freeze([
       'nirs4all.operators.transforms.SavitzkyGolay',
       'nirs4all.operators.transforms.nirs.SavitzkyGolay',
+      'n4m.SavitzkyGolay',
     ]),
     ports: Object.freeze({
       inputs: Object.freeze(['X']),
@@ -225,6 +233,8 @@ export const controllerCapabilities = Object.freeze([
     operatorClasses: Object.freeze([
       'sklearn.cross_decomposition.PLSRegression',
       'sklearn.cross_decomposition._pls.PLSRegression',
+      'n4m.PLS',
+      'n4m.PLSRegression',
     ]),
     ports: Object.freeze({
       inputs: Object.freeze(['X', 'y']),
