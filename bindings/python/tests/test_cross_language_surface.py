@@ -1,26 +1,21 @@
 """Static cross-language public-surface parity gate for the aggregate.
 
 The nirs4all-core aggregate public surface is declared once per language
-binding. Four invariants must hold for the aggregate to be truthful, and none
-of them is otherwise checked when R, Node, Octave, or a Rust toolchain are
+binding. Three invariants must hold for the aggregate to be truthful, and none
+of them is otherwise checked when Node, Octave, or a Rust toolchain are
 unavailable (those runtime gates simply skip):
 
-1. The portable operator subset is identical across **all five** language
-   bindings (Python, WASM, R, MATLAB/Octave, Rust).
-2. The upstream registry (keys and role strings) is identical across all five
+1. The portable operator subset is identical across the four core-owned language
+   bindings (Python, WASM, MATLAB/Octave, Rust).
+2. The upstream registry (keys and role strings) is identical across all four
    bindings and the machine-readable ``compat`` registry.
-3. The R package export surface is self-consistent: ``NAMESPACE`` exports equal
-   the ``surface.R`` expected exports, every export has an ``\\alias`` in
-   ``man/`` (what ``R CMD check`` enforces), and every export has a top-level
-   definition in ``R/``.
-4. Every binding exposes a thin facade or re-export for the upstream DAG-ML
+3. Every binding exposes a thin facade or re-export for the upstream DAG-ML
    process-local loss/metric registry.
 
 These checks run in pure Python by reading the binding source files, so surface
 drift in *any* binding is caught in the required Python gate even on machines
-where R, Node, Octave, or ``cargo`` are unavailable. They complement (do not
-duplicate) the R/WASM/MATLAB/Rust gates in ``surface.R``,
-``tests/index.test.js``, ``tests/smoke.m``, and the ``cargo test`` unit tests,
+where Node, Octave, or ``cargo`` are unavailable. They complement (do not
+duplicate) the WASM/MATLAB/Rust gates in ``tests/index.test.js``, ``tests/smoke.m``, and the ``cargo test`` unit tests,
 which additionally require the respective runtimes.
 """
 
@@ -48,13 +43,6 @@ WASM_PACKAGE = ROOT / "bindings/wasm/package.json"
 WASM_PACKAGE_LOCK = ROOT / "bindings/wasm/package-lock.json"
 WASM_NATIVE_CARGO = ROOT / "bindings/wasm-native/Cargo.toml"
 PYPROJECT = ROOT / "bindings/python/pyproject.toml"
-R_PIPELINE = ROOT / "bindings/r/R/pipeline.R"
-R_UPSTREAMS = ROOT / "bindings/r/R/upstreams.R"
-R_DESCRIPTION = ROOT / "bindings/r/DESCRIPTION"
-R_NAMESPACE = ROOT / "bindings/r/NAMESPACE"
-R_SURFACE = ROOT / "bindings/r/tests/surface.R"
-R_MAN_DIR = ROOT / "bindings/r/man"
-R_SRC_DIR = ROOT / "bindings/r/R"
 MATLAB_OPERATORS = ROOT / "bindings/matlab/+nirs4all/portableOperatorClasses.m"
 MATLAB_UPSTREAMS = ROOT / "bindings/matlab/+nirs4all/upstreams.m"
 MATLAB_LOCAL_REGISTRY = ROOT / "bindings/matlab/+nirs4all/localImplementationRegistry.m"
@@ -66,7 +54,6 @@ COMPAT = ROOT / "compat/upstreams.toml"
 
 EXPECTED_OPERATOR_COUNT = 9
 EXPECTED_UPSTREAM_COUNT = 6
-EXPECTED_R_EXPORT_COUNT = 19
 
 
 def _read(path: Path) -> str:
@@ -95,21 +82,6 @@ def _wasm_upstreams() -> tuple[list[str], dict[str, str]]:
     )
     keys = re.findall(r"key:\s*'([^']+)'", block)
     roles = re.findall(r"role:\s*'([^']+)'", block)
-    return keys, dict(zip(keys, roles))
-
-
-def _r_operator_classes() -> list[str]:
-    block = _bracketed(
-        _read(R_PIPELINE),
-        r"NIRS4ALL_PORTABLE_OPERATOR_CLASSES\s*<-\s*c\((.*?)\)",
-    )
-    return re.findall(r'"([^"]+)"', block)
-
-
-def _r_upstreams() -> tuple[list[str], dict[str, str]]:
-    block = _bracketed(_read(R_UPSTREAMS), r"NIRS4ALL_UPSTREAMS\s*<-\s*list\((.*?)\n\)")
-    keys = re.findall(r"(?m)^\s*(\w+)\s*=\s*list\(", block)
-    roles = re.findall(r'role\s*=\s*"([^"]+)"', block)
     return keys, dict(zip(keys, roles))
 
 
@@ -159,20 +131,6 @@ def _compat_upstreams() -> tuple[list[str], dict[str, str]]:
     return keys, {item["key"]: item["role"] for item in data}
 
 
-def _r_description_fields() -> dict[str, str]:
-    fields: dict[str, str] = {}
-    current: str | None = None
-    for line in _read(R_DESCRIPTION).splitlines():
-        if line.startswith((" ", "\t")) and current is not None:
-            fields[current] = f"{fields[current]} {line.strip()}".strip()
-            continue
-        key, sep, value = line.partition(":")
-        if sep:
-            current = key
-            fields[current] = value.strip()
-    return fields
-
-
 def _cargo_to_pep440(version: str) -> str:
     base, sep, prerelease = version.partition("-")
     if not sep:
@@ -182,11 +140,6 @@ def _cargo_to_pep440(version: str) -> str:
     return f"{base}{suffix}{number or '0'}"
 
 
-def _cargo_to_r(version: str) -> str:
-    base = version.partition("-")[0]
-    return f"{base}.9000" if "-" in version else base
-
-
 class VersionMetadataParityTests(unittest.TestCase):
     def test_binding_manifest_versions_match_the_rust_source_of_truth(self) -> None:
         cargo_version = str(tomllib.loads(_read(RUST_CARGO))["package"]["version"])
@@ -194,7 +147,6 @@ class VersionMetadataParityTests(unittest.TestCase):
         wasm_package = json.loads(_read(WASM_PACKAGE))
         wasm_lock = json.loads(_read(WASM_PACKAGE_LOCK))
         wasm_native = tomllib.loads(_read(WASM_NATIVE_CARGO))
-        r_description = _r_description_fields()
 
         self.assertEqual(
             pyproject["project"]["version"],
@@ -205,7 +157,6 @@ class VersionMetadataParityTests(unittest.TestCase):
         self.assertEqual(wasm_lock["version"], cargo_version)
         self.assertEqual(wasm_lock["packages"][""]["version"], cargo_version)
         self.assertEqual(wasm_native["package"]["version"], cargo_version)
-        self.assertEqual(r_description["Version"], _cargo_to_r(cargo_version))
 
     def test_release_surface_version_metadata_covers_all_bindings(self) -> None:
         manifest = n4core.release_topology_manifest()
@@ -217,7 +168,6 @@ class VersionMetadataParityTests(unittest.TestCase):
                 "bindings/rust/nirs4all/Cargo.toml:package.version",
                 "cargo-semver",
             ),
-            "r": ("bindings/r/DESCRIPTION:Version", "r-description"),
             "matlab_octave": (
                 "bindings/rust/nirs4all/Cargo.toml:package.version",
                 "derived-cargo-semver",
@@ -250,7 +200,6 @@ class PortableOperatorSubsetParityTests(unittest.TestCase):
 
         extractors = {
             "wasm": _wasm_operator_classes,
-            "r": _r_operator_classes,
             "matlab": _matlab_operator_classes,
             "rust": _rust_operator_classes,
         }
@@ -273,14 +222,12 @@ class UpstreamRegistryParityTests(unittest.TestCase):
         self.assertEqual(len(python), EXPECTED_UPSTREAM_COUNT)
 
         wasm_keys, _ = _wasm_upstreams()
-        r_keys, _ = _r_upstreams()
         matlab_keys, _ = _matlab_upstreams()
         rust_keys, _ = _rust_upstreams()
         compat_keys, _ = _compat_upstreams()
 
         bindings = {
             "wasm": wasm_keys,
-            "r": r_keys,
             "matlab": matlab_keys,
             "rust": rust_keys,
             "compat": compat_keys,
@@ -294,14 +241,12 @@ class UpstreamRegistryParityTests(unittest.TestCase):
         self.assertEqual(len(python), EXPECTED_UPSTREAM_COUNT)
 
         _, wasm_roles = _wasm_upstreams()
-        _, r_roles = _r_upstreams()
         _, matlab_roles = _matlab_upstreams()
         _, rust_roles = _rust_upstreams()
         _, compat_roles = _compat_upstreams()
 
         bindings = {
             "wasm": wasm_roles,
-            "r": r_roles,
             "matlab": matlab_roles,
             "rust": rust_roles,
             "compat": compat_roles,
@@ -348,15 +293,6 @@ class LocalImplementationRegistryFacadeParityTests(unittest.TestCase):
                 r"localImplementationRegistry(?:<[^>]+>)?\(",
             ),
             "wasm-task-bound-loss": (WASM_TYPES, r"\bbind_training_loss\b"),
-            "r-export": (
-                R_NAMESPACE,
-                r"export\(nirs4all_local_implementation_registry\)",
-            ),
-            "r-delegation": (
-                R_UPSTREAMS,
-                r"nirs4all_local_implementation_registry\s*<-\s*function\(\)",
-            ),
-            "r-task-bound-loss": (R_UPSTREAMS, r"\binvoke_training_loss\b"),
             "matlab-delegation": (
                 MATLAB_LOCAL_REGISTRY,
                 r"function registry = localImplementationRegistry\(\)",
@@ -374,61 +310,6 @@ class LocalImplementationRegistryFacadeParityTests(unittest.TestCase):
         for label, (path, pattern) in markers.items():
             with self.subTest(binding=label):
                 self.assertRegex(_read(path), pattern)
-
-
-class RPublicSurfaceConsistencyTests(unittest.TestCase):
-    def test_namespace_exports_match_surface_test_expected_exports(self) -> None:
-        exports = _r_namespace_exports()
-        expected = _r_surface_expected_exports()
-
-        self.assertEqual(len(exports), EXPECTED_R_EXPORT_COUNT, exports)
-        self.assertEqual(len(expected), EXPECTED_R_EXPORT_COUNT, expected)
-        self.assertEqual(set(exports), set(expected))
-
-    def test_every_r_export_is_documented_in_man(self) -> None:
-        exports = set(_r_namespace_exports())
-        aliases = _r_man_aliases()
-
-        self.assertEqual(len(exports), EXPECTED_R_EXPORT_COUNT)
-        undocumented = sorted(exports - aliases)
-        self.assertEqual(
-            undocumented, [], f"exports without a man \\alias: {undocumented}"
-        )
-
-    def test_every_r_export_has_a_top_level_definition(self) -> None:
-        exports = set(_r_namespace_exports())
-        defined = _r_top_level_functions()
-
-        self.assertEqual(len(exports), EXPECTED_R_EXPORT_COUNT)
-        undefined = sorted(exports - defined)
-        self.assertEqual(
-            undefined, [], f"exports without an R/*.R definition: {undefined}"
-        )
-
-
-def _r_namespace_exports() -> list[str]:
-    return re.findall(r"export\((\w+)\)", _read(R_NAMESPACE))
-
-
-def _r_surface_expected_exports() -> list[str]:
-    block = _bracketed(_read(R_SURFACE), r"expected_exports\s*<-\s*c\((.*?)\)")
-    return re.findall(r'"([^"]+)"', block)
-
-
-def _r_man_aliases() -> set[str]:
-    aliases: set[str] = set()
-    for path in sorted(R_MAN_DIR.glob("*.Rd")):
-        aliases.update(re.findall(r"\\alias\{([^}]+)\}", _read(path)))
-    return aliases
-
-
-def _r_top_level_functions() -> set[str]:
-    functions: set[str] = set()
-    for path in sorted(R_SRC_DIR.glob("*.R")):
-        functions.update(
-            re.findall(r"(?m)^([A-Za-z_.][A-Za-z0-9_.]*)\s*<-\s*function", _read(path))
-        )
-    return functions
 
 
 if __name__ == "__main__":

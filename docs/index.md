@@ -3,8 +3,9 @@
 `nirs4all-core` is the **portable aggregate
 distribution** of the nirs4all
 ecosystem. It is a thin portability layer that records the same upstream domain
-map across **Rust, Python, R, MATLAB/Octave, and JavaScript/WASM** from one
-canonical package surface - without becoming a second implementation of parsing,
+map across **Rust, Python, MATLAB/Octave, and JavaScript/WASM** from one
+canonical package surface. The R product now lives in `nirs4all-r`. Neither
+repository should become a second implementation of parsing,
 datasets, ML orchestration, or numerical methods.
 
 ## What it re-exports

@@ -9,7 +9,6 @@ from ._pipeline import PORTABLE_OPERATOR_CLASSES
 
 RUNTIME_SURFACES: tuple[str, ...] = (
     "python",
-    "r",
     "javascript_wasm",
     "rust",
     "matlab_octave",
@@ -24,13 +23,6 @@ _RUNTIME_CONTRACTS: tuple[dict[str, Any], ...] = (
         "surface": "python",
         "pipeline_execution": "parity-validated",
         "pipeline_entrypoint": "run_portable_pipeline",
-        "serialized_model_predict": False,
-        "predict_entrypoint": None,
-    },
-    {
-        "surface": "r",
-        "pipeline_execution": "parity-validated",
-        "pipeline_entrypoint": "nirs4all_run_portable_pipeline",
         "serialized_model_predict": False,
         "predict_entrypoint": None,
     },

@@ -455,7 +455,7 @@ def _prepare_r_library(workspace_root: Path, core_root: Path, artifacts_dir: Pat
             "--no-staged-install",
             str(methods_r),
         ],
-        [str(r_cmd), "CMD", "INSTALL", f"--library={r_lib}", str(core_root / "bindings" / "r")],
+        [str(r_cmd), "CMD", "INSTALL", f"--library={r_lib}", str(Path(os.environ.get("NIRS4ALL_R_ROOT", workspace_root / "nirs4all-r")))],
     ]
     for command in commands:
         completed = subprocess.run(
@@ -506,7 +506,6 @@ args <- commandArgs(trailingOnly = TRUE)
 pipeline_path <- args[[1]]
 dataset_path <- args[[2]]
 output_path <- args[[3]]
-r_src_dir <- args[[4]]
 
 if (!requireNamespace("jsonlite", quietly = TRUE)) {
   stop("jsonlite R package is not installed", call. = FALSE)
@@ -523,16 +522,11 @@ if (nzchar(expected_n4m_lib)) {
   }
 }
 
-if (requireNamespace("nirs4all", quietly = TRUE)) {
-  run_portable <- nirs4all::nirs4all_run_portable_pipeline
-  binding_source <- "installed-package"
-} else {
-  source(file.path(r_src_dir, "upstreams.R"))
-  source(file.path(r_src_dir, "pipeline.R"))
-  source(file.path(r_src_dir, "execution.R"))
-  run_portable <- nirs4all_run_portable_pipeline
-  binding_source <- "source-checkout"
+if (!requireNamespace("nirs4all", quietly = TRUE)) {
+  stop("nirs4all R package from nirs4all-r is not installed", call. = FALSE)
 }
+run_portable <- nirs4all::nirs4all_run_portable_pipeline
+binding_source <- "installed-package"
 
 payload <- jsonlite::fromJSON(dataset_path, simplifyVector = FALSE)
 actual <- run_portable(pipeline_path, payload$portable_view)
@@ -551,7 +545,7 @@ jsonlite::write_json(actual, output_path, auto_unbox = TRUE, digits = 16)
     if methods_lib_dir.is_dir():
         _prepend_methods_lib_env(env, methods_lib_dir)
     completed = subprocess.run(
-        [rscript, "--vanilla", str(script_path), str(pipeline_path), str(dataset_path), str(output_json), str(core_root / "bindings/r/R")],
+        [rscript, "--vanilla", str(script_path), str(pipeline_path), str(dataset_path), str(output_json)],
         cwd=artifacts_dir,
         env=env,
         text=True,
