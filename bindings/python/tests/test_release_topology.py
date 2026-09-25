@@ -566,11 +566,18 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             "dag-ml-data-wasm",
             "dag-ml-wasm",
         }
-        expected_peers = upstream_peers | {"ml-random-forest"}
+        classic_ml_peers = {
+            "ml-random-forest": "^2.1.0",
+            "ml": "^8.0.0",
+            "scikitjs": "^1.24.0",
+            "@tensorflow/tfjs": "^3.21.0",
+        }
+        expected_peers = upstream_peers | set(classic_ml_peers)
 
         self.assertEqual(lock["lockfileVersion"], 3)
         self.assertEqual(package["types"], "./src/index.d.ts")
         self.assertEqual(package["exports"]["."]["types"], package["types"])
+        self.assertEqual(package["exports"]["./classic-ml"]["types"], "./src/classic-ml.d.ts")
         self.assertEqual(
             package["scripts"]["test"],
             "npm run build:native && npm run test:js && npm run typecheck",
@@ -587,11 +594,12 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             self.assertTrue(package["peerDependenciesMeta"][peer]["optional"])
             self.assertEqual(root_lock["peerDependencies"][peer], "*")
             self.assertTrue(root_lock["peerDependenciesMeta"][peer]["optional"])
-        self.assertEqual(package["peerDependencies"]["ml-random-forest"], "^2.1.0")
-        self.assertEqual(root_lock["peerDependencies"]["ml-random-forest"], "^2.1.0")
-        self.assertTrue(package["peerDependenciesMeta"]["ml-random-forest"]["optional"])
-        self.assertTrue(root_lock["peerDependenciesMeta"]["ml-random-forest"]["optional"])
-        self.assertEqual(package["devDependencies"]["ml-random-forest"], "^2.1.0")
+        for peer, version in classic_ml_peers.items():
+            self.assertEqual(package["peerDependencies"][peer], version)
+            self.assertEqual(root_lock["peerDependencies"][peer], version)
+            self.assertTrue(package["peerDependenciesMeta"][peer]["optional"])
+            self.assertTrue(root_lock["peerDependenciesMeta"][peer]["optional"])
+            self.assertEqual(package["devDependencies"][peer], version)
         self.assertEqual(package["devDependencies"]["dag-ml-wasm"], "^0.3.27")
 
         typescript = lock["packages"]["node_modules/typescript"]
