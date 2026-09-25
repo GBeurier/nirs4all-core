@@ -22,7 +22,7 @@ provides matrix, decomposition and statistics modules, but this is a selected
 toolbox rather than SciPy compatibility. A JSON ML model is never labeled as a
 portable native n4m artifact.
 
-For Kanaries ML, the published 1.1 package has no runtime dependencies and has
+For [Kanaries ML](https://github.com/Kanaries/ml), the published 1.1 package has no runtime dependencies and has
 a direct `BaseEstimator` / `TransformerBase` API, random forests and PCA. Its
 repository has numerous tests and a CI job that checks fixtures pinned to
 scikit-learn. It is also young and has little independent adoption. A local
