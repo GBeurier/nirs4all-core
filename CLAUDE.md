@@ -40,10 +40,8 @@ make test
 cargo test --workspace
 PYTHONPATH=bindings/python/src python -m unittest discover -s bindings/python/tests
 npm test --prefix bindings/wasm
-mkdir -p dist/r && cd dist/r && R CMD build ../../bindings/r && cd ../.. && R CMD check --no-manual dist/r/nirs4all_*.tar.gz
 octave --quiet --eval "run('bindings/matlab/tests/smoke.m')"
 ```
 
-`make build` produces Python, npm, R, MATLAB/Octave, and Rust package
-artifacts when the relevant toolchains are installed. R and Octave may be
-available only in CI on some workstations.
+`make build` produces core-owned Python, npm, MATLAB/Octave, and Rust package
+artifacts. The R package is built and checked in `nirs4all-r`.

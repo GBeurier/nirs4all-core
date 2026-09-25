@@ -135,7 +135,6 @@ test('capability manifest describes portable custom app host controllers', () =>
   assert.equal(manifest.schema, 'nirs4all-core.capabilities.v1');
   assert.deepEqual(manifest.runtimeSurfaces, [
     'python',
-    'r',
     'javascript_wasm',
     'rust',
     'matlab_octave',

@@ -118,7 +118,7 @@ class RepositoryDescriptorConsumerTests(unittest.TestCase):
                 mock.patch.object(
                     consumer,
                     "_run_r_execution",
-                    return_value=_runtime("bindings/r", [1.25, 2.25]),
+                    return_value=_runtime("nirs4all-r", [1.25, 2.25]),
                 ),
                 mock.patch.object(
                     consumer,
@@ -143,7 +143,7 @@ class RepositoryDescriptorConsumerTests(unittest.TestCase):
         )
         self.assertEqual(
             [item["surface"] for item in result["execution"]["runtime_results"]],
-            ["bindings/python", "bindings/r", "bindings/wasm"],
+            ["bindings/python", "nirs4all-r", "bindings/wasm"],
         )
         self.assertNotIn("known_followups", result)
 
@@ -166,7 +166,7 @@ class RepositoryDescriptorConsumerTests(unittest.TestCase):
             mock.patch.object(
                 consumer,
                 "_run_r_execution",
-                return_value=_runtime("bindings/r", [1.25, 2.25]),
+                return_value=_runtime("nirs4all-r", [1.25, 2.25]),
             ),
             mock.patch.object(
                 consumer,
@@ -181,7 +181,7 @@ class RepositoryDescriptorConsumerTests(unittest.TestCase):
         with self.assertRaisesRegex(AssertionError, "provider execution dataset"):
             consumer._runtime_execution(FIXTURE, {"repository": {"pipeline_id": "portable-methods"}})
 
-    def test_prepare_r_execution_library_installs_methods_and_core_with_preserved_libs(self) -> None:
+    def test_prepare_r_execution_library_installs_methods_and_r_product_with_preserved_libs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             artifacts_dir = root / "artifacts"
@@ -199,6 +199,8 @@ class RepositoryDescriptorConsumerTests(unittest.TestCase):
             r_cmd.write_text("#!/bin/sh\n", encoding="utf-8")
             methods_lib = methods_lib_dir / "libn4m.so"
             methods_lib.write_text("", encoding="utf-8")
+            r_product = root / "nirs4all-r"
+            r_product.mkdir()
 
             commands: list[list[str]] = []
 
@@ -227,6 +229,7 @@ class RepositoryDescriptorConsumerTests(unittest.TestCase):
                     os.environ,
                     {
                         "NIRS4ALL_METHODS_ROOT": str(methods_root),
+                        "NIRS4ALL_R_ROOT": str(r_product),
                         "R_LIBS": "/opt/site-r-lib",
                         "R_LIBS_USER": "/home/runner/R/library",
                         "LD_LIBRARY_PATH": "/usr/lib",
@@ -240,7 +243,7 @@ class RepositoryDescriptorConsumerTests(unittest.TestCase):
         self.assertEqual(r_lib, artifacts_dir / "_r-lib")
         self.assertEqual(len(commands), 2)
         self.assertIn(str(methods_r), commands[0])
-        self.assertIn(str(ROOT / "bindings" / "r"), commands[1])
+        self.assertIn(str(r_product), commands[1])
 
 
 if __name__ == "__main__":
