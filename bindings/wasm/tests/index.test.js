@@ -54,6 +54,7 @@ test('public V1 WASM surface exports expected names', () => {
       'artifactContracts',
       'capabilityManifest',
       'controllerCapabilities',
+      'createAsyncJsEstimatorController',
       'createDagMlNodeResult',
       'createDagMlModelManifest',
       'createJsEstimatorController',

@@ -35,8 +35,31 @@ compatibility, and browser bundle size are qualified.
 
 TensorFlow.js is optional and loaded only through scikitjs; it is not required
 for ml.js controllers or n4m pipelines. TensorFlow.js 3.x is needed by the
-current scikitjs release. Asynchronous scikitjs models remain host-only until
-DAG-ML offers an asynchronous WASM callback path.
+current scikitjs release. `createScikitJsAsyncController()` awaits fit,
+prediction and serialization for any class exposed by scikitjs, and returns
+the same NodeResult shape for a host that supplies a native DAG-ML NodeTask.
+It does **not** plug into `execute_campaign_phase_json()`: that WASM entrypoint
+requires its callback to return a JSON string synchronously. Blocking the
+same browser worker while awaiting a Promise would prevent its microtasks from
+running. A future native async phase driver is required for asynchronous
+estimators to participate in DAG-ML-managed CV. Do not substitute host-made
+fold loops for DAG-ML's seed, fold and lineage authority.
+
+## Capability inventory (0.3.35)
+
+| Area | JS/WASM package | nirs4all-web pipeline nodes | Remaining gap |
+| --- | --- | --- | --- |
+| Portable n4m | Methods-backed pipeline and serialized PLS replay, strict Python oracle gate | n4m preprocessing and 25 model nodes | Archive V2 replay remains the qualified single-predictor Methods subset |
+| ml.js supervised | Random forest and CART regression/classification; KNN classification, all with synchronous DAG-ML controllers | Five nodes: two forests, two trees, KNN classifier | Other ml.js models need independent validation before binding |
+| ml.js transforms | PCA fit/transform/inverseTransform host adapter | No ml.js PCA pipeline node; the Explore PCA view is separate | Pipeline transformer controller and fitted-state replay |
+| scikitjs synchronous | Tree regression/classification DAG-ML controllers; StandardScaler host transformer | No scikitjs nodes | Browser dependency/bundle and artifact integration |
+| scikitjs asynchronous | Generic host estimator and awaiting controller; LinearRegression fit/predict/serialization exercised | No async training nodes | Native DAG-ML asynchronous callback/phase driver |
+| Kanaries ML | Evaluated, no adapter | None | Parameter, numerical, artifact and browser qualification |
+| TensorFlow.js / Torch / ONNX | TensorFlow.js only as optional scikitjs backend; no neural-network controller | None | Dedicated framework and portable-model work |
+
+The package exposes a selected ml.js toolbox, not a complete sklearn or SciPy
+implementation. Only n4m-backed portable models have the cross-language binary
+and scientific parity claim; ml.js and scikitjs artifacts stay library-specific.
 
 A production Vite browser probe loaded scikitjs and TensorFlow.js 3.21, fit a
 decision tree, and predicted `[1]` for input `[[1]]`. Its generated JavaScript
