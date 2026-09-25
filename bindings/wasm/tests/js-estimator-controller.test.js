@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import * as dagMl from 'dag-ml-wasm';
 import {
   createDagMlNodeResult,
+  createAsyncJsEstimatorController,
   createJsEstimatorController,
   createN4mModelController,
   createRandomForestController,
@@ -85,6 +86,52 @@ test('generic JS estimator follows native DAG-ML folds, phases and exact seed', 
   assert.deepEqual(prediction.sample_ids, ['future:0']);
   assert.equal(prediction.values[0][0], y.reduce((sum, value) => sum + value, 0) / y.length);
   assert.equal(prediction.partition, 'final');
+});
+
+test('async host controller awaits fit and predict without leaking validation rows', async () => {
+  const { foldSet } = fixture();
+  const trainedRows = [];
+  const controllerId = 'controller:js.async-test';
+  const controller = createAsyncJsEstimatorController({
+    dagMl, controllerId, foldSet, dataset: { sampleIds: ids, X, y },
+    createEstimator() {
+      return {
+        async fit(rows, targets) {
+          await Promise.resolve();
+          trainedRows.push(rows.map((row) => row[0]));
+          this.mean = targets.reduce((sum, value) => sum + value, 0) / targets.length;
+        },
+        async predict(rows) {
+          await Promise.resolve();
+          return rows.map(() => this.mean);
+        },
+        async toJSON() { return { mean: this.mean }; },
+      };
+    },
+    async restoreEstimator(model) {
+      return { async predict(rows) { return rows.map(() => model.mean); } };
+    },
+  });
+  const fold = foldSet.folds[0];
+  const task = { phase: 'FIT_CV', run_id: 'run:async-test', fold_id: fold.fold_id,
+    variant_id: 'base', branch_path: [], node_plan: {
+      node_id: 'model:async-test', controller_id: controllerId,
+      controller_version: '1.0.0', params: {}, params_fingerprint: 'test',
+    } };
+  const result = JSON.parse(await controller.invokeAsync(controllerId, JSON.stringify(task), '42'));
+  assert.deepEqual(trainedRows[0], fold.train_sample_ids.map((id) => Number(id.slice(1))));
+  assert.deepEqual(result.predictions[0].sample_ids, fold.validation_sample_ids);
+  assert.equal(result.predictions[0].values.length, fold.validation_sample_ids.length);
+  await controller.fitFull();
+  const future = { sampleIds: ['future'], X: [[15, 0]] };
+  const expected = await controller.predict(future);
+  const restored = createAsyncJsEstimatorController({
+    dagMl, controllerId, foldSet, dataset: { sampleIds: ids, X, y },
+    createEstimator: () => { throw new Error('restored controller must not train'); },
+    restoreEstimator: async (model) => ({ async predict(rows) { return rows.map(() => model.mean); } }),
+  });
+  await restored.importModel(await controller.exportModel());
+  assert.deepEqual(await restored.predict(future), expected);
 });
 
 test('random forest regression is reproducible and its model reloads', async () => {
