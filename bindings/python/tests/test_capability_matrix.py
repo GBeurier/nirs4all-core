@@ -36,30 +36,26 @@ ROOT = Path(__file__).resolve().parents[3]
 CAPABILITIES = ROOT / "compat/capabilities.toml"
 OPERATORS_DOC = ROOT / "docs/OPERATORS.md"
 WASM_INDEX = ROOT / "bindings/wasm/src/index.js"
-R_CAPABILITIES = ROOT / "bindings/r/R/capabilities.R"
 RUST_LIB = ROOT / "bindings/rust/nirs4all/src/lib.rs"
 MATLAB_CAPABILITY_MANIFEST = ROOT / "bindings/matlab/+nirs4all/capabilityManifest.m"
 MATLAB_CONTROLLER_CAPABILITIES = ROOT / "bindings/matlab/+nirs4all/controllerCapabilities.m"
 MATLAB_RUNTIME_SURFACES = ROOT / "bindings/matlab/+nirs4all/runtimeSurfaces.m"
 
-EXPECTED_LANGUAGES = {"python", "rust", "wasm", "r", "matlab"}
+EXPECTED_LANGUAGES = {"python", "rust", "wasm", "matlab"}
 EXPECTED_RUNTIME_SURFACES = {
     "python",
-    "r",
     "javascript_wasm",
     "rust",
     "matlab_octave",
 }
 EXPECTED_RUNTIME_CONTRACT_SURFACES = (
     "python",
-    "r",
     "javascript_wasm",
     "rust",
     "matlab_octave",
 )
 RUNTIME_ENTRYPOINT_SOURCES = {
     "python": ROOT / "bindings/python/src/nirs4all_core/_execution.py",
-    "r": ROOT / "bindings/r/R/execution.R",
     "javascript_wasm": ROOT / "bindings/wasm/src/index.js",
     "rust": ROOT / "bindings/rust/nirs4all/src/lib.rs",
     "matlab_octave": ROOT / "bindings/matlab/+nirs4all/runPortablePipeline.m",
@@ -158,7 +154,7 @@ class PortableSubsetLedgerTests(unittest.TestCase):
 
 
 class BindingCapabilityHonestyTests(unittest.TestCase):
-    def test_all_five_languages_are_declared_once(self) -> None:
+    def test_all_four_core_languages_are_declared_once(self) -> None:
         caps = _load_capabilities()
         languages = [binding["language"] for binding in caps["binding"]]
 
@@ -500,16 +496,6 @@ class CustomHostCapabilityManifestTests(unittest.TestCase):
                     "runtimeContracts",
                 ),
             ),
-            "r": (
-                R_CAPABILITIES,
-                (
-                    "nirs4all_artifact_contracts",
-                    "nirs4all_capability_manifest",
-                    "nirs4all_controller_capabilities",
-                    "nirs4all_runtime_surfaces",
-                    "nirs4all_runtime_contracts",
-                ),
-            ),
             "rust": (
                 RUST_LIB,
                 (
@@ -542,7 +528,6 @@ class CustomHostCapabilityManifestTests(unittest.TestCase):
     def test_non_python_bindings_spell_the_same_controller_ids(self) -> None:
         sources = {
             "wasm": WASM_INDEX,
-            "r": R_CAPABILITIES,
             "rust": RUST_LIB,
             "matlab": MATLAB_CONTROLLER_CAPABILITIES,
         }

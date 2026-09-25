@@ -1,6 +1,6 @@
 # Machine-readable capability ledger for the portable operator subset exposed by
-# each nirs4all aggregate language binding (shipping as `nirs4all-core` in
-# Python and `nirs4all` in non-Python registries).
+# each binding shipped from this repository. The R product is independently
+# maintained in `nirs4all-r` and is not a core-owned release surface.
 #
 # Capability levels use the vocabulary defined in docs/OPERATORS.md:
 #   metadata | plan | execute-local | execute-remote | parity-validated
@@ -29,7 +29,6 @@ portable_operator_subset = [
 
 runtime_surfaces = [
   "python",
-  "r",
   "javascript_wasm",
   "rust",
   "matlab_octave",
@@ -73,14 +72,6 @@ parity_gate = "bindings/wasm/tests/parity.test.js"
 execution = "@nirs4all/methods module"
 
 [[binding]]
-language = "r"
-level = "parity-validated"
-run_symbol = "nirs4all_run_portable_pipeline"
-run_source = "bindings/r/R/execution.R"
-parity_gate = "bindings/r/tests/parity.R"
-execution = "nirs4all-methods R binding (n4m / pls4all)"
-
-[[binding]]
 language = "matlab"
 level = "parity-validated"
 run_symbol = "runPortablePipeline"
@@ -95,12 +86,6 @@ execution = "nirs4all-methods +n4m MATLAB/Octave MEX shims"
 surface = "python"
 pipeline_execution = "parity-validated"
 pipeline_entrypoint = "run_portable_pipeline"
-serialized_model_predict = false
-
-[[runtime_contract]]
-surface = "r"
-pipeline_execution = "parity-validated"
-pipeline_entrypoint = "nirs4all_run_portable_pipeline"
 serialized_model_predict = false
 
 [[runtime_contract]]
@@ -141,7 +126,7 @@ operator_classes = [
 inputs = ["X"]
 outputs = ["train_indices", "test_indices"]
 parameters = ["test_size"]
-runtime = { python = "parity-validated", r = "parity-validated", javascript_wasm = "parity-validated", rust = "parity-validated", matlab_octave = "parity-validated" }
+runtime = { python = "parity-validated", javascript_wasm = "parity-validated", rust = "parity-validated", matlab_octave = "parity-validated" }
 execution_path = "portable_pipeline"
 
 [[controller]]
@@ -157,7 +142,7 @@ operator_classes = [
 inputs = ["X"]
 outputs = ["X_transformed"]
 parameters = []
-runtime = { python = "parity-validated", r = "parity-validated", javascript_wasm = "parity-validated", rust = "parity-validated", matlab_octave = "parity-validated" }
+runtime = { python = "parity-validated", javascript_wasm = "parity-validated", rust = "parity-validated", matlab_octave = "parity-validated" }
 execution_path = "portable_pipeline"
 
 [[controller]]
@@ -172,7 +157,7 @@ operator_classes = [
 inputs = ["X"]
 outputs = ["X_transformed"]
 parameters = ["window_length", "polyorder", "deriv", "mode", "cval"]
-runtime = { python = "parity-validated", r = "parity-validated", javascript_wasm = "parity-validated", rust = "parity-validated", matlab_octave = "parity-validated" }
+runtime = { python = "parity-validated", javascript_wasm = "parity-validated", rust = "parity-validated", matlab_octave = "parity-validated" }
 execution_path = "portable_pipeline"
 
 [[controller]]
@@ -187,7 +172,7 @@ operator_classes = [
 inputs = ["X", "y"]
 outputs = ["predictions", "model"]
 parameters = ["n_components", "_range_"]
-runtime = { python = "parity-validated", r = "parity-validated", javascript_wasm = "parity-validated", rust = "parity-validated", matlab_octave = "parity-validated" }
+runtime = { python = "parity-validated", javascript_wasm = "parity-validated", rust = "parity-validated", matlab_octave = "parity-validated" }
 execution_path = "portable_pipeline"
 
 [[controller]]
@@ -199,7 +184,7 @@ operator_classes = []
 inputs = ["pipeline", "dataset"]
 outputs = ["execution_result", "predictions", "model"]
 parameters = []
-runtime = { python = "parity-validated", r = "parity-validated", javascript_wasm = "parity-validated", rust = "parity-validated", matlab_octave = "parity-validated" }
+runtime = { python = "parity-validated", javascript_wasm = "parity-validated", rust = "parity-validated", matlab_octave = "parity-validated" }
 execution_path = "run_portable_pipeline"
 composes = [
   "split.kennard_stone",
@@ -226,7 +211,7 @@ keys = ["formats", "io", "datasets", "dag_ml", "dag_ml_data"]
 id = "conformal.calibrated_result"
 schema = "nirs4all.dagml.conformal_store.v1"
 producer = "full-python-nirs4all"
-consumer_level = { python = "metadata", r = "metadata", javascript_wasm = "metadata", rust = "metadata", matlab_octave = "metadata" }
+consumer_level = { python = "metadata", javascript_wasm = "metadata", rust = "metadata", matlab_octave = "metadata" }
 python_surface = "nirs4all.calibrate / nirs4all.predict_calibrated / nirs4all.load_calibrated_result"
 portable_claim = "not-exposed-in-nirs4all-core"
 optional_payload_fields = ["conformal_guarantee_status", "calibration_replay_source", "tuning_calibration_source"]
@@ -237,7 +222,7 @@ notes = "Bindings may transport or display the guarantee badge and calibration r
 id = "robustness.summary"
 schema = "https://nirs4all.org/schemas/robustness-summary/v1"
 producer = "full-python-nirs4all"
-consumer_level = { python = "metadata", r = "metadata", javascript_wasm = "metadata", rust = "metadata", matlab_octave = "metadata" }
+consumer_level = { python = "metadata", javascript_wasm = "metadata", rust = "metadata", matlab_octave = "metadata" }
 python_surface = "nirs4all.RobustnessReport.summary_artifact / nirs4all.robustness_summary_schema_json"
 portable_claim = "summary-json-contract-only"
 optional_payload_fields = ["conformal_guarantee_status", "spectral_replay"]
@@ -248,7 +233,7 @@ notes = "Bindings and app hosts may render validated summary.json cards, the opt
 id = "tuning.summary"
 schema = "https://nirs4all.org/schemas/tuning-summary/v1"
 producer = "full-python-nirs4all"
-consumer_level = { python = "metadata", r = "metadata", javascript_wasm = "metadata", rust = "metadata", matlab_octave = "metadata" }
+consumer_level = { python = "metadata", javascript_wasm = "metadata", rust = "metadata", matlab_octave = "metadata" }
 python_surface = "nirs4all.TuningResult.summary_artifact / nirs4all.tuning_summary_schema_json"
 portable_claim = "summary-json-contract-only"
 optional_payload_fields = ["sampler", "pruner", "seed", "persistence", "trials[*].diagnostics"]
@@ -259,7 +244,7 @@ notes = "Bindings and app hosts may render validated tuning summary cards, inclu
 id = "tuning.ordered_search_space"
 schema = "https://nirs4all.org/schemas/tuning-ordered-search-space/v1"
 producer = "full-python-nirs4all"
-consumer_level = { python = "metadata", r = "metadata", javascript_wasm = "metadata", rust = "metadata", matlab_octave = "metadata" }
+consumer_level = { python = "metadata", javascript_wasm = "metadata", rust = "metadata", matlab_octave = "metadata" }
 python_surface = "nirs4all.inspect_tuning_space / nirs4all.NativeTuning.inspect_space / nirs4all.tuning_space_schema_json / nirs4all CLI tuning-space"
 portable_claim = "search-space-json-contract-only"
 optional_payload_fields = []
@@ -270,7 +255,7 @@ notes = "Bindings and app hosts may validate, transport, or render the ordered p
 id = "keyword.registry"
 schema = "nirs4all.keyword_registry.v1"
 producer = "full-python-nirs4all"
-consumer_level = { python = "metadata", r = "metadata", javascript_wasm = "metadata", rust = "metadata", matlab_octave = "metadata" }
+consumer_level = { python = "metadata", javascript_wasm = "metadata", rust = "metadata", matlab_octave = "metadata" }
 python_surface = "nirs4all.get_keyword_registry / nirs4all.keyword_registry_json / nirs4all.keyword_registry_schema_json / nirs4all.TUNING_OPTIMIZER_PERSISTENCE_KEYS / nirs4all.ROBUSTNESS_SCENARIO_KINDS / nirs4all.ROBUSTNESS_STOCHASTIC_SCENARIO_KINDS / nirs4all.ROBUSTNESS_SCENARIO_DISTRIBUTIONS / nirs4all.ROBUSTNESS_MODES / nirs4all.ROBUSTNESS_EXECUTABLE_MODES"
 portable_claim = "registry-json-contract-only"
 optional_payload_fields = []

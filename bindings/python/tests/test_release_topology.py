@@ -20,20 +20,6 @@ def _load_pyproject() -> dict[str, object]:
     return tomllib.loads((ROOT / "bindings/python/pyproject.toml").read_text())
 
 
-def _load_r_description() -> dict[str, str]:
-    fields: dict[str, str] = {}
-    current: str | None = None
-    for line in (ROOT / "bindings/r/DESCRIPTION").read_text().splitlines():
-        if line.startswith((" ", "\t")) and current is not None:
-            fields[current] = f"{fields[current]} {line.strip()}".strip()
-            continue
-        key, sep, value = line.partition(":")
-        if sep:
-            current = key
-            fields[current] = value.strip()
-    return fields
-
-
 def _load_wasm_package() -> dict[str, object]:
     return json.loads((ROOT / "bindings/wasm/package.json").read_text())
 
@@ -103,11 +89,6 @@ def _cargo_to_pep440(version: str) -> str:
     kind, _, number = prerelease.partition(".")
     suffix = {"alpha": "a", "beta": "b", "rc": "rc"}[kind]
     return f"{base}{suffix}{number or '0'}"
-
-
-def _cargo_to_r(version: str) -> str:
-    base = version.partition("-")[0]
-    return f"{base}.9000" if "-" in version else base
 
 
 class ReleaseTopologyManifestTests(unittest.TestCase):
@@ -238,7 +219,6 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             {
                 ("rust", "nirs4all", "nirs4all"),
                 ("javascript_wasm", "nirs4all", "nirs4all"),
-                ("r", "nirs4all", "library(nirs4all)"),
                 ("matlab_octave", "nirs4all", "+nirs4all"),
             },
         )
@@ -266,11 +246,6 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
                 "current",
                 "release-npm.yml",
                 "npm package",
-            ),
-            ("r", "cran/r-universe", "nirs4all"): (
-                "current",
-                "release-r.yml",
-                "source package",
             ),
             ("matlab_octave", "github-release", "nirs4all-matlab-octave"): (
                 "current",
@@ -311,7 +286,6 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
     def test_language_bindings_are_explicit_v1_release_surfaces(self) -> None:
         manifest = n4core.release_topology_manifest()
         pyproject = _load_pyproject()
-        r_description = _load_r_description()
         wasm_package = _load_wasm_package()
         rust_cargo = _load_rust_cargo()
         makefile = (ROOT / "Makefile").read_text()
@@ -326,27 +300,24 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
 
         self.assertEqual(
             set(surfaces),
-            {"python", "javascript_wasm", "rust", "r", "matlab_octave"},
+            {"python", "javascript_wasm", "rust", "matlab_octave"},
         )
         expected_names = {
             "python": pyproject["project"]["name"],
             "javascript_wasm": wasm_package["name"],
             "rust": rust_cargo["package"]["name"],
-            "r": r_description["Package"],
             "matlab_octave": "nirs4all-matlab-octave",
         }
         expected_workflows = {
             "python": "release-python.yml",
             "javascript_wasm": "release-npm.yml",
             "rust": "release-crates.yml",
-            "r": "release-r.yml",
             "matlab_octave": "release-matlab.yml",
         }
         expected_release_gates = {
             "python": ("test-python", "required"),
             "javascript_wasm": ("test-wasm", "required"),
             "rust": ("test-rust", "required"),
-            "r": ("test-r-if-available", "skip-locally-if-r-missing"),
             "matlab_octave": (
                 "test-matlab-parity-if-available",
                 "skip-locally-if-octave-missing",
@@ -356,7 +327,6 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             "python": "test-python-v1-surfaces",
             "javascript_wasm": "test-wasm-v1-surfaces",
             "rust": "test-rust",
-            "r": "test-r-v1-surfaces-if-available",
             "matlab_octave": "test-matlab-parity-if-available",
         }
         expected_version_sources = {
@@ -366,7 +336,6 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
                 "bindings/rust/nirs4all/Cargo.toml:package.version",
                 "cargo-semver",
             ),
-            "r": ("bindings/r/DESCRIPTION:Version", "r-description"),
             "matlab_octave": (
                 "bindings/rust/nirs4all/Cargo.toml:package.version",
                 "derived-cargo-semver",
@@ -378,7 +347,6 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
                 "test-rust",
                 "test-python-v1-surfaces",
                 "test-wasm-v1-surfaces",
-                "test-r-v1-surfaces-if-available",
                 "test-matlab-parity-if-available",
             ],
         )
@@ -387,18 +355,11 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertIn("bindings/python/tests/test_pipeline_contract.py", makefile)
         self.assertIn("bindings/python/tests/test_upstreams.py", makefile)
         self.assertIn("test:v1-surface", makefile)
-        self.assertIn("bindings/r/tests/surface.R", makefile)
-        self.assertIn("command -v R >/dev/null 2>&1", makefile)
-        self.assertIn(
-            "SKIP/RISK: R V1 public surface not checked: R/Rscript is not installed",
-            makefile,
-        )
         self.assertIn("command -v octave >/dev/null 2>&1", makefile)
         self.assertIn(
             "SKIP/RISK: MATLAB/Octave execution parity not checked: octave is not installed",
             makefile,
         )
-        self.assertIn("set -eu", makefile)
 
         for ecosystem, package_name in expected_names.items():
             with self.subTest(ecosystem=ecosystem):
@@ -447,7 +408,6 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             ROOT / "bindings/python/LICENSES",
             ROOT / "bindings/wasm/LICENSES",
             ROOT / "bindings/matlab/LICENSES",
-            ROOT / "bindings/r/inst/LICENSES",
         ):
             for name, expected in expected_license_hashes.items():
                 with self.subTest(binding_dir=binding_dir, license=name):
@@ -456,7 +416,6 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             "bindings/python/LICENSING.md",
             "bindings/wasm/LICENSING.md",
             "bindings/matlab/LICENSING.md",
-            "bindings/r/inst/LICENSING.md",
         ):
             with self.subTest(licensing_notice=relative):
                 self.assertEqual(
@@ -467,7 +426,6 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             "bindings/python/THIRD_PARTY_NOTICES.md",
             "bindings/wasm/THIRD_PARTY_NOTICES.md",
             "bindings/matlab/THIRD_PARTY_NOTICES.md",
-            "bindings/r/inst/THIRD_PARTY_NOTICES.md",
         ):
             with self.subTest(third_party_notice=relative):
                 self.assertEqual(
@@ -478,12 +436,10 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
     def test_binding_versions_stay_in_sync_with_rust_source_of_truth(self) -> None:
         rust_version = str(_load_rust_cargo()["package"]["version"])
         expected_python = _cargo_to_pep440(rust_version)
-        expected_r = _cargo_to_r(rust_version)
 
         pyproject = _load_pyproject()
         wasm_package = _load_wasm_package()
         wasm_lock = _load_wasm_package_lock()
-        r_description = _load_r_description()
 
         self.assertEqual(pyproject["project"]["version"], expected_python)
         self.assertEqual(n4core.__version__, expected_python)
@@ -493,7 +449,6 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertEqual(wasm_package["version"], rust_version)
         self.assertEqual(wasm_lock["version"], rust_version)
         self.assertEqual(wasm_lock["packages"][""]["version"], rust_version)
-        self.assertEqual(r_description["Version"], expected_r)
 
     def test_version_guard_checks_python_surface_and_binding_sync(self) -> None:
         workflow = _load_workflow_yaml("version-guard.yml")
@@ -542,7 +497,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertIn("GITHUB_WORKFLOW_REF", preflight["run"])
         self.assertIn("environment=pypi", preflight["run"])
 
-    def test_public_r_wasm_and_matlab_releases_require_strict_parity(self) -> None:
+    def test_public_wasm_and_matlab_releases_require_strict_parity(self) -> None:
         methods = _load_compat_upstreams()["methods"]
         self.assertEqual(methods["repo"], "GBeurier/nirs4all-methods")
         self.assertRegex(str(methods["ref"]), r"^[0-9a-f]{40}$")
@@ -568,26 +523,6 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertIn("check-wasm-methods-artifact:", makefile)
         self.assertIn("test-wasm-parity-strict: check-wasm-methods-artifact", makefile)
         self.assertIn("index.js n4m.js n4m.wasm", makefile)
-
-        r_workflow = _load_workflow_yaml("release-r.yml")
-        r_jobs = r_workflow["jobs"]
-        r_job = r_jobs["strict-r-parity"]
-        self.assertEqual(set(r_jobs["build-tarball"]["needs"]), {"check", "strict-r-parity"})
-        r_pin = _step_by_id(r_job, "methods-pin")
-        self.assertEqual(r_pin["shell"], "python")
-        self.assertIn("compat/upstreams.toml", r_pin["run"])
-        self.assertIn('item.get("key") == "methods"', r_pin["run"])
-        r_checkout = _checkout_step(r_job, methods["repo"])
-        self.assertEqual(r_checkout["with"]["path"], "nirs4all-methods")
-        self.assertEqual(r_checkout["with"]["ref"], expected_ref)
-        r_runs = _job_run_text(r_job)
-        self.assertIn("cmake --preset dev-release", r_runs)
-        self.assertIn("make test-r-parity", r_runs)
-        r_parity_step = _step_by_name(r_job, "Run strict R parity against the Python oracle")
-        self.assertEqual(
-            r_parity_step["env"]["NIRS4ALL_CORE_REQUIRE_METHODS_PARITY"],
-            "1",
-        )
 
         matlab_workflow = _load_workflow_yaml("release-matlab.yml")
         matlab_jobs = matlab_workflow["jobs"]
@@ -757,14 +692,6 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         for relative_path in license_pointer["files"]:
             with self.subTest(license_file=relative_path):
                 self.assertTrue((ROOT / relative_path).exists())
-
-        r_description = _load_r_description()
-        self.assertEqual(
-            r_description["License"],
-            "CeCILL-2.1 | AGPL (>= 3)",
-        )
-        r_license_note = (ROOT / "bindings/r/LICENSE").read_text()
-        self.assertIn(license_pointer["expression"], r_license_note)
 
         abi_pointers = {item["key"]: item for item in pointers["abi"]}
         methods_abi = abi_pointers["methods_c_abi"]

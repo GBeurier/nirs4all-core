@@ -24,7 +24,8 @@ methods-backed SciPy boundary-mode contract: `mirror=0`, `constant=1`,
 the full Python nirs4all operator; explicit `mode` and `cval` values must be
 preserved in the execution plan and forwarded to the upstream binding.
 
-Rust, JavaScript/WASM, R, and MATLAB/Octave publish as `nirs4all`. That shared
+Rust, JavaScript/WASM, and MATLAB/Octave publish as `nirs4all` from this core.
+The R package `nirs4all` is maintained in `nirs4all-r`. That shared
 name is only the package/namespace identity. The full six-domain aggregate is
 metadata plus re-export/load hooks; DAG-ML local loss/metric registries are
 available in R and MATLAB/Octave. The Python/JavaScript facades require the
@@ -32,8 +33,9 @@ task-bound `bind_training_loss` method, R requires `invoke_training_loss`, and
 MATLAB/Octave requires `invokeTrainingLoss` before treating the registry as an
 executable local-loss surface. Those hosts do not have runtime bindings for every
 `formats` / `io` / `datasets` domain row.
-The canonical source repository for every binding remains `nirs4all-core`.
-Python publishes as `nirs4all-core`; non-Python targets publish as `nirs4all`.
+The canonical source repository for core-owned bindings is `nirs4all-core`.
+Python publishes as `nirs4all-core`; its core-owned non-Python targets publish
+as `nirs4all`.
 
 The tuning, conformal and robustness artifacts currently produced by the full
 Python `nirs4all` package are explicitly not portable binding execution
@@ -194,16 +196,15 @@ binding-specific parity gates.
 ## R
 
 - Package name: `nirs4all`.
-- The current R surface records the shared domains and delegates the portable
-  methods subset to `n4m` / `pls4all` when installed.
+- Source repository: `GBeurier/nirs4all-r`, not this core repository.
+- The R product records the shared domains and delegates methods-backed
+  execution to `n4m`.
 - Future R controllers/adapters should expose formula/data-frame paths and S3
   methods where that is the natural R interface.
 - Keep native handles opaque and expose provenance in returned objects.
 - Current R package candidates include `nirs4allformats`, `nirs4allio`,
   `nirs4alldatasets`, `dagmldata`, `dagml`, and `n4m` / `pls4all` for methods.
-  `nirs4all_local_implementation_registry()` delegates to the native `dagml`
-  process-local registry; its methods retain the upstream R API, including
-  `size()`.
+  Its DAG-ML integration uses the upstream `dagml` contracts.
 
 ## MATLAB/Octave
 
