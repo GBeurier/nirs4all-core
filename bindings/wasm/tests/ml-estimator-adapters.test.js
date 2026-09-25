@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import * as dagMl from 'dag-ml-wasm';
 import {
   createMlJsController, createMlJsEstimator, createMlJsPca,
-  createScikitJsController, createScikitJsEstimator, loadMlJs, loadScikitJs,
+  createScikitJsAsyncController, createScikitJsController, createScikitJsEstimator, loadMlJs, loadScikitJs,
 } from 'nirs4all/classic-ml';
 
 dagMl.initSync({ module: readFileSync(fileURLToPath(
@@ -74,6 +74,12 @@ test('ml.js random forest regression and classification survive JSON round trips
     assert.ok(predicted.every(Number.isFinite));
     const restored = createMlJsEstimator({ ml, estimatorName }).load(JSON.parse(JSON.stringify(model.toJSON())));
     assert.deepEqual(restored.predict(X), predicted, `${estimatorName} restore`);
+    if (estimatorName === 'KNeighborsClassifier') {
+      const artifact = structuredClone(model.toJSON());
+      const workerRestored = createMlJsEstimator({ ml, estimatorName }).load(artifact);
+      assert.deepEqual(workerRestored.predict([[-1, 0], [13, 1]]), model.predict([[-1, 0], [13, 1]]));
+      assert.doesNotThrow(() => JSON.stringify(artifact), 'loading must not add circular parent links');
+    }
   }
 });
 
@@ -177,4 +183,36 @@ test('scikitjs sync tree controller runs DAG-ML, while async classes are refused
   await restored.importModelAsync(artifact);
   const future = { sampleIds: ['future'], X: [[9, 1]] };
   assert.deepEqual(restored.predict(future), controller.predict(future));
+});
+
+test('scikitjs async controller awaits fit, prediction, and model restoration', async () => {
+  const sk = await loadScikitJs();
+  const foldSet = JSON.parse(dagMl.kfold_split_json(
+    JSON.stringify({ n_splits: 3, shuffle: true, seed: 42 }), JSON.stringify(sampleIds), 'outer',
+  ));
+  const options = { scikitJs: sk, estimatorName: 'LinearRegression', dagMl, foldSet,
+    dataset: { sampleIds, X, y } };
+  const controller = createScikitJsAsyncController(options);
+  const controllerId = controller.manifest.controller_id;
+  const fold = foldSet.folds[0];
+  const task = { phase: 'FIT_CV', run_id: 'run:async', fold_id: fold.fold_id,
+    variant_id: 'base', branch_path: [], node_plan: {
+      node_id: 'model:async', controller_id: controllerId,
+      controller_version: '1.0.0', params: {}, params_fingerprint: 'test',
+    } };
+  const pendingFold = controller.invokeAsync(controllerId, JSON.stringify(task), '42');
+  assert.equal(typeof pendingFold.then, 'function');
+  const foldResult = JSON.parse(await pendingFold);
+  assert.deepEqual(foldResult.predictions[0].sample_ids, fold.validation_sample_ids);
+  assert.equal(foldResult.predictions[0].values.length, fold.validation_sample_ids.length);
+  assert.ok(foldResult.predictions[0].values.every(([value]) => Number.isFinite(value)));
+
+  await controller.fitFull({}, '42');
+  const future = { sampleIds: ['future'], X: [[13, 1]] };
+  const expected = await controller.predict(future);
+  const artifact = await controller.exportModel();
+  const restored = createScikitJsAsyncController(options);
+  await restored.importModel(JSON.parse(JSON.stringify(artifact)));
+  assert.deepEqual(await restored.predict(future), expected);
+  await assert.rejects(restored.predict({ sampleIds: ['wrong'], X: [[1]] }), /feature count/);
 });
