@@ -148,6 +148,7 @@ _PORTABLE_CONTROLLERS: tuple[dict[str, Any], ...] = (
         "operator_classes": (
             "nirs4all.operators.splitters.KennardStoneSplitter",
             "nirs4all.operators.splitters.splitters.KennardStoneSplitter",
+            "n4m.KennardStone",
         ),
         "ports": {
             "inputs": ("X",),
@@ -166,6 +167,7 @@ _PORTABLE_CONTROLLERS: tuple[dict[str, Any], ...] = (
             "nirs4all.operators.transforms.SNV",
             "nirs4all.operators.transforms.StandardNormalVariate",
             "nirs4all.operators.transforms.scalers.StandardNormalVariate",
+            "n4m.SNV",
         ),
         "ports": {
             "inputs": ("X",),
@@ -183,6 +185,7 @@ _PORTABLE_CONTROLLERS: tuple[dict[str, Any], ...] = (
         "operator_classes": (
             "nirs4all.operators.transforms.SavitzkyGolay",
             "nirs4all.operators.transforms.nirs.SavitzkyGolay",
+            "n4m.SavitzkyGolay",
         ),
         "ports": {
             "inputs": ("X",),
@@ -200,6 +203,8 @@ _PORTABLE_CONTROLLERS: tuple[dict[str, Any], ...] = (
         "operator_classes": (
             "sklearn.cross_decomposition.PLSRegression",
             "sklearn.cross_decomposition._pls.PLSRegression",
+            "n4m.PLS",
+            "n4m.PLSRegression",
         ),
         "ports": {
             "inputs": ("X", "y"),

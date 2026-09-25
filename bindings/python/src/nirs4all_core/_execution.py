@@ -12,6 +12,7 @@ KENNARD_STONE_CLASSES: frozenset[str] = frozenset(
     {
         "nirs4all.operators.splitters.KennardStoneSplitter",
         "nirs4all.operators.splitters.splitters.KennardStoneSplitter",
+        "n4m.KennardStone",
     }
 )
 SNV_CLASSES: frozenset[str] = frozenset(
@@ -19,18 +20,22 @@ SNV_CLASSES: frozenset[str] = frozenset(
         "nirs4all.operators.transforms.SNV",
         "nirs4all.operators.transforms.StandardNormalVariate",
         "nirs4all.operators.transforms.scalers.StandardNormalVariate",
+        "n4m.SNV",
     }
 )
 SAVGOL_CLASSES: frozenset[str] = frozenset(
     {
         "nirs4all.operators.transforms.SavitzkyGolay",
         "nirs4all.operators.transforms.nirs.SavitzkyGolay",
+        "n4m.SavitzkyGolay",
     }
 )
 PLS_CLASSES: frozenset[str] = frozenset(
     {
         "sklearn.cross_decomposition.PLSRegression",
         "sklearn.cross_decomposition._pls.PLSRegression",
+        "n4m.PLS",
+        "n4m.PLSRegression",
     }
 )
 SAVGOL_MODES: dict[str, int] = {
