@@ -45,26 +45,24 @@ make test-v1-surfaces
 make test
 make build-python
 make build-npm
-make build-r
 make build-matlab
 cargo package -p nirs4all
 ```
 
-`make test-v1-surfaces` runs Python unittest, the WASM npm test suite, and
-the R V1 surface scripts only when `R`/`Rscript` are available locally. `R CMD
-build/check`, Octave smoke tests, and CRAN/R-universe validation require
-R/Octave toolchains. They are part of CI because they may not be available on
-every development workstation.
+`make test-v1-surfaces` covers the core-owned Python, WASM, Rust, and
+MATLAB/Octave surfaces. R checks and CRAN/R-universe validation now run in
+`nirs4all-r` rather than this core repository.
 
 Every CI run uploads the build outputs as artifacts (`rust-crate`, `python-*`,
-`npm-wasm`, `r-source`, and `matlab-octave`).
+`npm-wasm` and `matlab-octave`).
 
-Tagged releases are cut by six dedicated workflows — `release-python.yml`,
-`release-npm.yml`, `release-crates.yml`, `release-r.yml`, `release-matlab.yml`,
+Tagged releases are cut by five dedicated workflows — `release-python.yml`,
+`release-npm.yml`, `release-crates.yml`, `release-matlab.yml`,
 `release-source.yml`. On a non-pre-release tag `vX.Y.Z` they publish PyPI
 `nirs4all-core` (OIDC Trusted Publishing, environment `pypi`), npm `nirs4all`
-(`NPM_TOKEN`), crates.io `nirs4all` (`CARGO_REGISTRY_TOKEN`), and attach the R
-tarball, the MATLAB/Octave zip, and the source + SBOM bundle to the Release.
+(`NPM_TOKEN`), crates.io `nirs4all` (`CARGO_REGISTRY_TOKEN`), and attach the
+MATLAB/Octave zip and the source + SBOM bundle to the Release. The R product is
+released independently from `nirs4all-r`.
 Pre-release tags build/attach but publish to no registry; `workflow_dispatch`
 runs every workflow in dry-run mode. The version source of truth is the Rust
 crate manifest, propagated by `scripts/bump_version.sh`. See

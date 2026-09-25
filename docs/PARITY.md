@@ -7,9 +7,9 @@ core behind multiple host-language APIs.
 
 1. **Upstream native vs upstream binding**: each upstream project proves its own
    binding parity first, especially `nirs4all-methods`.
-2. **nirs4all-core native vs binding**: portable aggregate pipelines produce
-   identical results across Rust, Python, R, MATLAB/Octave, and WASM within
-   declared tolerance.
+2. **nirs4all-core native vs core-owned bindings**: portable aggregate pipelines
+   produce identical results across Rust, Python, MATLAB/Octave, and WASM within
+   declared tolerance. The external `nirs4all-r` product uses the same oracle.
 3. **nirs4all-core vs full Python nirs4all**: equivalent pipelines match the
    current Python library before this binding can replace any core path.
 
@@ -30,8 +30,9 @@ overflows, including a single `2147483647` candidate. Methods still validates
 whether a component count is valid for the actual matrix.
 
 `tests/parity/fixtures/execution_contract_cases.json` is the shared positive
-and negative input corpus. Copies shipped in Rust and R are checked for byte
-equality by the Python gate. This complements the numerical oracle fixtures.
+and negative input corpus. The copy shipped in Rust is checked for byte
+equality by the Python gate; `nirs4all-r` pins its copy by checksum and tests
+every positive/negative case. This complements the numerical oracle fixtures.
 
 The runner's scores describe **training** when there is no splitter and
 **selection_validation** when Kennard-Stone reserves rows. The selected
@@ -49,15 +50,15 @@ paths are separate APIs and are not replaced by this convenience runner.
 Before any numeric gate runs, the public *surface* must be identical across
 bindings. `bindings/python/tests/test_cross_language_surface.py` proves, in pure
 Python by reading the binding sources, that the portable operator subset and the
-upstream registry (keys + role strings) are identical across **all five**
-bindings — Python, WASM, R, MATLAB/Octave, and Rust — plus the machine-readable
+upstream registry (keys + role strings) are identical across the **four core-owned**
+bindings — Python, WASM, MATLAB/Octave, and Rust — plus the machine-readable
 `compat/upstreams.toml`. `bindings/python/tests/test_capability_matrix.py`
 additionally proves the per-language capability claims in
 `compat/capabilities.toml` are backed by real run symbols and parity gates (see
 [`CAPABILITIES.md`](CAPABILITIES.md)).
 
-Because these gates need no R/Node/Octave/`cargo` toolchain, surface drift in any
-binding is caught in the required Python suite even on machines where the other
+Because these gates need no Node/Octave/`cargo` toolchain, surface drift in any
+core-owned binding is caught in the required Python suite even on machines where the other
 runtimes are unavailable. They run in `make test-python-v1-surfaces`.
 
 ## Fixture policy
@@ -197,14 +198,11 @@ NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 \
 cargo test -p nirs4all rust_binding_execution_matches_full_python_nirs4all_oracle -- --nocapture
 ```
 
-Run the strict R parity gate after installing an `n4m` R binding that exposes
-the portable preprocessing and splitter surface:
+The separate `nirs4all-r` repository checks R parity against the shared
+JSON/YAML fixtures and Python oracle retained under `tests/parity` here:
 
 ```bash
-NIRS4ALL_CORE_PARITY_ORACLE=$PWD/tests/parity/expected/portable_python_oracle.json \
-NIRS4ALL_CORE_PARITY_FIXTURES=$PWD/bindings/r/inst/extdata \
-NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 \
-Rscript bindings/r/tests/parity.R
+Rscript ../nirs4all-r/tests/portable-json-yaml.R
 ```
 
 Run the strict MATLAB/Octave parity gate after building the `nirs4all-methods`

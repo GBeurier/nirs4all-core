@@ -47,7 +47,6 @@ export const portableOperatorClasses = Object.freeze([
 
 export const runtimeSurfaces = Object.freeze([
   'python',
-  'r',
   'javascript_wasm',
   'rust',
   'matlab_octave',
@@ -58,13 +57,6 @@ export const runtimeContracts = Object.freeze([
     surface: 'python',
     pipelineExecution: 'parity-validated',
     pipelineEntrypoint: 'run_portable_pipeline',
-    serializedModelPredict: false,
-    predictEntrypoint: null,
-  }),
-  Object.freeze({
-    surface: 'r',
-    pipelineExecution: 'parity-validated',
-    pipelineEntrypoint: 'nirs4all_run_portable_pipeline',
     serializedModelPredict: false,
     predictEntrypoint: null,
   }),
