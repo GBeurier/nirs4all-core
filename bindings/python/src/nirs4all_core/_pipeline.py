@@ -21,6 +21,11 @@ PORTABLE_OPERATOR_CLASSES: frozenset[str] = frozenset(
         "nirs4all.operators.transforms.nirs.SavitzkyGolay",
         "sklearn.cross_decomposition.PLSRegression",
         "sklearn.cross_decomposition._pls.PLSRegression",
+        "n4m.KennardStone",
+        "n4m.SNV",
+        "n4m.SavitzkyGolay",
+        "n4m.PLS",
+        "n4m.PLSRegression",
     }
 )
 
