@@ -54,6 +54,11 @@ test('public V1 WASM surface exports expected names', () => {
       'artifactContracts',
       'capabilityManifest',
       'controllerCapabilities',
+      'createDagMlNodeResult',
+      'createDagMlModelManifest',
+      'createJsEstimatorController',
+      'createN4mModelController',
+      'createRandomForestController',
       'datasets',
       'formats',
       'importUpstream',
@@ -295,7 +300,7 @@ test('public upstream loaders report the correct missing upstream', async () => 
   await assert.rejects(loadIo, /upstream 'io'.*@nirs4all\/io-wasm/s);
   await assert.rejects(loadDatasets, /upstream 'datasets'.*@nirs4all\/datasets-wasm/s);
   await assert.rejects(loadMethods, /upstream 'methods'.*@nirs4all\/methods/s);
-  await assert.rejects(loadDagMl, /upstream 'dag_ml'.*dag-ml-wasm/s);
+  assert.equal(typeof (await loadDagMl()).derive_controller_manifest_json, 'function');
   await assert.rejects(loadDagMlData, /upstream 'dag_ml_data'.*dag-ml-data-wasm/s);
 });
 
