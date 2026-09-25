@@ -36,6 +36,11 @@ def _methods_root() -> Path:
     return _workspace_root() / "nirs4all-methods"
 
 
+def _r_package_root() -> Path:
+    configured = os.environ.get("NIRS4ALL_R_ROOT")
+    return Path(configured).expanduser().resolve() if configured else _workspace_root() / "nirs4all-r"
+
+
 def _read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -326,7 +331,7 @@ def _prepare_r_execution_library(artifacts_dir: Path, rscript: Path) -> tuple[Pa
             "--no-staged-install",
             str(methods_r),
         ],
-        [str(r_cmd), "CMD", "INSTALL", f"--library={r_lib}", str(_core_root() / "bindings" / "r")],
+        [str(r_cmd), "CMD", "INSTALL", f"--library={r_lib}", str(_r_package_root())],
     ]
     for command in commands:
         completed = subprocess.run(
@@ -356,7 +361,6 @@ def _run_r_execution(pipeline_path: Path, dataset: dict[str, Any]) -> dict[str, 
 
     code = r"""
 args <- commandArgs(trailingOnly = TRUE)
-core_root <- normalizePath(args[[1]], mustWork = TRUE)
 pipeline_path <- normalizePath(args[[2]], mustWork = TRUE)
 dataset_path <- normalizePath(args[[3]], mustWork = TRUE)
 output_path <- args[[4]]
@@ -380,17 +384,11 @@ if (nzchar(expected_n4m_lib)) {
   }
 }
 
-if (requireNamespace("nirs4all", quietly = TRUE)) {
-  run_portable <- nirs4all::nirs4all_run_portable_pipeline
-  nirs4all_version <- as.character(utils::packageVersion("nirs4all"))
-} else {
-  r_dir <- file.path(core_root, "bindings", "r", "R")
-  source(file.path(r_dir, "upstreams.R"))
-  source(file.path(r_dir, "pipeline.R"))
-  source(file.path(r_dir, "execution.R"))
-  run_portable <- nirs4all_run_portable_pipeline
-  nirs4all_version <- NULL
+if (!requireNamespace("nirs4all", quietly = TRUE)) {
+  stop("nirs4all R package from nirs4all-r is not installed", call. = FALSE)
 }
+run_portable <- nirs4all::nirs4all_run_portable_pipeline
+nirs4all_version <- as.character(utils::packageVersion("nirs4all"))
 
 dataset <- jsonlite::fromJSON(dataset_path, simplifyVector = FALSE)
 actual <- run_portable(pipeline_path, dataset)
@@ -436,7 +434,7 @@ jsonlite::write_json(payload, output_path, auto_unbox = TRUE, pretty = TRUE, dig
             raise RuntimeError(proc.stderr.strip() or f"Rscript exited with {proc.returncode}")
         payload = _read_json(output_path)
     return _execution_evidence(
-        "bindings/r",
+        "nirs4all-r",
         payload["actual"],
         {
             "r": payload.get("r"),
@@ -622,7 +620,7 @@ def _runtime_execution(pipeline_path: Path, resolution: dict[str, Any]) -> dict[
     runtime_errors = []
     for surface, runner in (
         ("bindings/python", _run_python_execution),
-        ("bindings/r", _run_r_execution),
+        ("nirs4all-r", _run_r_execution),
         ("bindings/wasm", _run_javascript_wasm_execution),
     ):
         try:
@@ -634,7 +632,7 @@ def _runtime_execution(pipeline_path: Path, resolution: dict[str, Any]) -> dict[
         raise AssertionError(f"repository pipeline execution failed on required runtime surface(s): {runtime_errors}")
 
     python_result = next((result for result in runtime_results if result["surface"] == "bindings/python"), None)
-    r_result = next((result for result in runtime_results if result["surface"] == "bindings/r"), None)
+    r_result = next((result for result in runtime_results if result["surface"] == "nirs4all-r"), None)
     wasm_result = next((result for result in runtime_results if result["surface"] == "bindings/wasm"), None)
     if python_result is None or r_result is None or wasm_result is None:
         raise AssertionError("repository pipeline execution requires Python, R, and JavaScript/WASM runtime evidence")

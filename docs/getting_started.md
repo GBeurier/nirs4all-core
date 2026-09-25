@@ -114,4 +114,5 @@ DAG-ML validation/test paths when an independent evaluation is required.
 
 See [PARITY.md](PARITY.md) for the exact fixtures and the strict
 execution-parity gates, and [BINDINGS.md](BINDINGS.md) for the equivalent entry
-points in Rust, R, MATLAB/Octave, and JavaScript/WASM.
+points in Rust, MATLAB/Octave, and JavaScript/WASM. The R equivalent is in
+`nirs4all-r`.

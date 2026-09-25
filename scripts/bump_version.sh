@@ -24,10 +24,6 @@
 #   * Python ABI   : bindings/python-native/Cargo.toml keeps the same Cargo
 #                   version as the public aggregate to make wheel provenance
 #                   unambiguous.
-#   * R           : the plain base `X.Y.Z` for a final release; `X.Y.Z.9000`
-#                   (the canonical R "in-development toward X.Y.Z" spelling)
-#                   for ANY pre-release — CRAN does not accept SemVer
-#                   pre-release suffixes. bindings/r/DESCRIPTION.
 #
 # Usage:
 #   scripts/bump_version.sh                # sync manifests to the SoT (idempotent)
@@ -93,16 +89,6 @@ to_pep440() {
     esac
 }
 
-# to_r <cargo_version> -> R DESCRIPTION spelling
-to_r() {
-    local v="$1"
-    local base="${v%%-*}"          # X.Y.Z
-    if [[ "${v}" == *-* ]]; then
-        printf '%s.9000' "${base}"
-    else
-        printf '%s' "${base}"
-    fi
-}
 
 # ---------------------------------------------------------------------------
 # 3. CLI handling
@@ -146,18 +132,16 @@ if [[ "${MODE}" == "bump" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# 5. Re-read the SoT (post --bump if any) and derive the three spellings
+# 5. Re-read the SoT (post --bump if any) and derive the host spellings
 # ---------------------------------------------------------------------------
 CARGO_VERSION="$(read_sot_version)"
 PEP440_VERSION="$(to_pep440 "${CARGO_VERSION}")"
-R_VERSION="$(to_r "${CARGO_VERSION}")"
 
 if [[ "${MODE}" == "check" ]]; then
     echo "  canonical Cargo version : ${CARGO_VERSION}"
     echo "  derived PEP 440 version : ${PEP440_VERSION}"
-    echo "  derived R version       : ${R_VERSION}"
 else
-    echo "  syncing manifests to Cargo=${CARGO_VERSION} / PEP440=${PEP440_VERSION} / R=${R_VERSION}"
+    echo "  syncing manifests to Cargo=${CARGO_VERSION} / PEP440=${PEP440_VERSION}"
 fi
 
 # ---------------------------------------------------------------------------
@@ -348,13 +332,6 @@ update_with_sed \
     "${PEP440_VERSION}" \
     "^__version__[[:space:]]*=[[:space:]]*\"([0-9A-Za-z.+!-]+)\"" \
     "s/^(__version__[[:space:]]*=[[:space:]]*\")[0-9A-Za-z.+!-]+(\")/\1${PEP440_VERSION}\2/"
-
-# --- R DESCRIPTION target --------------------------------------------------
-update_with_sed \
-    "bindings/r/DESCRIPTION" \
-    "${R_VERSION}" \
-    "^Version:[[:space:]]+([0-9.]+)" \
-    "s/^(Version:[[:space:]]+)[0-9.]+/\1${R_VERSION}/"
 
 # ---------------------------------------------------------------------------
 # 8. Summary

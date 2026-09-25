@@ -26,7 +26,6 @@ class PipelineContractTests(unittest.TestCase):
             with self.subTest(case=case["name"]):
                 self.assertEqual(n4core.parse_execution_plan(case)["nComponents"], case["components"])
         for copy in (
-            ROOT / "bindings/r/inst/extdata/execution_contract_cases.json",
             ROOT / "bindings/rust/nirs4all/tests/parity/fixtures/execution_contract_cases.json",
         ):
             self.assertEqual(copy.read_bytes(), corpus_path.read_bytes())

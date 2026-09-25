@@ -8,8 +8,8 @@ API boundaries. Keep optional dependencies optional.
 
 ## R
 
-The current R package publishes the aggregate registry and the portable methods
-subset. Future R controllers should support data frames and formula-style entry
+The R package now lives in `nirs4all-r`; it publishes the aggregate registry and
+the portable methods subset. R controllers should support data frames and formula-style entry
 points where an upstream runtime binding exists, while preserving provenance in
 returned S3/S4 objects.
 

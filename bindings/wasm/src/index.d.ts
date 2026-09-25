@@ -26,7 +26,7 @@ export interface PipelineDefinition {
   pipeline: unknown[];
 }
 
-export type RuntimeSurface = 'python' | 'r' | 'javascript_wasm' | 'rust' | 'matlab_octave';
+export type RuntimeSurface = 'python' | 'javascript_wasm' | 'rust' | 'matlab_octave';
 export type CapabilityLevel = 'metadata' | 'plan' | 'execute-local' | 'execute-remote' | 'parity-validated';
 
 export interface RuntimeContract {

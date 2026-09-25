@@ -78,7 +78,7 @@ The aggregate itself executes exactly one operator subset — Kennard-Stone spli
 SNV, Savitzky-Golay, and PLS regression — and it does so by **delegating all
 numerics to the `methods` upstream** (`nirs4all-methods` / `libn4m` / `+n4m` /
 `n4m`). It never re-implements a kernel. The same nine class aliases are
-declared identically in all five bindings (proven by
+declared identically in all four core-owned bindings (proven by
 `test_cross_language_surface.py`).
 
 | Language | Level | Run entry point | Numerics reached via | Parity gate |
@@ -86,7 +86,6 @@ declared identically in all five bindings (proven by
 | Python | `parity-validated` | `run_portable_pipeline()` | nirs4all-methods Python (`n4m`/`pls4all`) | `bindings/python/tests/test_execution_parity.py` |
 | Rust | `parity-validated` | `run_portable_pipeline_with_library()` | caller-supplied `libn4m` (`NIRS4ALL_METHODS_LIB`) | `cargo test` `rust_binding_execution_matches_full_python_nirs4all_oracle` |
 | JavaScript/WASM | `parity-validated` | `runPortablePipeline()` plus standalone `predictPortablePipeline()` | `@nirs4all/methods` | `bindings/wasm/tests/parity.test.js` |
-| R | `parity-validated` | `nirs4all_run_portable_pipeline()` | nirs4all-methods R (`n4m`/`pls4all`) | `bindings/r/tests/parity.R` |
 | MATLAB/Octave | `parity-validated` | `nirs4all.runPortablePipeline()` | `+n4m` MATLAB/Octave MEX shims | `bindings/matlab/tests/parity.m` |
 
 "`parity-validated`" here is **conditional on the `methods` upstream being
@@ -96,7 +95,7 @@ present**. Without it, every binding degrades honestly:
   `portable_class_names`, `parse_execution_plan`) still works — this is the
   `plan` level;
 - the run entry point raises a clear "capability unavailable" style error
-  (e.g. R's "does not expose …", MATLAB's `nirs4all:MissingMethods`, the Rust
+  (e.g. MATLAB's `nirs4all:MissingMethods`, the Rust
   loader error, the strict-parity skip guarded by
   `NIRS4ALL_CORE_REQUIRE_METHODS_PARITY`), never a silent local re-implementation.
 
@@ -114,7 +113,7 @@ below and do not alter `compat/capabilities.toml`.
 | Rust | Validate/replay N4MM format 1 raw PLS and format 2 `SNV(ddof=0) -> SG(mode=interp) -> PLS`; train one selected dense IO package source; optionally calibrate from a disjoint package; return conformal presentation V1/V2. | DAG-ML owns scheduling/calibration, Methods owns numerics, IO owns package buffers, and Core owns the archive. No Python callbacks, implicit fusion, N-D flattening, or host recalibration. |
 | Python | Validate/replay the same native Methods archives and return scalar V1 or named multi-target V2 conformal presentations. | No native package-training facade and no Python preprocessing/model fallback. |
 | JavaScript/WASM | Validate/replay the bounded Methods Archive V2 path documented by the WASM binding. | Calibrated/conformal archives remain refused; no conformal presentation API. |
-| R / MATLAB/Octave | No Archive V2 execution API. | Aggregate registry/portable-pipeline surfaces do not imply archive replay. |
+| R product (`nirs4all-r`) / MATLAB/Octave | No Archive V2 execution API yet. | N4MM model bytes alone do not make a complete pipeline archive portable. |
 
 ## Upstream domains
 
