@@ -402,6 +402,23 @@
       "components": [
         2
       ]
+    },
+    {
+      "name": "n4m_aliases",
+      "pipeline": [
+        {"class": "n4m.KennardStone", "params": {"test_size": 0.25}},
+        {"class": "n4m.SNV"},
+        {"class": "n4m.SavitzkyGolay", "params": {"window_length": 11}},
+        {"model": {"class": "n4m.PLS", "params": {"n_components": 2}}}
+      ],
+      "components": [2]
+    },
+    {
+      "name": "n4m_pls_regression_alias",
+      "pipeline": [
+        {"model": {"class": "n4m.PLSRegression", "params": {"n_components": 3}}}
+      ],
+      "components": [3]
     }
   ]
 }

@@ -52,7 +52,7 @@ RUST_CARGO = ROOT / "bindings/rust/nirs4all/Cargo.toml"
 RUST_LIB = ROOT / "bindings/rust/nirs4all/src/lib.rs"
 COMPAT = ROOT / "compat/upstreams.toml"
 
-EXPECTED_OPERATOR_COUNT = 9
+EXPECTED_OPERATOR_COUNT = 14
 EXPECTED_UPSTREAM_COUNT = 6
 
 

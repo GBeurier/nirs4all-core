@@ -113,13 +113,18 @@ pub const UPSTREAMS: &[Upstream] = &[
 pub const PORTABLE_OPERATOR_CLASSES: &[&str] = &[
     "nirs4all.operators.splitters.KennardStoneSplitter",
     "nirs4all.operators.splitters.splitters.KennardStoneSplitter",
+    "n4m.KennardStone",
     "nirs4all.operators.transforms.SNV",
     "nirs4all.operators.transforms.StandardNormalVariate",
     "nirs4all.operators.transforms.scalers.StandardNormalVariate",
+    "n4m.SNV",
     "nirs4all.operators.transforms.SavitzkyGolay",
     "nirs4all.operators.transforms.nirs.SavitzkyGolay",
+    "n4m.SavitzkyGolay",
     "sklearn.cross_decomposition.PLSRegression",
     "sklearn.cross_decomposition._pls.PLSRegression",
+    "n4m.PLS",
+    "n4m.PLSRegression",
 ];
 
 pub const RUNTIME_SURFACES: &[&str] = &["python", "javascript_wasm", "rust", "matlab_octave"];
@@ -263,22 +268,27 @@ pub const ARTIFACT_CONTRACTS: &[ArtifactContract] = &[
 const KENNARD_STONE_CLASSES: &[&str] = &[
     "nirs4all.operators.splitters.KennardStoneSplitter",
     "nirs4all.operators.splitters.splitters.KennardStoneSplitter",
+    "n4m.KennardStone",
 ];
 
 const SNV_CLASSES: &[&str] = &[
     "nirs4all.operators.transforms.SNV",
     "nirs4all.operators.transforms.StandardNormalVariate",
     "nirs4all.operators.transforms.scalers.StandardNormalVariate",
+    "n4m.SNV",
 ];
 
 const SAVGOL_CLASSES: &[&str] = &[
     "nirs4all.operators.transforms.SavitzkyGolay",
     "nirs4all.operators.transforms.nirs.SavitzkyGolay",
+    "n4m.SavitzkyGolay",
 ];
 
 const PLS_CLASSES: &[&str] = &[
     "sklearn.cross_decomposition.PLSRegression",
     "sklearn.cross_decomposition._pls.PLSRegression",
+    "n4m.PLS",
+    "n4m.PLSRegression",
 ];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
