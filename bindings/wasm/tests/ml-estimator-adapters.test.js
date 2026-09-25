@@ -77,6 +77,23 @@ test('ml.js random forest regression and classification survive JSON round trips
   }
 });
 
+test('ml.js classifiers survive worker structuredClone before new-sample prediction', async () => {
+  const ml = await loadMlJs();
+  const future = [[-1, 0], [13, 1]];
+  for (const estimatorName of ['DecisionTreeClassifier', 'RandomForestClassifier']) {
+    const model = createMlJsEstimator({ ml, estimatorName,
+      params: { nEstimators: 7, seed: 19, noOOB: true } })
+      .fit(X, y.map((value) => Number(value > 11)));
+    const expected = model.predict(future);
+    const cloned = structuredClone(model.toJSON());
+    const restored = createMlJsEstimator({ ml, estimatorName }).load(cloned);
+    assert.deepEqual(restored.predict(future), expected, `${estimatorName} worker transfer`);
+    assert.deepEqual(createMlJsEstimator({ ml, estimatorName })
+      .load(JSON.parse(JSON.stringify(cloned))).predict(future), expected,
+    `${estimatorName} worker transfer and JSON persistence`);
+  }
+});
+
 test('ml.js tree controller uses native DAG-ML folds and serialized model', async () => {
   const ml = await loadMlJs();
   const foldSet = JSON.parse(dagMl.kfold_split_json(
