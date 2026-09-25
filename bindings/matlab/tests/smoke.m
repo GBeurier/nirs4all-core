@@ -28,7 +28,7 @@ assert(isequal(manifest.runtimeContracts, contracts));
 contractSurfaces = cellfun(@(item) item.surface, contracts, 'UniformOutput', false);
 assert(isequal(contractSurfaces, {'python', 'javascript_wasm', 'rust', 'matlab_octave'}));
 predictFlags = cellfun(@(item) item.serializedModelPredict, contracts);
-assert(isequal(predictFlags, [false, false, true, true, false]));
+assert(isequal(predictFlags, [false, true, true, false]));
 controllers = nirs4all.controllerCapabilities();
 controllerIds = cellfun(@(item) item.id, controllers, 'UniformOutput', false);
 assert(isequal(controllerIds, { ...
