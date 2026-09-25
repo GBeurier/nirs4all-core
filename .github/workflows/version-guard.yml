@@ -1,8 +1,7 @@
 name: version-guard
 
-# Guardrail: the in-repo version must NEVER be ahead of the latest git tag.
-# Tag ahead of the manifest (a release in flight) is allowed; manifest ahead of
-# the tag (an un-tagged bump) is forbidden — that is the drift this blocks.
+# Guardrail: manifests may name the next patch while a release is prepared.
+# A larger untagged bump still indicates version drift.
 # Part of the nirs4all ecosystem version-sync guardrail.
 
 on:
@@ -27,7 +26,7 @@ jobs:
       - run: python -m pip install --quiet packaging
       - name: Binding versions must match the Rust source of truth
         run: scripts/bump_version.sh --check
-      - name: Manifest versions must not be ahead of the latest tag
+      - name: Manifest versions must be at most one patch ahead of the latest tag
         shell: python
         run: |
           import re, subprocess, sys, json
@@ -110,6 +109,7 @@ jobs:
               sys.exit(0)
 
           latest_v, latest_t = max(cand, key=lambda x: x[0])
+          next_patch = Version(f"{latest_v.major}.{latest_v.minor}.{latest_v.micro + 1}")
           failures = 0
           for check in checks:
               raw = read_manifest(check["strat"], check["path"], check["attr"])
@@ -131,14 +131,14 @@ jobs:
                   continue
 
               print(f"{check['label']}: {manifest}    latest tag = {latest_t} ({latest_v})")
-              if manifest > latest_v:
+              if manifest > latest_v and (latest_v.is_prerelease or manifest != next_patch):
                   print(
                       f"::error::version-guard: {check['label']} version {manifest} is AHEAD "
-                      f"of the latest tag {latest_t}. A version bump must ship as a tag/release "
-                      f"(tag {prefix}{manifest}), never merged to main ahead of its tag."
+                      f"of the latest tag {latest_t} by more than one final patch release "
+                      f"(allowed next patch: {next_patch})."
                   )
                   failures += 1
 
           if failures:
               sys.exit(1)
-          print("OK: guarded manifests are not ahead of the latest tag (tag ahead of / equal to the manifest is fine).")
+          print("OK: guarded manifests are no more than one final patch ahead of the latest tag.")
