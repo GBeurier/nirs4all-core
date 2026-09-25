@@ -22,11 +22,11 @@ end
 
 manifest = nirs4all.capabilityManifest();
 assert(strcmp(manifest.schema, 'nirs4all-core.capabilities.v1'));
-assert(isequal(nirs4all.runtimeSurfaces(), {'python', 'r', 'javascript_wasm', 'rust', 'matlab_octave'}));
+assert(isequal(nirs4all.runtimeSurfaces(), {'python', 'javascript_wasm', 'rust', 'matlab_octave'}));
 contracts = nirs4all.runtimeContracts();
 assert(isequal(manifest.runtimeContracts, contracts));
 contractSurfaces = cellfun(@(item) item.surface, contracts, 'UniformOutput', false);
-assert(isequal(contractSurfaces, {'python', 'r', 'javascript_wasm', 'rust', 'matlab_octave'}));
+assert(isequal(contractSurfaces, {'python', 'javascript_wasm', 'rust', 'matlab_octave'}));
 predictFlags = cellfun(@(item) item.serializedModelPredict, contracts);
 assert(isequal(predictFlags, [false, false, true, true, false]));
 controllers = nirs4all.controllerCapabilities();

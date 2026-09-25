@@ -122,7 +122,7 @@ pub const PORTABLE_OPERATOR_CLASSES: &[&str] = &[
     "sklearn.cross_decomposition._pls.PLSRegression",
 ];
 
-pub const RUNTIME_SURFACES: &[&str] = &["python", "r", "javascript_wasm", "rust", "matlab_octave"];
+pub const RUNTIME_SURFACES: &[&str] = &["python", "javascript_wasm", "rust", "matlab_octave"];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RuntimeContract {
@@ -138,13 +138,6 @@ pub const RUNTIME_CONTRACTS: &[RuntimeContract] = &[
         surface: "python",
         pipeline_execution: "parity-validated",
         pipeline_entrypoint: "run_portable_pipeline",
-        serialized_model_predict: false,
-        predict_entrypoint: None,
-    },
-    RuntimeContract {
-        surface: "r",
-        pipeline_execution: "parity-validated",
-        pipeline_entrypoint: "nirs4all_run_portable_pipeline",
         serialized_model_predict: false,
         predict_entrypoint: None,
     },
@@ -2073,13 +2066,6 @@ mod tests {
                     "predict_entrypoint": null
                 },
                 {
-                    "surface": "r",
-                    "pipeline_execution": "parity-validated",
-                    "pipeline_entrypoint": "nirs4all_run_portable_pipeline",
-                    "serialized_model_predict": false,
-                    "predict_entrypoint": null
-                },
-                {
                     "surface": "javascript_wasm",
                     "pipeline_execution": "parity-validated",
                     "pipeline_entrypoint": "runPortablePipeline",
@@ -2111,7 +2097,6 @@ mod tests {
                     "producer": "full-python-nirs4all",
                     "consumer_level": {
                         "python": "metadata",
-                        "r": "metadata",
                         "javascript_wasm": "metadata",
                         "rust": "metadata",
                         "matlab_octave": "metadata"
@@ -2131,7 +2116,6 @@ mod tests {
                     "producer": "full-python-nirs4all",
                     "consumer_level": {
                         "python": "metadata",
-                        "r": "metadata",
                         "javascript_wasm": "metadata",
                         "rust": "metadata",
                         "matlab_octave": "metadata"
@@ -2147,7 +2131,6 @@ mod tests {
                     "producer": "full-python-nirs4all",
                     "consumer_level": {
                         "python": "metadata",
-                        "r": "metadata",
                         "javascript_wasm": "metadata",
                         "rust": "metadata",
                         "matlab_octave": "metadata"
@@ -2163,7 +2146,6 @@ mod tests {
                     "producer": "full-python-nirs4all",
                     "consumer_level": {
                         "python": "metadata",
-                        "r": "metadata",
                         "javascript_wasm": "metadata",
                         "rust": "metadata",
                         "matlab_octave": "metadata"
@@ -2179,7 +2161,6 @@ mod tests {
                     "producer": "full-python-nirs4all",
                     "consumer_level": {
                         "python": "metadata",
-                        "r": "metadata",
                         "javascript_wasm": "metadata",
                         "rust": "metadata",
                         "matlab_octave": "metadata"

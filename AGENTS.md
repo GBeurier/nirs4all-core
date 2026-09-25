@@ -17,7 +17,7 @@ through this aggregate.
   import `nirs4all_core`; additive facade `n4a`).
 - `bindings/rust`: Rust crate named `nirs4all`.
 - `bindings/wasm`: npm/WASM package named `nirs4all`.
-- `bindings/r`: R package skeleton named `nirs4all`.
+- The R package `nirs4all` is maintained in the sibling `nirs4all-r` repository.
 - `bindings/matlab`: MATLAB/Octave `+nirs4all` namespace.
 - `docs`: binding, parity, compatibility, and release contracts.
 - `compat`: machine-readable upstream registry.
@@ -30,7 +30,6 @@ Run the checks matching the touched area:
 - `cargo test --workspace`
 - `PYTHONPATH=bindings/python/src python -m unittest discover -s bindings/python/tests`
 - `npm test --prefix bindings/wasm`
-- `mkdir -p dist/r && cd dist/r && R CMD build ../../bindings/r && cd ../.. && R CMD check --no-manual dist/r/nirs4all_*.tar.gz`
 - `octave --quiet --eval "run('bindings/matlab/tests/smoke.m')"`
 
 When parity fixtures are added, run the native-vs-binding and

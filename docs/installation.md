@@ -97,9 +97,8 @@ code does not live here.
 
 ## R
 
-Package name `nirs4all` (built from `bindings/r`). The upstream ecosystem
-bindings are not on mainstream CRAN yet, so the natural channel today is
-**R-universe**:
+Package name `nirs4all`, maintained in the separate `GBeurier/nirs4all-r`
+repository. Its publication channel is R-universe:
 
 ```r
 install.packages(
@@ -111,11 +110,9 @@ install.packages(
 )
 ```
 
-It is a pure-R package (no compilation) that `Imports` only `jsonlite` and
-`yaml`. The upstream bindings (`nirs4allformats`, `nirs4allio`,
-`nirs4alldatasets`, `n4m`, `dagml`, `dagmldata`) are `Suggests`, resolved from
-R-universe via `Additional_repositories`. The `dagml` package owns local R loss
-and metric registration.
+It is a pure-R facade over the `n4m` R binding for methods-backed execution,
+with `jsonlite` and `yaml` for portable pipeline files. Other R integrations
+remain optional; see `nirs4all-r` for current dependency and controller details.
 
 ## MATLAB / Octave
 

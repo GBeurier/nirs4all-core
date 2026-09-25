@@ -20,10 +20,9 @@ nirs4all stack. It aggregates:
 It must not add independent numerical, parsing, or pipeline logic. The upstream
 projects stay the source of truth; this repository provides the canonical
 aggregate package surface, native bindings, release glue, and parity checks.
-Outside Python, the published package names stay `nirs4all`, but those
-artifacts are still this aggregate: target-language surfaces that consume the
-shared upstream packages and `nirs4all-methods` instead of duplicating parsers,
-IO, orchestration, or numerical kernels.
+The core-owned non-Python package names stay `nirs4all`; the R product is now
+maintained in the separate `nirs4all-r` repository. All bindings consume shared
+upstream packages rather than duplicating parsers, IO, orchestration, or kernels.
 
 ## Package names
 
@@ -32,7 +31,7 @@ IO, orchestration, or numerical kernels.
 | Python | `nirs4all-core` | `nirs4all_core` |
 | Rust | `nirs4all` | `nirs4all` |
 | JavaScript/WASM | `nirs4all` | `nirs4all` |
-| R | `nirs4all` | `library(nirs4all)` |
+| R (external product) | `nirs4all` | `library(nirs4all)` from `nirs4all-r` |
 | MATLAB/Octave | `nirs4all` | `+nirs4all` namespace |
 
 The Python distribution is `nirs4all-core`; it cannot use the bare `nirs4all`
@@ -40,15 +39,12 @@ name because the full Python `nirs4all` library owns it. Other language
 bindings use `nirs4all`. The canonical Python import root is
 `nirs4all_core`.
 
-The Rust crate, npm package, R package, and MATLAB/Octave namespace named
-`nirs4all` are therefore release identities for the same `nirs4all-core`
-aggregate, not separate full implementations of the nirs4all stack in those
-host languages.
+The Rust crate, npm package, and MATLAB/Octave namespace named `nirs4all`
+remain core-owned release identities. The R product has its own lifecycle in
+`nirs4all-r`, while sharing DAG-ML and Methods contracts.
 
-The canonical source repository for all of these artifacts is
-`GBeurier/nirs4all-core`. Registry/package names are ecosystem-specific:
-Python publishes `nirs4all-core`, while Rust, JavaScript/WASM, R, and the
-MATLAB/Octave namespace publish or ship under `nirs4all`.
+The canonical source repository for core-owned artifacts is
+`GBeurier/nirs4all-core`; `GBeurier/nirs4all-r` owns the R package.
 
 That shared non-Python name is a packaging identity, not a claim that every
 upstream domain has a runtime binding in every language. The full six-domain
@@ -77,8 +73,8 @@ upstream runtime bindings are installed. Domains without a host binding remain
 metadata-only and must fail explicitly if requested as executable capabilities.
 
 Current runtime coverage is intentionally uneven: JavaScript/WASM records npm
-peer candidates for every domain; R reaches only the upstream R packages that
-exist, including the `dagml` process-local loss/metric registry; MATLAB/Octave
+peer candidates for every domain; the separate R product reaches upstream R
+packages, including the `dagml` process-local loss/metric registry; MATLAB/Octave
 has runtime candidates for DAG-ML local registries through `+dagml` and methods
 through `+n4m`, while `dag_ml_data`, `formats`, `io`, and `datasets` remain
 metadata-only.
@@ -118,7 +114,6 @@ bindings/
   python/      # Python distribution: nirs4all-core
   rust/        # Rust crate: nirs4all
   wasm/        # npm/WASM package: nirs4all
-  r/           # R package skeleton: nirs4all
   matlab/      # MATLAB/Octave namespace and portable execution facade
 compat/        # Upstream registry and compatibility metadata
 docs/          # Architecture, binding, parity, and release contracts
@@ -138,7 +133,7 @@ Python expose the identity-bound multi-target conformal presentation V2 without
 recalculating calibration in the host.
 
 The broader aggregate surface remains intentionally uneven across Python, npm,
-R, MATLAB/Octave, and Rust. Runtime execution is limited to upstream bindings
+MATLAB/Octave, and Rust. Runtime execution is limited to upstream bindings
 that actually exist in each host; numerical and parsing behavior stays
 delegated to those upstream packages, and `nirs4all-core` does not vendor or
 reimplement their engines.
@@ -153,11 +148,8 @@ PYTHONPATH=bindings/python/src python -m unittest discover -s bindings/python/te
 npm test --prefix bindings/wasm
 ```
 
-`make test-v1-surfaces` is the public V1 surface gate for Python, R, and
-JavaScript/WASM. It runs the Python unittest suite, the WASM npm tests, and the
-R surface/upstream/pipeline checks when `R` and `Rscript` are installed; local
-workstations without them print a skip/risk message instead. `make test-r` is
-the separate local `R CMD check --no-manual bindings/r` gate.
+`make test-v1-surfaces` covers the core-owned Python, Rust, JavaScript/WASM,
+and MATLAB/Octave surfaces. The R product runs its checks in `nirs4all-r`.
 
 Strict Python-vs-full-`nirs4all` execution parity needs local
 `nirs4all-methods` Python bindings and libn4m:
@@ -178,12 +170,8 @@ NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 \
 cargo test -p nirs4all rust_binding_execution_matches_full_python_nirs4all_oracle -- --nocapture
 ```
 
-Strict R-vs-full-`nirs4all` execution parity needs an installed `n4m` R binding
-with the portable preprocessing and splitter surface:
-
-```bash
-make test-r-parity
-```
+Strict R-vs-Python parity is tested in `nirs4all-r` against the portable
+JSON/YAML fixtures retained under `tests/parity` here.
 
 Strict MATLAB/Octave-vs-full-`nirs4all` execution parity needs the
 `nirs4all-methods` `+n4m` MEX shims on the Octave/MATLAB path:
@@ -192,9 +180,8 @@ Strict MATLAB/Octave-vs-full-`nirs4all` execution parity needs the
 make test-matlab-parity
 ```
 
-`make build` produces the language artifacts when the required toolchains are
-installed. R and MATLAB/Octave checks require local R/Octave installations; CI
-also runs those gates.
+`make build` produces core-owned language artifacts when the required toolchains
+are installed. R checks and publication run in `nirs4all-r`.
 
 ## License
 
