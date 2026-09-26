@@ -478,12 +478,11 @@ fn configure_methods_library_identity(
     }
 
     let (snapshot_directory, snapshot_path) = write_attested_methods_snapshot(&attested)?;
-    MethodsRuntime::configure(&snapshot_path).map_err(|error| {
-        replay_error(format!(
-            "cannot configure the attested Methods runtime: {error}"
-        ))
-    })?;
-    let abi_error = n4m::Context::new().err().map(|error| error.to_string());
+    // DAG-ML's configure opens the snapshot through the n4m instance it links
+    // and creates a native context, which is the authoritative ABI preflight.
+    let abi_error = MethodsRuntime::configure(&snapshot_path)
+        .err()
+        .map(|error| format!("cannot configure the attested Methods runtime: {error}"));
     *configured = Some(ConfiguredMethodsLibrary {
         source_canonical_path: attested.source_canonical_path,
         sha256: attested.sha256,

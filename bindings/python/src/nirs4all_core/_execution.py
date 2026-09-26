@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import math
 from typing import Any
 
+from ._n4m_roles import n4m_role_method_id
 from ._pipeline import PipelineDefinition, load_pipeline_definition
 
 KENNARD_STONE_CLASSES: frozenset[str] = frozenset(
@@ -141,6 +142,9 @@ def parse_execution_plan(
     model_step: dict[str, Any] | None = None
 
     for step in definition.pipeline:
+        role_name = step.get("class") if isinstance(step, dict) else step
+        if n4m_role_method_id(role_name) is not None:
+            raise ValueError(f"'{role_name}' is an n4m role step: fit role recipes with N4mRolePipeline.fit_recipe().")
         if not isinstance(step, dict):
             raise TypeError("Portable pipeline steps must be mapping objects.")
 

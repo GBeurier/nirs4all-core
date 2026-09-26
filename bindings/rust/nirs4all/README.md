@@ -34,6 +34,26 @@ models replay their declared preprocessing once in Core; v2 models receive raw
 input and apply their embedded Methods SNV/Savitzky-Golay pipeline once. It
 never falls back to Python or a host executor.
 
+## Generic n4m role recipes (trained envelope v8)
+
+Pipeline definitions accept the language-neutral token `"n4m:<catalog method
+id>"` (a step string, or `{"class": "n4m:<id>", "params": {...}}`) wherever
+the portable subset is checked; `load_pipeline_definition_str()` resolves it
+through the native n4m manifest (`n4m::roles`), and `n4m_role_capabilities()`
+lists the manifest methods usable as recipe steps. `N4mRolePipeline` fits such
+a recipe (sample filters, transformers and selectors, then one regressor or
+classifier) and reads/writes the `nirs4all.n4m.trained_pipeline.v8` envelope,
+whose per-step N4ME states replay identically in the Python, R and JS/WASM
+bindings. Select the runtime with `n4m::configure_library()` or
+`N4M_LIBRARY_PATH`.
+
+```rust
+let fitted = nirs4all::N4mRolePipeline::fit_recipe(&recipe, &x, rows, cols, &y)?;
+let envelope = fitted.to_json()?;
+let replayed = nirs4all::N4mRolePipeline::from_json(&envelope)?;
+let predictions = replayed.predict(&x_new, new_rows)?;
+```
+
 ## Archive V1
 
 `load_archive_v1()` and `write_archive_v1()` implement only the stored-ZIP,

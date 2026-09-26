@@ -1,5 +1,7 @@
 import { parse as parseYaml } from 'yaml';
 
+import { n4mRoleMethodId, resolvesN4mRole } from './n4m-roles.js';
+
 export const upstreams = Object.freeze([
   {
     key: 'dag_ml',
@@ -511,7 +513,7 @@ export async function loadPortableStack(keys = upstreams.map((item) => item.key)
   return loaded;
 }
 
-export function loadPipelineDefinition(source) {
+export function loadPipelineDefinition(source, options = {}) {
   const data = typeof source === 'string' ? parsePipelineText(source) : clone(source);
   const normalized = normalizePipelineRoot(data);
   const pipeline = normalized.pipeline;
@@ -528,10 +530,17 @@ export function loadPipelineDefinition(source) {
     definition.random_state = normalized.random_state;
   }
 
-  const unsupported = portableClassNames(definition).filter((name) => !portableOperatorSet.has(name));
+  // Legacy class names use the portable subset; "n4m:<method id>" tokens
+  // resolve through the loaded Methods manifest.
+  const methods = options.methods ?? methodsModule;
+  const unsupported = portableClassNames(definition)
+    .filter((name) => !portableOperatorSet.has(name) && !resolvesN4mRole(name, methods));
   if (unsupported.length > 0) {
+    const hint = !methods && unsupported.some((name) => n4mRoleMethodId(name) !== null)
+      ? ' (n4m:<method id> steps resolve through the Methods manifest: await loadMethodsWasm() or pass {methods})'
+      : '';
     throw new Error(
-      `Pipeline uses operators outside the current nirs4all-core portable subset: ${[...new Set(unsupported)].join(', ')}`,
+      `Pipeline uses operators outside the current nirs4all-core portable subset: ${[...new Set(unsupported)].join(', ')}${hint}`,
     );
   }
 
@@ -617,6 +626,9 @@ function isCommentStep(value) {
 function collectClasses(value, output) {
   if (Array.isArray(value)) {
     for (const item of value) {
+      if (n4mRoleMethodId(item) !== null) {
+        output.push(item);
+      }
       collectClasses(item, output);
     }
     return;
@@ -632,6 +644,12 @@ function collectClasses(value, output) {
 }
 
 export { parseExecutionPlan, predictPortablePipeline, runPortablePipeline } from './execution.js';
+export {
+  N4M_ROLE_PREFIX,
+  N4M_TRAINED_PIPELINE_SCHEMA,
+  N4mRolePipeline,
+  n4mRoleCapabilities,
+} from './n4m-roles.js';
 export { createAsyncJsEstimatorController, createDagMlModelManifest, createDagMlNodeResult, createJsEstimatorController, createN4mModelController, createRandomForestController } from './js-estimator-controller.js';
 export {
   inspectMethodsArchiveV2Predictors,

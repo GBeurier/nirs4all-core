@@ -21,6 +21,7 @@ mod archive_view;
 mod durability;
 mod formats_io;
 mod io_training;
+mod n4m_roles;
 mod native_methods_replay;
 mod portable_session;
 pub use archive_v1::{
@@ -50,6 +51,10 @@ pub use io_training::{
     DatasetPackageMethodsArchiveV2Outcome, DatasetPackageMethodsArchiveV2Request,
     DatasetPackageMethodsConformalArchiveV2Outcome, DatasetPackageMethodsConformalArchiveV2Request,
     DatasetPackageMethodsProvider,
+};
+pub use n4m_roles::{
+    n4m_role_capabilities, n4m_role_method_id, resolve_n4m_role, N4mRolePipeline, RolePredictions,
+    RoleTarget, N4M_ROLE_PREFIX, N4M_TRAINED_PIPELINE_SCHEMA,
 };
 pub use native_methods_replay::{
     inspect_methods_archive_v2_predictors, inspect_methods_archive_v2_predictors_json,
@@ -519,11 +524,14 @@ pub fn load_pipeline_definition_str(input: &str) -> Result<Value, String> {
     strip_comments_in_place(pipeline);
 
     let classes = portable_class_names(&value);
-    let unsupported: Vec<_> = classes
-        .iter()
-        .filter(|name| !PORTABLE_OPERATOR_CLASSES.contains(&name.as_str()))
-        .cloned()
-        .collect();
+    let mut unsupported = Vec::new();
+    for name in &classes {
+        if n4m_role_method_id(name).is_some() {
+            resolve_n4m_role(name)?;
+        } else if !PORTABLE_OPERATOR_CLASSES.contains(&name.as_str()) {
+            unsupported.push(name.clone());
+        }
+    }
     if !unsupported.is_empty() {
         return Err(format!(
             "pipeline uses operators outside the current nirs4all-core portable subset: {}",
@@ -675,6 +683,15 @@ pub fn parse_execution_plan(definition: &Value) -> Result<ExecutionPlan, String>
     let mut model_step = None;
 
     for step in pipeline {
+        let class_name = step
+            .as_str()
+            .or_else(|| step.get("class").and_then(Value::as_str));
+        if class_name.and_then(n4m_role_method_id).is_some() {
+            return Err(
+                "n4m:<method id> role recipes run through N4mRolePipeline, not the legacy portable plan"
+                    .to_string(),
+            );
+        }
         let step_obj = step
             .as_object()
             .ok_or_else(|| "portable pipeline steps must be mapping objects".to_string())?;
@@ -1105,7 +1122,12 @@ fn collect_classes(value: &Value, output: &mut Vec<String>) {
     match value {
         Value::Array(items) => {
             for item in items {
-                collect_classes(item, output);
+                match item {
+                    Value::String(token) if n4m_role_method_id(token).is_some() => {
+                        output.push(token.clone())
+                    }
+                    _ => collect_classes(item, output),
+                }
             }
         }
         Value::Object(map) => {

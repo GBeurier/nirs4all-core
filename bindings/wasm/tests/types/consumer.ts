@@ -27,6 +27,11 @@ import {
   runPortablePipeline,
   upstream,
   upstreams,
+  N4mRolePipeline,
+  n4mRoleCapabilities,
+  type N4mRoleCapability,
+  type N4mRolePrediction,
+  type N4mTrainedPipelineEnvelope,
   type PipelineDefinition,
   type NativePredictorDescriptorV1,
   type PortableExecutionResult,
@@ -139,3 +144,17 @@ void stackPromise;
 void dataIoPromise;
 void maybeLoadedMethods;
 void inspectedPredictors;
+
+async function roleRecipe(): Promise<void> {
+  const fitted: N4mRolePipeline = await N4mRolePipeline.fit(
+    { pipeline: ['n4m:preprocessing.scatter.snv', { class: 'n4m:models.pls.cppls', params: { n_components: 3 } }] },
+    { X: [[1, 2], [3, 4]], rows: 2, cols: 2, y: [1, 2] },
+  );
+  const envelope: N4mTrainedPipelineEnvelope = fitted.toJSON();
+  const replayed = await N4mRolePipeline.fromJSON(JSON.stringify(envelope));
+  const prediction: N4mRolePrediction = replayed.predict({ X: [[1, 2]], rows: 1, cols: 2 });
+  const steps: N4mRoleCapability[] = await n4mRoleCapabilities();
+  void prediction;
+  void steps;
+}
+void roleRecipe;

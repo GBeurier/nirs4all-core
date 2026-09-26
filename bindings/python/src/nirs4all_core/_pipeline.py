@@ -10,6 +10,8 @@ from typing import Any
 
 import yaml
 
+from ._n4m_roles import n4m_role_method_id, resolves_n4m_role
+
 PORTABLE_OPERATOR_CLASSES: frozenset[str] = frozenset(
     {
         "nirs4all.operators.splitters.KennardStoneSplitter",
@@ -167,8 +169,10 @@ def _is_comment_step(value: Any) -> bool:
 
 
 def _validate_portable_classes(value: Any) -> None:
+    # Legacy class names use the portable subset; "n4m:<method id>" tokens
+    # resolve through the Methods manifest.
     classes = portable_class_names(value)
-    unsupported = [name for name in classes if name not in PORTABLE_OPERATOR_CLASSES]
+    unsupported = [name for name in classes if name not in PORTABLE_OPERATOR_CLASSES and not resolves_n4m_role(name)]
     if unsupported:
         raise ValueError(
             "Pipeline uses operators outside the current nirs4all-core portable subset: "
@@ -179,6 +183,8 @@ def _validate_portable_classes(value: Any) -> None:
 def _collect_classes(value: Any, output: list[str]) -> None:
     if isinstance(value, list):
         for item in value:
+            if n4m_role_method_id(item) is not None:
+                output.append(item)
             _collect_classes(item, output)
         return
 

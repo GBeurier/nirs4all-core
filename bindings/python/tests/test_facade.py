@@ -29,6 +29,9 @@ class FacadeImportSurfaceTests(unittest.TestCase):
     def test_aggregate_public_surface_is_explicit(self) -> None:
         expected_exports = [
             "LazyUpstream",
+            "N4M_ROLE_PREFIX",
+            "N4M_TRAINED_PIPELINE_SCHEMA",
+            "N4mRolePipeline",
             "NativeArchiveUnavailableError",
             "PORTABLE_OPERATOR_CLASSES",
             "PortableDataset",
@@ -53,6 +56,7 @@ class FacadeImportSurfaceTests(unittest.TestCase):
             "load_pipeline_definition",
             "local_implementation_registry",
             "methods",
+            "n4m_role_capabilities",
             "parse_execution_plan",
             "portable_class_names",
             "predict_methods_archive_v2_matrix",

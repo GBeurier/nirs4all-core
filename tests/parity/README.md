@@ -46,6 +46,16 @@ python -m unittest bindings/python/tests/test_execution_parity.py -v
 Rscript ../nirs4all-r/tests/portable-json-yaml.R
 ```
 
+`fixtures/n4m_roles_v8_python_trained.json` holds Python-trained regression
+and classification `nirs4all.n4m.trained_pipeline.v8` envelopes with their
+training rows, `x_test` and expected predictions (copied from
+`nirs4all-r/inst/extdata/python_trained_roles_v8.json`);
+`fixtures/n4m_roles_v8_r_trained.json` with
+`expected/n4m_roles_v8_r_trained_oracle.json` is an R-trained envelope and its
+predictions (copied from the full Python `nirs4all`
+`tests/fixtures/portable_roles_v8_r_*`). Every binding replays both and
+round-trips its own fits.
+
 Each fixture should include:
 
 - input data or a DOI/catalog reference;

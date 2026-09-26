@@ -589,10 +589,12 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertEqual(set(root_lock["peerDependencies"]), expected_peers)
         self.assertEqual(set(root_lock["peerDependenciesMeta"]), expected_peers)
         self.assertEqual(root_lock["license"], package["license"])
+        # Methods is floored at the release carrying ABI 2.13 estimator roles.
+        pinned_peers = {"@nirs4all/methods": "^1.0.22"}
         for peer in upstream_peers:
-            self.assertEqual(package["peerDependencies"][peer], "*")
+            self.assertEqual(package["peerDependencies"][peer], pinned_peers.get(peer, "*"))
             self.assertTrue(package["peerDependenciesMeta"][peer]["optional"])
-            self.assertEqual(root_lock["peerDependencies"][peer], "*")
+            self.assertEqual(root_lock["peerDependencies"][peer], pinned_peers.get(peer, "*"))
             self.assertTrue(root_lock["peerDependenciesMeta"][peer]["optional"])
         for peer, version in classic_ml_peers.items():
             self.assertEqual(package["peerDependencies"][peer], version)
@@ -650,13 +652,13 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         )
         self.assertEqual(extras["datasets"], ["nirs4all-datasets>=0.3.5"])
         self.assertEqual(extras["dag-ml"], ["dag-ml>=0.3.27,<0.4"])
-        self.assertIn("nirs4all-methods>=1.0.18,<2", extras["methods"])
+        self.assertIn("nirs4all-methods>=1.0.22,<2", extras["methods"])
         self.assertIn("pls4all>=1.0.18,<2", extras["methods"])
         self.assertIn("scikit-learn>=1.3", extras["methods"])
         self.assertIn("nirs4all-formats>=0.2.9", all_extra)
         self.assertIn("nirs4all-io>=0.1.18", all_extra)
         self.assertIn("dag-ml>=0.3.27,<0.4", all_extra)
-        self.assertIn("nirs4all-methods>=1.0.18,<2", all_extra)
+        self.assertIn("nirs4all-methods>=1.0.22,<2", all_extra)
         self.assertIn("pls4all>=1.0.18,<2", all_extra)
         self.assertNotIn("nirs4all-methods>=1.0.5", extras["methods"])
 
