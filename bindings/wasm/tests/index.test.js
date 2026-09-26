@@ -237,6 +237,7 @@ test('capability manifest describes portable custom app host controllers', () =>
     'split.kennard_stone',
     'preprocess.snv',
     'preprocess.savgol',
+    'preprocess.msc',
     'model.pls_regression',
     'pipeline.portable_methods',
   ]);
@@ -244,7 +245,14 @@ test('capability manifest describes portable custom app host controllers', () =>
   for (const controller of manifest.controllers) {
     assert.equal(controller.domain, 'methods');
     assert.deepEqual(Object.keys(controller.runtime).sort(), [...runtimeSurfaces].sort());
-    assert.ok(Object.values(controller.runtime).every((level) => level === 'parity-validated'));
+    if (controller.id === 'preprocess.msc') {
+      assert.equal(controller.runtime.javascript_wasm, 'execute-local');
+      assert.ok(Object.entries(controller.runtime)
+        .filter(([surface]) => surface !== 'javascript_wasm')
+        .every(([, level]) => level === 'metadata'));
+    } else {
+      assert.ok(Object.values(controller.runtime).every((level) => level === 'parity-validated'));
+    }
     assert.ok(controller.ports.inputs.length > 0);
     assert.ok(controller.ports.outputs.length > 0);
   }

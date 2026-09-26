@@ -101,6 +101,118 @@ test('portable execution plan preserves Savitzky-Golay mode and cval', () => {
   assert.deepEqual(plan.preprocessing[0].params, [11, 3, 0, 1, 7.25]);
 });
 
+test('MSC recipe restores training state across JSON and never fits validation data', async () => {
+  const fits = [];
+  const created = [];
+  const methods = {
+    ppCreate(type) {
+      created.push(type);
+      assert.equal(type, 'MSC');
+      return { type, state: null };
+    },
+    ppFit(op, data, rows, cols) {
+      fits.push(Array.from(data));
+      op.state = Float64Array.from({ length: cols }, (_, col) => {
+        let sum = 0;
+        for (let row = 0; row < rows; row += 1) sum += data[row * cols + col];
+        return sum / rows;
+      });
+    },
+    ppGetState: (op) => op.state,
+    ppSetState(op, state) { op.state = state; },
+    ppTransform(op, data, rows, cols) {
+      assert.ok(op.state, 'preprocessing must have training state before transform');
+      return Float64Array.from(data, (value, index) => value - op.state[index % cols]);
+    },
+    ppDestroy() {},
+    computeSplitIndices: () => ({ trainIndices: [0, 1], testIndices: [2, 3] }),
+    fitPls: () => ({
+      coefficients: Float64Array.of(1, 0), xMean: Float64Array.of(0, 0),
+      yMean: Float64Array.of(0), intercept: null, n_features: 2, n_targets: 1,
+    }),
+    predictPls: (_model, X) => ({
+      data: Float64Array.from({ length: X.rows }, (_, row) => X.data[row * X.cols]),
+      rows: X.rows,
+      cols: 1,
+    }),
+  };
+  const source = { pipeline: [
+    { class: 'nirs4all.operators.splitters.KennardStoneSplitter' },
+    { class: 'n4m.MSC' },
+    { model: { class: 'sklearn.cross_decomposition.PLSRegression', params: { n_components: 1 } } },
+  ] };
+  const dataset = { X: [1, 2, 3, 4, 100, 200, 300, 400], y: [0, 0, 98, 298], rows: 4, cols: 2 };
+  const fitted = await runPortablePipeline(source, dataset, { methods });
+  assert.deepEqual(fitted.preprocessing, [{ type: 'MSC', params: [], state: [2, 3] }]);
+  assert.deepEqual(fits, [[1, 2, 3, 4]]);
+  assert.deepEqual(fitted.selected.predictions, [98, 298]);
+
+  const replayed = JSON.parse(JSON.stringify(fitted));
+  const validation = await predictPortablePipeline(replayed, { X: [100, 200, 300, 400], rows: 2, cols: 2 }, { methods });
+  assert.deepEqual(validation.data, fitted.selected.predictions);
+  assert.deepEqual(created, ['MSC', 'MSC']);
+  assert.deepEqual(fits, [[1, 2, 3, 4]], 'prediction must not re-fit a stateful operator');
+
+  replayed.preprocessing[0].state = [2];
+  await assert.rejects(
+    predictPortablePipeline(replayed, { X: [100, 200], rows: 1, cols: 2 }, { methods }),
+    /state length 1 does not match 2 features/,
+  );
+  replayed.preprocessing[0].state = [2, Number.NaN];
+  await assert.rejects(
+    predictPortablePipeline(replayed, { X: [100, 200], rows: 1, cols: 2 }, { methods }),
+    /invalid fitted state/,
+  );
+  delete replayed.preprocessing[0].state;
+  await assert.rejects(
+    predictPortablePipeline(replayed, { X: [100, 200], rows: 1, cols: 2 }, { methods }),
+    /requires fitted state/,
+  );
+});
+
+test('MSC Python aliases use the Methods MSC token and reject unsupported parameters', () => {
+  for (const className of [
+    'nirs4all.operators.transforms.MSC',
+    'nirs4all.operators.transforms.MultiplicativeScatterCorrection',
+    'nirs4all.operators.transforms.nirs.MultiplicativeScatterCorrection',
+  ]) {
+    const plan = parseExecutionPlan({ pipeline: [
+      { class: className, params: { scale: false, copy: true } },
+      { model: { class: 'sklearn.cross_decomposition.PLSRegression' } },
+    ] });
+    assert.deepEqual(plan.preprocessing, [{ type: 'MSC', params: [] }]);
+  }
+  assert.throws(() => parseExecutionPlan({ pipeline: [
+    { class: 'n4m.MSC', params: { reference: [1, 2] } },
+    { model: { class: 'sklearn.cross_decomposition.PLSRegression' } },
+  ] }), /Unsupported MSC parameter/);
+});
+
+test('older stateless preprocessing remains replayable without fitted state', async () => {
+  let fits = 0;
+  const methods = {
+    ppCreate: () => ({}),
+    ppFit() { fits += 1; },
+    ppTransform: (_op, data) => Float64Array.from(data),
+    ppDestroy() {},
+    predictPls: (_model, X) => ({ data: Float64Array.of(X.data[0]), rows: X.rows, cols: 1 }),
+  };
+  const model = {
+    coefficients: [1, 0], xMean: [0, 0], yMean: [0], intercept: null,
+    n_features: 2, n_targets: 1,
+  };
+  const result = await predictPortablePipeline(
+    { preprocessing: [
+      { type: 'StandardNormalVariate', params: [] },
+      { type: 'SavitzkyGolay', params: [3, 1, 0, 4, 0] },
+    ], model },
+    { X: [7, 8], rows: 1, cols: 2 },
+    { methods },
+  );
+  assert.deepEqual(result.data, [7]);
+  assert.equal(fits, 0);
+});
+
 test('portable execution plan rejects lossy operator parameter coercions', () => {
   assert.throws(() => parseExecutionPlan({
     pipeline: [
