@@ -380,9 +380,11 @@ test('MBPLS preserves block boundaries through fit and JSON replay', async () =>
   };
   const source = { pipeline: [{ model: { class: 'n4m.MBPLS', params: {
     n_components: 2, block_sizes: [2, 4] } } }] };
+  const yaml = 'pipeline:\n  - model:\n      class: n4m.MBPLS\n      params:\n        n_components: 2\n        block_sizes: [2, 4]\n';
   const data = { X: Array.from({ length: 30 }, (_, i) => i + 1),
     y: [1, 7, 13, 19, 25], rows: 5, cols: 6 };
   assert.deepEqual(parseExecutionPlan(source).modelParams, [2, 4]);
+  assert.deepEqual(parseExecutionPlan(yaml).modelParams, [2, 4]);
   const fitted = await runPortablePipeline(source, data, { methods });
   assert.deepEqual(calls[0], ['fit', 'MBPLS', 6, 2, [2, 4]]);
   assert.deepEqual(fitted.model.params, [2, 4]);
