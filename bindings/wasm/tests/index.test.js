@@ -237,20 +237,37 @@ test('capability manifest describes portable custom app host controllers', () =>
     'split.kennard_stone',
     'preprocess.snv',
     'preprocess.savgol',
+    'preprocess.msc',
+    'select.spa',
+    'select.n4m',
     'model.pls_regression',
+    'model.affine_methods',
     'pipeline.portable_methods',
   ]);
 
   for (const controller of manifest.controllers) {
     assert.equal(controller.domain, 'methods');
     assert.deepEqual(Object.keys(controller.runtime).sort(), [...runtimeSurfaces].sort());
-    assert.ok(Object.values(controller.runtime).every((level) => level === 'parity-validated'));
+    if (['preprocess.msc', 'select.spa', 'select.n4m', 'model.affine_methods'].includes(controller.id)) {
+      assert.equal(controller.runtime.javascript_wasm, 'execute-local');
+      assert.ok(Object.entries(controller.runtime)
+        .filter(([surface]) => surface !== 'javascript_wasm')
+        .every(([, level]) => level === 'metadata'));
+    } else {
+      assert.ok(Object.values(controller.runtime).every((level) => level === 'parity-validated'));
+    }
     assert.ok(controller.ports.inputs.length > 0);
     assert.ok(controller.ports.outputs.length > 0);
   }
 
   const covered = manifest.controllers.flatMap((item) => item.operatorClasses);
   assert.deepEqual(covered.sort(), [...portableOperatorClasses].sort());
+  const affine = manifest.controllers.find((item) => item.id === 'model.affine_methods');
+  for (const name of ['FusedSparsePLS', 'BaggingPLS', 'BoostingPLS', 'RandomSubspacePLS']) {
+    assert.ok(affine.operatorClasses.includes(`n4m.${name}`));
+  }
+  assert.ok(affine.operatorClasses.includes('n4m.NPLS'));
+  assert.ok(affine.operatorClasses.includes('n4m.MBPLS'));
 });
 
 test('public upstream loaders map to the declared V1 upstreams', () => {

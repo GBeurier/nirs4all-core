@@ -5,8 +5,10 @@ binding. Three invariants must hold for the aggregate to be truthful, and none
 of them is otherwise checked when Node, Octave, or a Rust toolchain are
 unavailable (those runtime gates simply skip):
 
-1. The portable operator subset is identical across the four core-owned language
-   bindings (Python, WASM, MATLAB/Octave, Rust).
+1. The original portable operator subset is identical across Python,
+   MATLAB/Octave, and Rust. WASM contains that subset plus its separately
+   qualified local Methods controllers; their extra names are not presented as
+   cross-language support by the other facades.
 2. The upstream registry (keys and role strings) is identical across all four
    bindings and the machine-readable ``compat`` registry.
 3. Every binding exposes a thin facade or re-export for the upstream DAG-ML
@@ -53,6 +55,7 @@ RUST_LIB = ROOT / "bindings/rust/nirs4all/src/lib.rs"
 COMPAT = ROOT / "compat/upstreams.toml"
 
 EXPECTED_OPERATOR_COUNT = 14
+EXPECTED_WASM_OPERATOR_COUNT = 36
 EXPECTED_UPSTREAM_COUNT = 6
 
 
@@ -194,12 +197,11 @@ class VersionMetadataParityTests(unittest.TestCase):
 
 
 class PortableOperatorSubsetParityTests(unittest.TestCase):
-    def test_operator_subset_is_identical_across_all_bindings(self) -> None:
+    def test_shared_operator_subset_and_wasm_extension(self) -> None:
         python = set(n4core.PORTABLE_OPERATOR_CLASSES)
         self.assertEqual(len(python), EXPECTED_OPERATOR_COUNT)
 
         extractors = {
-            "wasm": _wasm_operator_classes,
             "matlab": _matlab_operator_classes,
             "rust": _rust_operator_classes,
         }
@@ -214,6 +216,38 @@ class PortableOperatorSubsetParityTests(unittest.TestCase):
                     f"duplicate {label} operator class",
                 )
                 self.assertEqual(python, set(classes))
+
+        wasm = _wasm_operator_classes()
+        self.assertEqual(len(wasm), EXPECTED_WASM_OPERATOR_COUNT, wasm)
+        self.assertEqual(len(set(wasm)), len(wasm), "duplicate wasm operator class")
+        self.assertTrue(python <= set(wasm), "WASM lost a shared portable operator")
+        self.assertEqual(
+            set(wasm) - python,
+            {
+                "n4m.MSC",
+                "nirs4all.operators.transforms.MSC",
+                "nirs4all.operators.transforms.MultiplicativeScatterCorrection",
+                "nirs4all.operators.transforms.nirs.MultiplicativeScatterCorrection",
+                "n4m.SPA",
+                "n4m.SPASelector",
+                "pls4all.sklearn.SPASelector",
+                "n4m.Selector",
+                "n4m.Ridge",
+                "n4m.RidgePLS",
+                "n4m.RobustPLS",
+                "n4m.CPPLS",
+                "n4m.SparseSIMPLS",
+                "n4m.ECR",
+                "n4m.ContinuumRegression",
+                "n4m.MIRPLS",
+                "n4m.FusedSparsePLS",
+                "n4m.BaggingPLS",
+                "n4m.BoostingPLS",
+                "n4m.RandomSubspacePLS",
+                "n4m.NPLS",
+                "n4m.MBPLS",
+            },
+        )
 
 
 class UpstreamRegistryParityTests(unittest.TestCase):

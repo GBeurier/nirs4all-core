@@ -101,6 +101,527 @@ test('portable execution plan preserves Savitzky-Golay mode and cval', () => {
   assert.deepEqual(plan.preprocessing[0].params, [11, 3, 0, 1, 7.25]);
 });
 
+test('MSC recipe restores training state across JSON and never fits validation data', async () => {
+  const fits = [];
+  const created = [];
+  const methods = {
+    ppCreate(type) {
+      created.push(type);
+      assert.equal(type, 'MSC');
+      return { type, state: null };
+    },
+    ppFit(op, data, rows, cols) {
+      fits.push(Array.from(data));
+      op.state = Float64Array.from({ length: cols }, (_, col) => {
+        let sum = 0;
+        for (let row = 0; row < rows; row += 1) sum += data[row * cols + col];
+        return sum / rows;
+      });
+    },
+    ppGetState: (op) => op.state,
+    ppSetState(op, state) { op.state = state; },
+    ppTransform(op, data, rows, cols) {
+      assert.ok(op.state, 'preprocessing must have training state before transform');
+      return Float64Array.from(data, (value, index) => value - op.state[index % cols]);
+    },
+    ppDestroy() {},
+    computeSplitIndices: () => ({ trainIndices: [0, 1], testIndices: [2, 3] }),
+    fitPls: () => ({
+      coefficients: Float64Array.of(1, 0), xMean: Float64Array.of(0, 0),
+      yMean: Float64Array.of(0), intercept: null, n_features: 2, n_targets: 1,
+    }),
+    predictPls: (_model, X) => ({
+      data: Float64Array.from({ length: X.rows }, (_, row) => X.data[row * X.cols]),
+      rows: X.rows,
+      cols: 1,
+    }),
+  };
+  const source = { pipeline: [
+    { class: 'nirs4all.operators.splitters.KennardStoneSplitter' },
+    { class: 'n4m.MSC' },
+    { model: { class: 'sklearn.cross_decomposition.PLSRegression', params: { n_components: 1 } } },
+  ] };
+  const dataset = { X: [1, 2, 3, 4, 100, 200, 300, 400], y: [0, 0, 98, 298], rows: 4, cols: 2 };
+  const fitted = await runPortablePipeline(source, dataset, { methods });
+  assert.deepEqual(fitted.preprocessing, [{ type: 'MSC', params: [], state: [2, 3] }]);
+  assert.deepEqual(fits, [[1, 2, 3, 4]]);
+  assert.deepEqual(fitted.selected.predictions, [98, 298]);
+
+  const replayed = JSON.parse(JSON.stringify(fitted));
+  const validation = await predictPortablePipeline(replayed, { X: [100, 200, 300, 400], rows: 2, cols: 2 }, { methods });
+  assert.deepEqual(validation.data, fitted.selected.predictions);
+  assert.deepEqual(created, ['MSC', 'MSC']);
+  assert.deepEqual(fits, [[1, 2, 3, 4]], 'prediction must not re-fit a stateful operator');
+
+  replayed.preprocessing[0].state = [2];
+  await assert.rejects(
+    predictPortablePipeline(replayed, { X: [100, 200], rows: 1, cols: 2 }, { methods }),
+    /state length 1 does not match 2 features/,
+  );
+  replayed.preprocessing[0].state = [2, Number.NaN];
+  await assert.rejects(
+    predictPortablePipeline(replayed, { X: [100, 200], rows: 1, cols: 2 }, { methods }),
+    /invalid fitted state/,
+  );
+  delete replayed.preprocessing[0].state;
+  await assert.rejects(
+    predictPortablePipeline(replayed, { X: [100, 200], rows: 1, cols: 2 }, { methods }),
+    /requires fitted state/,
+  );
+});
+
+test('MSC Python aliases use the Methods MSC token and reject unsupported parameters', () => {
+  for (const className of [
+    'nirs4all.operators.transforms.MSC',
+    'nirs4all.operators.transforms.MultiplicativeScatterCorrection',
+    'nirs4all.operators.transforms.nirs.MultiplicativeScatterCorrection',
+  ]) {
+    const plan = parseExecutionPlan({ pipeline: [
+      { class: className, params: { scale: false, copy: true } },
+      { model: { class: 'sklearn.cross_decomposition.PLSRegression' } },
+    ] });
+    assert.deepEqual(plan.preprocessing, [{ type: 'MSC', params: [] }]);
+  }
+  assert.throws(() => parseExecutionPlan({ pipeline: [
+    { class: 'n4m.MSC', params: { reference: [1, 2] } },
+    { model: { class: 'sklearn.cross_decomposition.PLSRegression' } },
+  ] }), /Unsupported MSC parameter/);
+});
+
+test('eight affine model aliases dispatch and replay through Methods', async () => {
+  const cases = [
+    ['Ridge', { lambda: 2 }, [2]],
+    ['RidgePLS', { ridge_lambda: 3 }, [3]],
+    ['RobustPLS', { huber_k: 1.5, max_irls_iter: 7 }, [1.5, 7]],
+    ['CPPLS', { gamma: 0.4 }, [0.4]],
+    ['SparseSIMPLS', { sparsity_lambda: 0.02 }, [0.02]],
+    ['ECR', { alpha: 0.7 }, [0.7]],
+    ['ContinuumRegression', { tau: 0.3 }, [0.3]],
+    ['MIRPLS', {}, []],
+  ];
+  for (const [type, params, vector] of cases) {
+    const calls = [];
+    const methods = {
+      fitModel(token, X, Y, components, values) {
+        calls.push(['fit', token, components, values]);
+        assert.equal(X.rows, Y.rows);
+        return { coefficients: Float64Array.of(1, 0), xMean: Float64Array.of(0, 0),
+          yMean: Float64Array.of(0), intercept: type === 'Ridge' ? Float64Array.of(2) : null,
+          n_features: 2, n_targets: 1 };
+      },
+      predictModel(model, X) {
+        calls.push(['predict', model.intercept == null ? null : Array.from(model.intercept)]);
+        return { data: Float64Array.from({ length: X.rows }, (_, row) => X.data[row * X.cols]),
+          rows: X.rows, cols: 1 };
+      },
+    };
+    const source = { pipeline: [{ model: { class: `n4m.${type}`, params: { ...params, n_components: 2 } } }] };
+    const input = { X: [1, 2, 3, 4, 5, 6], y: [1, 3, 5], rows: 3, cols: 2 };
+    const plan = parseExecutionPlan(source);
+    assert.equal(plan.modelType, type);
+    assert.deepEqual(plan.modelParams, vector);
+    const fitted = await runPortablePipeline(source, input, { methods });
+    assert.equal(fitted.model.type, type);
+    assert.deepEqual(fitted.model.params, vector);
+    assert.deepEqual(fitted.selected.predictions, [1, 3, 5]);
+    const replay = JSON.parse(JSON.stringify(fitted));
+    const predicted = await predictPortablePipeline(replay, { X: input.X, rows: 3, cols: 2 }, { methods });
+    assert.deepEqual(predicted.data, fitted.selected.predictions);
+    assert.deepEqual(calls[0], ['fit', type, 2, vector]);
+    assert.equal(calls.filter(([name]) => name === 'predict').length, 2);
+  }
+});
+
+test('affine model recipes reject unsupported or lossy parameters', () => {
+  for (const [type, params, pattern] of [
+    ['Ridge', { alpha: 1 }, /Unsupported Ridge parameter/],
+    ['RidgePLS', { ridge_lambda: 'NaN' }, /ridge_lambda must be finite/],
+    ['RobustPLS', { max_irls_iter: 2.5 }, /max_irls_iter must be an integer/],
+    ['MIRPLS', { tau: 0.5 }, /Unsupported MIRPLS parameter/],
+  ]) {
+    assert.throws(() => parseExecutionPlan({ pipeline: [
+      { model: { class: `n4m.${type}`, params } },
+    ] }), pattern);
+  }
+});
+
+test('four fused and ensemble aliases use strict C defaults and replay after JSON', async () => {
+  const cases = [
+    ['FusedSparsePLS', [0.05, 0.05], { l1_lambda: 0.2, fusion_lambda: 0.3 }, [0.2, 0.3]],
+    ['BaggingPLS', [50, 0], { n_estimators: 7, seed: 42 }, [7, 42]],
+    ['BoostingPLS', [50, 0.1], { n_estimators: 8, learning_rate: 0.25 }, [8, 0.25]],
+    ['RandomSubspacePLS', [50, 10, 0],
+      { n_estimators: 9, features_per_subspace: 6, seed: 3 }, [9, 6, 3]],
+  ];
+  for (const [type, defaults, overrides, expected] of cases) {
+    const calls = [];
+    const methods = {
+      fitModel(token, X, Y, components, params) {
+        calls.push(['fit', token, components, params]);
+        assert.equal(X.rows, Y.rows);
+        return { coefficients: Float64Array.from({ length: 12 }, (_, col) => col === 0 ? 1 : 0),
+          xMean: new Float64Array(12), yMean: Float64Array.of(0),
+          intercept: null, n_features: 12, n_targets: 1 };
+      },
+      predictModel(model, X) {
+        calls.push(['predict', model.n_features, X.cols]);
+        return { data: Float64Array.from({ length: X.rows }, (_, row) => X.data[row * X.cols]),
+          rows: X.rows, cols: 1 };
+      },
+    };
+    const dataset = { X: Array.from({ length: 144 }, (_, i) => i + 1),
+      y: Array.from({ length: 12 }, (_, i) => i * 12 + 1), rows: 12, cols: 12 };
+    const source = (params) => ({ pipeline: [
+      { model: { class: `n4m.${type}`, params } },
+    ] });
+    assert.deepEqual(parseExecutionPlan(source({})).modelParams, defaults);
+    const fitted = await runPortablePipeline(source({ ...overrides, n_components: 2 }), dataset, { methods });
+    assert.deepEqual(calls[0], ['fit', type, 2, expected]);
+    assert.deepEqual(fitted.model.params, expected);
+    const replay = JSON.parse(JSON.stringify(fitted));
+    const predicted = await predictPortablePipeline(replay,
+      { X: dataset.X, rows: 12, cols: 12 }, { methods });
+    assert.deepEqual(predicted.data, dataset.y);
+    assert.deepEqual(calls.at(-1), ['predict', 12, 12]);
+  }
+});
+
+test('fused and ensemble recipes reject invalid shape, seed, and model parameters', async () => {
+  const source = (type, params) => ({ pipeline: [{ model: { class: `n4m.${type}`, params } }] });
+  for (const [type, params, pattern] of [
+    ['BaggingPLS', { seed: -1 }, /seed must be >= 0/],
+    ['BaggingPLS', { seed: 2.5 }, /seed must be an integer/],
+    ['BaggingPLS', { seed: 4294967296 }, /seed is outside i32 range/],
+    ['BaggingPLS', { seed: 2147483648 }, /seed is outside i32 range/],
+    ['BaggingPLS', { n_estimators: 0 }, /n_estimators must be >= 1/],
+    ['BoostingPLS', { learning_rate: 1.1 }, /learning_rate must be in/],
+    ['BoostingPLS', { learning_rate: 0 }, /learning_rate must be in/],
+    ['FusedSparsePLS', { fusion_lambda: -1 }, /fusion_lambda must be non-negative/],
+    ['RandomSubspacePLS', { features_per_subspace: 1.5 }, /features_per_subspace must be an integer/],
+    ['RandomSubspacePLS', { seed: '1' }, /seed must be numeric/],
+    ['RandomSubspacePLS', { extra: 1 }, /Unsupported RandomSubspacePLS parameter/],
+  ]) assert.throws(() => parseExecutionPlan(source(type, params)), pattern);
+  assert.deepEqual(parseExecutionPlan(source('BaggingPLS', { seed: 2147483647 })).modelParams,
+    [50, 2147483647]);
+  await assert.rejects(runPortablePipeline(source('RandomSubspacePLS', {}),
+    { X: [1, 2, 3, 4, 5, 6], y: [1, 2, 3], rows: 3, cols: 2 },
+    { methods: {} }), /features_per_subspace 10 exceeds 2 input features/);
+});
+
+test('NPLS fits flattened training tensor and replays serialized model state', async () => {
+  const calls = [];
+  const methods = {
+    computeSplitIndices: () => ({ trainIndices: [0, 1, 2], testIndices: [3, 4] }),
+    fitModel(token, X, Y, components, params) {
+      calls.push(['fit', token, X.rows, X.cols, Array.from(Y.data), components, params]);
+      return { coefficients: Float64Array.of(1, 0, 0, 0, 0, 0),
+        xMean: new Float64Array(6), yMean: Float64Array.of(0),
+        intercept: null, n_features: 6, n_targets: 1 };
+    },
+    predictModel(model, X) {
+      calls.push(['predict', model.n_features, X.rows]);
+      return { data: Float64Array.from({ length: X.rows }, (_, row) => X.data[row * X.cols]),
+        rows: X.rows, cols: 1 };
+    },
+  };
+  const source = { pipeline: [
+    { class: 'nirs4all.operators.splitters.KennardStoneSplitter' },
+    { model: { class: 'n4m.NPLS', params: { mode_j: 2, mode_k: 3 } } },
+  ] };
+  const data = { X: Array.from({ length: 30 }, (_, i) => i + 1),
+    y: [1, 7, 13, 19, 25], rows: 5, cols: 6 };
+  assert.deepEqual(parseExecutionPlan(source).modelParams, [2, 3]);
+  const fitted = await runPortablePipeline(source, data, { methods });
+  assert.deepEqual(calls[0], ['fit', 'NPLS', 3, 6, [1, 7, 13], 2, [2, 3]]);
+  assert.equal(fitted.model.type, 'NPLS');
+  assert.deepEqual(fitted.model.params, [2, 3]);
+  assert.deepEqual(fitted.selected.predictions, [19, 25]);
+  const replay = JSON.parse(JSON.stringify(fitted));
+  const predicted = await predictPortablePipeline(replay,
+    { X: data.X, rows: data.rows, cols: data.cols }, { methods });
+  assert.deepEqual(predicted.data, data.y);
+  assert.equal(calls.filter(([kind]) => kind === 'fit').length, 1);
+  assert.deepEqual(calls.at(-1), ['predict', 6, 5]);
+});
+
+test('NPLS rejects missing or lossy dimensions and mismatched fitted width', async () => {
+  const source = (params) => ({ pipeline: [{ model: { class: 'n4m.NPLS', params } }] });
+  for (const [params, pattern] of [
+    [{ mode_k: 3 }, /mode_j must be an integer/],
+    [{ mode_j: 2 }, /mode_k must be an integer/],
+    [{ mode_j: 0, mode_k: 3 }, /mode_j must be >= 1/],
+    [{ mode_j: 1.5, mode_k: 4 }, /mode_j must be an integer/],
+    [{ mode_j: '2', mode_k: 3 }, /mode_j must be numeric/],
+    [{ mode_j: 2147483648, mode_k: 3 }, /mode_j is outside i32 range/],
+    [{ mode_j: 2, mode_k: 3, extra: 1 }, /Unsupported NPLS parameter/],
+  ]) assert.throws(() => parseExecutionPlan(source(params)), pattern);
+  await assert.rejects(runPortablePipeline(source({ mode_j: 2, mode_k: 4 }),
+    { X: Array.from({ length: 18 }, (_, i) => i + 1), y: [1, 2, 3], rows: 3, cols: 6 },
+    { methods: {} }), /mode_j \* mode_k must equal 6 fitted features/);
+  await assert.rejects(runPortablePipeline(source({ mode_j: 2147483647, mode_k: 2147483647 }),
+    { X: Array.from({ length: 18 }, (_, i) => i + 1), y: [1, 2, 3], rows: 3, cols: 6 },
+    { methods: {} }), /mode_j \* mode_k must equal 6 fitted features/);
+});
+
+test('MBPLS preserves block boundaries through fit and JSON replay', async () => {
+  const calls = [];
+  const methods = {
+    fitModel(token, X, Y, components, params) {
+      calls.push(['fit', token, X.cols, components, params]);
+      return { coefficients: Float64Array.of(1, 0, 0, 0, 0, 0),
+        xMean: new Float64Array(6), yMean: Float64Array.of(0),
+        intercept: Float64Array.of(0), n_features: 6, n_targets: 1 };
+    },
+    predictModel(model, X) {
+      calls.push(['predict', model.n_features, X.rows]);
+      return { data: Float64Array.from({ length: X.rows }, (_, row) => X.data[row * X.cols]),
+        rows: X.rows, cols: 1 };
+    },
+  };
+  const source = { pipeline: [{ model: { class: 'n4m.MBPLS', params: {
+    n_components: 2, block_sizes: [2, 4] } } }] };
+  const yaml = 'pipeline:\n  - model:\n      class: n4m.MBPLS\n      params:\n        n_components: 2\n        block_sizes: [2, 4]\n';
+  const data = { X: Array.from({ length: 30 }, (_, i) => i + 1),
+    y: [1, 7, 13, 19, 25], rows: 5, cols: 6 };
+  assert.deepEqual(parseExecutionPlan(source).modelParams, [2, 4]);
+  assert.deepEqual(parseExecutionPlan(yaml).modelParams, [2, 4]);
+  const fitted = await runPortablePipeline(source, data, { methods });
+  assert.deepEqual(calls[0], ['fit', 'MBPLS', 6, 2, [2, 4]]);
+  assert.deepEqual(fitted.model.params, [2, 4]);
+  const replay = JSON.parse(JSON.stringify(fitted));
+  const predicted = await predictPortablePipeline(replay,
+    { X: data.X, rows: data.rows, cols: data.cols }, { methods });
+  assert.deepEqual(predicted.data, data.y);
+});
+
+test('MBPLS rejects invalid block lists and fitted width', async () => {
+  const source = (block_sizes) => ({ pipeline: [{ model: { class: 'n4m.MBPLS',
+    params: { block_sizes } } }] });
+  for (const blocks of [undefined, [], [6], [0, 6], [1.5, 4.5], ['2', 4],
+    [2147483648, 1]]) {
+    assert.throws(() => parseExecutionPlan(source(blocks)), /block_sizes/);
+  }
+  await assert.rejects(runPortablePipeline(source([2, 3]),
+    { X: Array.from({ length: 18 }, (_, i) => i + 1), y: [1, 2, 3], rows: 3, cols: 6 },
+    { methods: {} }), /block_sizes must sum to 6 fitted features/);
+});
+
+test('SPA learns only on training rows and replays sorted selected columns', async () => {
+  const calls = [];
+  const methods = {
+    computeSplitIndices: () => ({ trainIndices: [0, 1], testIndices: [2, 3] }),
+    selectSpa(X, Y, topK, components) {
+      calls.push(['select', Array.from(X.data), Array.from(Y.data), topK, components]);
+      return BigInt64Array.of(2n, 0n);
+    },
+    fitPls(X) {
+      calls.push(['fit', Array.from(X.data), X.cols]);
+      return { coefficients: Float64Array.of(1, 0), xMean: Float64Array.of(0, 0),
+        yMean: Float64Array.of(0), intercept: null, n_features: 2, n_targets: 1 };
+    },
+    predictPls(_model, X) {
+      calls.push(['predict', Array.from(X.data), X.cols]);
+      return { data: Float64Array.from({ length: X.rows }, (_, row) => X.data[row * X.cols]),
+        rows: X.rows, cols: 1 };
+    },
+  };
+  const source = { pipeline: [
+    { class: 'nirs4all.operators.splitters.KennardStoneSplitter' },
+    { class: 'n4m.SPA', params: { top_k: 2, n_components: 1 } },
+    { model: { class: 'sklearn.cross_decomposition.PLSRegression', params: { n_components: 1 } } },
+  ] };
+  const dataset = { X: [1, 10, 2, 3, 20, 4, 5, 30, 6, 7, 40, 8],
+    y: [1, 3, 5, 7], rows: 4, cols: 3 };
+  const fitted = await runPortablePipeline(source, dataset, { methods });
+  assert.deepEqual(calls[0], ['select', [1, 10, 2, 3, 20, 4], [1, 3], 2, 1]);
+  assert.deepEqual(calls[1], ['fit', [1, 2, 3, 4], 2]);
+  assert.deepEqual(fitted.preprocessing, [{ type: 'SPA', params: [2, 1], state: [2, 0] }]);
+  assert.deepEqual(fitted.selected.predictions, [5, 7]);
+  const replay = JSON.parse(JSON.stringify(fitted));
+  const result = await predictPortablePipeline(replay, { X: dataset.X, rows: 4, cols: 3 }, { methods });
+  assert.deepEqual(result.data, [1, 3, 5, 7]);
+  assert.equal(calls.filter(([name]) => name === 'select').length, 1);
+  assert.deepEqual(calls.at(-1), ['predict', [1, 2, 3, 4, 5, 6, 7, 8], 2]);
+
+  for (const state of [[0, 0], [0, 3], [0], [0, 1.5], null]) {
+    replay.preprocessing[0].state = state;
+    await assert.rejects(
+      predictPortablePipeline(replay, { X: dataset.X, rows: 4, cols: 3 }, { methods }),
+      /SPA/,
+    );
+  }
+});
+
+test('SPA preserves native ranking while projecting ascending columns after JSON replay', async () => {
+  const projected = [];
+  const methods = {
+    selectSpa: () => BigInt64Array.of(8n, 3n, 1n),
+    fitPls(X) {
+      projected.push(Array.from(X.data));
+      return { coefficients: Float64Array.of(1, 0, 0), xMean: Float64Array.of(0, 0, 0),
+        yMean: Float64Array.of(0), intercept: null, n_features: 3, n_targets: 1 };
+    },
+    predictPls(_model, X) {
+      projected.push(Array.from(X.data));
+      return { data: Float64Array.from({ length: X.rows }, (_, row) => X.data[row * X.cols]),
+        rows: X.rows, cols: 1 };
+    },
+  };
+  const source = { pipeline: [
+    { class: 'n4m.SPA', params: { top_k: 3, n_components: 1 } },
+    { model: { class: 'sklearn.cross_decomposition.PLSRegression', params: { n_components: 1 } } },
+  ] };
+  const dataset = { X: Array.from({ length: 36 }, (_, index) => index + 1),
+    y: [2, 11, 20, 29], rows: 4, cols: 9 };
+  const fitted = await runPortablePipeline(source, dataset, { methods });
+  assert.deepEqual(fitted.preprocessing[0].state, [8, 3, 1]);
+  const expected = [2, 4, 9, 11, 13, 18, 20, 22, 27, 29, 31, 36];
+  assert.deepEqual(projected[0], expected);
+  const replay = JSON.parse(JSON.stringify(fitted));
+  await predictPortablePipeline(replay, { X: dataset.X, rows: 4, cols: 9 }, { methods });
+  assert.deepEqual(projected.at(-1), expected);
+  assert.deepEqual(replay.preprocessing[0].state, [8, 3, 1]);
+});
+
+test('SPA recipes reject missing, unsupported, and out-of-range top_k', async () => {
+  for (const params of [{}, { top_k: 0 }, { top_k: 1.5 }, { top_k: 2, seed: 1 }]) {
+    assert.throws(() => parseExecutionPlan({ pipeline: [
+      { class: 'n4m.SPA', params },
+      { model: { class: 'sklearn.cross_decomposition.PLSRegression' } },
+    ] }), /SPA/);
+  }
+  const source = { pipeline: [
+    { class: 'n4m.SPA', params: { top_k: 4 } },
+    { model: { class: 'sklearn.cross_decomposition.PLSRegression' } },
+  ] };
+  await assert.rejects(runPortablePipeline(source, {
+    X: [1, 2, 3, 4, 5, 6], y: [1, 2, 3], rows: 3, cols: 2,
+  }, { methods: {} }), /SPA top_k 4 exceeds 2 features/);
+  const rankSource = { pipeline: [
+    { class: 'nirs4all.operators.splitters.KennardStoneSplitter' },
+    { class: 'n4m.SPA', params: { top_k: 1, n_components: 2 } },
+    { model: { class: 'sklearn.cross_decomposition.PLSRegression' } },
+  ] };
+  await assert.rejects(runPortablePipeline(rankSource, {
+    X: [1, 2, 3, 4, 5, 6], y: [1, 2, 3], rows: 3, cols: 2,
+  }, { methods: { computeSplitIndices: () => ({ trainIndices: [0, 1], testIndices: [2] }) } }),
+  /SPA n_components 2 exceeds train rank limit 1/);
+});
+
+test('generic Selector parses all native names and rejects lossy parameters', () => {
+  const names = ['spa_select', 'cars_select', 'interval_select', 'stability_select',
+    'uve_select', 'random_frog_select', 'scars_select', 'ga_select', 'pso_select',
+    'vissa_select', 'shaving_select', 'bve_select', 't2_select', 'wvc_select',
+    'wvc_threshold_select', 'emcuve_select', 'randomization_select', 'bipls_select',
+    'sipls_select', 'rep_select', 'ipw_select', 'st_select', 'iriv_select',
+    'irf_select', 'vip_spa_select'];
+  const required = { spa_select: { top_k: 2 }, stability_select: { top_k: 2 },
+    wvc_select: { top_k: 2 }, random_frog_select: { top_k: 2, seed: 0 },
+    ipw_select: { top_k: 2 }, irf_select: { top_k: 2, seed: 0 },
+    vip_spa_select: { top_k: 2 }, uve_select: { noise_seed: 0 },
+    emcuve_select: { noise_seed: 0 }, randomization_select: { randomization_seed: 0 },
+    scars_select: { seed: 0 }, ga_select: { seed: 0 }, pso_select: { seed: 0 },
+    vissa_select: { seed: 0 }, iriv_select: { seed: 0 },
+    t2_select: { alpha_thresholds: [0.05] }, st_select: { thresholds: [0.1] } };
+  const source = (method, method_params = required[method] ?? {}) => ({ pipeline: [
+    { class: 'n4m.Selector', params: { method, n_components: 1, method_params } },
+    { model: { class: 'sklearn.cross_decomposition.PLSRegression', params: { n_components: 1 } } },
+  ] });
+  for (const method of names) {
+    const plan = parseExecutionPlan(source(method));
+    assert.equal(plan.preprocessing[0].params.method, method);
+  }
+  for (const [method, params] of [
+    ['other', {}], ['spa_select', {}], ['spa_select', { top_k: 1.5 }],
+    ['spa_select', { top_k: 2, bogus: 1 }], ['t2_select', { alpha_thresholds: [] }],
+    ['wvc_select', { top_k: 2, normalize: 1 }],
+    ['uve_select', { noise_seed: 9007199254740992 }],
+  ]) assert.throws(() => parseExecutionPlan(source(method, params)), /Selector|parameter|top_k|thresholds|noise_seed/);
+});
+
+test('generic Selector fits on training rows, preserves rank, and replays sorted projection', async () => {
+  const calls = [];
+  const methods = {
+    computeSplitIndices: () => ({ trainIndices: [0, 1, 2, 3], testIndices: [4, 5] }),
+    selectVariables(method, X, Y, components, params) {
+      calls.push(['select', method, X.rows, Array.from(X.data), Array.from(Y.data), components, params]);
+      return BigInt64Array.of(8n, 3n, 1n);
+    },
+    fitPls(X) {
+      calls.push(['fit', Array.from(X.data)]);
+      return { coefficients: Float64Array.of(1, 0, 0), xMean: Float64Array.of(0, 0, 0),
+        yMean: Float64Array.of(0), intercept: null, n_features: 3, n_targets: 1 };
+    },
+    predictPls(_model, X) {
+      calls.push(['predict', Array.from(X.data)]);
+      return { data: Float64Array.from({ length: X.rows }, (_, row) => X.data[row * X.cols]),
+        rows: X.rows, cols: 1 };
+    },
+  };
+  const source = { pipeline: [
+    { class: 'nirs4all.operators.splitters.KennardStoneSplitter' },
+    { class: 'n4m.Selector', params: { method: 'wvc_select', n_components: 1,
+      method_params: { top_k: 3, normalize: false } } },
+    { model: { class: 'sklearn.cross_decomposition.PLSRegression', params: { n_components: 1 } } },
+  ] };
+  const dataset = { X: Array.from({ length: 54 }, (_, i) => i + 1),
+    y: [2, 11, 20, 29, 38, 47], rows: 6, cols: 9 };
+  const fitted = await runPortablePipeline(source, dataset, { methods });
+  assert.deepEqual(calls[0], ['select', 'wvc_select', 4,
+    dataset.X.slice(0, 36), dataset.y.slice(0, 4), 1, { top_k: 3, normalize: false }]);
+  assert.deepEqual(fitted.preprocessing[0].state, [8, 3, 1]);
+  assert.deepEqual(calls[1], ['fit', [2, 4, 9, 11, 13, 18, 20, 22, 27, 29, 31, 36]]);
+  const replay = JSON.parse(JSON.stringify(fitted));
+  await predictPortablePipeline(replay, { X: dataset.X, rows: 6, cols: 9 }, { methods });
+  assert.deepEqual(calls.at(-1), ['predict', [2, 4, 9, 11, 13, 18, 20, 22, 27,
+    29, 31, 36, 38, 40, 45, 47, 49, 54]]);
+  assert.equal(calls.filter(([name]) => name === 'select').length, 1);
+  assert.deepEqual(replay.preprocessing[0].state, [8, 3, 1]);
+  for (const state of [[1, 1], [9], [], null]) {
+    replay.preprocessing[0].state = state;
+    await assert.rejects(predictPortablePipeline(replay, dataset, { methods }), /Selector/);
+  }
+});
+
+test('generic Selector checks train rank, plan rows, and top_k before native calls', async () => {
+  const source = (method, method_params, components = 1) => ({ pipeline: [
+    { class: 'n4m.Selector', params: { method, n_components: components, method_params } },
+    { model: { class: 'sklearn.cross_decomposition.PLSRegression', params: { n_components: 1 } } },
+  ] });
+  const dataset = { X: [1, 2, 3, 4, 5, 6], y: [1, 2, 3], rows: 3, cols: 2 };
+  await assert.rejects(runPortablePipeline(source('spa_select', { top_k: 3 }),
+    dataset, { methods: {} }), /top_k/);
+  await assert.rejects(runPortablePipeline(source('spa_select', { top_k: 1 }, 3),
+    dataset, { methods: {} }), /training rank/);
+  await assert.rejects(runPortablePipeline(source('cars_select', {}),
+    dataset, { methods: {} }), /at least 4 training rows/);
+});
+
+test('older stateless preprocessing remains replayable without fitted state', async () => {
+  let fits = 0;
+  const methods = {
+    ppCreate: () => ({}),
+    ppFit() { fits += 1; },
+    ppTransform: (_op, data) => Float64Array.from(data),
+    ppDestroy() {},
+    predictPls: (_model, X) => ({ data: Float64Array.of(X.data[0]), rows: X.rows, cols: 1 }),
+  };
+  const model = {
+    coefficients: [1, 0], xMean: [0, 0], yMean: [0], intercept: null,
+    n_features: 2, n_targets: 1,
+  };
+  const result = await predictPortablePipeline(
+    { preprocessing: [
+      { type: 'StandardNormalVariate', params: [] },
+      { type: 'SavitzkyGolay', params: [3, 1, 0, 4, 0] },
+    ], model },
+    { X: [7, 8], rows: 1, cols: 2 },
+    { methods },
+  );
+  assert.deepEqual(result.data, [7]);
+  assert.equal(fits, 0);
+});
+
 test('portable execution plan rejects lossy operator parameter coercions', () => {
   assert.throws(() => parseExecutionPlan({
     pipeline: [
