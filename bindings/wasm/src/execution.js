@@ -27,6 +27,49 @@ const MSC = new Set([
 ]);
 
 const SPA = new Set(['n4m.SPA', 'n4m.SPASelector', 'pls4all.sklearn.SPASelector']);
+const SELECTOR = 'n4m.Selector';
+const SELECTOR_PARAMS = new Map([
+  ['spa_select', ['top_k']],
+  ['cars_select', ['n_iterations', 'min_features']],
+  ['interval_select', ['interval_width', 'step']],
+  ['stability_select', ['top_k']],
+  ['uve_select', ['noise_features', 'noise_seed']],
+  ['random_frog_select', ['n_iterations', 'initial_size', 'min_size', 'max_size', 'top_k', 'seed']],
+  ['scars_select', ['n_iterations', 'min_features', 'sample_fraction', 'seed']],
+  ['ga_select', ['n_generations', 'population_size', 'min_features', 'max_features', 'mutation_rate', 'seed']],
+  ['pso_select', ['n_swarm', 'n_iterations', 'w', 'c1', 'c2', 'v_max', 'seed']],
+  ['vissa_select', ['n_iterations', 'n_submodels', 'ratio_kept', 'threshold', 'floor_probability', 'seed']],
+  ['shaving_select', ['n_steps', 'min_features', 'shave_fraction']],
+  ['bve_select', ['n_steps', 'min_features']],
+  ['t2_select', ['alpha_thresholds', 'min_selected']],
+  ['wvc_select', ['top_k', 'normalize']],
+  ['wvc_threshold_select', ['normalize', 'threshold', 'threshold_factor', 'min_selected']],
+  ['emcuve_select', ['noise_features', 'noise_seed', 'n_ensembles', 'vote_threshold']],
+  ['randomization_select', ['n_permutations', 'randomization_seed', 'alpha']],
+  ['bipls_select', ['interval_width', 'min_intervals']],
+  ['sipls_select', ['interval_width', 'combination_size']],
+  ['rep_select', ['n_steps', 'min_features', 'remove_count']],
+  ['ipw_select', ['n_iterations', 'top_k', 'damping', 'weight_floor']],
+  ['st_select', ['thresholds', 'min_selected']],
+  ['iriv_select', ['max_rounds', 'seed']],
+  ['irf_select', ['n_iterations', 'window_size', 'initial_intervals', 'top_k', 'seed']],
+  ['vip_spa_select', ['vip_threshold', 'top_k']],
+]);
+const SELECTOR_PLAN = new Set([...SELECTOR_PARAMS.keys()].filter((name) =>
+  !['spa_select', 'wvc_select', 'wvc_threshold_select', 'randomization_select', 'vip_spa_select'].includes(name)));
+const SELECTOR_TOP_K = new Set(['spa_select', 'wvc_select', 'stability_select',
+  'random_frog_select', 'ipw_select', 'irf_select', 'vip_spa_select']);
+const SELECTOR_SEEDS = new Map([
+  ['uve_select', 'noise_seed'], ['emcuve_select', 'noise_seed'],
+  ['randomization_select', 'randomization_seed'],
+  ...['random_frog_select', 'scars_select', 'ga_select', 'pso_select', 'vissa_select',
+    'iriv_select', 'irf_select'].map((name) => [name, 'seed']),
+]);
+const SELECTOR_INTEGER_PARAMS = new Set(['top_k', 'n_iterations', 'min_features', 'interval_width',
+  'step', 'noise_features', 'noise_seed', 'initial_size', 'min_size', 'max_size', 'seed',
+  'n_generations', 'population_size', 'n_swarm', 'n_submodels', 'n_steps', 'min_selected',
+  'n_ensembles', 'n_permutations', 'randomization_seed', 'min_intervals', 'combination_size',
+  'remove_count', 'max_rounds', 'window_size', 'initial_intervals']);
 
 const STATELESS_PREPROCESSING = new Set(['StandardNormalVariate', 'SavitzkyGolay']);
 
@@ -68,6 +111,27 @@ export async function runPortablePipeline(source, dataset, options = {}) {
   const preprocessing = [];
 
   for (const step of plan.preprocessing) {
+    if (step.type === 'N4MSelector') {
+      const spec = step.params;
+      if (spec.n_components > Math.min(XTrain.cols, XTrain.rows - 1)) {
+        throw new RangeError(`Selector n_components ${spec.n_components} exceeds the training rank.`);
+      }
+      if (SELECTOR_PLAN.has(spec.method) && XTrain.rows < 4) {
+        throw new RangeError('Selector validation plan requires at least 4 training rows.');
+      }
+      if (spec.method_params.top_k > XTrain.cols) {
+        throw new RangeError(`Selector top_k exceeds ${XTrain.cols} input features.`);
+      }
+      const selected = methods.selectVariables(spec.method,
+        { data: XTrain.data, rows: XTrain.rows, cols: XTrain.cols },
+        { data: yTrain.data, rows: yTrain.rows, cols: 1 },
+        spec.n_components, spec.method_params);
+      const indices = checkedSelectorIndices(selected, XTrain.cols);
+      XTrain = selectColumns(XTrain, sortedSpaIndices(indices));
+      XTest = selectColumns(XTest, sortedSpaIndices(indices));
+      preprocessing.push({ type: 'N4MSelector', params: spec, state: indices });
+      continue;
+    }
     if (step.type === 'SPA') {
       if (step.params[0] > XTrain.cols) {
         throw new RangeError(`SPA top_k ${step.params[0]} exceeds ${XTrain.cols} features.`);
@@ -167,6 +231,10 @@ export async function predictPortablePipeline(fitted, dataset, options = {}) {
 
   let X = coerceFeatures(dataset);
   for (const step of fitted.preprocessing ?? []) {
+    if (step.type === 'N4MSelector') {
+      X = selectColumns(X, sortedSpaIndices(checkedSelectorIndices(step.state, X.cols)));
+      continue;
+    }
     if (step.type === 'SPA') {
       const topK = integerParam(step.params?.[0], undefined, 'SPA top_k', { min: 1 });
       X = selectColumns(X, sortedSpaIndices(checkedSpaIndices(step.state, X.cols, topK)));
@@ -247,6 +315,8 @@ export function parseExecutionPlan(source) {
         preprocessing.push({ type: 'MSC', params: [] });
       } else if (SPA.has(step.class)) {
         preprocessing.push({ type: 'SPA', params: spaParams(step.params) });
+      } else if (step.class === SELECTOR) {
+        preprocessing.push({ type: 'N4MSelector', params: selectorParams(step.params) });
       } else {
         throw new Error(`Portable execution does not support step class '${step.class}'.`);
       }
@@ -402,26 +472,39 @@ function selectColumns(matrix, indices) {
 }
 
 function checkedSpaIndices(value, cols, topK) {
+  let indices;
+  try {
+    indices = checkedSelectorIndices(value, cols);
+  } catch (error) {
+    throw new error.constructor(`SPA ${error.message}`);
+  }
+  if (indices.length !== topK) {
+    throw new RangeError(`SPA selected ${indices.length} indices; expected ${topK}.`);
+  }
+  return indices;
+}
+
+function checkedSelectorIndices(value, cols) {
   if ((!Array.isArray(value) && !ArrayBuffer.isView(value))
       || typeof value[Symbol.iterator] !== 'function') {
-    throw new TypeError('SPA requires fitted selected indices.');
+    throw new TypeError('Selector requires fitted selected indices.');
   }
   const raw = Array.from(value);
-  if (raw.length !== topK) {
-    throw new RangeError(`SPA selected ${raw.length} indices; expected ${topK}.`);
+  if (raw.length < 1 || raw.length > cols) {
+    throw new RangeError(`Selector returned ${raw.length} indices for ${cols} features.`);
   }
   const indices = raw.map((item) => {
     if (typeof item !== 'bigint' && (!Number.isSafeInteger(item) || item < 0)) {
-      throw new TypeError('SPA selected indices must be non-negative safe integers.');
+      throw new TypeError('Selector indices must be non-negative safe integers.');
     }
     const index = typeof item === 'bigint' ? item : BigInt(item);
     if (index < 0n || index >= BigInt(cols)) {
-      throw new RangeError(`SPA selected index ${item} is outside 0..${cols - 1}.`);
+      throw new RangeError(`Selector index ${item} is outside 0..${cols - 1}.`);
     }
     return Number(index);
   });
   if (new Set(indices).size !== indices.length) {
-    throw new RangeError('SPA selected duplicate indices.');
+    throw new RangeError('Selector returned duplicate indices.');
   }
   return indices;
 }
@@ -443,6 +526,56 @@ function spaParams(params) {
     integerParam(params.top_k, undefined, 'SPA top_k', { min: 1 }),
     integerParam(params.n_components, 2, 'SPA n_components', { min: 1 }),
   ];
+}
+
+function selectorParams(params) {
+  if (!params || typeof params !== 'object' || Array.isArray(params)
+      || Object.keys(params).some((key) => !['method', 'n_components', 'method_params'].includes(key))) {
+    throw new TypeError('Selector params must contain method, n_components, and method_params.');
+  }
+  const { method, method_params: methodParams } = params;
+  if (typeof method !== 'string' || !SELECTOR_PARAMS.has(method)) {
+    throw new TypeError(`Unsupported Selector method '${method}'.`);
+  }
+  if (typeof params.n_components !== 'number') {
+    throw new TypeError('Selector n_components must be numeric.');
+  }
+  const nComponents = integerParam(params.n_components, undefined, 'Selector n_components', { min: 1 });
+  if (!methodParams || typeof methodParams !== 'object' || Array.isArray(methodParams)) {
+    throw new TypeError('Selector method_params must be a mapping.');
+  }
+  const allowed = new Set(SELECTOR_PARAMS.get(method));
+  const required = [];
+  if (SELECTOR_TOP_K.has(method)) required.push('top_k');
+  if (SELECTOR_SEEDS.has(method)) required.push(SELECTOR_SEEDS.get(method));
+  if (method === 't2_select') required.push('alpha_thresholds');
+  if (method === 'st_select') required.push('thresholds');
+  for (const name of required) {
+    if (!Object.hasOwn(methodParams, name)) throw new TypeError(`Selector '${method}' requires '${name}'.`);
+  }
+  const normalized = {};
+  for (const [name, value] of Object.entries(methodParams)) {
+    if (!allowed.has(name)) throw new TypeError(`Unsupported ${method} parameter '${name}'.`);
+    if (name === 'normalize') {
+      if (typeof value !== 'boolean') throw new TypeError('Selector normalize must be boolean.');
+      normalized[name] = value;
+    } else if (name === 'alpha_thresholds' || name === 'thresholds') {
+      if (!Array.isArray(value) || value.length === 0 ||
+          !value.every((item) => typeof item === 'number' && Number.isFinite(item))) {
+        throw new TypeError(`Selector ${name} must be a non-empty finite numeric array.`);
+      }
+      normalized[name] = [...value];
+    } else if (SELECTOR_INTEGER_PARAMS.has(name)) {
+      normalized[name] = integerParam(value, undefined, name,
+        { min: SELECTOR_SEEDS.get(method) === name ? 0 : 1 });
+    } else {
+      if (typeof value !== 'number' || !Number.isFinite(value)) {
+        throw new TypeError(`Selector ${name} must be finite numeric.`);
+      }
+      normalized[name] = value;
+    }
+  }
+  return { method, n_components: nComponents, method_params: normalized };
 }
 
 function savgolParams(params) {

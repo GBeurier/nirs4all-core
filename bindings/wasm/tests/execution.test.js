@@ -347,6 +347,95 @@ test('SPA recipes reject missing, unsupported, and out-of-range top_k', async ()
   /SPA n_components 2 exceeds train rank limit 1/);
 });
 
+test('generic Selector parses all native names and rejects lossy parameters', () => {
+  const names = ['spa_select', 'cars_select', 'interval_select', 'stability_select',
+    'uve_select', 'random_frog_select', 'scars_select', 'ga_select', 'pso_select',
+    'vissa_select', 'shaving_select', 'bve_select', 't2_select', 'wvc_select',
+    'wvc_threshold_select', 'emcuve_select', 'randomization_select', 'bipls_select',
+    'sipls_select', 'rep_select', 'ipw_select', 'st_select', 'iriv_select',
+    'irf_select', 'vip_spa_select'];
+  const required = { spa_select: { top_k: 2 }, stability_select: { top_k: 2 },
+    wvc_select: { top_k: 2 }, random_frog_select: { top_k: 2, seed: 0 },
+    ipw_select: { top_k: 2 }, irf_select: { top_k: 2, seed: 0 },
+    vip_spa_select: { top_k: 2 }, uve_select: { noise_seed: 0 },
+    emcuve_select: { noise_seed: 0 }, randomization_select: { randomization_seed: 0 },
+    scars_select: { seed: 0 }, ga_select: { seed: 0 }, pso_select: { seed: 0 },
+    vissa_select: { seed: 0 }, iriv_select: { seed: 0 },
+    t2_select: { alpha_thresholds: [0.05] }, st_select: { thresholds: [0.1] } };
+  const source = (method, method_params = required[method] ?? {}) => ({ pipeline: [
+    { class: 'n4m.Selector', params: { method, n_components: 1, method_params } },
+    { model: { class: 'sklearn.cross_decomposition.PLSRegression', params: { n_components: 1 } } },
+  ] });
+  for (const method of names) {
+    const plan = parseExecutionPlan(source(method));
+    assert.equal(plan.preprocessing[0].params.method, method);
+  }
+  for (const [method, params] of [
+    ['other', {}], ['spa_select', {}], ['spa_select', { top_k: 1.5 }],
+    ['spa_select', { top_k: 2, bogus: 1 }], ['t2_select', { alpha_thresholds: [] }],
+    ['wvc_select', { top_k: 2, normalize: 1 }],
+    ['uve_select', { noise_seed: 9007199254740992 }],
+  ]) assert.throws(() => parseExecutionPlan(source(method, params)), /Selector|parameter|top_k|thresholds|noise_seed/);
+});
+
+test('generic Selector fits on training rows, preserves rank, and replays sorted projection', async () => {
+  const calls = [];
+  const methods = {
+    computeSplitIndices: () => ({ trainIndices: [0, 1, 2, 3], testIndices: [4, 5] }),
+    selectVariables(method, X, Y, components, params) {
+      calls.push(['select', method, X.rows, Array.from(X.data), Array.from(Y.data), components, params]);
+      return BigInt64Array.of(8n, 3n, 1n);
+    },
+    fitPls(X) {
+      calls.push(['fit', Array.from(X.data)]);
+      return { coefficients: Float64Array.of(1, 0, 0), xMean: Float64Array.of(0, 0, 0),
+        yMean: Float64Array.of(0), intercept: null, n_features: 3, n_targets: 1 };
+    },
+    predictPls(_model, X) {
+      calls.push(['predict', Array.from(X.data)]);
+      return { data: Float64Array.from({ length: X.rows }, (_, row) => X.data[row * X.cols]),
+        rows: X.rows, cols: 1 };
+    },
+  };
+  const source = { pipeline: [
+    { class: 'nirs4all.operators.splitters.KennardStoneSplitter' },
+    { class: 'n4m.Selector', params: { method: 'wvc_select', n_components: 1,
+      method_params: { top_k: 3, normalize: false } } },
+    { model: { class: 'sklearn.cross_decomposition.PLSRegression', params: { n_components: 1 } } },
+  ] };
+  const dataset = { X: Array.from({ length: 54 }, (_, i) => i + 1),
+    y: [2, 11, 20, 29, 38, 47], rows: 6, cols: 9 };
+  const fitted = await runPortablePipeline(source, dataset, { methods });
+  assert.deepEqual(calls[0], ['select', 'wvc_select', 4,
+    dataset.X.slice(0, 36), dataset.y.slice(0, 4), 1, { top_k: 3, normalize: false }]);
+  assert.deepEqual(fitted.preprocessing[0].state, [8, 3, 1]);
+  assert.deepEqual(calls[1], ['fit', [2, 4, 9, 11, 13, 18, 20, 22, 27, 29, 31, 36]]);
+  const replay = JSON.parse(JSON.stringify(fitted));
+  await predictPortablePipeline(replay, { X: dataset.X, rows: 6, cols: 9 }, { methods });
+  assert.deepEqual(calls.at(-1), ['predict', [2, 4, 9, 11, 13, 18, 20, 22, 27,
+    29, 31, 36, 38, 40, 45, 47, 49, 54]]);
+  assert.equal(calls.filter(([name]) => name === 'select').length, 1);
+  assert.deepEqual(replay.preprocessing[0].state, [8, 3, 1]);
+  for (const state of [[1, 1], [9], [], null]) {
+    replay.preprocessing[0].state = state;
+    await assert.rejects(predictPortablePipeline(replay, dataset, { methods }), /Selector/);
+  }
+});
+
+test('generic Selector checks train rank, plan rows, and top_k before native calls', async () => {
+  const source = (method, method_params, components = 1) => ({ pipeline: [
+    { class: 'n4m.Selector', params: { method, n_components: components, method_params } },
+    { model: { class: 'sklearn.cross_decomposition.PLSRegression', params: { n_components: 1 } } },
+  ] });
+  const dataset = { X: [1, 2, 3, 4, 5, 6], y: [1, 2, 3], rows: 3, cols: 2 };
+  await assert.rejects(runPortablePipeline(source('spa_select', { top_k: 3 }),
+    dataset, { methods: {} }), /top_k/);
+  await assert.rejects(runPortablePipeline(source('spa_select', { top_k: 1 }, 3),
+    dataset, { methods: {} }), /training rank/);
+  await assert.rejects(runPortablePipeline(source('cars_select', {}),
+    dataset, { methods: {} }), /at least 4 training rows/);
+});
+
 test('older stateless preprocessing remains replayable without fitted state', async () => {
   let fits = 0;
   const methods = {

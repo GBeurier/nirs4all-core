@@ -45,6 +45,15 @@ SPA recipes accept `n4m.SPA` (also `n4m.SPASelector` and
 The result stores validated zero-based selected indices in the native ranked
 order. Fit and prediction project a sorted copy onto ascending columns without
 re-fitting SPA. A missing, duplicate, or out-of-range index is rejected.
+
+The generic `n4m.Selector` step accepts all 25 Methods selector names with
+`{method, n_components, method_params}`. It calls the native selector once on
+training rows, stores zero-based indices in their native ranked order, and
+projects a sorted copy onto validation and replay matrices. Methods requiring
+internal validation receive deterministic folds over training rows only. Seeds,
+threshold vectors, and other method parameters are passed through the native
+C ABI; this surface has mock-contract coverage but not numerical WASM parity
+until a current Methods WASM artifact is built and tested.
 - `replayMethodsArchiveV2(archiveBytes, dataset)` validates the bounded Archive
   V2 stored-ZIP, manifest, inventory digests, DAG-ML package, execution bundle,
   and N4MM binding in Rust, then imports and predicts the single multi-target

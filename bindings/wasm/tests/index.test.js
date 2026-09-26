@@ -239,6 +239,7 @@ test('capability manifest describes portable custom app host controllers', () =>
     'preprocess.savgol',
     'preprocess.msc',
     'select.spa',
+    'select.n4m',
     'model.pls_regression',
     'model.affine_methods',
     'pipeline.portable_methods',
@@ -247,7 +248,7 @@ test('capability manifest describes portable custom app host controllers', () =>
   for (const controller of manifest.controllers) {
     assert.equal(controller.domain, 'methods');
     assert.deepEqual(Object.keys(controller.runtime).sort(), [...runtimeSurfaces].sort());
-    if (['preprocess.msc', 'select.spa', 'model.affine_methods'].includes(controller.id)) {
+    if (['preprocess.msc', 'select.spa', 'select.n4m', 'model.affine_methods'].includes(controller.id)) {
       assert.equal(controller.runtime.javascript_wasm, 'execute-local');
       assert.ok(Object.entries(controller.runtime)
         .filter(([surface]) => surface !== 'javascript_wasm')
