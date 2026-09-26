@@ -346,7 +346,7 @@ export function loadPipelineDefinition(source: string | unknown[] | Record<strin
 export function portableClassNames(definition: PipelineDefinition | unknown[] | Record<string, unknown>): string[];
 export function parseExecutionPlan(source: string | PipelineDefinition | unknown[] | Record<string, unknown>): {
   splitter: { type: 'KennardStone'; params: Record<string, unknown> } | null;
-  preprocessing: { type: 'StandardNormalVariate' | 'SavitzkyGolay' | 'MSC'; params: number[] }[];
+  preprocessing: { type: 'StandardNormalVariate' | 'SavitzkyGolay' | 'MSC' | 'SPA'; params: number[] }[];
   nComponents: number[];
   modelType: PortablePlsModel['type'];
   modelParams: number[];

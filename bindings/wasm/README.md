@@ -38,6 +38,13 @@ MSC recipes accept `n4m.MSC` and the nirs4all Python `MSC` /
 `MultiplicativeScatterCorrection` class aliases. They call the Methods `MSC`
 operator with no numeric parameters. The Python `scale` and `copy` flags are
 accepted as booleans; they do not alter the Methods numerical operation.
+
+SPA recipes accept `n4m.SPA` (also `n4m.SPASelector` and
+`pls4all.sklearn.SPASelector`) before the final model. `top_k` is required;
+`n_components` defaults to 2. Methods fits the selector on training rows only.
+The result stores validated zero-based selected indices in the native ranked
+order. Fit and prediction project a sorted copy onto ascending columns without
+re-fitting SPA. A missing, duplicate, or out-of-range index is rejected.
 - `replayMethodsArchiveV2(archiveBytes, dataset)` validates the bounded Archive
   V2 stored-ZIP, manifest, inventory digests, DAG-ML package, execution bundle,
   and N4MM binding in Rust, then imports and predicts the single multi-target
