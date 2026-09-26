@@ -11,8 +11,32 @@ This package is the runtime surface that `nirs4all-web` should consume. The web
 application lives in `nirs4all-web`; this directory is for the reusable
 JavaScript/WASM binding and package metadata.
 
-The portable execution API delegates Kennard-Stone, SNV, Savitzky-Golay, and
+The portable execution API delegates Kennard-Stone, SNV, MSC, Savitzky-Golay, and
 PLS component sweeps to `@nirs4all/methods`:
+
+It also accepts `n4m.Ridge`, `n4m.RidgePLS`, `n4m.RobustPLS`, `n4m.CPPLS`,
+`n4m.SparseSIMPLS`, `n4m.ECR`, `n4m.ContinuumRegression`, and `n4m.MIRPLS`
+as final model steps. These use Methods `fitModel` and `predictModel`; the
+serialized selected model can be replayed after JSON roundtrip. Recipe
+parameters map to Methods in positional order: `lambda`, `ridge_lambda`,
+`[huber_k, max_irls_iter]`, `gamma`, `sparsity_lambda`, `alpha`, `tau`, or no
+extra parameters, respectively. `n_components` is passed separately and may
+be swept with `_range_`. Unknown model parameters are rejected.
+
+The same `fitModel`/`predictModel` path also supports `n4m.FusedSparsePLS`,
+`n4m.BaggingPLS`, `n4m.BoostingPLS`, and `n4m.RandomSubspacePLS`. Their
+positional parameters are `[l1_lambda, fusion_lambda]` (defaults 0.05/0.05),
+`[n_estimators, seed]` (50/0), `[n_estimators, learning_rate]` (50/0.1), and
+`[n_estimators, features_per_subspace, seed]` (50/10/0). Subspace width is
+checked against the fitted feature count. These recipes have native C and mock
+contract checks, not numerical WASM parity without a fresh WASM artifact.
+
+`n4m.NPLS` accepts flattened tensor features with required positive integer
+`mode_j` and `mode_k`; their product must equal the fitted feature count.
+`n_components` defaults to 2. Methods fits the native N-PLS kernel and the
+serialized coefficient/mean state replays on later matrices. The Core recipe
+currently accepts a single target; a native C oracle additionally checks
+two-target held-out prediction. Real WASM parity requires a fresh artifact.
 
 - `runPortablePipeline(source, dataset)` parses the shared nirs4all JSON/YAML
   syntax, executes the portable subset, and returns parity-checkable split,
@@ -20,7 +44,31 @@ PLS component sweeps to `@nirs4all/methods`:
   model.
 - `predictPortablePipeline(result, dataset)` replays the recorded preprocessing
   chain and predicts with that serialized model through the same methods WASM
-  backend.
+  backend. Fitted preprocessing state is serialized as numeric arrays in each
+  step and restored before prediction. Older results with stateless steps remain
+  readable; a persisted MSC step without fitted state is rejected because its
+  training reference cannot be recovered from prediction data.
+
+MSC recipes accept `n4m.MSC` and the nirs4all Python `MSC` /
+`MultiplicativeScatterCorrection` class aliases. They call the Methods `MSC`
+operator with no numeric parameters. The Python `scale` and `copy` flags are
+accepted as booleans; they do not alter the Methods numerical operation.
+
+SPA recipes accept `n4m.SPA` (also `n4m.SPASelector` and
+`pls4all.sklearn.SPASelector`) before the final model. `top_k` is required;
+`n_components` defaults to 2. Methods fits the selector on training rows only.
+The result stores validated zero-based selected indices in the native ranked
+order. Fit and prediction project a sorted copy onto ascending columns without
+re-fitting SPA. A missing, duplicate, or out-of-range index is rejected.
+
+The generic `n4m.Selector` step accepts all 25 Methods selector names with
+`{method, n_components, method_params}`. It calls the native selector once on
+training rows, stores zero-based indices in their native ranked order, and
+projects a sorted copy onto validation and replay matrices. Methods requiring
+internal validation receive deterministic folds over training rows only. Seeds,
+threshold vectors, and other method parameters are passed through the native
+C ABI; this surface has mock-contract coverage but not numerical WASM parity
+until a current Methods WASM artifact is built and tested.
 - `replayMethodsArchiveV2(archiveBytes, dataset)` validates the bounded Archive
   V2 stored-ZIP, manifest, inventory digests, DAG-ML package, execution bundle,
   and N4MM binding in Rust, then imports and predicts the single multi-target

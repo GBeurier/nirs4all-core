@@ -97,8 +97,9 @@ export interface PortableVariantResult {
 }
 
 export interface PortablePlsModel {
-  type: 'PLSRegression';
+  type: 'PLSRegression' | 'Ridge' | 'RidgePLS' | 'RobustPLS' | 'CPPLS' | 'SparseSIMPLS' | 'ECR' | 'ContinuumRegression' | 'MIRPLS' | 'FusedSparsePLS' | 'BaggingPLS' | 'BoostingPLS' | 'RandomSubspacePLS' | 'NPLS' | 'MBPLS';
   n_components: number;
+  params?: number[];
   coefficients: number[];
   xMean: number[];
   yMean: number[];
@@ -112,7 +113,7 @@ export interface PortableExecutionResult {
   rows: number;
   cols: number;
   split: PortableSplitResult;
-  preprocessing: { type: string; params: number[] }[];
+  preprocessing: PortablePreprocessingStep[];
   variants: PortableVariantResult[];
   selected: PortableVariantResult;
   model: PortablePlsModel;
@@ -122,6 +123,17 @@ export interface PortableExecutionResult {
     scope: 'training' | 'selection_validation';
     independent_test: false;
   };
+}
+
+export interface PortablePreprocessingStep {
+  type: string;
+  params: number[] | {
+    method: string;
+    n_components: number;
+    method_params: Record<string, number | boolean | number[]>;
+  };
+  /** Fitted Methods state. Older stateless results may omit it. */
+  state?: number[];
 }
 
 export interface PortablePredictionResult {
@@ -338,8 +350,10 @@ export function loadPipelineDefinition(source: string | unknown[] | Record<strin
 export function portableClassNames(definition: PipelineDefinition | unknown[] | Record<string, unknown>): string[];
 export function parseExecutionPlan(source: string | PipelineDefinition | unknown[] | Record<string, unknown>): {
   splitter: { type: 'KennardStone'; params: Record<string, unknown> } | null;
-  preprocessing: { type: 'StandardNormalVariate' | 'SavitzkyGolay'; params: number[] }[];
+  preprocessing: PortablePreprocessingStep[];
   nComponents: number[];
+  modelType: PortablePlsModel['type'];
+  modelParams: number[];
 };
 export function runPortablePipeline(
   source: string | PipelineDefinition | unknown[] | Record<string, unknown>,
@@ -347,7 +361,7 @@ export function runPortablePipeline(
   options?: { methods?: unknown },
 ): Promise<PortableExecutionResult>;
 export function predictPortablePipeline(
-  fitted: PortableExecutionResult | { preprocessing?: { type: string; params: number[] }[]; model?: PortablePlsModel },
+  fitted: PortableExecutionResult | { preprocessing?: PortablePreprocessingStep[]; model?: PortablePlsModel },
   dataset: Omit<PortableMatrixDataset, 'y'>,
   options?: { methods?: unknown },
 ): Promise<PortablePredictionResult>;
