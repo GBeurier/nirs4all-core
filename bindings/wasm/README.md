@@ -90,6 +90,24 @@ until a current Methods WASM artifact is built and tested.
   compares the manifest's capability-derived `abi_min_minor` with the actual
   Methods WASM `abiVersion()` and refuses an older runtime.
 
+`runPortablePipeline` also accepts one training-only native X augmentation
+before preprocessing and the model. It runs after splitting and applies only
+to the training matrix; `predictPortablePipeline` never replays it. The kind is
+one of the 22 snake_case names in the closed Methods ABI 2.11 X→X subset, and
+`values` follows that kind's native positional parameter order. For example:
+
+```json
+{"pipeline":[
+  {"train_augmentation":{"class":"n4m.NativeXAugmentation","params":{"kind":"gaussian_noise","values":[0.03],"seed":42}}},
+  {"model":{"class":"sklearn.cross_decomposition.PLSRegression","params":{"n_components":2}}}
+]}
+```
+
+This Level 1 WASM runner requires a Methods package exposing `augmentNative`.
+It records the declaration with the fitted result for provenance. The
+augmentation has no fitted state or prediction transform and is outside Core's
+Archive V2 and DAG training contracts.
+
 The Archive V2 WASM replay intentionally covers the Phase 2 portable Methods
 PLS final-refit contract only. N4MM v2 preprocessing stays embedded in Methods
 and therefore receives the raw matrix without a JavaScript kernel. Archives with multiple predictor

@@ -345,6 +345,23 @@ test('nirs4all JSON and YAML pipeline syntax normalize to the same portable defi
   assert.deepEqual(jsonPipeline.pipeline.at(-1)._range_, [2, 11, 2]);
 });
 
+test('R-shaped train augmentation normalizes from JSON and YAML without widening other runtimes', () => {
+  const source = {
+    pipeline: [
+      { train_augmentation: {
+        class: 'n4m.NativeXAugmentation',
+        params: { kind: 'gaussian_noise', values: [0.03], seed: 42 },
+      } },
+      { model: { class: 'sklearn.cross_decomposition.PLSRegression', params: { n_components: 2 } } },
+    ],
+  };
+  assert.deepEqual(loadPipelineDefinition(JSON.stringify(source)),
+    loadPipelineDefinition('pipeline:\n  - train_augmentation:\n      class: n4m.NativeXAugmentation\n      params:\n        kind: gaussian_noise\n        values: [0.03]\n        seed: 42\n  - model:\n      class: sklearn.cross_decomposition.PLSRegression\n      params:\n        n_components: 2\n'));
+  assert.throws(() => loadPipelineDefinition({ pipeline: [
+    { class: 'n4m.NativeXAugmentation' }, source.pipeline[1],
+  ] }), /outside the current/);
+});
+
 test('all shared parity fixtures keep JSON and YAML in lockstep', () => {
   const fixtureDir = new URL('../../../tests/parity/fixtures/', import.meta.url);
   const names = readdirSync(fixtureDir)

@@ -6,6 +6,18 @@ import { parseExecutionPlan, predictPortablePipeline, runPortablePipeline } from
 import { requireMethodsArtifact } from './methods-artifact.js';
 
 const fixtureUrl = new URL('../../../tests/parity/fixtures/portable_methods_pipeline.json', import.meta.url);
+const augmentationCases = JSON.parse(readFileSync(new URL(
+  '../../../tests/parity/fixtures/native_x_augmentation_cases.json', import.meta.url,
+), 'utf8'));
+
+function augmentedDefinition(kind, values, seed = 42) {
+  return {
+    pipeline: [
+      { train_augmentation: { class: 'n4m.NativeXAugmentation', params: { kind, values, seed } } },
+      { model: { class: 'sklearn.cross_decomposition.PLSRegression', params: { n_components: 2 } } },
+    ],
+  };
+}
 
 test('portable parsers share bounded positive and negative contract cases', () => {
   const cases = JSON.parse(readFileSync(new URL('../../../tests/parity/fixtures/execution_contract_cases.json', import.meta.url), 'utf8'));
@@ -715,6 +727,110 @@ test('portable execution plan rejects lossy operator parameter coercions', () =>
       },
     ],
   }), /start must be <= stop/);
+});
+
+test('native X augmentation parses the closed 22-kind R contract', () => {
+  assert.equal(augmentationCases.cases.length, 22);
+  for (const [kind, methodsKind, values] of augmentationCases.cases) {
+    const plan = parseExecutionPlan(augmentedDefinition(kind, values));
+    assert.deepEqual(plan.trainAugmentation, { kind, methodsKind, values, seed: 42 });
+  }
+  for (const [kind, values, seed] of [
+    ['mixup', [0.5], 42],
+    ['GaussianNoise', [0.03], 42],
+    ['gaussian_noise', [], 42],
+    ['gaussian_noise', [Infinity], 42],
+    ['gaussian_noise', [0.03], -1],
+    ['gaussian_noise', [0.03], 2 ** 53],
+    ['gaussian_noise', [0.03], 1.5],
+  ]) {
+    assert.throws(() => parseExecutionPlan(augmentedDefinition(kind, values, seed)));
+  }
+  const reordered = augmentedDefinition('gaussian_noise', [0.03]);
+  reordered.pipeline.unshift({ class: 'nirs4all.operators.transforms.StandardNormalVariate' });
+  assert.throws(() => parseExecutionPlan(reordered), /before preprocessing/);
+  const duplicate = augmentedDefinition('gaussian_noise', [0.03]);
+  duplicate.pipeline.splice(1, 0, duplicate.pipeline[0]);
+  assert.throws(() => parseExecutionPlan(duplicate), /once/);
+});
+
+test('native X augmentation fails closed on old Methods', async () => {
+  const dataset = makeDataset();
+  await assert.rejects(
+    runPortablePipeline(augmentedDefinition('gaussian_noise', [0.03]), dataset, { methods: {} }),
+    /lacks augmentNative/,
+  );
+});
+
+test('native X augmentation touches only split training X and never predict', async (t) => {
+  const artifact = requireMethodsArtifact(t);
+  if (!artifact) return;
+  const methods = await import(artifact.indexUrl.href);
+  if (typeof methods.augmentNative !== 'function') {
+    t.skip('local Methods artifact predates ABI 2.11');
+    return;
+  }
+  const dataset = makeDataset();
+  const fixture = JSON.parse(readFileSync(fixtureUrl, 'utf8'));
+  const baseline = await runPortablePipeline(fixture, dataset, { methods });
+  const calls = [];
+  const recording = { ...methods, augmentNative(kind, X, values, seed) {
+    calls.push({ kind, X: Float64Array.from(X.data), rows: X.rows, cols: X.cols, values, seed });
+    return methods.augmentNative(kind, X, values, seed);
+  } };
+  fixture.pipeline.splice(1, 0, augmentedDefinition('gaussian_noise', [0.03]).pipeline[0]);
+  const augmented = await runPortablePipeline(fixture, dataset, { methods: recording });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].kind, 'GaussianNoise');
+  assert.deepEqual(calls[0].values, [0.03]);
+  assert.equal(calls[0].seed, 42);
+  assert.equal(calls[0].rows, augmented.split.trainIndices.length);
+  assert.deepEqual(augmented.split, baseline.split);
+  assert.deepEqual(augmented.targets, baseline.targets);
+  assert.deepEqual(calls[0].X, Float64Array.from(augmented.split.trainIndices.flatMap(
+    (row) => Array.from(dataset.X.subarray(row * dataset.cols, (row + 1) * dataset.cols)),
+  )));
+  const predicted = await predictPortablePipeline(augmented, dataset, { methods: recording });
+  assert.equal(calls.length, 1, 'prediction must not replay augmentation');
+  assert.ok(maxAbsDiff(augmented.split.testIndices.map((row) => predicted.data[row]),
+    augmented.selected.predictions) <= 1e-10);
+});
+
+test('native X augmentation matches Methods for all 22 kinds and frozen R oracles', async (t) => {
+  const artifact = requireMethodsArtifact(t);
+  if (!artifact) return;
+  const methods = await import(artifact.indexUrl.href);
+  if (typeof methods.augmentNative !== 'function') {
+    t.skip('local Methods artifact predates ABI 2.11');
+    return;
+  }
+  await methods.loadModule();
+  const X = { rows: 8, cols: 32, data: Float64Array.from(
+    Array.from({ length: 8 * 32 }, (_, i) => 1 + 0.02 * (i % 32)),
+  ) };
+  const dataset = makeDataset(24, 32);
+  for (const [kind, methodsKind, values] of augmentationCases.cases) {
+    const plan = parseExecutionPlan(augmentedDefinition(kind, values));
+    const actual = methods.augmentNative(plan.trainAugmentation.methodsKind, X,
+      plan.trainAugmentation.values, plan.trainAugmentation.seed).data;
+    const repeat = methods.augmentNative(methodsKind, X, values, 42).data;
+    assert.deepEqual(actual, repeat, `${kind} native kind mapping and seed`);
+    const nativeOracle = augmentationCases.native_oracle[kind];
+    assert.ok(nativeOracle, `${kind} native oracle exists`);
+    const close = (a, b) => Math.abs(a - b) <= 1e-10 * Math.max(1, Math.abs(b));
+    assert.ok(close(actual.reduce((a, b) => a + b, 0), nativeOracle[0]), `${kind} native sum`);
+    assert.ok(close(actual.reduce((a, b) => a + b * b, 0), nativeOracle[1]), `${kind} native sumsq`);
+    const oracle = augmentationCases.r_oracle[kind];
+    if (oracle) {
+      assert.ok(close(actual.reduce((a, b) => a + b, 0), oracle[0]), `${kind} R sum`);
+      assert.ok(close(actual.reduce((a, b) => a + b * b, 0), oracle[1]), `${kind} R sumsq`);
+      oracle[2].forEach((value, i) => assert.ok(close(actual[i], value), `${kind} R prefix ${i}`));
+    }
+    const fitted = await runPortablePipeline(augmentedDefinition(kind, values), dataset, { methods });
+    const predicted = await predictPortablePipeline(fitted, dataset, { methods });
+    assert.ok(fitted.selected.predictions.every(Number.isFinite), `${kind} finite fit`);
+    assert.ok(predicted.data.every(Number.isFinite), `${kind} finite predict`);
+  }
 });
 
 test('portable WASM execution delegates the shared pipeline to nirs4all-methods', async (t) => {
