@@ -38,6 +38,16 @@ serialized coefficient/mean state replays on later matrices. The Core recipe
 currently accepts a single target; a native C oracle additionally checks
 two-target held-out prediction. Real WASM parity requires a fresh artifact.
 
+`n4m.GroupSparsePLS` requires an explicit `group_assignment` array with one
+non-negative 32-bit group ID per fitted feature. `group_lambda` defaults to
+0.05 and must be finite and non-negative. The recipe preserves the group IDs
+in JSON/YAML and fitted model metadata; fit and replay use the corrected native
+Methods post-SIMPLS group-wise coefficient shrinkage (not a refit of sparse
+latent directions). The WASM parity gate checks held-out predictions
+at both zero and positive penalty against Python n4m. This is a bounded recipe
+and coefficient replay, not a claim that an R/Python trained archive can already
+be imported into the browser.
+
 - `runPortablePipeline(source, dataset)` parses the shared nirs4all JSON/YAML
   syntax, executes the portable subset, and returns parity-checkable split,
   target, variant, and selected-result fields plus a serialized selected PLS

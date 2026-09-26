@@ -406,6 +406,56 @@ test('MBPLS rejects invalid block lists and fitted width', async () => {
     { methods: {} }), /block_sizes must sum to 6 fitted features/);
 });
 
+test('GroupSparsePLS preserves explicit group IDs through JSON/YAML and replay', async () => {
+  const calls = [];
+  const methods = {
+    fitModel(token, X, Y, components, params) {
+      calls.push(['fit', token, X.cols, components, params]);
+      return { coefficients: Float64Array.of(1, 0, 0, 0),
+        xMean: new Float64Array(4), yMean: Float64Array.of(0),
+        intercept: null, n_features: 4, n_targets: 1 };
+    },
+    predictModel(model, X) {
+      calls.push(['predict', model.n_features, X.rows]);
+      return { data: Float64Array.from({ length: X.rows }, (_, row) => X.data[row * X.cols]),
+        rows: X.rows, cols: 1 };
+    },
+  };
+  const source = { pipeline: [{ model: { class: 'n4m.GroupSparsePLS', params: {
+    n_components: 2, group_lambda: 0.3, group_assignment: [7, 7, 12, 12],
+  } } }] };
+  const yaml = 'pipeline:\n  - model:\n      class: n4m.GroupSparsePLS\n      params:\n        n_components: 2\n        group_lambda: 0.3\n        group_assignment: [7, 7, 12, 12]\n';
+  const data = { X: Array.from({ length: 20 }, (_, i) => i + 1),
+    y: [1, 5, 9, 13, 17], rows: 5, cols: 4 };
+  assert.deepEqual(parseExecutionPlan(source).modelParams, [0.3, 7, 7, 12, 12]);
+  assert.deepEqual(parseExecutionPlan(yaml).modelParams, [0.3, 7, 7, 12, 12]);
+  const fitted = await runPortablePipeline(source, data, { methods });
+  assert.deepEqual(calls[0], ['fit', 'GroupSparsePLS', 4, 2, [0.3, 7, 7, 12, 12]]);
+  assert.deepEqual(fitted.model.params, [0.3, 7, 7, 12, 12]);
+  const predicted = await predictPortablePipeline(JSON.parse(JSON.stringify(fitted)),
+    { X: data.X, rows: data.rows, cols: data.cols }, { methods });
+  assert.deepEqual(predicted.data, data.y);
+});
+
+test('GroupSparsePLS rejects implicit, malformed, or wrong-width groups', async () => {
+  const source = (params) => ({ pipeline: [{ model: {
+    class: 'n4m.GroupSparsePLS', params,
+  } }] });
+  for (const groups of [undefined, [], [0, -1, 0, 1], [0, 0.5, 1, 1],
+    ['0', 0, 1, 1], [0, 0, 1, 2147483648]]) {
+    assert.throws(() => parseExecutionPlan(source({ group_assignment: groups })),
+      /group_assignment/);
+  }
+  for (const lambda of [-1, Infinity, '0.3']) {
+    assert.throws(() => parseExecutionPlan(source({ group_assignment: [0, 0, 1, 1],
+      group_lambda: lambda })), /group_lambda/);
+  }
+  await assert.rejects(runPortablePipeline(source({ group_assignment: [0, 0, 1] }),
+    { X: Array.from({ length: 20 }, (_, i) => i + 1),
+      y: [1, 5, 9, 13, 17], rows: 5, cols: 4 }, { methods: {} }),
+  /group_assignment must contain 4 fitted features/);
+});
+
 test('SPA learns only on training rows and replays sorted selected columns', async () => {
   const calls = [];
   const methods = {
