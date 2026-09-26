@@ -245,6 +245,108 @@ test('affine model recipes reject unsupported or lossy parameters', () => {
   }
 });
 
+test('SPA learns only on training rows and replays sorted selected columns', async () => {
+  const calls = [];
+  const methods = {
+    computeSplitIndices: () => ({ trainIndices: [0, 1], testIndices: [2, 3] }),
+    selectSpa(X, Y, topK, components) {
+      calls.push(['select', Array.from(X.data), Array.from(Y.data), topK, components]);
+      return BigInt64Array.of(2n, 0n);
+    },
+    fitPls(X) {
+      calls.push(['fit', Array.from(X.data), X.cols]);
+      return { coefficients: Float64Array.of(1, 0), xMean: Float64Array.of(0, 0),
+        yMean: Float64Array.of(0), intercept: null, n_features: 2, n_targets: 1 };
+    },
+    predictPls(_model, X) {
+      calls.push(['predict', Array.from(X.data), X.cols]);
+      return { data: Float64Array.from({ length: X.rows }, (_, row) => X.data[row * X.cols]),
+        rows: X.rows, cols: 1 };
+    },
+  };
+  const source = { pipeline: [
+    { class: 'nirs4all.operators.splitters.KennardStoneSplitter' },
+    { class: 'n4m.SPA', params: { top_k: 2, n_components: 1 } },
+    { model: { class: 'sklearn.cross_decomposition.PLSRegression', params: { n_components: 1 } } },
+  ] };
+  const dataset = { X: [1, 10, 2, 3, 20, 4, 5, 30, 6, 7, 40, 8],
+    y: [1, 3, 5, 7], rows: 4, cols: 3 };
+  const fitted = await runPortablePipeline(source, dataset, { methods });
+  assert.deepEqual(calls[0], ['select', [1, 10, 2, 3, 20, 4], [1, 3], 2, 1]);
+  assert.deepEqual(calls[1], ['fit', [1, 2, 3, 4], 2]);
+  assert.deepEqual(fitted.preprocessing, [{ type: 'SPA', params: [2, 1], state: [2, 0] }]);
+  assert.deepEqual(fitted.selected.predictions, [5, 7]);
+  const replay = JSON.parse(JSON.stringify(fitted));
+  const result = await predictPortablePipeline(replay, { X: dataset.X, rows: 4, cols: 3 }, { methods });
+  assert.deepEqual(result.data, [1, 3, 5, 7]);
+  assert.equal(calls.filter(([name]) => name === 'select').length, 1);
+  assert.deepEqual(calls.at(-1), ['predict', [1, 2, 3, 4, 5, 6, 7, 8], 2]);
+
+  for (const state of [[0, 0], [0, 3], [0], [0, 1.5], null]) {
+    replay.preprocessing[0].state = state;
+    await assert.rejects(
+      predictPortablePipeline(replay, { X: dataset.X, rows: 4, cols: 3 }, { methods }),
+      /SPA/,
+    );
+  }
+});
+
+test('SPA preserves native ranking while projecting ascending columns after JSON replay', async () => {
+  const projected = [];
+  const methods = {
+    selectSpa: () => BigInt64Array.of(8n, 3n, 1n),
+    fitPls(X) {
+      projected.push(Array.from(X.data));
+      return { coefficients: Float64Array.of(1, 0, 0), xMean: Float64Array.of(0, 0, 0),
+        yMean: Float64Array.of(0), intercept: null, n_features: 3, n_targets: 1 };
+    },
+    predictPls(_model, X) {
+      projected.push(Array.from(X.data));
+      return { data: Float64Array.from({ length: X.rows }, (_, row) => X.data[row * X.cols]),
+        rows: X.rows, cols: 1 };
+    },
+  };
+  const source = { pipeline: [
+    { class: 'n4m.SPA', params: { top_k: 3, n_components: 1 } },
+    { model: { class: 'sklearn.cross_decomposition.PLSRegression', params: { n_components: 1 } } },
+  ] };
+  const dataset = { X: Array.from({ length: 36 }, (_, index) => index + 1),
+    y: [2, 11, 20, 29], rows: 4, cols: 9 };
+  const fitted = await runPortablePipeline(source, dataset, { methods });
+  assert.deepEqual(fitted.preprocessing[0].state, [8, 3, 1]);
+  const expected = [2, 4, 9, 11, 13, 18, 20, 22, 27, 29, 31, 36];
+  assert.deepEqual(projected[0], expected);
+  const replay = JSON.parse(JSON.stringify(fitted));
+  await predictPortablePipeline(replay, { X: dataset.X, rows: 4, cols: 9 }, { methods });
+  assert.deepEqual(projected.at(-1), expected);
+  assert.deepEqual(replay.preprocessing[0].state, [8, 3, 1]);
+});
+
+test('SPA recipes reject missing, unsupported, and out-of-range top_k', async () => {
+  for (const params of [{}, { top_k: 0 }, { top_k: 1.5 }, { top_k: 2, seed: 1 }]) {
+    assert.throws(() => parseExecutionPlan({ pipeline: [
+      { class: 'n4m.SPA', params },
+      { model: { class: 'sklearn.cross_decomposition.PLSRegression' } },
+    ] }), /SPA/);
+  }
+  const source = { pipeline: [
+    { class: 'n4m.SPA', params: { top_k: 4 } },
+    { model: { class: 'sklearn.cross_decomposition.PLSRegression' } },
+  ] };
+  await assert.rejects(runPortablePipeline(source, {
+    X: [1, 2, 3, 4, 5, 6], y: [1, 2, 3], rows: 3, cols: 2,
+  }, { methods: {} }), /SPA top_k 4 exceeds 2 features/);
+  const rankSource = { pipeline: [
+    { class: 'nirs4all.operators.splitters.KennardStoneSplitter' },
+    { class: 'n4m.SPA', params: { top_k: 1, n_components: 2 } },
+    { model: { class: 'sklearn.cross_decomposition.PLSRegression' } },
+  ] };
+  await assert.rejects(runPortablePipeline(rankSource, {
+    X: [1, 2, 3, 4, 5, 6], y: [1, 2, 3], rows: 3, cols: 2,
+  }, { methods: { computeSplitIndices: () => ({ trainIndices: [0, 1], testIndices: [2] }) } }),
+  /SPA n_components 2 exceeds train rank limit 1/);
+});
+
 test('older stateless preprocessing remains replayable without fitted state', async () => {
   let fits = 0;
   const methods = {

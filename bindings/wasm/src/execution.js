@@ -26,6 +26,8 @@ const MSC = new Set([
   'nirs4all.operators.transforms.nirs.MultiplicativeScatterCorrection',
 ]);
 
+const SPA = new Set(['n4m.SPA', 'n4m.SPASelector', 'pls4all.sklearn.SPASelector']);
+
 const STATELESS_PREPROCESSING = new Set(['StandardNormalVariate', 'SavitzkyGolay']);
 
 const PLS = new Set([
@@ -66,6 +68,25 @@ export async function runPortablePipeline(source, dataset, options = {}) {
   const preprocessing = [];
 
   for (const step of plan.preprocessing) {
+    if (step.type === 'SPA') {
+      if (step.params[0] > XTrain.cols) {
+        throw new RangeError(`SPA top_k ${step.params[0]} exceeds ${XTrain.cols} features.`);
+      }
+      const maxComponents = Math.min(XTrain.cols, XTrain.rows - 1);
+      if (step.params[1] > maxComponents) {
+        throw new RangeError(`SPA n_components ${step.params[1]} exceeds train rank limit ${maxComponents}.`);
+      }
+      const selected = methods.selectSpa(
+        { data: XTrain.data, rows: XTrain.rows, cols: XTrain.cols },
+        { data: yTrain.data, rows: yTrain.rows, cols: 1 },
+        step.params[0], step.params[1],
+      );
+      const indices = checkedSpaIndices(selected, XTrain.cols, step.params[0]);
+      XTrain = selectColumns(XTrain, sortedSpaIndices(indices));
+      XTest = selectColumns(XTest, sortedSpaIndices(indices));
+      preprocessing.push({ type: 'SPA', params: step.params, state: indices });
+      continue;
+    }
     const op = methods.ppCreate(step.type, step.params);
     try {
       methods.ppFit(op, XTrain.data, XTrain.rows, XTrain.cols);
@@ -146,6 +167,11 @@ export async function predictPortablePipeline(fitted, dataset, options = {}) {
 
   let X = coerceFeatures(dataset);
   for (const step of fitted.preprocessing ?? []) {
+    if (step.type === 'SPA') {
+      const topK = integerParam(step.params?.[0], undefined, 'SPA top_k', { min: 1 });
+      X = selectColumns(X, sortedSpaIndices(checkedSpaIndices(step.state, X.cols, topK)));
+      continue;
+    }
     const state = step.state;
     if (!STATELESS_PREPROCESSING.has(step.type) && (!Array.isArray(state) || state.length === 0)) {
       throw new Error(`Portable preprocessing '${step.type}' requires fitted state; this result cannot be replayed safely.`);
@@ -219,6 +245,8 @@ export function parseExecutionPlan(source) {
       } else if (MSC.has(step.class)) {
         mscParams(step.params ?? {});
         preprocessing.push({ type: 'MSC', params: [] });
+      } else if (SPA.has(step.class)) {
+        preprocessing.push({ type: 'SPA', params: spaParams(step.params) });
       } else {
         throw new Error(`Portable execution does not support step class '${step.class}'.`);
       }
@@ -361,6 +389,60 @@ function selectRows(data, rows, cols, indices) {
     out.set(data.subarray(source * cols, source * cols + cols), r * cols);
   }
   return { data: out, rows: indices.length, cols };
+}
+
+function selectColumns(matrix, indices) {
+  const out = new Float64Array(matrix.rows * indices.length);
+  for (let row = 0; row < matrix.rows; row += 1) {
+    for (let col = 0; col < indices.length; col += 1) {
+      out[row * indices.length + col] = matrix.data[row * matrix.cols + indices[col]];
+    }
+  }
+  return { data: out, rows: matrix.rows, cols: indices.length };
+}
+
+function checkedSpaIndices(value, cols, topK) {
+  if ((!Array.isArray(value) && !ArrayBuffer.isView(value))
+      || typeof value[Symbol.iterator] !== 'function') {
+    throw new TypeError('SPA requires fitted selected indices.');
+  }
+  const raw = Array.from(value);
+  if (raw.length !== topK) {
+    throw new RangeError(`SPA selected ${raw.length} indices; expected ${topK}.`);
+  }
+  const indices = raw.map((item) => {
+    if (typeof item !== 'bigint' && (!Number.isSafeInteger(item) || item < 0)) {
+      throw new TypeError('SPA selected indices must be non-negative safe integers.');
+    }
+    const index = typeof item === 'bigint' ? item : BigInt(item);
+    if (index < 0n || index >= BigInt(cols)) {
+      throw new RangeError(`SPA selected index ${item} is outside 0..${cols - 1}.`);
+    }
+    return Number(index);
+  });
+  if (new Set(indices).size !== indices.length) {
+    throw new RangeError('SPA selected duplicate indices.');
+  }
+  return indices;
+}
+
+function sortedSpaIndices(indices) {
+  return [...indices].sort((a, b) => a - b);
+}
+
+function spaParams(params) {
+  if (!params || typeof params !== 'object' || Array.isArray(params)) {
+    throw new TypeError('SPA params must be a mapping with top_k.');
+  }
+  for (const key of Object.keys(params)) {
+    if (!['top_k', 'n_components'].includes(key)) {
+      throw new TypeError(`Unsupported SPA parameter '${key}'.`);
+    }
+  }
+  return [
+    integerParam(params.top_k, undefined, 'SPA top_k', { min: 1 }),
+    integerParam(params.n_components, 2, 'SPA n_components', { min: 1 }),
+  ];
 }
 
 function savgolParams(params) {
