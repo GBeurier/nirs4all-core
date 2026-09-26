@@ -98,6 +98,8 @@ const AFFINE_MODELS = new Map([
   ['n4m.RandomSubspacePLS', { type: 'RandomSubspacePLS', strict: true,
     params: [['n_estimators', 50, 'integer'], ['features_per_subspace', 10, 'integer'],
       ['seed', 0, 'seed']] }],
+  ['n4m.NPLS', { type: 'NPLS', strict: true,
+    params: [['mode_j', undefined, 'integer'], ['mode_k', undefined, 'integer']] }],
 ]);
 
 export async function runPortablePipeline(source, dataset, options = {}) {
@@ -191,6 +193,10 @@ export async function runPortablePipeline(source, dataset, options = {}) {
   const candidates = plan.nComponents.map((nComponents) => {
     if (plan.modelType === 'RandomSubspacePLS' && plan.modelParams[1] > XTrain.cols) {
       throw new RangeError(`RandomSubspacePLS features_per_subspace ${plan.modelParams[1]} exceeds ${XTrain.cols} input features.`);
+    }
+    if (plan.modelType === 'NPLS' &&
+        BigInt(plan.modelParams[0]) * BigInt(plan.modelParams[1]) !== BigInt(XTrain.cols)) {
+      throw new RangeError(`NPLS mode_j * mode_k must equal ${XTrain.cols} fitted features.`);
     }
     const xMatrix = { data: XTrain.data, rows: XTrain.rows, cols: XTrain.cols };
     const yMatrix = { data: yTrain.data, rows: yTrain.rows, cols: 1 };

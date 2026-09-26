@@ -308,6 +308,61 @@ test('fused and ensemble recipes reject invalid shape, seed, and model parameter
     { methods: {} }), /features_per_subspace 10 exceeds 2 input features/);
 });
 
+test('NPLS fits flattened training tensor and replays serialized model state', async () => {
+  const calls = [];
+  const methods = {
+    computeSplitIndices: () => ({ trainIndices: [0, 1, 2], testIndices: [3, 4] }),
+    fitModel(token, X, Y, components, params) {
+      calls.push(['fit', token, X.rows, X.cols, Array.from(Y.data), components, params]);
+      return { coefficients: Float64Array.of(1, 0, 0, 0, 0, 0),
+        xMean: new Float64Array(6), yMean: Float64Array.of(0),
+        intercept: null, n_features: 6, n_targets: 1 };
+    },
+    predictModel(model, X) {
+      calls.push(['predict', model.n_features, X.rows]);
+      return { data: Float64Array.from({ length: X.rows }, (_, row) => X.data[row * X.cols]),
+        rows: X.rows, cols: 1 };
+    },
+  };
+  const source = { pipeline: [
+    { class: 'nirs4all.operators.splitters.KennardStoneSplitter' },
+    { model: { class: 'n4m.NPLS', params: { mode_j: 2, mode_k: 3 } } },
+  ] };
+  const data = { X: Array.from({ length: 30 }, (_, i) => i + 1),
+    y: [1, 7, 13, 19, 25], rows: 5, cols: 6 };
+  assert.deepEqual(parseExecutionPlan(source).modelParams, [2, 3]);
+  const fitted = await runPortablePipeline(source, data, { methods });
+  assert.deepEqual(calls[0], ['fit', 'NPLS', 3, 6, [1, 7, 13], 2, [2, 3]]);
+  assert.equal(fitted.model.type, 'NPLS');
+  assert.deepEqual(fitted.model.params, [2, 3]);
+  assert.deepEqual(fitted.selected.predictions, [19, 25]);
+  const replay = JSON.parse(JSON.stringify(fitted));
+  const predicted = await predictPortablePipeline(replay,
+    { X: data.X, rows: data.rows, cols: data.cols }, { methods });
+  assert.deepEqual(predicted.data, data.y);
+  assert.equal(calls.filter(([kind]) => kind === 'fit').length, 1);
+  assert.deepEqual(calls.at(-1), ['predict', 6, 5]);
+});
+
+test('NPLS rejects missing or lossy dimensions and mismatched fitted width', async () => {
+  const source = (params) => ({ pipeline: [{ model: { class: 'n4m.NPLS', params } }] });
+  for (const [params, pattern] of [
+    [{ mode_k: 3 }, /mode_j must be an integer/],
+    [{ mode_j: 2 }, /mode_k must be an integer/],
+    [{ mode_j: 0, mode_k: 3 }, /mode_j must be >= 1/],
+    [{ mode_j: 1.5, mode_k: 4 }, /mode_j must be an integer/],
+    [{ mode_j: '2', mode_k: 3 }, /mode_j must be numeric/],
+    [{ mode_j: 2147483648, mode_k: 3 }, /mode_j is outside i32 range/],
+    [{ mode_j: 2, mode_k: 3, extra: 1 }, /Unsupported NPLS parameter/],
+  ]) assert.throws(() => parseExecutionPlan(source(params)), pattern);
+  await assert.rejects(runPortablePipeline(source({ mode_j: 2, mode_k: 4 }),
+    { X: Array.from({ length: 18 }, (_, i) => i + 1), y: [1, 2, 3], rows: 3, cols: 6 },
+    { methods: {} }), /mode_j \* mode_k must equal 6 fitted features/);
+  await assert.rejects(runPortablePipeline(source({ mode_j: 2147483647, mode_k: 2147483647 }),
+    { X: Array.from({ length: 18 }, (_, i) => i + 1), y: [1, 2, 3], rows: 3, cols: 6 },
+    { methods: {} }), /mode_j \* mode_k must equal 6 fitted features/);
+});
+
 test('SPA learns only on training rows and replays sorted selected columns', async () => {
   const calls = [];
   const methods = {
