@@ -102,6 +102,8 @@ const AFFINE_MODELS = new Map([
     params: [['mode_j', undefined, 'integer'], ['mode_k', undefined, 'integer']] }],
   ['n4m.MBPLS', { type: 'MBPLS', strict: true,
     params: [['block_sizes', undefined, 'integerArray']] }],
+  ['n4m.GroupSparsePLS', { type: 'GroupSparsePLS', strict: true,
+    params: [['group_lambda', 0.05], ['group_assignment', undefined, 'integerArray']] }],
 ]);
 
 export async function runPortablePipeline(source, dataset, options = {}) {
@@ -203,6 +205,10 @@ export async function runPortablePipeline(source, dataset, options = {}) {
     if (plan.modelType === 'MBPLS' &&
         plan.modelParams.reduce((sum, size) => sum + size, 0) !== XTrain.cols) {
       throw new RangeError(`MBPLS block_sizes must sum to ${XTrain.cols} fitted features.`);
+    }
+    if (plan.modelType === 'GroupSparsePLS' &&
+        plan.modelParams.length !== XTrain.cols + 1) {
+      throw new RangeError(`GroupSparsePLS group_assignment must contain ${XTrain.cols} fitted features.`);
     }
     const xMatrix = { data: XTrain.data, rows: XTrain.rows, cols: XTrain.cols };
     const yMatrix = { data: yTrain.data, rows: yTrain.rows, cols: 1 };
@@ -393,6 +399,20 @@ function affineParams(params = {}, spec) {
       throw new TypeError('MBPLS block_sizes must contain at least two positive i32 integers.');
     }
     return [...blocks];
+  }
+  if (spec.type === 'GroupSparsePLS') {
+    if (params.group_lambda != null && typeof params.group_lambda !== 'number') {
+      throw new TypeError('group_lambda must be numeric.');
+    }
+    const lambda = numberParam(params.group_lambda, 0.05, 'group_lambda');
+    const groups = params.group_assignment;
+    if (lambda < 0) throw new RangeError('group_lambda must be non-negative.');
+    if (!Array.isArray(groups) || groups.length === 0 ||
+        groups.some((id) => typeof id !== 'number' || !Number.isInteger(id) ||
+          id < 0 || id > 2147483647)) {
+      throw new TypeError('GroupSparsePLS group_assignment must contain non-negative i32 group ids.');
+    }
+    return [lambda, ...groups];
   }
   return spec.params.map(([name, fallback, kind]) => {
     if (spec.strict && params[name] != null && typeof params[name] !== 'number') {
