@@ -112,7 +112,7 @@ export interface PortableExecutionResult {
   rows: number;
   cols: number;
   split: PortableSplitResult;
-  preprocessing: { type: string; params: number[] }[];
+  preprocessing: PortablePreprocessingStep[];
   variants: PortableVariantResult[];
   selected: PortableVariantResult;
   model: PortablePlsModel;
@@ -122,6 +122,13 @@ export interface PortableExecutionResult {
     scope: 'training' | 'selection_validation';
     independent_test: false;
   };
+}
+
+export interface PortablePreprocessingStep {
+  type: string;
+  params: number[];
+  /** Fitted Methods state. Older stateless results may omit it. */
+  state?: number[];
 }
 
 export interface PortablePredictionResult {
@@ -338,7 +345,7 @@ export function loadPipelineDefinition(source: string | unknown[] | Record<strin
 export function portableClassNames(definition: PipelineDefinition | unknown[] | Record<string, unknown>): string[];
 export function parseExecutionPlan(source: string | PipelineDefinition | unknown[] | Record<string, unknown>): {
   splitter: { type: 'KennardStone'; params: Record<string, unknown> } | null;
-  preprocessing: { type: 'StandardNormalVariate' | 'SavitzkyGolay'; params: number[] }[];
+  preprocessing: { type: 'StandardNormalVariate' | 'SavitzkyGolay' | 'MSC'; params: number[] }[];
   nComponents: number[];
 };
 export function runPortablePipeline(
@@ -347,7 +354,7 @@ export function runPortablePipeline(
   options?: { methods?: unknown },
 ): Promise<PortableExecutionResult>;
 export function predictPortablePipeline(
-  fitted: PortableExecutionResult | { preprocessing?: { type: string; params: number[] }[]; model?: PortablePlsModel },
+  fitted: PortableExecutionResult | { preprocessing?: PortablePreprocessingStep[]; model?: PortablePlsModel },
   dataset: Omit<PortableMatrixDataset, 'y'>,
   options?: { methods?: unknown },
 ): Promise<PortablePredictionResult>;

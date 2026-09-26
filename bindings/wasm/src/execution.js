@@ -19,6 +19,15 @@ const SAVGOL = new Set([
   'n4m.SavitzkyGolay',
 ]);
 
+const MSC = new Set([
+  'n4m.MSC',
+  'nirs4all.operators.transforms.MSC',
+  'nirs4all.operators.transforms.MultiplicativeScatterCorrection',
+  'nirs4all.operators.transforms.nirs.MultiplicativeScatterCorrection',
+]);
+
+const STATELESS_PREPROCESSING = new Set(['StandardNormalVariate', 'SavitzkyGolay']);
+
 const PLS = new Set([
   'sklearn.cross_decomposition.PLSRegression',
   'sklearn.cross_decomposition._pls.PLSRegression',
@@ -49,6 +58,15 @@ export async function runPortablePipeline(source, dataset, options = {}) {
     const op = methods.ppCreate(step.type, step.params);
     try {
       methods.ppFit(op, XTrain.data, XTrain.rows, XTrain.cols);
+      const state = typeof methods.ppGetState === 'function'
+        ? Array.from(methods.ppGetState(op))
+        : [];
+      if (!STATELESS_PREPROCESSING.has(step.type) && state.length === 0) {
+        throw new Error(`Portable preprocessing '${step.type}' did not provide fitted state.`);
+      }
+      if (!state.every(Number.isFinite) || (step.type === 'MSC' && state.length !== XTrain.cols)) {
+        throw new Error(`Portable preprocessing '${step.type}' provided invalid fitted state.`);
+      }
       XTrain = {
         data: methods.ppTransform(op, XTrain.data, XTrain.rows, XTrain.cols),
         rows: XTrain.rows,
@@ -59,7 +77,7 @@ export async function runPortablePipeline(source, dataset, options = {}) {
         rows: XTest.rows,
         cols: XTest.cols,
       };
-      preprocessing.push({ type: step.type, params: step.params });
+      preprocessing.push({ type: step.type, params: step.params, state });
     } finally {
       methods.ppDestroy(op);
     }
@@ -117,9 +135,24 @@ export async function predictPortablePipeline(fitted, dataset, options = {}) {
 
   let X = coerceFeatures(dataset);
   for (const step of fitted.preprocessing ?? []) {
+    const state = step.state;
+    if (!STATELESS_PREPROCESSING.has(step.type) && (!Array.isArray(state) || state.length === 0)) {
+      throw new Error(`Portable preprocessing '${step.type}' requires fitted state; this result cannot be replayed safely.`);
+    }
+    if (step.type === 'MSC' && state.length !== X.cols) {
+      throw new RangeError(`Portable preprocessing 'MSC' state length ${state.length} does not match ${X.cols} features.`);
+    }
     const op = methods.ppCreate(step.type, step.params ?? []);
     try {
-      methods.ppFit(op, X.data, X.rows, X.cols);
+      if (state?.length) {
+        if (!Array.isArray(state) || !state.every(Number.isFinite)) {
+          throw new TypeError(`Portable preprocessing '${step.type}' has invalid fitted state.`);
+        }
+        if (typeof methods.ppSetState !== 'function') {
+          throw new Error(`Methods runtime cannot restore fitted state for '${step.type}'.`);
+        }
+        methods.ppSetState(op, Float64Array.from(state));
+      }
       X = {
         data: methods.ppTransform(op, X.data, X.rows, X.cols),
         rows: X.rows,
@@ -171,6 +204,9 @@ export function parseExecutionPlan(source) {
         preprocessing.push({ type: 'StandardNormalVariate', params: [] });
       } else if (SAVGOL.has(step.class)) {
         preprocessing.push({ type: 'SavitzkyGolay', params: savgolParams(step.params ?? {}) });
+      } else if (MSC.has(step.class)) {
+        mscParams(step.params ?? {});
+        preprocessing.push({ type: 'MSC', params: [] });
       } else {
         throw new Error(`Portable execution does not support step class '${step.class}'.`);
       }
@@ -311,6 +347,17 @@ function savgolParams(params) {
     savgolMode(params.mode ?? 'interp'),
     numberParam(params.cval, 0, 'cval'),
   ];
+}
+
+function mscParams(params) {
+  if (!params || typeof params !== 'object' || Array.isArray(params)) {
+    throw new TypeError('MSC params must be a mapping.');
+  }
+  for (const [key, value] of Object.entries(params)) {
+    if (!['scale', 'copy'].includes(key) || typeof value !== 'boolean') {
+      throw new TypeError(`Unsupported MSC parameter '${key}'.`);
+    }
+  }
 }
 
 const SAVGOL_MODES = new Map([

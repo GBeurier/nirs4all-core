@@ -41,6 +41,10 @@ export const portableOperatorClasses = Object.freeze([
   'nirs4all.operators.transforms.scalers.StandardNormalVariate',
   'nirs4all.operators.transforms.SavitzkyGolay',
   'nirs4all.operators.transforms.nirs.SavitzkyGolay',
+  'n4m.MSC',
+  'nirs4all.operators.transforms.MSC',
+  'nirs4all.operators.transforms.MultiplicativeScatterCorrection',
+  'nirs4all.operators.transforms.nirs.MultiplicativeScatterCorrection',
   'sklearn.cross_decomposition.PLSRegression',
   'sklearn.cross_decomposition._pls.PLSRegression',
   'n4m.KennardStone',
@@ -169,6 +173,10 @@ const parityRuntime = Object.freeze(Object.fromEntries(
   runtimeSurfaces.map((surface) => [surface, 'parity-validated']),
 ));
 
+const mscRuntime = Object.freeze(Object.fromEntries(
+  runtimeSurfaces.map((surface) => [surface, surface === 'javascript_wasm' ? 'execute-local' : 'metadata']),
+));
+
 export const controllerCapabilities = Object.freeze([
   Object.freeze({
     id: 'split.kennard_stone',
@@ -223,6 +231,25 @@ export const controllerCapabilities = Object.freeze([
     }),
     parameters: Object.freeze(['window_length', 'polyorder', 'deriv', 'mode', 'cval']),
     runtime: parityRuntime,
+    executionPath: 'portable_pipeline',
+  }),
+  Object.freeze({
+    id: 'preprocess.msc',
+    kind: 'transform',
+    domain: 'methods',
+    label: 'Multiplicative scatter correction',
+    operatorClasses: Object.freeze([
+      'n4m.MSC',
+      'nirs4all.operators.transforms.MSC',
+      'nirs4all.operators.transforms.MultiplicativeScatterCorrection',
+      'nirs4all.operators.transforms.nirs.MultiplicativeScatterCorrection',
+    ]),
+    ports: Object.freeze({
+      inputs: Object.freeze(['X']),
+      outputs: Object.freeze(['X_transformed']),
+    }),
+    parameters: Object.freeze(['scale', 'copy']),
+    runtime: mscRuntime,
     executionPath: 'portable_pipeline',
   }),
   Object.freeze({

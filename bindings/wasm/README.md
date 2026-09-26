@@ -11,7 +11,7 @@ This package is the runtime surface that `nirs4all-web` should consume. The web
 application lives in `nirs4all-web`; this directory is for the reusable
 JavaScript/WASM binding and package metadata.
 
-The portable execution API delegates Kennard-Stone, SNV, Savitzky-Golay, and
+The portable execution API delegates Kennard-Stone, SNV, MSC, Savitzky-Golay, and
 PLS component sweeps to `@nirs4all/methods`:
 
 - `runPortablePipeline(source, dataset)` parses the shared nirs4all JSON/YAML
@@ -20,7 +20,15 @@ PLS component sweeps to `@nirs4all/methods`:
   model.
 - `predictPortablePipeline(result, dataset)` replays the recorded preprocessing
   chain and predicts with that serialized model through the same methods WASM
-  backend.
+  backend. Fitted preprocessing state is serialized as numeric arrays in each
+  step and restored before prediction. Older results with stateless steps remain
+  readable; a persisted MSC step without fitted state is rejected because its
+  training reference cannot be recovered from prediction data.
+
+MSC recipes accept `n4m.MSC` and the nirs4all Python `MSC` /
+`MultiplicativeScatterCorrection` class aliases. They call the Methods `MSC`
+operator with no numeric parameters. The Python `scale` and `copy` flags are
+accepted as booleans; they do not alter the Methods numerical operation.
 - `replayMethodsArchiveV2(archiveBytes, dataset)` validates the bounded Archive
   V2 stored-ZIP, manifest, inventory digests, DAG-ML package, execution bundle,
   and N4MM binding in Rust, then imports and predicts the single multi-target
