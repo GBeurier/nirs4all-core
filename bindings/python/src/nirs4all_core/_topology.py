@@ -44,7 +44,11 @@ CORE_FACADE_EXPORTS: tuple[str, ...] = (
 )
 
 EXECUTION_ENGINE_EXPORTS: tuple[str, ...] = (
+    "N4M_ROLE_PREFIX",
+    "N4M_TRAINED_PIPELINE_SCHEMA",
+    "N4mRolePipeline",
     "PortableDataset",
+    "n4m_role_capabilities",
     "parse_execution_plan",
     "run_portable_pipeline",
 )

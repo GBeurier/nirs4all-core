@@ -8,6 +8,29 @@ binding manifest.
 
 ## [Unreleased]
 
+### Added
+
+- Generic n4m role recipes. The Python, Rust and JS/WASM bindings accept the
+  language-neutral step token `"n4m:<catalog method id>"` wherever the
+  portable whitelist is consulted, resolving it through the Methods manifest
+  (`n4m.roles.method_class`, `n4m::roles::method_info`, `methodClass`) rather
+  than a hand-maintained list; `n4m_role_capabilities()` /
+  `n4mRoleCapabilities()` list the usable steps from that manifest.
+- `N4mRolePipeline` in the three bindings fits role recipes (sample filters,
+  transformers/selectors, one regressor or classifier) through the Methods
+  estimator roles and reads/writes the cross-language trained envelope
+  `nirs4all.n4m.trained_pipeline.v8` (per-step N4ME states). The npm package
+  replays Python- and R-trained envelopes in the browser (level L2); the gates
+  replay the shared fixtures within 1e-12 and round-trip their own fits.
+
+### Changed
+
+- Require the Methods release carrying ABI 2.13 estimator roles: Rust
+  `n4m =0.2.0`, npm peer `@nirs4all/methods ^1.0.22`, and the Python
+  `methods`/`all` extras `nirs4all-methods>=1.0.22,<2`.
+- Archive V2 replay takes its libn4m ABI verdict from DAG-ML's
+  `MethodsRuntime::configure` preflight instead of a second n4m instance.
+
 ## [0.3.31] - 2026-09-24
 
 ### Changed

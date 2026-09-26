@@ -113,6 +113,34 @@ Savitzky-Golay defaults to `mode: "interp"` for full nirs4all parity and
 preserves explicit methods-backed modes (`mirror`, `constant`, `nearest`,
 `wrap`, `interp`) plus `cval` in the serialized preprocessing chain.
 
+## Generic n4m role recipes and trained envelopes (v8)
+
+Any Methods estimator is a recipe step through the language-neutral token
+`"n4m:<catalog method id>"` (or `{ class: "n4m:<id>", params }`), shared with
+the full Python `nirs4all`, the R package and the Rust binding.
+`loadPipelineDefinition(source, { methods })` accepts these tokens when they
+resolve in the loaded Methods manifest (`methodClass`), next to the legacy
+class names above; `n4mRoleCapabilities()` lists the usable steps from the
+same manifest instead of a hand-maintained list.
+
+`N4mRolePipeline` fits such a recipe (sample filters on training rows only,
+transformers and selectors, then one regressor or classifier) through the
+Methods `NativeEstimator` roles and reads/writes the
+`nirs4all.n4m.trained_pipeline.v8` envelope (`{schema, recipe, n_features,
+states: [{method_id, n4me_base64, sha256, class_names?}]}`). A pipeline trained
+in Python or R replays in the browser from its N4ME states (level L2):
+
+```js
+import { N4mRolePipeline } from 'nirs4all';
+
+const fitted = await N4mRolePipeline.fromJSON(envelopeText);
+const { data } = fitted.predict({ X, rows, cols });          // regressor
+const { labels } = classifier.predict({ X, rows, cols });    // classifier
+const text = JSON.stringify(await N4mRolePipeline.fit(recipe, { X, rows, cols, y }));
+```
+
+This path requires `@nirs4all/methods` with ABI 2.13 estimator roles.
+
 Custom app hosts can inspect `capabilityManifest()`, `controllerCapabilities`,
 `runtimeSurfaces`, and `runtimeContracts` before rendering graph nodes or
 selecting a runtime. The manifest schema is `nirs4all-core.capabilities.v1`; it

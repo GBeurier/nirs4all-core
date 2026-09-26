@@ -78,3 +78,28 @@ N4M_LIB_PATH=/path/to/libn4m.so \
 NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 \
 python -m unittest bindings/python/tests/test_execution_parity.py -v
 ```
+
+## Generic n4m role recipes (trained envelope v8)
+
+Any Methods estimator is a recipe step through the language-neutral token
+`"n4m:<catalog method id>"` (or `{"class": "n4m:<id>", "params": {...}}`),
+shared with the full Python `nirs4all`, the R package, the Rust binding and the
+npm package. `load_pipeline_definition` accepts these tokens when they resolve
+in the Methods manifest (`n4m.roles.method_class`); `n4m_role_capabilities()`
+lists the usable steps from that manifest.
+
+`N4mRolePipeline` fits such a recipe (sample filters on training rows only,
+transformers and selectors, then one regressor or classifier) and reads/writes
+the `nirs4all.n4m.trained_pipeline.v8` envelope, so a pipeline trained in any
+binding predicts identically here:
+
+```python
+import nirs4all_core as n4core
+
+fitted = n4core.N4mRolePipeline.fit_recipe(recipe, X_train, y_train)
+fitted.to_json("trained-v8.json")
+predictions = n4core.N4mRolePipeline.from_json("trained-v8.json").predict(X_new)
+```
+
+It requires `nirs4all-methods` with ABI 2.13 estimator roles (1.0.22 or later).
+

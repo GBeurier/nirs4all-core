@@ -346,7 +346,10 @@ export const methods: UpstreamProxy;
 export const dagMl: UpstreamProxy;
 export const dagMlData: UpstreamProxy;
 
-export function loadPipelineDefinition(source: string | unknown[] | Record<string, unknown>): PipelineDefinition;
+export function loadPipelineDefinition(
+  source: string | unknown[] | Record<string, unknown>,
+  options?: { methods?: unknown },
+): PipelineDefinition;
 export function portableClassNames(definition: PipelineDefinition | unknown[] | Record<string, unknown>): string[];
 export function parseExecutionPlan(source: string | PipelineDefinition | unknown[] | Record<string, unknown>): {
   splitter: { type: 'KennardStone'; params: Record<string, unknown> } | null;
@@ -373,3 +376,67 @@ export function replayMethodsArchiveV2(
   archiveBytes: ArrayBuffer | ArrayBufferView,
   dataset: ArchiveV2ReplayDataset,
 ): Promise<ArchiveV2ReplayResult>;
+
+/** Prefix of the language-neutral n4m role step token `n4m:<catalog method id>`. */
+export const N4M_ROLE_PREFIX: 'n4m:';
+/** Schema of the trained n4m role pipeline envelope shared with Python, R and Rust. */
+export const N4M_TRAINED_PIPELINE_SCHEMA: 'nirs4all.n4m.trained_pipeline.v8';
+
+/** A recipe step: `"n4m:<method id>"` or `{ class: "n4m:<method id>", params }`. */
+export type N4mRoleStep = string | { class: string; params?: Record<string, unknown> };
+
+export interface N4mRoleRecipe {
+  pipeline: N4mRoleStep[];
+}
+
+export interface N4mRoleState {
+  method_id: string;
+  n4me_base64: string;
+  sha256: string;
+  class_names?: (string | number)[];
+}
+
+export interface N4mTrainedPipelineEnvelope {
+  schema: 'nirs4all.n4m.trained_pipeline.v8';
+  recipe: N4mRoleRecipe;
+  n_features: number;
+  states: N4mRoleState[];
+}
+
+export interface N4mRoleDataset {
+  X: Float64Array | number[] | readonly number[] | readonly (readonly number[])[];
+  rows: number;
+  cols: number;
+}
+
+export interface N4mRoleTrainingDataset extends N4mRoleDataset {
+  /** Responses (regressor) or labels (classifier: integer ids, or names mapped in sorted order). */
+  y: Float64Array | readonly number[] | readonly (readonly number[])[] | readonly (string | number)[];
+}
+
+export type N4mRolePrediction =
+  | { data: number[]; rows: number; cols: number }
+  | { labels: (string | number)[]; rows: number };
+
+export interface N4mRoleCapability {
+  token: string;
+  methodId: string;
+  roles: string[];
+  nodeKinds: string[];
+  parameters: string[];
+}
+
+/** A fitted recipe of n4m role steps, portable as N4ME states. */
+export class N4mRolePipeline {
+  readonly recipe: N4mRoleRecipe;
+  readonly nFeatures: number;
+  static fit(recipe: N4mRoleRecipe, dataset: N4mRoleTrainingDataset, options?: { methods?: unknown }): Promise<N4mRolePipeline>;
+  static fromJSON(source: string | N4mTrainedPipelineEnvelope, options?: { methods?: unknown }): Promise<N4mRolePipeline>;
+  toJSON(): N4mTrainedPipelineEnvelope;
+  predict(dataset: N4mRoleDataset): N4mRolePrediction;
+  retrain(dataset: N4mRoleTrainingDataset, options?: { methods?: unknown }): Promise<N4mRolePipeline>;
+  dispose(): void;
+}
+
+/** Methods estimators usable as role recipe steps, read from the Methods manifest. */
+export function n4mRoleCapabilities(options?: { methods?: unknown }): Promise<N4mRoleCapability[]>;

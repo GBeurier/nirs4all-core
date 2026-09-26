@@ -103,6 +103,25 @@ The shared numeric oracle is
 `tests/parity/expected/portable_python_oracle.json`, generated from the full
 Python `nirs4all` library (see [`PARITY.md`](PARITY.md)).
 
+## Generic n4m role recipes (trained envelope v8)
+
+Besides that legacy alias subset, every binding that consults the portable
+whitelist accepts the generic step token `"n4m:<catalog method id>"`, resolved
+through the Methods manifest rather than a hand-maintained list, and each
+executing binding fits and replays role recipes through the
+`nirs4all.n4m.trained_pipeline.v8` envelope (N4ME states per fitted step):
+
+| Language | Token resolution | Fit / replay entry point | Gate |
+| --- | --- | --- | --- |
+| Python | `n4m.roles.method_class` | `N4mRolePipeline.fit_recipe()` / `.from_json()` | `bindings/python/tests/test_n4m_roles.py` |
+| Rust | `n4m::roles::method_info` | `N4mRolePipeline::fit_recipe()` / `::from_json()` | `cargo test -p nirs4all n4m_roles` |
+| JavaScript/WASM | `@nirs4all/methods` `methodClass` | `N4mRolePipeline.fit()` / `.fromJSON()` | `bindings/wasm/tests/n4m-roles.test.js` |
+| MATLAB/Octave | not yet (the `+n4m` MATLAB binding has no role manifest) | — | — |
+
+The gates replay the Python- and R-trained fixture envelopes
+(`tests/parity/fixtures/n4m_roles_v8_*`) within 1e-12 and round-trip an
+envelope trained in the binding itself.
+
 ## Native Archive V2 execution and presentation
 
 These operational APIs are separate from the full-Python metadata contracts

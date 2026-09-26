@@ -24,6 +24,12 @@ from ._archive import (
     write_archive_v3_from_native_payloads,
 )
 from ._execution import PortableDataset, parse_execution_plan, run_portable_pipeline
+from ._n4m_roles import (
+    N4M_ROLE_PREFIX,
+    N4M_TRAINED_PIPELINE_SCHEMA,
+    N4mRolePipeline,
+    n4m_role_capabilities,
+)
 from ._pipeline import (
     PORTABLE_OPERATOR_CLASSES,
     PipelineDefinition,
@@ -61,6 +67,9 @@ __aggregate_import__ = __name__
 
 __all__ = [
     "LazyUpstream",
+    "N4M_ROLE_PREFIX",
+    "N4M_TRAINED_PIPELINE_SCHEMA",
+    "N4mRolePipeline",
     "NativeArchiveUnavailableError",
     "PORTABLE_OPERATOR_CLASSES",
     "PortableDataset",
@@ -85,6 +94,7 @@ __all__ = [
     "load_pipeline_definition",
     "local_implementation_registry",
     "methods",
+    "n4m_role_capabilities",
     "parse_execution_plan",
     "portable_class_names",
     "predict_methods_archive_v2_matrix",

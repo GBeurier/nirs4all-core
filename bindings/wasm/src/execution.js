@@ -1,4 +1,5 @@
 import { loadMethodsWasm, loadPipelineDefinition } from './index.js';
+import { n4mRoleMethodId } from './n4m-roles.js';
 
 const KENNARD_STONE = new Set([
   'nirs4all.operators.splitters.KennardStoneSplitter',
@@ -319,6 +320,10 @@ export function parseExecutionPlan(source) {
   let modelStep = null;
 
   for (const step of definition.pipeline) {
+    const roleName = typeof step === 'string' ? step : step?.class;
+    if (n4mRoleMethodId(roleName) !== null) {
+      throw new Error(`'${roleName}' is an n4m role step: fit role recipes with N4mRolePipeline.fit().`);
+    }
     if (!step || typeof step !== 'object' || Array.isArray(step)) {
       throw new TypeError('Portable pipeline steps must be mapping objects.');
     }
@@ -443,7 +448,7 @@ function coerceDataset(dataset) {
   return { X, y, rows, cols };
 }
 
-function coerceFeatures(dataset) {
+export function coerceFeatures(dataset) {
   if (!dataset || typeof dataset !== 'object') {
     throw new TypeError('Portable prediction requires a feature dataset object.');
   }
