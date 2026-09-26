@@ -63,7 +63,7 @@
     "@nirs4all/datasets-wasm": "*",
     "@nirs4all/formats-wasm": "*",
     "@nirs4all/io-wasm": "*",
-    "@nirs4all/methods": "^1.0.22",
+    "@nirs4all/methods": "^1.1.0",
     "@tensorflow/tfjs": "^3.21.0",
     "dag-ml-data-wasm": "*",
     "dag-ml-wasm": "*",

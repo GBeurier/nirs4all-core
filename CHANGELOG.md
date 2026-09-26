@@ -26,8 +26,8 @@ binding manifest.
 ### Changed
 
 - Require the Methods release carrying ABI 2.13 estimator roles: Rust
-  `n4m =0.2.0`, npm peer `@nirs4all/methods ^1.0.22`, and the Python
-  `methods`/`all` extras `nirs4all-methods>=1.0.22,<2`.
+  `n4m =0.2.0`, npm peer `@nirs4all/methods ^1.1.0`, and the Python
+  `methods`/`all` extras `nirs4all-methods>=1.1.0,<2`.
 - Archive V2 replay takes its libn4m ABI verdict from DAG-ML's
   `MethodsRuntime::configure` preflight instead of a second n4m instance.
 
