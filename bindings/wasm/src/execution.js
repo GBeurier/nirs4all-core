@@ -100,6 +100,8 @@ const AFFINE_MODELS = new Map([
       ['seed', 0, 'seed']] }],
   ['n4m.NPLS', { type: 'NPLS', strict: true,
     params: [['mode_j', undefined, 'integer'], ['mode_k', undefined, 'integer']] }],
+  ['n4m.MBPLS', { type: 'MBPLS', strict: true,
+    params: [['block_sizes', undefined, 'integerArray']] }],
 ]);
 
 export async function runPortablePipeline(source, dataset, options = {}) {
@@ -197,6 +199,10 @@ export async function runPortablePipeline(source, dataset, options = {}) {
     if (plan.modelType === 'NPLS' &&
         BigInt(plan.modelParams[0]) * BigInt(plan.modelParams[1]) !== BigInt(XTrain.cols)) {
       throw new RangeError(`NPLS mode_j * mode_k must equal ${XTrain.cols} fitted features.`);
+    }
+    if (plan.modelType === 'MBPLS' &&
+        plan.modelParams.reduce((sum, size) => sum + size, 0) !== XTrain.cols) {
+      throw new RangeError(`MBPLS block_sizes must sum to ${XTrain.cols} fitted features.`);
     }
     const xMatrix = { data: XTrain.data, rows: XTrain.rows, cols: XTrain.cols };
     const yMatrix = { data: yTrain.data, rows: yTrain.rows, cols: 1 };
@@ -378,6 +384,15 @@ function affineParams(params = {}, spec) {
   const allowed = new Set(['n_components', ...spec.params.map(([name]) => name)]);
   for (const key of Object.keys(params)) {
     if (!allowed.has(key)) throw new TypeError(`Unsupported ${spec.type} parameter '${key}'.`);
+  }
+  if (spec.type === 'MBPLS') {
+    const blocks = params.block_sizes;
+    if (!Array.isArray(blocks) || blocks.length < 2 ||
+        blocks.some((size) => typeof size !== 'number' || !Number.isInteger(size) ||
+          size < 1 || size > 2147483647)) {
+      throw new TypeError('MBPLS block_sizes must contain at least two positive i32 integers.');
+    }
+    return [...blocks];
   }
   return spec.params.map(([name, fallback, kind]) => {
     if (spec.strict && params[name] != null && typeof params[name] !== 'number') {
