@@ -101,5 +101,5 @@ fitted.to_json("trained-v8.json")
 predictions = n4core.N4mRolePipeline.from_json("trained-v8.json").predict(X_new)
 ```
 
-It requires `nirs4all-methods` with ABI 2.13 estimator roles (1.0.22 or later).
+It requires `nirs4all-methods` with ABI 2.13 estimator roles (1.1.0 or later).
 
