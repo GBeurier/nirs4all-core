@@ -292,6 +292,7 @@ test('fused and ensemble recipes reject invalid shape, seed, and model parameter
     ['BaggingPLS', { seed: -1 }, /seed must be >= 0/],
     ['BaggingPLS', { seed: 2.5 }, /seed must be an integer/],
     ['BaggingPLS', { seed: 4294967296 }, /seed is outside i32 range/],
+    ['BaggingPLS', { seed: 2147483648 }, /seed is outside i32 range/],
     ['BaggingPLS', { n_estimators: 0 }, /n_estimators must be >= 1/],
     ['BoostingPLS', { learning_rate: 1.1 }, /learning_rate must be in/],
     ['BoostingPLS', { learning_rate: 0 }, /learning_rate must be in/],
@@ -300,6 +301,8 @@ test('fused and ensemble recipes reject invalid shape, seed, and model parameter
     ['RandomSubspacePLS', { seed: '1' }, /seed must be numeric/],
     ['RandomSubspacePLS', { extra: 1 }, /Unsupported RandomSubspacePLS parameter/],
   ]) assert.throws(() => parseExecutionPlan(source(type, params)), pattern);
+  assert.deepEqual(parseExecutionPlan(source('BaggingPLS', { seed: 2147483647 })).modelParams,
+    [50, 2147483647]);
   await assert.rejects(runPortablePipeline(source('RandomSubspacePLS', {}),
     { X: [1, 2, 3, 4, 5, 6], y: [1, 2, 3], rows: 3, cols: 2 },
     { methods: {} }), /features_per_subspace 10 exceeds 2 input features/);
