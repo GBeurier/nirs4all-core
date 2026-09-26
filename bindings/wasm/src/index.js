@@ -52,6 +52,14 @@ export const portableOperatorClasses = Object.freeze([
   'n4m.SavitzkyGolay',
   'n4m.PLS',
   'n4m.PLSRegression',
+  'n4m.Ridge',
+  'n4m.RidgePLS',
+  'n4m.RobustPLS',
+  'n4m.CPPLS',
+  'n4m.SparseSIMPLS',
+  'n4m.ECR',
+  'n4m.ContinuumRegression',
+  'n4m.MIRPLS',
 ]);
 
 export const runtimeSurfaces = Object.freeze([
@@ -173,7 +181,7 @@ const parityRuntime = Object.freeze(Object.fromEntries(
   runtimeSurfaces.map((surface) => [surface, 'parity-validated']),
 ));
 
-const mscRuntime = Object.freeze(Object.fromEntries(
+const localWasmRuntime = Object.freeze(Object.fromEntries(
   runtimeSurfaces.map((surface) => [surface, surface === 'javascript_wasm' ? 'execute-local' : 'metadata']),
 ));
 
@@ -249,7 +257,7 @@ export const controllerCapabilities = Object.freeze([
       outputs: Object.freeze(['X_transformed']),
     }),
     parameters: Object.freeze(['scale', 'copy']),
-    runtime: mscRuntime,
+    runtime: localWasmRuntime,
     executionPath: 'portable_pipeline',
   }),
   Object.freeze({
@@ -269,6 +277,26 @@ export const controllerCapabilities = Object.freeze([
     }),
     parameters: Object.freeze(['n_components', '_range_']),
     runtime: parityRuntime,
+    executionPath: 'portable_pipeline',
+  }),
+  Object.freeze({
+    id: 'model.affine_methods',
+    kind: 'model',
+    domain: 'methods',
+    label: 'Methods affine regressors',
+    operatorClasses: Object.freeze([
+      'n4m.Ridge', 'n4m.RidgePLS', 'n4m.RobustPLS', 'n4m.CPPLS',
+      'n4m.SparseSIMPLS', 'n4m.ECR', 'n4m.ContinuumRegression', 'n4m.MIRPLS',
+    ]),
+    ports: Object.freeze({
+      inputs: Object.freeze(['X', 'y']),
+      outputs: Object.freeze(['predictions', 'model']),
+    }),
+    parameters: Object.freeze([
+      'n_components', '_range_', 'lambda', 'ridge_lambda', 'huber_k',
+      'max_irls_iter', 'gamma', 'sparsity_lambda', 'alpha', 'tau',
+    ]),
+    runtime: localWasmRuntime,
     executionPath: 'portable_pipeline',
   }),
   Object.freeze({
