@@ -55,7 +55,7 @@ RUST_LIB = ROOT / "bindings/rust/nirs4all/src/lib.rs"
 COMPAT = ROOT / "compat/upstreams.toml"
 
 EXPECTED_OPERATOR_COUNT = 14
-EXPECTED_WASM_OPERATOR_COUNT = 36
+EXPECTED_WASM_OPERATOR_COUNT = 37
 EXPECTED_UPSTREAM_COUNT = 6
 
 
@@ -246,6 +246,7 @@ class PortableOperatorSubsetParityTests(unittest.TestCase):
                 "n4m.RandomSubspacePLS",
                 "n4m.NPLS",
                 "n4m.MBPLS",
+                "n4m.GroupSparsePLS",
             },
         )
 
