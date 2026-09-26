@@ -64,6 +64,10 @@ export const portableOperatorClasses = Object.freeze([
   'n4m.ECR',
   'n4m.ContinuumRegression',
   'n4m.MIRPLS',
+  'n4m.FusedSparsePLS',
+  'n4m.BaggingPLS',
+  'n4m.BoostingPLS',
+  'n4m.RandomSubspacePLS',
 ]);
 
 export const runtimeSurfaces = Object.freeze([
@@ -319,6 +323,7 @@ export const controllerCapabilities = Object.freeze([
     operatorClasses: Object.freeze([
       'n4m.Ridge', 'n4m.RidgePLS', 'n4m.RobustPLS', 'n4m.CPPLS',
       'n4m.SparseSIMPLS', 'n4m.ECR', 'n4m.ContinuumRegression', 'n4m.MIRPLS',
+      'n4m.FusedSparsePLS', 'n4m.BaggingPLS', 'n4m.BoostingPLS', 'n4m.RandomSubspacePLS',
     ]),
     ports: Object.freeze({
       inputs: Object.freeze(['X', 'y']),
@@ -327,6 +332,8 @@ export const controllerCapabilities = Object.freeze([
     parameters: Object.freeze([
       'n_components', '_range_', 'lambda', 'ridge_lambda', 'huber_k',
       'max_irls_iter', 'gamma', 'sparsity_lambda', 'alpha', 'tau',
+      'l1_lambda', 'fusion_lambda', 'n_estimators', 'seed',
+      'learning_rate', 'features_per_subspace',
     ]),
     runtime: localWasmRuntime,
     executionPath: 'portable_pipeline',

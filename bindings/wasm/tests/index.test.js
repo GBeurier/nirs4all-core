@@ -262,6 +262,10 @@ test('capability manifest describes portable custom app host controllers', () =>
 
   const covered = manifest.controllers.flatMap((item) => item.operatorClasses);
   assert.deepEqual(covered.sort(), [...portableOperatorClasses].sort());
+  const affine = manifest.controllers.find((item) => item.id === 'model.affine_methods');
+  for (const name of ['FusedSparsePLS', 'BaggingPLS', 'BoostingPLS', 'RandomSubspacePLS']) {
+    assert.ok(affine.operatorClasses.includes(`n4m.${name}`));
+  }
 });
 
 test('public upstream loaders map to the declared V1 upstreams', () => {

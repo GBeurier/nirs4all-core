@@ -89,6 +89,15 @@ const AFFINE_MODELS = new Map([
   ['n4m.ECR', { type: 'ECR', params: [['alpha', 0.5]] }],
   ['n4m.ContinuumRegression', { type: 'ContinuumRegression', params: [['tau', 0.5]] }],
   ['n4m.MIRPLS', { type: 'MIRPLS', params: [] }],
+  ['n4m.FusedSparsePLS', { type: 'FusedSparsePLS', strict: true,
+    params: [['l1_lambda', 0.05], ['fusion_lambda', 0.05]] }],
+  ['n4m.BaggingPLS', { type: 'BaggingPLS', strict: true,
+    params: [['n_estimators', 50, 'integer'], ['seed', 0, 'seed']] }],
+  ['n4m.BoostingPLS', { type: 'BoostingPLS', strict: true,
+    params: [['n_estimators', 50, 'integer'], ['learning_rate', 0.1, 'unitInterval']] }],
+  ['n4m.RandomSubspacePLS', { type: 'RandomSubspacePLS', strict: true,
+    params: [['n_estimators', 50, 'integer'], ['features_per_subspace', 10, 'integer'],
+      ['seed', 0, 'seed']] }],
 ]);
 
 export async function runPortablePipeline(source, dataset, options = {}) {
@@ -180,6 +189,9 @@ export async function runPortablePipeline(source, dataset, options = {}) {
   }
 
   const candidates = plan.nComponents.map((nComponents) => {
+    if (plan.modelType === 'RandomSubspacePLS' && plan.modelParams[1] > XTrain.cols) {
+      throw new RangeError(`RandomSubspacePLS features_per_subspace ${plan.modelParams[1]} exceeds ${XTrain.cols} input features.`);
+    }
     const xMatrix = { data: XTrain.data, rows: XTrain.rows, cols: XTrain.cols };
     const yMatrix = { data: yTrain.data, rows: yTrain.rows, cols: 1 };
     const model = plan.modelType === 'PLSRegression'
@@ -361,9 +373,22 @@ function affineParams(params = {}, spec) {
   for (const key of Object.keys(params)) {
     if (!allowed.has(key)) throw new TypeError(`Unsupported ${spec.type} parameter '${key}'.`);
   }
-  return spec.params.map(([name, fallback, kind]) => kind === 'integer'
-    ? integerParam(params[name], fallback, name, { min: 1 })
-    : numberParam(params[name], fallback, name));
+  return spec.params.map(([name, fallback, kind]) => {
+    if (spec.strict && params[name] != null && typeof params[name] !== 'number') {
+      throw new TypeError(`${name} must be numeric.`);
+    }
+    if (kind === 'integer' || kind === 'seed') {
+      return integerParam(params[name], fallback, name, { min: kind === 'seed' ? 0 : 1 });
+    }
+    const value = numberParam(params[name], fallback, name);
+    if (kind === 'unitInterval' && !(value > 0 && value <= 1)) {
+      throw new RangeError(`${name} must be in (0, 1].`);
+    }
+    if (spec.type === 'FusedSparsePLS' && value < 0) {
+      throw new RangeError(`${name} must be non-negative.`);
+    }
+    return value;
+  });
 }
 
 function coerceDataset(dataset) {
