@@ -127,7 +127,11 @@ export interface PortableExecutionResult {
 
 export interface PortablePreprocessingStep {
   type: string;
-  params: number[];
+  params: number[] | {
+    method: string;
+    n_components: number;
+    method_params: Record<string, number | boolean | number[]>;
+  };
   /** Fitted Methods state. Older stateless results may omit it. */
   state?: number[];
 }
