@@ -1,4 +1,5 @@
 import { loadMethodsWasm, loadPipelineDefinition } from './index.js';
+import { parseTrainAugmentation } from './native-augmentation.js';
 
 const KENNARD_STONE = new Set([
   'nirs4all.operators.splitters.KennardStoneSplitter',
@@ -125,6 +126,23 @@ export async function runPortablePipeline(source, dataset, options = {}) {
   let XTest = test;
   const preprocessing = [];
 
+  if (plan.trainAugmentation) {
+    if (typeof methods.augmentNative !== 'function') {
+      throw new Error('nirs4all-methods WASM lacks augmentNative (requires Methods ABI 2.11 or newer).');
+    }
+    const augmentation = plan.trainAugmentation;
+    const augmented = methods.augmentNative(
+      augmentation.methodsKind, XTrain, augmentation.values, augmentation.seed,
+    );
+    if (!augmented || augmented.rows !== XTrain.rows || augmented.cols !== XTrain.cols
+        || !(augmented.data instanceof Float64Array)
+        || augmented.data.length !== XTrain.data.length
+        || !augmented.data.every(Number.isFinite)) {
+      throw new Error('nirs4all-methods returned an invalid native X augmentation matrix.');
+    }
+    XTrain = augmented;
+  }
+
   for (const step of plan.preprocessing) {
     if (step.type === 'N4MSelector') {
       const spec = step.params;
@@ -239,6 +257,11 @@ export async function runPortablePipeline(source, dataset, options = {}) {
     cols: input.cols,
     split,
     preprocessing,
+    ...(plan.trainAugmentation ? { train_augmentation: {
+      kind: plan.trainAugmentation.kind,
+      values: [...plan.trainAugmentation.values],
+      seed: plan.trainAugmentation.seed,
+    } } : {}),
     variants,
     selected: stripVariantModel(selected),
     model: selected.model,
@@ -316,7 +339,9 @@ export function parseExecutionPlan(source) {
   const definition = source && Array.isArray(source.pipeline) ? source : loadPipelineDefinition(source);
   let splitter = null;
   const preprocessing = [];
+  let trainAugmentation = null;
   let modelStep = null;
+  let seenPreprocessing = false;
 
   for (const step of definition.pipeline) {
     if (!step || typeof step !== 'object' || Array.isArray(step)) {
@@ -329,6 +354,14 @@ export function parseExecutionPlan(source) {
       throw new Error('A portable step cannot contain both class and model.');
     }
 
+    if (Object.prototype.hasOwnProperty.call(step, 'train_augmentation')) {
+      if (trainAugmentation || seenPreprocessing) {
+        throw new Error('train_augmentation must appear once before preprocessing and the model.');
+      }
+      trainAugmentation = parseTrainAugmentation(step);
+      continue;
+    }
+
     if (typeof step.class === 'string') {
       if (KENNARD_STONE.has(step.class)) {
         if (splitter) {
@@ -337,8 +370,10 @@ export function parseExecutionPlan(source) {
         const params = { ...step.params, test_size: numberParam(step.params?.test_size, 0.25, 'test_size') };
         splitter = { type: 'KennardStone', params };
       } else if (SNV.has(step.class)) {
+        seenPreprocessing = true;
         preprocessing.push({ type: 'StandardNormalVariate', params: [] });
       } else if (SAVGOL.has(step.class)) {
+        seenPreprocessing = true;
         preprocessing.push({ type: 'SavitzkyGolay', params: savgolParams(step.params ?? {}) });
       } else if (MSC.has(step.class)) {
         mscParams(step.params ?? {});
@@ -376,6 +411,7 @@ export function parseExecutionPlan(source) {
 
   return {
     splitter,
+    trainAugmentation,
     preprocessing,
     nComponents: componentValues(modelStep),
     modelType: affine?.type ?? 'PLSRegression',

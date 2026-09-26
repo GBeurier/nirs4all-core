@@ -114,6 +114,8 @@ export interface PortableExecutionResult {
   cols: number;
   split: PortableSplitResult;
   preprocessing: PortablePreprocessingStep[];
+  /** Training-only one-shot native X augmentation; never replayed at predict time. */
+  train_augmentation?: { kind: string; values: number[]; seed: number };
   variants: PortableVariantResult[];
   selected: PortableVariantResult;
   model: PortablePlsModel;
@@ -350,6 +352,12 @@ export function loadPipelineDefinition(source: string | unknown[] | Record<strin
 export function portableClassNames(definition: PipelineDefinition | unknown[] | Record<string, unknown>): string[];
 export function parseExecutionPlan(source: string | PipelineDefinition | unknown[] | Record<string, unknown>): {
   splitter: { type: 'KennardStone'; params: Record<string, unknown> } | null;
+  trainAugmentation: {
+    kind: string;
+    methodsKind: string;
+    values: number[];
+    seed: number;
+  } | null;
   preprocessing: PortablePreprocessingStep[];
   nComponents: number[];
   modelType: PortablePlsModel['type'];
