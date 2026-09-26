@@ -35,6 +35,17 @@ const PLS = new Set([
   'n4m.PLSRegression',
 ]);
 
+const AFFINE_MODELS = new Map([
+  ['n4m.Ridge', { type: 'Ridge', params: [['lambda', 1]] }],
+  ['n4m.RidgePLS', { type: 'RidgePLS', params: [['ridge_lambda', 1]] }],
+  ['n4m.RobustPLS', { type: 'RobustPLS', params: [['huber_k', 1.345], ['max_irls_iter', 20, 'integer']] }],
+  ['n4m.CPPLS', { type: 'CPPLS', params: [['gamma', 0.5]] }],
+  ['n4m.SparseSIMPLS', { type: 'SparseSIMPLS', params: [['sparsity_lambda', 0.05]] }],
+  ['n4m.ECR', { type: 'ECR', params: [['alpha', 0.5]] }],
+  ['n4m.ContinuumRegression', { type: 'ContinuumRegression', params: [['tau', 0.5]] }],
+  ['n4m.MIRPLS', { type: 'MIRPLS', params: [] }],
+]);
+
 export async function runPortablePipeline(source, dataset, options = {}) {
   const definition = loadPipelineDefinition(source);
   const plan = parseExecutionPlan(definition);
@@ -84,12 +95,12 @@ export async function runPortablePipeline(source, dataset, options = {}) {
   }
 
   const candidates = plan.nComponents.map((nComponents) => {
-    const model = methods.fitPls(
-      { data: XTrain.data, rows: XTrain.rows, cols: XTrain.cols },
-      { data: yTrain.data, rows: yTrain.rows, cols: 1 },
-      nComponents,
-    );
-    const predicted = methods.predictPls(model, {
+    const xMatrix = { data: XTrain.data, rows: XTrain.rows, cols: XTrain.cols };
+    const yMatrix = { data: yTrain.data, rows: yTrain.rows, cols: 1 };
+    const model = plan.modelType === 'PLSRegression'
+      ? methods.fitPls(xMatrix, yMatrix, nComponents)
+      : methods.fitModel(plan.modelType, xMatrix, yMatrix, nComponents, plan.modelParams);
+    const predicted = (plan.modelType === 'PLSRegression' ? methods.predictPls : methods.predictModel)(model, {
       data: XTest.data,
       rows: XTest.rows,
       cols: XTest.cols,
@@ -100,7 +111,7 @@ export async function runPortablePipeline(source, dataset, options = {}) {
       n_components: nComponents,
       rmse: rmse(predictions, targets),
       predictions,
-      model: serializePlsModel(model, nComponents),
+      model: serializePlsModel(model, nComponents, plan.modelType, plan.modelParams),
     };
   });
 
@@ -164,7 +175,8 @@ export async function predictPortablePipeline(fitted, dataset, options = {}) {
   }
 
   const model = hydratePlsModel(fitted.model ?? fitted.selected?.model);
-  const predicted = methods.predictPls(model, {
+  const predicted = (model.type === 'PLSRegression' || model.type == null
+    ? methods.predictPls : methods.predictModel)(model, {
     data: X.data,
     rows: X.rows,
     cols: X.cols,
@@ -225,18 +237,35 @@ export function parseExecutionPlan(source) {
   }
 
   if (!modelStep) {
-    throw new Error('Portable execution requires a PLSRegression model step.');
+    throw new Error('Portable execution requires a supported model step.');
   }
   const model = modelStep.model;
-  if (!PLS.has(model.class)) {
+  if (!PLS.has(model.class) && !AFFINE_MODELS.has(model.class)) {
     throw new Error(`Portable execution does not support model class '${model.class}'.`);
   }
+
+  const affine = AFFINE_MODELS.get(model.class);
 
   return {
     splitter,
     preprocessing,
     nComponents: componentValues(modelStep),
+    modelType: affine?.type ?? 'PLSRegression',
+    modelParams: affine ? affineParams(model.params, affine) : [],
   };
+}
+
+function affineParams(params = {}, spec) {
+  if (!params || typeof params !== 'object' || Array.isArray(params)) {
+    throw new TypeError(`${spec.type} params must be a mapping.`);
+  }
+  const allowed = new Set(['n_components', ...spec.params.map(([name]) => name)]);
+  for (const key of Object.keys(params)) {
+    if (!allowed.has(key)) throw new TypeError(`Unsupported ${spec.type} parameter '${key}'.`);
+  }
+  return spec.params.map(([name, fallback, kind]) => kind === 'integer'
+    ? integerParam(params[name], fallback, name, { min: 1 })
+    : numberParam(params[name], fallback, name));
 }
 
 function coerceDataset(dataset) {
@@ -459,13 +488,14 @@ function stripVariantModel(variant) {
   };
 }
 
-function serializePlsModel(model, nComponents) {
+function serializePlsModel(model, nComponents, type = 'PLSRegression', params = []) {
   if (!model || typeof model !== 'object') {
     throw new TypeError('nirs4all-methods returned an invalid PLS model.');
   }
   return {
-    type: 'PLSRegression',
+    type,
     n_components: nComponents,
+    params,
     coefficients: serializeVector(model.coefficients),
     xMean: serializeVector(model.xMean),
     yMean: serializeVector(model.yMean),
@@ -480,6 +510,7 @@ function hydratePlsModel(model) {
     throw new TypeError('Portable prediction requires a serialized PLS model.');
   }
   return {
+    type: model.type,
     coefficients: Float64Array.from(model.coefficients ?? []),
     xMean: Float64Array.from(model.xMean ?? model.x_mean ?? []),
     yMean: Float64Array.from(model.yMean ?? model.y_mean ?? []),

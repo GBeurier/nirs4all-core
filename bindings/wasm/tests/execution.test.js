@@ -188,6 +188,63 @@ test('MSC Python aliases use the Methods MSC token and reject unsupported parame
   ] }), /Unsupported MSC parameter/);
 });
 
+test('eight affine model aliases dispatch and replay through Methods', async () => {
+  const cases = [
+    ['Ridge', { lambda: 2 }, [2]],
+    ['RidgePLS', { ridge_lambda: 3 }, [3]],
+    ['RobustPLS', { huber_k: 1.5, max_irls_iter: 7 }, [1.5, 7]],
+    ['CPPLS', { gamma: 0.4 }, [0.4]],
+    ['SparseSIMPLS', { sparsity_lambda: 0.02 }, [0.02]],
+    ['ECR', { alpha: 0.7 }, [0.7]],
+    ['ContinuumRegression', { tau: 0.3 }, [0.3]],
+    ['MIRPLS', {}, []],
+  ];
+  for (const [type, params, vector] of cases) {
+    const calls = [];
+    const methods = {
+      fitModel(token, X, Y, components, values) {
+        calls.push(['fit', token, components, values]);
+        assert.equal(X.rows, Y.rows);
+        return { coefficients: Float64Array.of(1, 0), xMean: Float64Array.of(0, 0),
+          yMean: Float64Array.of(0), intercept: type === 'Ridge' ? Float64Array.of(2) : null,
+          n_features: 2, n_targets: 1 };
+      },
+      predictModel(model, X) {
+        calls.push(['predict', model.intercept == null ? null : Array.from(model.intercept)]);
+        return { data: Float64Array.from({ length: X.rows }, (_, row) => X.data[row * X.cols]),
+          rows: X.rows, cols: 1 };
+      },
+    };
+    const source = { pipeline: [{ model: { class: `n4m.${type}`, params: { ...params, n_components: 2 } } }] };
+    const input = { X: [1, 2, 3, 4, 5, 6], y: [1, 3, 5], rows: 3, cols: 2 };
+    const plan = parseExecutionPlan(source);
+    assert.equal(plan.modelType, type);
+    assert.deepEqual(plan.modelParams, vector);
+    const fitted = await runPortablePipeline(source, input, { methods });
+    assert.equal(fitted.model.type, type);
+    assert.deepEqual(fitted.model.params, vector);
+    assert.deepEqual(fitted.selected.predictions, [1, 3, 5]);
+    const replay = JSON.parse(JSON.stringify(fitted));
+    const predicted = await predictPortablePipeline(replay, { X: input.X, rows: 3, cols: 2 }, { methods });
+    assert.deepEqual(predicted.data, fitted.selected.predictions);
+    assert.deepEqual(calls[0], ['fit', type, 2, vector]);
+    assert.equal(calls.filter(([name]) => name === 'predict').length, 2);
+  }
+});
+
+test('affine model recipes reject unsupported or lossy parameters', () => {
+  for (const [type, params, pattern] of [
+    ['Ridge', { alpha: 1 }, /Unsupported Ridge parameter/],
+    ['RidgePLS', { ridge_lambda: 'NaN' }, /ridge_lambda must be finite/],
+    ['RobustPLS', { max_irls_iter: 2.5 }, /max_irls_iter must be an integer/],
+    ['MIRPLS', { tau: 0.5 }, /Unsupported MIRPLS parameter/],
+  ]) {
+    assert.throws(() => parseExecutionPlan({ pipeline: [
+      { model: { class: `n4m.${type}`, params } },
+    ] }), pattern);
+  }
+});
+
 test('older stateless preprocessing remains replayable without fitted state', async () => {
   let fits = 0;
   const methods = {

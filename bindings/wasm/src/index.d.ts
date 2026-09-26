@@ -97,8 +97,9 @@ export interface PortableVariantResult {
 }
 
 export interface PortablePlsModel {
-  type: 'PLSRegression';
+  type: 'PLSRegression' | 'Ridge' | 'RidgePLS' | 'RobustPLS' | 'CPPLS' | 'SparseSIMPLS' | 'ECR' | 'ContinuumRegression' | 'MIRPLS';
   n_components: number;
+  params?: number[];
   coefficients: number[];
   xMean: number[];
   yMean: number[];
@@ -347,6 +348,8 @@ export function parseExecutionPlan(source: string | PipelineDefinition | unknown
   splitter: { type: 'KennardStone'; params: Record<string, unknown> } | null;
   preprocessing: { type: 'StandardNormalVariate' | 'SavitzkyGolay' | 'MSC'; params: number[] }[];
   nComponents: number[];
+  modelType: PortablePlsModel['type'];
+  modelParams: number[];
 };
 export function runPortablePipeline(
   source: string | PipelineDefinition | unknown[] | Record<string, unknown>,

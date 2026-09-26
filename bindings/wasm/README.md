@@ -14,6 +14,15 @@ JavaScript/WASM binding and package metadata.
 The portable execution API delegates Kennard-Stone, SNV, MSC, Savitzky-Golay, and
 PLS component sweeps to `@nirs4all/methods`:
 
+It also accepts `n4m.Ridge`, `n4m.RidgePLS`, `n4m.RobustPLS`, `n4m.CPPLS`,
+`n4m.SparseSIMPLS`, `n4m.ECR`, `n4m.ContinuumRegression`, and `n4m.MIRPLS`
+as final model steps. These use Methods `fitModel` and `predictModel`; the
+serialized selected model can be replayed after JSON roundtrip. Recipe
+parameters map to Methods in positional order: `lambda`, `ridge_lambda`,
+`[huber_k, max_irls_iter]`, `gamma`, `sparsity_lambda`, `alpha`, `tau`, or no
+extra parameters, respectively. `n_components` is passed separately and may
+be swept with `_range_`. Unknown model parameters are rejected.
+
 - `runPortablePipeline(source, dataset)` parses the shared nirs4all JSON/YAML
   syntax, executes the portable subset, and returns parity-checkable split,
   target, variant, and selected-result fields plus a serialized selected PLS
