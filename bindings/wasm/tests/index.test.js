@@ -266,6 +266,7 @@ test('capability manifest describes portable custom app host controllers', () =>
   for (const name of ['FusedSparsePLS', 'BaggingPLS', 'BoostingPLS', 'RandomSubspacePLS']) {
     assert.ok(affine.operatorClasses.includes(`n4m.${name}`));
   }
+  assert.ok(affine.operatorClasses.includes('n4m.NPLS'));
 });
 
 test('public upstream loaders map to the declared V1 upstreams', () => {

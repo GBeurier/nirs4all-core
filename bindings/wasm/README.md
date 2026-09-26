@@ -31,6 +31,13 @@ positional parameters are `[l1_lambda, fusion_lambda]` (defaults 0.05/0.05),
 checked against the fitted feature count. These recipes have native C and mock
 contract checks, not numerical WASM parity without a fresh WASM artifact.
 
+`n4m.NPLS` accepts flattened tensor features with required positive integer
+`mode_j` and `mode_k`; their product must equal the fitted feature count.
+`n_components` defaults to 2. Methods fits the native N-PLS kernel and the
+serialized coefficient/mean state replays on later matrices. The Core recipe
+currently accepts a single target; a native C oracle additionally checks
+two-target held-out prediction. Real WASM parity requires a fresh artifact.
+
 - `runPortablePipeline(source, dataset)` parses the shared nirs4all JSON/YAML
   syntax, executes the portable subset, and returns parity-checkable split,
   target, variant, and selected-result fields plus a serialized selected PLS
