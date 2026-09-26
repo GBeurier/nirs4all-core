@@ -23,6 +23,14 @@ parameters map to Methods in positional order: `lambda`, `ridge_lambda`,
 extra parameters, respectively. `n_components` is passed separately and may
 be swept with `_range_`. Unknown model parameters are rejected.
 
+The same `fitModel`/`predictModel` path also supports `n4m.FusedSparsePLS`,
+`n4m.BaggingPLS`, `n4m.BoostingPLS`, and `n4m.RandomSubspacePLS`. Their
+positional parameters are `[l1_lambda, fusion_lambda]` (defaults 0.05/0.05),
+`[n_estimators, seed]` (50/0), `[n_estimators, learning_rate]` (50/0.1), and
+`[n_estimators, features_per_subspace, seed]` (50/10/0). Subspace width is
+checked against the fitted feature count. These recipes have native C and mock
+contract checks, not numerical WASM parity without a fresh WASM artifact.
+
 - `runPortablePipeline(source, dataset)` parses the shared nirs4all JSON/YAML
   syntax, executes the portable subset, and returns parity-checkable split,
   target, variant, and selected-result fields plus a serialized selected PLS

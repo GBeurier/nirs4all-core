@@ -97,7 +97,7 @@ export interface PortableVariantResult {
 }
 
 export interface PortablePlsModel {
-  type: 'PLSRegression' | 'Ridge' | 'RidgePLS' | 'RobustPLS' | 'CPPLS' | 'SparseSIMPLS' | 'ECR' | 'ContinuumRegression' | 'MIRPLS';
+  type: 'PLSRegression' | 'Ridge' | 'RidgePLS' | 'RobustPLS' | 'CPPLS' | 'SparseSIMPLS' | 'ECR' | 'ContinuumRegression' | 'MIRPLS' | 'FusedSparsePLS' | 'BaggingPLS' | 'BoostingPLS' | 'RandomSubspacePLS';
   n_components: number;
   params?: number[];
   coefficients: number[];
@@ -350,7 +350,7 @@ export function loadPipelineDefinition(source: string | unknown[] | Record<strin
 export function portableClassNames(definition: PipelineDefinition | unknown[] | Record<string, unknown>): string[];
 export function parseExecutionPlan(source: string | PipelineDefinition | unknown[] | Record<string, unknown>): {
   splitter: { type: 'KennardStone'; params: Record<string, unknown> } | null;
-  preprocessing: { type: 'StandardNormalVariate' | 'SavitzkyGolay' | 'MSC' | 'SPA'; params: number[] }[];
+  preprocessing: PortablePreprocessingStep[];
   nComponents: number[];
   modelType: PortablePlsModel['type'];
   modelParams: number[];

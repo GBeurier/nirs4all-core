@@ -245,6 +245,66 @@ test('affine model recipes reject unsupported or lossy parameters', () => {
   }
 });
 
+test('four fused and ensemble aliases use strict C defaults and replay after JSON', async () => {
+  const cases = [
+    ['FusedSparsePLS', [0.05, 0.05], { l1_lambda: 0.2, fusion_lambda: 0.3 }, [0.2, 0.3]],
+    ['BaggingPLS', [50, 0], { n_estimators: 7, seed: 42 }, [7, 42]],
+    ['BoostingPLS', [50, 0.1], { n_estimators: 8, learning_rate: 0.25 }, [8, 0.25]],
+    ['RandomSubspacePLS', [50, 10, 0],
+      { n_estimators: 9, features_per_subspace: 6, seed: 3 }, [9, 6, 3]],
+  ];
+  for (const [type, defaults, overrides, expected] of cases) {
+    const calls = [];
+    const methods = {
+      fitModel(token, X, Y, components, params) {
+        calls.push(['fit', token, components, params]);
+        assert.equal(X.rows, Y.rows);
+        return { coefficients: Float64Array.from({ length: 12 }, (_, col) => col === 0 ? 1 : 0),
+          xMean: new Float64Array(12), yMean: Float64Array.of(0),
+          intercept: null, n_features: 12, n_targets: 1 };
+      },
+      predictModel(model, X) {
+        calls.push(['predict', model.n_features, X.cols]);
+        return { data: Float64Array.from({ length: X.rows }, (_, row) => X.data[row * X.cols]),
+          rows: X.rows, cols: 1 };
+      },
+    };
+    const dataset = { X: Array.from({ length: 144 }, (_, i) => i + 1),
+      y: Array.from({ length: 12 }, (_, i) => i * 12 + 1), rows: 12, cols: 12 };
+    const source = (params) => ({ pipeline: [
+      { model: { class: `n4m.${type}`, params } },
+    ] });
+    assert.deepEqual(parseExecutionPlan(source({})).modelParams, defaults);
+    const fitted = await runPortablePipeline(source({ ...overrides, n_components: 2 }), dataset, { methods });
+    assert.deepEqual(calls[0], ['fit', type, 2, expected]);
+    assert.deepEqual(fitted.model.params, expected);
+    const replay = JSON.parse(JSON.stringify(fitted));
+    const predicted = await predictPortablePipeline(replay,
+      { X: dataset.X, rows: 12, cols: 12 }, { methods });
+    assert.deepEqual(predicted.data, dataset.y);
+    assert.deepEqual(calls.at(-1), ['predict', 12, 12]);
+  }
+});
+
+test('fused and ensemble recipes reject invalid shape, seed, and model parameters', async () => {
+  const source = (type, params) => ({ pipeline: [{ model: { class: `n4m.${type}`, params } }] });
+  for (const [type, params, pattern] of [
+    ['BaggingPLS', { seed: -1 }, /seed must be >= 0/],
+    ['BaggingPLS', { seed: 2.5 }, /seed must be an integer/],
+    ['BaggingPLS', { seed: 4294967296 }, /seed is outside i32 range/],
+    ['BaggingPLS', { n_estimators: 0 }, /n_estimators must be >= 1/],
+    ['BoostingPLS', { learning_rate: 1.1 }, /learning_rate must be in/],
+    ['BoostingPLS', { learning_rate: 0 }, /learning_rate must be in/],
+    ['FusedSparsePLS', { fusion_lambda: -1 }, /fusion_lambda must be non-negative/],
+    ['RandomSubspacePLS', { features_per_subspace: 1.5 }, /features_per_subspace must be an integer/],
+    ['RandomSubspacePLS', { seed: '1' }, /seed must be numeric/],
+    ['RandomSubspacePLS', { extra: 1 }, /Unsupported RandomSubspacePLS parameter/],
+  ]) assert.throws(() => parseExecutionPlan(source(type, params)), pattern);
+  await assert.rejects(runPortablePipeline(source('RandomSubspacePLS', {}),
+    { X: [1, 2, 3, 4, 5, 6], y: [1, 2, 3], rows: 3, cols: 2 },
+    { methods: {} }), /features_per_subspace 10 exceeds 2 input features/);
+});
+
 test('SPA learns only on training rows and replays sorted selected columns', async () => {
   const calls = [];
   const methods = {
