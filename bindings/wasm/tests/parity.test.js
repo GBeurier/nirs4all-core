@@ -79,3 +79,33 @@ test('portable WASM execution matches the full Python nirs4all oracle', async (t
     );
   }
 });
+
+test('MBPLS WASM recipe matches independent R/Python held-out oracle', async (t) => {
+  const artifact = requireMethodsArtifact(t);
+  if (!artifact) return;
+  const methods = await import(artifact.indexUrl.href);
+  const rows = 21, cols = 12;
+  const X = new Float64Array(rows * cols);
+  const y = new Float64Array(rows);
+  for (let i = 0; i < rows; i += 1) {
+    for (let j = 0; j < cols; j += 1) {
+      X[i * cols + j] = Math.sin((i + 1) * (j + 1) / 9)
+        + Math.cos((i + 1) + (j + 1) / 7) + (i + 1) * (j + 1) / 100;
+    }
+    y[i] = 1.3 + 0.7 * X[i * cols + 1] - 0.4 * X[i * cols + 5];
+  }
+  const recipe = { pipeline: [{ model: { class: 'n4m.MBPLS', params: {
+    n_components: 2, block_sizes: [4, 4, 4],
+  } } }] };
+  const fitted = await runPortablePipeline(recipe, { X, y, rows, cols }, { methods });
+  assert.equal(fitted.model.type, 'MBPLS');
+  assert.deepEqual(fitted.model.params, [4, 4, 4]);
+  const heldout = new Float64Array(3 * cols);
+  for (const [row, source] of [1, 7, 16].entries()) {
+    for (let j = 0; j < cols; j += 1) heldout[row * cols + j] = X[source * cols + j] + 0.031;
+  }
+  const predicted = await predictPortablePipeline(JSON.parse(JSON.stringify(fitted)),
+    { X: heldout, rows: 3, cols }, { methods });
+  assert.ok(maxAbsDiff(predicted.data,
+    [1.3614391588922699, 2.033212108151359, 0.7661914180346159]) < 1e-10);
+});

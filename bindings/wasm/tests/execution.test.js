@@ -363,6 +363,47 @@ test('NPLS rejects missing or lossy dimensions and mismatched fitted width', asy
     { methods: {} }), /mode_j \* mode_k must equal 6 fitted features/);
 });
 
+test('MBPLS preserves block boundaries through fit and JSON replay', async () => {
+  const calls = [];
+  const methods = {
+    fitModel(token, X, Y, components, params) {
+      calls.push(['fit', token, X.cols, components, params]);
+      return { coefficients: Float64Array.of(1, 0, 0, 0, 0, 0),
+        xMean: new Float64Array(6), yMean: Float64Array.of(0),
+        intercept: Float64Array.of(0), n_features: 6, n_targets: 1 };
+    },
+    predictModel(model, X) {
+      calls.push(['predict', model.n_features, X.rows]);
+      return { data: Float64Array.from({ length: X.rows }, (_, row) => X.data[row * X.cols]),
+        rows: X.rows, cols: 1 };
+    },
+  };
+  const source = { pipeline: [{ model: { class: 'n4m.MBPLS', params: {
+    n_components: 2, block_sizes: [2, 4] } } }] };
+  const data = { X: Array.from({ length: 30 }, (_, i) => i + 1),
+    y: [1, 7, 13, 19, 25], rows: 5, cols: 6 };
+  assert.deepEqual(parseExecutionPlan(source).modelParams, [2, 4]);
+  const fitted = await runPortablePipeline(source, data, { methods });
+  assert.deepEqual(calls[0], ['fit', 'MBPLS', 6, 2, [2, 4]]);
+  assert.deepEqual(fitted.model.params, [2, 4]);
+  const replay = JSON.parse(JSON.stringify(fitted));
+  const predicted = await predictPortablePipeline(replay,
+    { X: data.X, rows: data.rows, cols: data.cols }, { methods });
+  assert.deepEqual(predicted.data, data.y);
+});
+
+test('MBPLS rejects invalid block lists and fitted width', async () => {
+  const source = (block_sizes) => ({ pipeline: [{ model: { class: 'n4m.MBPLS',
+    params: { block_sizes } } }] });
+  for (const blocks of [undefined, [], [6], [0, 6], [1.5, 4.5], ['2', 4],
+    [2147483648, 1]]) {
+    assert.throws(() => parseExecutionPlan(source(blocks)), /block_sizes/);
+  }
+  await assert.rejects(runPortablePipeline(source([2, 3]),
+    { X: Array.from({ length: 18 }, (_, i) => i + 1), y: [1, 2, 3], rows: 3, cols: 6 },
+    { methods: {} }), /block_sizes must sum to 6 fitted features/);
+});
+
 test('SPA learns only on training rows and replays sorted selected columns', async () => {
   const calls = [];
   const methods = {
