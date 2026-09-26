@@ -1,4 +1,5 @@
 import { parse as parseYaml } from 'yaml';
+import { NATIVE_X_AUGMENTATION_CLASS, parseTrainAugmentation } from './native-augmentation.js';
 
 export const upstreams = Object.freeze([
   {
@@ -528,7 +529,15 @@ export function loadPipelineDefinition(source) {
     definition.random_state = normalized.random_state;
   }
 
-  const unsupported = portableClassNames(definition).filter((name) => !portableOperatorSet.has(name));
+  const augmentationSteps = definition.pipeline.filter((step) => step && typeof step === 'object'
+    && !Array.isArray(step) && Object.prototype.hasOwnProperty.call(step, 'train_augmentation'));
+  for (const step of augmentationSteps) parseTrainAugmentation(step);
+
+  const classes = portableClassNames(definition);
+  const augmentationClassCount = classes.filter((name) => name === NATIVE_X_AUGMENTATION_CLASS).length;
+  const unsupported = classes.filter((name) => !portableOperatorSet.has(name)
+    && !(name === NATIVE_X_AUGMENTATION_CLASS && augmentationSteps.length === 1
+      && augmentationClassCount === 1));
   if (unsupported.length > 0) {
     throw new Error(
       `Pipeline uses operators outside the current nirs4all-core portable subset: ${[...new Set(unsupported)].join(', ')}`,
