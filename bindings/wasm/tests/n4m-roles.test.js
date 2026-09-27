@@ -302,6 +302,7 @@ test('label tables that contradict the states are refused (R05)', async (t) => {
     [['only'], 'class id 1 has no entry in class_names (1 labels)'],
     [['same', 'same'], 'class label "same" is duplicated'],
     [[1.5, 1.5], 'class label 1.5 is duplicated'],
+    [['high', 2], 'class_names mixes strings and numbers'],
     [['high', null], 'class label null is not a string or a finite number'],
     [[true, false], 'class label true is not a string or a finite number'],
     [['high', Number.NaN], 'class label NaN is not a string or a finite number'],

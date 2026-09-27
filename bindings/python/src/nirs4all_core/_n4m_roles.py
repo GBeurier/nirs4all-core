@@ -111,28 +111,20 @@ def _check_column_names(names: Any) -> None:
 
 
 def _check_label_table(names: Any) -> None:
-    """A label table (index = class id): non-empty, unique strings or finite numbers."""
+    """A label table (index = class id): non-empty, unique, all strings or all finite numbers."""
 
     if not isinstance(names, list) or not names:
         raise ValueError("class_names must be a non-empty list of labels")
     for name in names:
         if isinstance(name, bool) or not isinstance(name, (str, int, float)) or (isinstance(name, float) and not math.isfinite(name)):
             raise ValueError(f"class label {name!r} is not a string or a finite number")
+    if len({isinstance(name, str) for name in names}) > 1:
+        raise ValueError("class_names mixes strings and numbers")
     seen: set[Any] = set()
     for name in names:
         if name in seen:
             raise ValueError(f"class label {name!r} is duplicated")
         seen.add(name)
-
-
-def _label_table(names: list[Any]) -> Any:
-    """The table handed to Methods; numpy would turn a table mixing strings and numbers into strings."""
-
-    if len({isinstance(name, str) for name in names}) == 1:
-        return names
-    import numpy as np
-
-    return np.array(names, dtype=object)
 
 
 class N4mRolePipeline:
@@ -181,11 +173,7 @@ class N4mRolePipeline:
         recipe = copy.deepcopy(recipe)
         if hasattr(X, "columns"):
             _check_column_names(X.columns)
-        pipeline = _roles().RolePipeline(_steps(recipe)).fit(X, y)
-        class_names = pipeline.label_names_
-        if class_names is not None:
-            _check_label_table(class_names.tolist())
-        return cls(recipe, pipeline)
+        return cls(recipe, _roles().RolePipeline(_steps(recipe)).fit(X, y))
 
     @classmethod
     def from_json(cls, source: str | Path) -> N4mRolePipeline:
@@ -231,7 +219,7 @@ class N4mRolePipeline:
             for class_id in pipeline.classes_.tolist():
                 if not 0 <= class_id < len(class_names):
                     raise ValueError(f"class id {class_id} has no entry in class_names ({len(class_names)} labels)")
-            pipeline = _roles().RolePipeline.from_states(steps, payloads, feature_names, _label_table(class_names))
+            pipeline = _roles().RolePipeline.from_states(steps, payloads, feature_names, class_names)
         return cls(recipe, pipeline)
 
     def to_json(self, file: str | Path | None = None, *, allow_training_rows: bool = False) -> str:

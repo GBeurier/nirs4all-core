@@ -23,13 +23,12 @@ shared label/input contract; the checks hold against the released Methods
   estimator controller refuses nested X whose width contradicts a declared
   `cols`.
 - `class_names` of a v8 envelope is checked on import in Python, JS/WASM and
-  Rust: a non-empty list of unique strings or finite numbers (no null, NaN,
-  ±Inf or boolean) that labels every native class id of the fitted
+  Rust: a non-empty list of unique labels, all strings or all finite numbers
+  (no null, NaN, ±Inf, boolean or mix of both) that labels every native class id of the fitted
   classifier (`0 <= id < len`; a longer table keeps labels a filter removed),
   and only on a final classifier. `[]`, `["only"]` and duplicated names used
   to import, then fail or merge at predict (R05). Python also refuses a
-  missing or non-finite label at fit, and keeps a table mixing strings and
-  numbers without converting it. Column names holding NUL are refused on
+  missing or non-finite label at fit. Column names holding NUL are refused on
   import, fit and predict (Python, JS/WASM) before any C string is built.
 - Rust: `class_names` may hold finite numbers, as the Python writer produces;
   classifier predictions are `RolePredictions::Labels(Vec<ClassLabel>)` with

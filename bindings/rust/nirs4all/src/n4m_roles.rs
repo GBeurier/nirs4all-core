@@ -132,7 +132,7 @@ impl ClassLabel {
     }
 }
 
-/// The label table of an envelope: non-empty, unique strings or finite numbers.
+/// The label table of an envelope: non-empty, unique, all strings or all finite numbers.
 fn label_table(value: &Value) -> Result<Vec<ClassLabel>, String> {
     let entries = value
         .as_array()
@@ -145,6 +145,11 @@ fn label_table(value: &Value) -> Result<Vec<ClassLabel>, String> {
             return Err(format!("class label {entry} is duplicated"));
         }
         labels.push(label);
+    }
+    if labels.iter().any(|label| {
+        matches!(label, ClassLabel::Name(_)) != matches!(labels[0], ClassLabel::Name(_))
+    }) {
+        return Err("class_names mixes strings and numbers".to_string());
     }
     Ok(labels)
 }
@@ -1145,6 +1150,7 @@ mod tests {
                 json!(["only"]),
                 "class id 1 has no entry in class_names (1 labels)",
             ),
+            (json!(["high", 2]), "class_names mixes strings and numbers"),
             (
                 json!(["same", "same"]),
                 "class label \"same\" is duplicated",

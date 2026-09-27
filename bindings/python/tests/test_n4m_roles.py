@@ -260,14 +260,14 @@ class N4mRoleRecipeTests(unittest.TestCase):
                 n4core.N4mRolePipeline.from_json(_with_class_names(source, class_names))
 
         # Index = class id: a longer table keeps the slots of labels a filter
-        # removed, and finite numbers (even beside strings) are labels too.
+        # removed, and finite numbers are labels too.
         longer = n4core.N4mRolePipeline.from_json(_with_class_names(source, ["a", "b", "c"]))
         self.assertEqual(len(longer.predict(x_test)), len(x_test))
         numeric = n4core.N4mRolePipeline.from_json(_with_class_names(source, [0.5, 1.5]))
         self.assertEqual(numeric.predict(x_test).tolist(), [0.5 if label == "high" else 1.5 for label in expected])
         self.assertEqual(json.loads(numeric.to_json())["states"][-1]["class_names"], [0.5, 1.5])
-        mixed = n4core.N4mRolePipeline.from_json(_with_class_names(source, ["high", 2]))
-        self.assertEqual(mixed.predict(x_test).tolist(), [label if label == "high" else 2 for label in expected])
+        with self.assertRaisesRegex(ValueError, "class_names mixes strings and numbers"):
+            n4core.N4mRolePipeline.from_json(_with_class_names(source, ["high", 2]))
 
         # States fitted on class ids 10 and 20 have no entry in a two-label table.
         ids = [10 if label == "high" else 20 for label in PYTHON_TRAINED["classification"]["y_train"]]
@@ -285,9 +285,9 @@ class N4mRoleRecipeTests(unittest.TestCase):
         fitted = n4core.N4mRolePipeline.fit_recipe(recipe, x_train, labels)
         self.assertEqual(json.loads(fitted.to_json())["states"][-1]["class_names"], [0.5, 1.5])
         for bad, shown in ((float("nan"), "nan"), (float("inf"), "inf")):
-            with self.subTest(shown), self.assertRaisesRegex(ValueError, f"class label {shown} is not a string or a finite number"):
+            with self.subTest(shown), self.assertRaisesRegex(ValueError, re.escape("class labels must be finite (no NaN or infinity)")):
                 n4core.N4mRolePipeline.fit_recipe(recipe, x_train, [bad, *labels[1:]])
-        with self.assertRaisesRegex(ValueError, "class label False is not a string or a finite number"):
+        with self.assertRaisesRegex(ValueError, "no booleans"):
             n4core.N4mRolePipeline.fit_recipe(recipe, x_train, [label == 0.5 for label in labels])
 
     def test_envelope_widths_are_positive_json_integers(self) -> None:
