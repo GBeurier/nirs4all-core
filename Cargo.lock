@@ -507,18 +507,18 @@ dependencies = [
 
 [[package]]
 name = "dag-ml"
-version = "0.3.29"
+version = "0.3.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "45eac5b9399aaa739f813d6ae4077a6e55ca720a38d0576ead64ff84b3f0787c"
+checksum = "f1550291994f84ead9d6752de98f2c699e44164bc7f2defe6ee1c1378d3dc955"
 dependencies = [
  "dag-ml-core",
 ]
 
 [[package]]
 name = "dag-ml-core"
-version = "0.3.29"
+version = "0.3.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1663e9b96f28e312a349cbed057251cebd5910d8b83bfd3c8d9407f0300587e5"
+checksum = "39697df9fd50ece994bc056425ef0145e5c2a56cc270e7071530e99f53696900"
 dependencies = [
  "indexmap",
  "n4m",
@@ -972,7 +972,7 @@ dependencies = [
 
 [[package]]
 name = "nirs4all"
-version = "0.3.37"
+version = "0.4.0"
 dependencies = [
  "base64",
  "dag-ml",
@@ -994,7 +994,7 @@ dependencies = [
 
 [[package]]
 name = "nirs4all-core-python-native"
-version = "0.3.37"
+version = "0.4.0"
 dependencies = [
  "nirs4all",
  "pyo3",
@@ -1004,7 +1004,7 @@ dependencies = [
 
 [[package]]
 name = "nirs4all-core-wasm-native"
-version = "0.3.37"
+version = "0.4.0"
 dependencies = [
  "dag-ml-core",
  "serde_json",
