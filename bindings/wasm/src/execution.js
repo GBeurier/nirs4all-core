@@ -342,7 +342,6 @@ export function parseExecutionPlan(source) {
   const preprocessing = [];
   let trainAugmentation = null;
   let modelStep = null;
-  let seenPreprocessing = false;
 
   for (const step of definition.pipeline) {
     const roleName = typeof step === 'string' ? step : step?.class;
@@ -360,7 +359,7 @@ export function parseExecutionPlan(source) {
     }
 
     if (Object.prototype.hasOwnProperty.call(step, 'train_augmentation')) {
-      if (trainAugmentation || seenPreprocessing) {
+      if (trainAugmentation || preprocessing.length > 0) {
         throw new Error('train_augmentation must appear once before preprocessing and the model.');
       }
       trainAugmentation = parseTrainAugmentation(step);
@@ -375,10 +374,8 @@ export function parseExecutionPlan(source) {
         const params = { ...step.params, test_size: numberParam(step.params?.test_size, 0.25, 'test_size') };
         splitter = { type: 'KennardStone', params };
       } else if (SNV.has(step.class)) {
-        seenPreprocessing = true;
         preprocessing.push({ type: 'StandardNormalVariate', params: [] });
       } else if (SAVGOL.has(step.class)) {
-        seenPreprocessing = true;
         preprocessing.push({ type: 'SavitzkyGolay', params: savgolParams(step.params ?? {}) });
       } else if (MSC.has(step.class)) {
         mscParams(step.params ?? {});
