@@ -8,6 +8,8 @@ binding manifest.
 
 ## [Unreleased]
 
+## [0.3.36] - 2026-09-27
+
 ### Added
 
 - Generic n4m role recipes. The Python, Rust and JS/WASM bindings accept the
@@ -22,14 +24,30 @@ binding manifest.
   `nirs4all.n4m.trained_pipeline.v8` (per-step N4ME states). The npm package
   replays Python- and R-trained envelopes in the browser (level L2); the gates
   replay the shared fixtures within 1e-12 and round-trip their own fits.
+- JS/WASM portable recipes execute one train-only native X augmentation step
+  (`train_augmentation` with class `n4m.NativeXAugmentation`, the closed
+  22-kind R contract with positional values and a seed) through the Methods
+  `augmentNative` kernel. It transforms only the split training rows, is
+  recorded in the run result and is never replayed at prediction; it must
+  precede every preprocessing step and the model.
 
 ### Changed
 
-- Require the Methods release carrying ABI 2.13 estimator roles: Rust
-  `n4m =0.2.0`, npm peer `@nirs4all/methods ^1.1.0`, and the Python
-  `methods`/`all` extras `nirs4all-methods>=1.1.0,<2`.
+- Require the Methods release carrying ABI 2.13 estimator roles (Methods
+  1.1.0): Rust `n4m =0.2.0`, npm peer `@nirs4all/methods ^1.1.0`, and the
+  Python `methods`/`all` extras `nirs4all-methods>=1.1.0,<2`.
+- Move the Rust coordinator pins to DAG-ML 0.3.28 (`dag-ml`/`dag-ml-core`
+  `=0.3.28`, also in the WASM-native bridge), the release that links the same
+  `n4m` 0.2.0 binding, so the Rust graph carries exactly one `n4m`/libn4m
+  loader; the npm test harness resolves `dag-ml-wasm` 0.3.28. The Python
+  `dag-ml` extra keeps its `>=0.3.27,<0.4` floor.
 - Archive V2 replay takes its libn4m ABI verdict from DAG-ML's
-  `MethodsRuntime::configure` preflight instead of a second n4m instance.
+  `MethodsRuntime::configure` preflight instead of a second n4m instance. A
+  Rust process therefore fixes one libn4m file for role recipes and Archive V2
+  replay; select it with `preflight_methods_archive_v2_library` when a process
+  does both.
+- `compat/upstreams.toml` pins DAG-ML v0.3.28, Methods v1.1.0 and
+  nirs4all-formats v0.2.9 (the version the manifests require).
 
 ## [0.3.31] - 2026-09-24
 
