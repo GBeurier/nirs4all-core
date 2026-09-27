@@ -1,11 +1,16 @@
 // Generic n4m role recipes and trained envelopes (nirs4all.n4m.trained_pipeline.v8).
 //
 // A recipe step is the language-neutral token "n4m:<catalog method id>" (or
-// {class: "n4m:<id>", params}). Every step resolves through the
-// @nirs4all/methods manifest (methodClass / manifest); parameters, fitting,
-// numerics and the portable N4ME state stay in Methods. This module only
-// orders the steps, moves rows, and reads/writes the JSON envelope shared
-// with the Python, R and Rust bindings.
+// {class: "n4m:<id>", params}), resolved through the @nirs4all/methods
+// manifest. The recipe runs in the native role pipeline of Methods
+// (RolePipeline, ABI 2.14), which validates the recipe, routes every target
+// column to the steps that need it, keeps filters on the training rows, checks
+// the input column names and refuses states that contradict the recipe. This
+// module only reads and writes the JSON envelope shared with the Python, R and
+// Rust bindings: schema, recipe, n_features, feature_names (when the fit had
+// names) and, per stateful step, method_id, n4me_base64, sha256,
+// contains_training_rows and class_names (classifier trained on label names).
+// Envelopes written before feature_names / contains_training_rows still load.
 
 import { coerceFeatures } from './execution.js';
 import { loadMethodsWasm } from './index.js';
@@ -14,7 +19,6 @@ export const N4M_ROLE_PREFIX = 'n4m:';
 export const N4M_TRAINED_PIPELINE_SCHEMA = 'nirs4all.n4m.trained_pipeline.v8';
 
 const RECIPE_ROLES = new Set(['sample_filter', 'transformer', 'selector', 'regressor', 'classifier']);
-const manifestCache = new WeakMap();
 
 /** Catalog method id of an "n4m:<id>" class name, else null. */
 export function n4mRoleMethodId(name) {
@@ -49,117 +53,123 @@ export async function n4mRoleCapabilities(options = {}) {
 
 /** A fitted recipe of n4m role steps, portable as N4ME states (envelope v8). */
 export class N4mRolePipeline {
-  constructor(recipe, nFeatures, steps) {
+  #digests;
+
+  constructor(recipe, pipeline, digests) {
     this.recipe = recipe;
-    this.nFeatures = nFeatures;
-    this.steps = steps;
+    /** The fitted Methods RolePipeline (transform, decisionFunction, predictProba, stepsInfo). */
+    this.pipeline = pipeline;
+    this.#digests = digests;
   }
 
-  /** Fits every step of `recipe` natively on `dataset` ({X, y, rows, cols}). */
+  /** Input width. */
+  get nFeatures() {
+    return this.pipeline.stepsInfo().find((step) => step.stateIndex >= 0).nFeaturesIn;
+  }
+
+  /** Fitted input column names, in order (undefined: positional input). */
+  get featureNames() {
+    return this.pipeline.featureNames;
+  }
+
+  /**
+   * Fits `recipe` natively on `dataset` ({X, y, rows, cols, featureNames?}): y holds the
+   * responses of a final regressor (a vector, or one row of targets per sample) or the
+   * labels of a final classifier.
+   */
   static async fit(recipe, dataset, options = {}) {
     const methods = await readyMethods(options);
-    const steps = recipeSteps(recipe, methods);
-    const last = steps.at(-1);
-    if (!last || !(last.roles.has('regressor') || last.roles.has('classifier'))) {
-      throw new Error('An n4m role recipe ends with one regressor or classifier.');
-    }
-    const classification = last.roles.has('classifier');
-    let X = coerceFeatures(dataset);
-    const nFeatures = X.cols;
-    let target = classification ? encodeLabels(dataset.y, X.rows) : regressionTarget(dataset.y, X.rows);
-    const fitted = [];
+    const X = coerceFeatures(dataset);
+    const pipeline = methods.RolePipeline.fromSteps(recipeSteps(recipe));
     try {
-      for (const step of steps.slice(0, -1)) {
-        const stepY = step.needsY ? target.values : undefined;
-        if (step.roles.has('sample_filter')) {
-          const filter = step.create();
-          try {
-            const keep = filter.fit(X, stepY).getMask(X, stepY);
-            const rows = keep.flatMap((flag, index) => (flag ? [index] : []));
-            X = selectRows(X, rows);
-            target = selectTarget(target, rows);
-          } finally {
-            filter.dispose();
-          }
-        } else if (step.roles.has('transformer') || step.roles.has('selector')) {
-          const estimator = step.create();
-          fitted.push({ estimator, methodId: step.methodId });
-          X = estimator.fit(X, stepY).transform(X);
-        } else {
-          throw new Error(`n4m:${step.methodId} is not a portable pipeline step.`);
-        }
-      }
-      const model = last.create();
-      fitted.push({ estimator: model, methodId: last.methodId, classNames: target.classNames });
-      model.fit(X, classification ? target.ids : target.matrix);
-      const states = await Promise.all(fitted.map(exportState));
-      return new N4mRolePipeline(clone(recipe), nFeatures, fitted.map((item, i) => ({ ...item, state: states[i] })));
+      pipeline.fit(X, fitTarget(dataset.y), { featureNames: dataset.featureNames });
+      return await N4mRolePipeline.#wrap(recipe, pipeline);
     } catch (error) {
-      fitted.forEach((item) => item.estimator.dispose());
+      pipeline.dispose();
       throw error;
     }
   }
 
-  /** Rebuilds the estimators of a v8 envelope (object or JSON text) from their N4ME states. */
+  /** Rebuilds the fitted pipeline of a v8 envelope (object or JSON text) from its N4ME states. */
   static async fromJSON(source, options = {}) {
     const methods = await readyMethods(options);
     const envelope = typeof source === 'string' ? JSON.parse(source) : source;
     if (!envelope || typeof envelope !== 'object' || envelope.schema !== N4M_TRAINED_PIPELINE_SCHEMA) {
       throw new Error('Unsupported trained n4m pipeline envelope.');
     }
-    const stateful = recipeSteps(envelope.recipe, methods).filter((step) => !step.roles.has('sample_filter'));
-    if (!Array.isArray(envelope.states) || envelope.states.length !== stateful.length) {
-      throw new Error('Envelope states do not match the recipe steps.');
+    const states = Array.isArray(envelope.states) ? envelope.states : [];
+    const payloads = [];
+    for (const state of states) {
+      const payload = base64ToBytes(state.n4me_base64);
+      if (await sha256Hex(payload) !== state.sha256) {
+        throw new Error(`N4ME state of ${state.method_id} fails its checksum.`);
+      }
+      payloads.push(payload);
     }
-    const steps = [];
+    const featureNames = envelope.feature_names;
+    if (featureNames !== undefined && !(Array.isArray(featureNames) && featureNames.every((name) => typeof name === 'string'))) {
+      throw new TypeError('feature_names must be an array of strings.');
+    }
+    const pipeline = methods.RolePipeline.fromStates(recipeSteps(envelope.recipe), payloads, {
+      featureNames,
+      classNames: states.at(-1)?.class_names,
+    });
     try {
-      for (let i = 0; i < stateful.length; i += 1) {
-        const state = envelope.states[i];
-        const payload = base64ToBytes(state.n4me_base64);
-        if (await sha256Hex(payload) !== state.sha256) {
-          throw new Error(`N4ME state of ${state.method_id} fails its checksum.`);
-        }
-        const estimator = methods.NativeEstimator.fromN4me(payload);
-        steps.push({ estimator, methodId: state.method_id, classNames: state.class_names, state: { ...state } });
-        if (estimator.methodId !== state.method_id || state.method_id !== stateful[i].methodId) {
+      const fitted = pipeline.stepsInfo().filter((step) => step.stateIndex >= 0);
+      fitted.forEach((step, i) => {
+        const state = states[i];
+        if (state.method_id !== step.methodId) {
           throw new Error(`N4ME state ${state.method_id} does not match its recipe step.`);
         }
+        if ((state.contains_training_rows ?? step.containsTrainingRows) !== step.containsTrainingRows) {
+          throw new Error(`contains_training_rows of ${state.method_id} contradicts its N4ME state.`);
+        }
+      });
+      if (Number(envelope.n_features) !== fitted[0].nFeaturesIn) {
+        throw new RangeError(`n_features is ${envelope.n_features} but the states take ${fitted[0].nFeaturesIn} columns.`);
       }
+      return await N4mRolePipeline.#wrap(envelope.recipe, pipeline);
     } catch (error) {
-      steps.forEach((item) => item.estimator.dispose());
+      pipeline.dispose();
       throw error;
     }
-    return new N4mRolePipeline(clone(envelope.recipe), Number(envelope.n_features), steps);
-  }
-
-  /** The v8 envelope (JSON.stringify(pipeline) writes it). */
-  toJSON() {
-    return {
-      schema: N4M_TRAINED_PIPELINE_SCHEMA,
-      recipe: clone(this.recipe),
-      n_features: this.nFeatures,
-      states: this.steps.map((step) => ({ ...step.state })),
-    };
   }
 
   /**
-   * Predictions of the final model: {data, rows, cols} for a regressor,
-   * {labels, rows} (class names, or ids when trained on integer labels) for a classifier.
+   * The v8 envelope (JSON.stringify(pipeline) writes it). A state that embeds training
+   * rows (kernel PLS, LW-PLS, ...) is refused unless `allowTrainingRows` is set.
+   */
+  toJSON(options) {
+    const allowTrainingRows = options?.allowTrainingRows === true; // JSON.stringify passes a key string
+    const states = this.pipeline.exportStates({ allowTrainingRows }).map((state) => {
+      const n4meBase64 = bytesToBase64(state.n4me);
+      return {
+        method_id: state.methodId,
+        n4me_base64: n4meBase64,
+        sha256: this.#digests.get(n4meBase64),
+        contains_training_rows: state.containsTrainingRows,
+      };
+    });
+    // Classifier label names (N4ME holds integer class ids only): the facade's label table.
+    const classNames = this.pipeline.classNames;
+    if (classNames !== undefined) states.at(-1).class_names = [...classNames];
+    const envelope = { schema: N4M_TRAINED_PIPELINE_SCHEMA, recipe: clone(this.recipe), n_features: this.nFeatures };
+    if (this.featureNames !== undefined) envelope.feature_names = this.featureNames;
+    envelope.states = states;
+    return envelope;
+  }
+
+  /**
+   * Predictions of the final model: {data, rows, cols} for a regressor, {labels, rows}
+   * (class names, or ids when trained on integer labels) for a classifier. With
+   * `dataset.featureNames`, renamed or reordered columns are refused.
    */
   predict(dataset) {
-    let X = coerceFeatures(dataset);
-    if (X.cols !== this.nFeatures) {
-      throw new RangeError(`Expected ${this.nFeatures} input columns, got ${X.cols}.`);
+    const X = coerceFeatures(dataset);
+    if (this.pipeline.stepsInfo().at(-1).role === 'classifier') {
+      return { labels: this.pipeline.predictLabels(X, dataset.featureNames), rows: X.rows };
     }
-    for (const step of this.steps.slice(0, -1)) {
-      X = step.estimator.transform(X);
-    }
-    const last = this.steps.at(-1);
-    if (typeof last.estimator.predictLabels === 'function') {
-      const ids = last.estimator.predictLabels(X);
-      return { labels: last.classNames ? ids.map((id) => last.classNames[id]) : ids, rows: X.rows };
-    }
-    const predicted = last.estimator.predict(X);
+    const predicted = this.pipeline.predict(X, dataset.featureNames);
     return { data: Array.from(predicted.data), rows: predicted.rows, cols: predicted.cols };
   }
 
@@ -168,9 +178,19 @@ export class N4mRolePipeline {
     return N4mRolePipeline.fit(this.recipe, dataset, options);
   }
 
-  /** Releases the native estimators. */
+  /** Releases the native pipeline. */
   dispose() {
-    this.steps.forEach((step) => step.estimator.dispose());
+    this.pipeline.dispose();
+  }
+
+  // The SHA-256 of every state is computed once here (WebCrypto is asynchronous), so
+  // that toJSON stays synchronous; the exported bytes are deterministic.
+  static async #wrap(recipe, pipeline) {
+    const digests = new Map();
+    for (const state of pipeline.exportStates({ allowTrainingRows: true })) {
+      digests.set(bytesToBase64(state.n4me), await sha256Hex(state.n4me));
+    }
+    return new N4mRolePipeline(clone(recipe), pipeline, digests);
   }
 }
 
@@ -182,88 +202,25 @@ async function readyMethods(options) {
   return methods;
 }
 
-function manifestIndex(methods) {
-  let index = manifestCache.get(methods);
-  if (!index) {
-    index = new Map(methods.manifest().methods.map((item) => [item.method_id, item]));
-    manifestCache.set(methods, index);
-  }
-  return index;
-}
-
-function recipeSteps(recipe, methods) {
+function recipeSteps(recipe) {
   const pipeline = recipe?.pipeline;
-  if (!Array.isArray(pipeline) || pipeline.length === 0) {
+  if (!Array.isArray(pipeline)) {
     throw new TypeError('An n4m role recipe is {pipeline: [n4m:<method id> steps]}.');
   }
-  const index = manifestIndex(methods);
-  return pipeline.map((token) => {
-    const name = token && typeof token === 'object' ? token.class : token;
-    const methodId = n4mRoleMethodId(name);
-    const info = methodId === null ? undefined : index.get(methodId);
-    if (!info) {
+  for (const token of pipeline) {
+    if (n4mRoleMethodId(token && typeof token === 'object' ? token.class : token) === null) {
       throw new Error(`n4m role recipes contain n4m:<method id> steps only, got ${JSON.stringify(token)}.`);
     }
-    const params = token && typeof token === 'object' ? token.params ?? {} : {};
-    const cls = methods.methodClass(methodId);
-    return {
-      methodId,
-      roles: new Set(info.roles),
-      needsY: info.inputs.y === 'required',
-      create: () => new cls(clone(params)),
-    };
-  });
-}
-
-function regressionTarget(y, rows) {
-  const nested = Array.isArray(y) && Array.isArray(y[0]);
-  const cols = nested ? y[0].length : 1;
-  const data = nested ? Float64Array.from(y.flat()) : Float64Array.from(y ?? []);
-  if (data.length !== rows * cols) {
-    throw new RangeError(`Target length ${data.length} does not match ${rows} rows.`);
   }
-  const matrix = { data, rows, cols };
-  return { matrix, values: cols === 1 ? data : undefined };
+  return pipeline;
 }
 
-// Integer labels are class ids; other labels map to ids in sorted order and
-// travel as class_names (the same encoding as the Python and R bindings).
-function encodeLabels(y, rows) {
-  const labels = Array.from(y ?? []);
-  if (labels.length !== rows) {
-    throw new RangeError(`Label count ${labels.length} does not match ${rows} rows.`);
+// One row of targets per sample becomes a row-major response matrix; vectors and labels pass as they are.
+function fitTarget(y) {
+  if (Array.isArray(y) && Array.isArray(y[0])) {
+    return { data: Float64Array.from(y.flat()), rows: y.length, cols: y[0].length };
   }
-  if (labels.every((label) => Number.isInteger(label))) {
-    return { ids: labels, values: Float64Array.from(labels), classNames: undefined };
-  }
-  const numeric = labels.every((label) => typeof label === 'number');
-  const names = [...new Set(numeric ? labels : labels.map(String))]
-    .sort(numeric ? (a, b) => a - b : (a, b) => (a < b ? -1 : a > b ? 1 : 0));
-  const position = new Map(names.map((name, id) => [name, id]));
-  const ids = labels.map((label) => position.get(numeric ? label : String(label)));
-  return { ids, values: Float64Array.from(ids), classNames: names };
-}
-
-function selectTarget(target, rows) {
-  if (target.ids) {
-    const ids = rows.map((row) => target.ids[row]);
-    return { ...target, ids, values: Float64Array.from(ids) };
-  }
-  const matrix = selectRows(target.matrix, rows);
-  return { matrix, values: matrix.cols === 1 ? matrix.data : undefined };
-}
-
-function selectRows(matrix, rows) {
-  const data = new Float64Array(rows.length * matrix.cols);
-  rows.forEach((row, i) => data.set(matrix.data.subarray(row * matrix.cols, (row + 1) * matrix.cols), i * matrix.cols));
-  return { data, rows: rows.length, cols: matrix.cols };
-}
-
-async function exportState({ estimator, methodId, classNames }) {
-  const payload = estimator.toN4me();
-  const state = { method_id: methodId, n4me_base64: bytesToBase64(payload), sha256: await sha256Hex(payload) };
-  if (classNames) state.class_names = [...classNames];
-  return state;
+  return y;
 }
 
 async function sha256Hex(bytes) {

@@ -401,6 +401,8 @@ export interface N4mRoleState {
   method_id: string;
   n4me_base64: string;
   sha256: string;
+  /** The state embeds training rows (exported only with `allowTrainingRows`); absent in older envelopes. */
+  contains_training_rows?: boolean;
   class_names?: (string | number)[];
 }
 
@@ -408,6 +410,8 @@ export interface N4mTrainedPipelineEnvelope {
   schema: 'nirs4all.n4m.trained_pipeline.v8';
   recipe: N4mRoleRecipe;
   n_features: number;
+  /** Fitted input column names, in order, when the fit had names. */
+  feature_names?: string[];
   states: N4mRoleState[];
 }
 
@@ -415,10 +419,15 @@ export interface N4mRoleDataset {
   X: Float64Array | number[] | readonly number[] | readonly (readonly number[])[];
   rows: number;
   cols: number;
+  /** Column names: stored at fit, then renamed or reordered columns are refused. Without them, columns are positional. */
+  featureNames?: string[];
 }
 
 export interface N4mRoleTrainingDataset extends N4mRoleDataset {
-  /** Responses (regressor) or labels (classifier: integer ids, or names mapped in sorted order). */
+  /**
+   * Responses of a final regressor (a vector, or one row of targets per sample) or labels of a
+   * final classifier (integer ids, or names mapped in sorted order).
+   */
   y: Float64Array | readonly number[] | readonly (readonly number[])[] | readonly (string | number)[];
 }
 
@@ -434,13 +443,21 @@ export interface N4mRoleCapability {
   parameters: string[];
 }
 
-/** A fitted recipe of n4m role steps, portable as N4ME states. */
+/**
+ * A fitted recipe of n4m role steps, portable as N4ME states. The recipe runs in the native
+ * Methods role pipeline (ABI 2.14); this class reads and writes the envelope.
+ */
 export class N4mRolePipeline {
   readonly recipe: N4mRoleRecipe;
   readonly nFeatures: number;
+  /** Fitted input column names, in order (undefined: positional input). */
+  readonly featureNames: string[] | undefined;
+  /** The fitted `@nirs4all/methods` RolePipeline (transform, decisionFunction, predictProba, stepsInfo). */
+  readonly pipeline: unknown;
   static fit(recipe: N4mRoleRecipe, dataset: N4mRoleTrainingDataset, options?: { methods?: unknown }): Promise<N4mRolePipeline>;
   static fromJSON(source: string | N4mTrainedPipelineEnvelope, options?: { methods?: unknown }): Promise<N4mRolePipeline>;
-  toJSON(): N4mTrainedPipelineEnvelope;
+  /** The envelope; a state embedding training rows is refused unless `allowTrainingRows` is set. */
+  toJSON(options?: { allowTrainingRows?: boolean } | string): N4mTrainedPipelineEnvelope;
   predict(dataset: N4mRoleDataset): N4mRolePrediction;
   retrain(dataset: N4mRoleTrainingDataset, options?: { methods?: unknown }): Promise<N4mRolePipeline>;
   dispose(): void;

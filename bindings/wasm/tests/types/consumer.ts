@@ -148,11 +148,14 @@ void inspectedPredictors;
 async function roleRecipe(): Promise<void> {
   const fitted: N4mRolePipeline = await N4mRolePipeline.fit(
     { pipeline: ['n4m:preprocessing.scatter.snv', { class: 'n4m:models.pls.cppls', params: { n_components: 3 } }] },
-    { X: [[1, 2], [3, 4]], rows: 2, cols: 2, y: [1, 2] },
+    { X: [[1, 2], [3, 4]], rows: 2, cols: 2, y: [[1, 0], [2, 1]], featureNames: ['a', 'b'] },
   );
-  const envelope: N4mTrainedPipelineEnvelope = fitted.toJSON();
+  const envelope: N4mTrainedPipelineEnvelope = fitted.toJSON({ allowTrainingRows: false });
+  const names: string[] | undefined = envelope.feature_names ?? fitted.featureNames;
+  const retainsRows: boolean | undefined = envelope.states[0]?.contains_training_rows;
   const replayed = await N4mRolePipeline.fromJSON(JSON.stringify(envelope));
-  const prediction: N4mRolePrediction = replayed.predict({ X: [[1, 2]], rows: 1, cols: 2 });
+  const prediction: N4mRolePrediction = replayed.predict({ X: [[1, 2]], rows: 1, cols: 2, featureNames: names });
+  void retainsRows;
   const steps: N4mRoleCapability[] = await n4mRoleCapabilities();
   void prediction;
   void steps;

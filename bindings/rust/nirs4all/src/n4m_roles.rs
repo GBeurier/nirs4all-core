@@ -2,21 +2,29 @@
 //!
 //! A recipe step is the language-neutral token `"n4m:<catalog method id>"`
 //! (a string, or `{"class": "n4m:<id>", "params": {...}}`), resolved through
-//! the native n4m manifest. [`N4mRolePipeline`] fits such a recipe (sample
-//! filters, transformers and selectors, then one regressor or classifier) and
-//! exchanges every fitted step as its native N4ME state, so the Python, R,
-//! JS/WASM and Rust bindings replay one another's pipelines. Parameters,
-//! role checks and all numerics stay in libn4m; the runtime is selected with
-//! `n4m::configure_library` or `N4M_LIBRARY_PATH`. A process fixes a single
-//! libn4m file, so a process that also replays Archive V2 selects it once
-//! through [`crate::preflight_methods_archive_v2_library`], whose attested
-//! snapshot then serves both the role recipes and the replay.
+//! the native n4m manifest. [`N4mRolePipeline`] runs such a recipe (sample
+//! filters, transformers and selectors, then one regressor or classifier) in
+//! the native role pipeline of libn4m (`n4m::roles::RolePipeline`, ABI 2.14),
+//! which validates the recipe, routes every target column to the steps that
+//! need it, keeps filters on the training rows, checks the input column names
+//! and refuses states that contradict the recipe. This module translates the
+//! recipe tokens and reads/writes the envelope shared with the Python, R and
+//! JS/WASM bindings: `schema`, `recipe`, `n_features`, `feature_names` (when
+//! the fit had names) and, per stateful step, `method_id`, `n4me_base64`,
+//! `sha256`, `contains_training_rows` and `class_names` (classifier trained on
+//! label names). Envelopes written before `feature_names` and
+//! `contains_training_rows` still load.
+//!
+//! The runtime is selected with `n4m::configure_library` or
+//! `N4M_LIBRARY_PATH`. A process fixes a single libn4m file, so a process that
+//! also replays Archive V2 selects it once through
+//! [`crate::preflight_methods_archive_v2_library`], whose attested snapshot
+//! then serves both the role recipes and the replay.
 
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine as _;
 use n4m::roles::{
-    self, Estimator, FitInput, FitInputs, InputRequirement, MethodInfo, MethodKind, ParamType,
-    ParamValue, Params,
+    self, FitInputs, MethodInfo, MethodKind, ParamType, ParamValue, Params, RolePipeline,
 };
 use n4m::{Context, MatrixRef};
 use serde_json::{json, Value};
@@ -77,7 +85,8 @@ pub fn n4m_role_capabilities() -> Result<Value, String> {
 /// Training target of a recipe.
 #[derive(Debug, Clone, PartialEq)]
 pub enum RoleTarget {
-    /// Row-major responses, `cols` per row (regressors).
+    /// Row-major responses, `cols` per row (regressors; every column reaches
+    /// the steps that need `y`).
     Values { data: Vec<f64>, cols: usize },
     /// Class label names (classifiers); encoded as ids in sorted order.
     Labels(Vec<String>),
@@ -97,78 +106,48 @@ pub enum RolePredictions {
     ClassIds(Vec<i64>),
 }
 
-struct RecipeStep {
-    info: MethodInfo,
-    params: Value,
-}
-
-impl RecipeStep {
-    fn parse(token: &Value) -> Result<Self, String> {
-        let (class_name, params) = match token {
-            Value::String(name) => (name.as_str(), Value::Null),
-            Value::Object(map) => (
-                map.get("class").and_then(Value::as_str).ok_or_else(|| {
-                    format!("n4m role recipe step needs a string 'class': {token}")
-                })?,
-                map.get("params").cloned().unwrap_or(Value::Null),
-            ),
-            _ => return Err(format!("n4m role recipe step must be a token: {token}")),
-        };
-        if n4m_role_method_id(class_name).is_none() {
+/// Method id and native parameters of one recipe token.
+fn recipe_step(ctx: &Context, token: &Value) -> Result<(String, Params), String> {
+    let (class_name, values) = match token {
+        Value::String(name) => (name.as_str(), &Value::Null),
+        Value::Object(map) => (
+            map.get("class")
+                .and_then(Value::as_str)
+                .ok_or_else(|| format!("n4m role recipe step needs a string 'class': {token}"))?,
+            map.get("params").unwrap_or(&Value::Null),
+        ),
+        _ => return Err(format!("n4m role recipe step must be a token: {token}")),
+    };
+    if n4m_role_method_id(class_name).is_none() {
+        return Err(format!(
+            "portable n4m role recipes contain n4m:<method id> steps only, got {token}"
+        ));
+    }
+    let info = resolve_n4m_role(class_name)?;
+    let mut params = Params::new(ctx, &info.method_id).map_err(native)?;
+    match values {
+        Value::Null => {}
+        Value::Object(values) => {
+            for (name, value) in values {
+                let param = info
+                    .params
+                    .iter()
+                    .find(|param| &param.name == name)
+                    .ok_or_else(|| format!("{}: unknown parameter '{name}'", info.method_id))?;
+                let typed = param_value(param.param_type, value).ok_or_else(|| {
+                    format!("{}: invalid value for '{name}': {value}", info.method_id)
+                })?;
+                params.set(name, &typed).map_err(native)?;
+            }
+        }
+        other => {
             return Err(format!(
-                "portable n4m role recipes contain n4m:<method id> steps only, got {token}"
-            ));
+                "{}: params must be a mapping, got {other}",
+                info.method_id
+            ))
         }
-        Ok(Self {
-            info: resolve_n4m_role(class_name)?,
-            params,
-        })
     }
-
-    fn has_role(&self, role: u32) -> bool {
-        self.info.roles & role != 0
-    }
-
-    fn is_sample_filter(&self) -> bool {
-        self.has_role(roles::ROLE_SAMPLE_FILTER)
-    }
-
-    fn needs_y(&self) -> bool {
-        self.info.input(FitInput::Y) == InputRequirement::Required
-    }
-
-    fn estimator(&self, ctx: &Context) -> Result<Estimator, String> {
-        let mut params = Params::new(ctx, &self.info.method_id).map_err(native)?;
-        match &self.params {
-            Value::Null => {}
-            Value::Object(values) => {
-                for (name, value) in values {
-                    let param = self
-                        .info
-                        .params
-                        .iter()
-                        .find(|param| &param.name == name)
-                        .ok_or_else(|| {
-                            format!("{}: unknown parameter '{name}'", self.info.method_id)
-                        })?;
-                    let typed = param_value(param.param_type, value).ok_or_else(|| {
-                        format!(
-                            "{}: invalid value for '{name}': {value}",
-                            self.info.method_id
-                        )
-                    })?;
-                    params.set(name, &typed).map_err(native)?;
-                }
-            }
-            other => {
-                return Err(format!(
-                    "{}: params must be a mapping, got {other}",
-                    self.info.method_id
-                ))
-            }
-        }
-        Estimator::new(ctx, &self.info.method_id, Some(&params)).map_err(native)
-    }
+    Ok((info.method_id, params))
 }
 
 fn param_value(kind: ParamType, value: &Value) -> Option<ParamValue> {
@@ -206,68 +185,88 @@ fn native(error: n4m::Error) -> String {
     error.to_string()
 }
 
-fn recipe_steps(recipe: &Value) -> Result<Vec<RecipeStep>, String> {
-    recipe
+/// The unfitted native pipeline of `recipe` (validated natively).
+fn role_pipeline(ctx: &Context, recipe: &Value) -> Result<RolePipeline, String> {
+    let steps = recipe
         .get("pipeline")
         .and_then(Value::as_array)
         .ok_or_else(|| "an n4m role recipe is {\"pipeline\": [steps]}".to_string())?
         .iter()
-        .map(RecipeStep::parse)
-        .collect()
-}
-
-fn keep_rows<T: Copy>(data: &[T], cols: usize, keep: &[bool]) -> Vec<T> {
-    data.chunks(cols)
-        .zip(keep)
-        .filter(|(_, keep)| **keep)
-        .flat_map(|(row, _)| row.iter().copied())
-        .collect()
+        .map(|token| recipe_step(ctx, token))
+        .collect::<Result<Vec<_>, _>>()?;
+    let steps: Vec<(&str, Option<&Params>)> = steps
+        .iter()
+        .map(|(method_id, params)| (method_id.as_str(), Some(params)))
+        .collect();
+    RolePipeline::new(ctx, &steps).map_err(native)
 }
 
 fn matrix(data: &[f64], rows: usize, cols: usize) -> Result<MatrixRef<'_>, String> {
     MatrixRef::row_major(data, rows, cols).map_err(native)
 }
 
-struct FittedStep {
-    estimator: Estimator,
-    method_id: String,
-    classifier: bool,
-    class_names: Option<Vec<String>>,
+fn strings(value: &Value) -> Option<Vec<String>> {
+    value
+        .as_array()?
+        .iter()
+        .map(|item| item.as_str().map(str::to_owned))
+        .collect()
 }
 
 /// A fitted recipe of n4m role steps, portable as N4ME states.
 pub struct N4mRolePipeline {
     recipe: Value,
+    pipeline: RolePipeline,
     n_features: usize,
-    steps: Vec<FittedStep>,
+    feature_names: Option<Vec<String>>,
+    classifier: bool,
+    class_names: Option<Vec<String>>,
 }
 
 impl N4mRolePipeline {
-    /// Fit every step of `recipe` natively on row-major `x` (`rows` x `cols`).
+    fn fitted(
+        recipe: &Value,
+        pipeline: RolePipeline,
+        class_names: Option<Vec<String>>,
+    ) -> Result<Self, String> {
+        let steps = pipeline.steps().map_err(native)?;
+        let names = pipeline.feature_names().map_err(native)?;
+        Ok(Self {
+            recipe: recipe.clone(),
+            n_features: pipeline.n_features_in().map_err(native)?,
+            feature_names: (!names.is_empty()).then_some(names),
+            classifier: steps
+                .last()
+                .is_some_and(|step| step.role == roles::ROLE_CLASSIFIER),
+            class_names,
+            pipeline,
+        })
+    }
+
+    /// Fit `recipe` natively on row-major `x` (`rows` x `cols`). With
+    /// `feature_names`, later predictions given names refuse renamed or
+    /// reordered columns.
     pub fn fit_recipe(
         recipe: &Value,
         x: &[f64],
         rows: usize,
         cols: usize,
+        feature_names: Option<&[&str]>,
         y: &RoleTarget,
     ) -> Result<Self, String> {
-        let parsed = recipe_steps(recipe)?;
-        let (last, intermediate) = parsed
-            .split_last()
-            .ok_or("a portable n4m role recipe ends with one regressor or classifier")?;
-        let classifier = last.has_role(roles::ROLE_CLASSIFIER);
-        if !classifier && !last.has_role(roles::ROLE_REGRESSOR) {
-            return Err("a portable n4m role recipe ends with one regressor or classifier".into());
-        }
-        matrix(x, rows, cols)?;
         let ctx = Context::new().map_err(native)?;
-        let (mut values, mut rows, mut width) = (x.to_vec(), rows, cols);
-        let (mut target, target_cols) = match y {
-            RoleTarget::Values { data, cols } => (data.clone(), *cols),
-            RoleTarget::Labels(_) | RoleTarget::ClassIds(_) => (Vec::new(), 0),
-        };
-        let (mut class_ids, class_names) = match y {
-            RoleTarget::Values { .. } => (Vec::new(), None),
+        let mut pipeline = role_pipeline(&ctx, recipe)?;
+        if let Some(names) = feature_names {
+            pipeline.set_feature_names(&ctx, names).map_err(native)?;
+        }
+        let x_view = matrix(x, rows, cols)?;
+        let (ids, class_names) = match y {
+            RoleTarget::Values { data, cols } => {
+                let y_rows = data.len().checked_div(*cols).unwrap_or(0);
+                let inputs = FitInputs::new(x_view).y(matrix(data, y_rows, *cols)?);
+                pipeline.fit(&ctx, &inputs).map_err(native)?;
+                return Self::fitted(recipe, pipeline, None);
+            }
             RoleTarget::ClassIds(ids) => (ids.clone(), None),
             RoleTarget::Labels(labels) => {
                 let mut names = labels.clone();
@@ -281,96 +280,14 @@ impl N4mRolePipeline {
                 (ids, Some(names))
             }
         };
-        if classifier == matches!(y, RoleTarget::Values { .. }) {
-            return Err(
-                "a classifier recipe needs labels and a regressor recipe needs values".into(),
-            );
-        }
-        let target_rows = if classifier {
-            class_ids.len()
-        } else {
-            target.len() / target_cols.max(1)
-        };
-        if target_rows != rows || (!classifier && target_cols == 0) {
-            return Err(format!(
-                "target rows ({target_rows}) must match X rows ({rows})"
-            ));
-        }
-
-        let mut steps = Vec::new();
-        for step in intermediate {
-            let mut estimator = step.estimator(&ctx)?;
-            let x_view = matrix(&values, rows, width)?;
-            let y_view = if step.needs_y() {
-                if classifier {
-                    return Err(format!(
-                        "{} needs a numeric target, but the recipe is a classifier",
-                        step.info.method_id
-                    ));
-                }
-                Some(matrix(&target, rows, target_cols)?)
-            } else {
-                None
-            };
-            let inputs = match y_view {
-                Some(y_view) => FitInputs::new(x_view).y(y_view),
-                None => FitInputs::new(x_view),
-            };
-            estimator.fit(&ctx, &inputs).map_err(native)?;
-            if step.is_sample_filter() {
-                let keep = estimator.apply_mask(&ctx, x_view, y_view).map_err(native)?;
-                values = keep_rows(&values, width, &keep);
-                if classifier {
-                    class_ids = keep_rows(&class_ids, 1, &keep);
-                } else {
-                    target = keep_rows(&target, target_cols, &keep);
-                }
-                rows = keep.iter().filter(|keep| **keep).count();
-            } else if step.has_role(roles::ROLE_TRANSFORMER | roles::ROLE_SELECTOR) {
-                let transformed = estimator.transform(&ctx, x_view).map_err(native)?;
-                (values, width) = (transformed.data, transformed.cols);
-                steps.push(FittedStep {
-                    estimator,
-                    method_id: step.info.method_id.clone(),
-                    classifier: false,
-                    class_names: None,
-                });
-            } else {
-                return Err(format!(
-                    "{} is not a portable pipeline step",
-                    step.info.method_id
-                ));
-            }
-        }
-
-        let mut estimator = last.estimator(&ctx)?;
-        let x_view = matrix(&values, rows, width)?;
-        if classifier {
-            estimator
-                .fit(&ctx, &FitInputs::new(x_view).labels(&class_ids))
-                .map_err(native)?;
-        } else {
-            estimator
-                .fit(
-                    &ctx,
-                    &FitInputs::new(x_view).y(matrix(&target, rows, target_cols)?),
-                )
-                .map_err(native)?;
-        }
-        steps.push(FittedStep {
-            estimator,
-            method_id: last.info.method_id.clone(),
-            classifier,
-            class_names,
-        });
-        Ok(Self {
-            recipe: recipe.clone(),
-            n_features: cols,
-            steps,
-        })
+        pipeline
+            .fit(&ctx, &FitInputs::new(x_view).labels(&ids))
+            .map_err(native)?;
+        Self::fitted(recipe, pipeline, class_names)
     }
 
-    /// Read a version 8 envelope and rebuild its estimators from N4ME bytes.
+    /// Read a version 8 envelope and rebuild its fitted pipeline from the
+    /// N4ME states.
     pub fn from_json(text: &str) -> Result<Self, String> {
         let document: Value = serde_json::from_str(text).map_err(|error| error.to_string())?;
         if document.get("schema").and_then(Value::as_str) != Some(N4M_TRAINED_PIPELINE_SCHEMA) {
@@ -382,30 +299,22 @@ impl N4mRolePipeline {
         let n_features = document
             .get("n_features")
             .and_then(Value::as_u64)
-            .ok_or_else(|| "envelope has no n_features".to_string())?
-            as usize;
+            .ok_or_else(|| "envelope has no n_features".to_string())?;
         let states = document
             .get("states")
             .and_then(Value::as_array)
             .ok_or_else(|| "envelope has no states".to_string())?;
-        let parsed = recipe_steps(recipe)?;
-        if !parsed.last().is_some_and(|step| {
-            !step.is_sample_filter()
-                && step.has_role(roles::ROLE_REGRESSOR | roles::ROLE_CLASSIFIER)
-        }) {
-            return Err("a portable n4m role recipe ends with one regressor or classifier".into());
-        }
-        let stateful: Vec<_> = parsed
-            .iter()
-            .filter(|step| !step.is_sample_filter())
-            .collect();
-        if stateful.len() != states.len() {
-            return Err("envelope states do not match the recipe steps".into());
-        }
-        let last = stateful.len() - 1;
-        let ctx = Context::new().map_err(native)?;
-        let mut steps = Vec::with_capacity(states.len());
-        for (index, (step, state)) in stateful.into_iter().zip(states).enumerate() {
+        let feature_names = document
+            .get("feature_names")
+            .map(|names| strings(names).ok_or("feature_names must be an array of strings"))
+            .transpose()?;
+        let class_names = states
+            .last()
+            .and_then(|state| state.get("class_names"))
+            .map(|names| strings(names).ok_or("class_names must be strings"))
+            .transpose()?;
+        let mut payloads = Vec::with_capacity(states.len());
+        for state in states {
             let method_id = state
                 .get("method_id")
                 .and_then(Value::as_str)
@@ -422,100 +331,112 @@ impl N4mRolePipeline {
             if state.get("sha256").and_then(Value::as_str) != Some(digest.as_str()) {
                 return Err(format!("N4ME state of {method_id} fails its checksum"));
             }
-            let estimator = Estimator::from_n4me(&ctx, &payload).map_err(native)?;
-            let restored = estimator.method_id().map_err(native)?;
-            if restored != method_id || method_id != step.info.method_id {
+            payloads.push(payload);
+        }
+
+        let ctx = Context::new().map_err(native)?;
+        let mut pipeline = role_pipeline(&ctx, recipe)?;
+        if let Some(names) = &feature_names {
+            let names: Vec<&str> = names.iter().map(String::as_str).collect();
+            pipeline.set_feature_names(&ctx, &names).map_err(native)?;
+        }
+        let payloads: Vec<&[u8]> = payloads.iter().map(Vec::as_slice).collect();
+        pipeline.import_states(&ctx, &payloads).map_err(native)?;
+        let steps = pipeline.steps().map_err(native)?;
+        let stateful = steps.iter().filter(|step| step.state_index.is_some());
+        for (step, state) in stateful.zip(states) {
+            let method_id = state.get("method_id").and_then(Value::as_str);
+            if method_id != Some(step.method_id.as_str()) {
                 return Err(format!(
-                    "N4ME state {method_id} does not match its recipe step"
+                    "N4ME state {} does not match its recipe step",
+                    method_id.unwrap_or_default()
                 ));
             }
-            let class_names = match state.get("class_names") {
-                None => None,
-                Some(names) => Some(
-                    names
-                        .as_array()
-                        .and_then(|names| {
-                            names
-                                .iter()
-                                .map(|name| name.as_str().map(str::to_owned))
-                                .collect::<Option<Vec<_>>>()
-                        })
-                        .ok_or_else(|| format!("class_names of {method_id} must be strings"))?,
-                ),
-            };
-            steps.push(FittedStep {
-                estimator,
-                method_id: restored,
-                classifier: index == last && step.has_role(roles::ROLE_CLASSIFIER),
-                class_names,
-            });
+            if state
+                .get("contains_training_rows")
+                .is_some_and(|flag| flag.as_bool() != Some(step.contains_training_rows))
+            {
+                return Err(format!(
+                    "contains_training_rows of {} contradicts its N4ME state",
+                    step.method_id
+                ));
+            }
         }
-        Ok(Self {
-            recipe: recipe.clone(),
-            n_features,
-            steps,
-        })
+        let fitted = Self::fitted(recipe, pipeline, class_names)?;
+        if fitted.n_features as u64 != n_features {
+            return Err(format!(
+                "n_features is {n_features} but the states take {} columns",
+                fitted.n_features
+            ));
+        }
+        Ok(fitted)
     }
 
-    /// The version 8 envelope.
-    pub fn to_json(&self) -> Result<String, String> {
+    /// The version 8 envelope. A state that embeds training rows (kernel
+    /// PLS, LW-PLS, ...) is refused unless `allow_training_rows` is set.
+    pub fn to_json(&self, allow_training_rows: bool) -> Result<String, String> {
         let ctx = Context::new().map_err(native)?;
-        let states = self
-            .steps
+        let payloads = self
+            .pipeline
+            .export_states(&ctx, allow_training_rows)
+            .map_err(native)?;
+        let steps = self.pipeline.steps().map_err(native)?;
+        let mut states: Vec<Value> = steps
             .iter()
-            .map(|step| {
-                let payload = step.estimator.to_n4me(&ctx, true).map_err(native)?;
-                let mut state = json!({
+            .filter(|step| step.state_index.is_some())
+            .zip(&payloads)
+            .map(|(step, payload)| {
+                json!({
                     "method_id": step.method_id,
-                    "n4me_base64": STANDARD.encode(&payload),
-                    "sha256": format!("{:x}", Sha256::digest(&payload)),
-                });
-                if let Some(names) = &step.class_names {
-                    state["class_names"] = json!(names);
-                }
-                Ok(state)
+                    "n4me_base64": STANDARD.encode(payload),
+                    "sha256": format!("{:x}", Sha256::digest(payload)),
+                    "contains_training_rows": step.contains_training_rows,
+                })
             })
-            .collect::<Result<Vec<_>, String>>()?;
-        serde_json::to_string_pretty(&json!({
+            .collect();
+        if let (Some(names), Some(state)) = (&self.class_names, states.last_mut()) {
+            state["class_names"] = json!(names);
+        }
+        let mut document = json!({
             "schema": N4M_TRAINED_PIPELINE_SCHEMA,
             "recipe": self.recipe,
             "n_features": self.n_features,
             "states": states,
-        }))
-        .map_err(|error| error.to_string())
+        });
+        if let Some(names) = &self.feature_names {
+            document["feature_names"] = json!(names);
+        }
+        serde_json::to_string_pretty(&document).map_err(|error| error.to_string())
     }
 
-    /// Predictions (regressor) or class labels (classifier) of the final model.
-    pub fn predict(&self, x: &[f64], rows: usize) -> Result<RolePredictions, String> {
-        matrix(x, rows, self.n_features)
-            .map_err(|_| format!("expected {} input columns", self.n_features))?;
+    /// Predictions (regressor) or class labels (classifier) of the final
+    /// model for row-major `x` with `rows` rows. With `feature_names`, renamed
+    /// or reordered columns are refused; without, columns are positional.
+    pub fn predict(
+        &self,
+        x: &[f64],
+        rows: usize,
+        feature_names: Option<&[&str]>,
+    ) -> Result<RolePredictions, String> {
+        let cols = x.len().checked_div(rows).unwrap_or(0);
+        let x_view = matrix(x, rows, cols)?;
         let ctx = Context::new().map_err(native)?;
-        let (last, transforms) = self
-            .steps
-            .split_last()
-            .ok_or_else(|| "fitted pipeline has no steps".to_string())?;
-        let (mut values, mut width) = (x.to_vec(), self.n_features);
-        for step in transforms {
-            let out = step
-                .estimator
-                .transform(&ctx, matrix(&values, rows, width)?)
+        if !self.classifier {
+            let out = self
+                .pipeline
+                .predict(&ctx, x_view, feature_names)
                 .map_err(native)?;
-            (values, width) = (out.data, out.cols);
-        }
-        let x_view = matrix(&values, rows, width)?;
-        if !last.classifier {
-            let out = last.estimator.predict(&ctx, x_view).map_err(native)?;
             return Ok(RolePredictions::Values {
                 data: out.data,
                 rows: out.rows,
                 cols: out.cols,
             });
         }
-        let ids = last
-            .estimator
-            .predict_labels(&ctx, x_view)
+        let ids = self
+            .pipeline
+            .predict_labels(&ctx, x_view, feature_names)
             .map_err(native)?;
-        match &last.class_names {
+        match &self.class_names {
             None => Ok(RolePredictions::ClassIds(ids)),
             Some(names) => ids
                 .iter()
@@ -537,10 +458,27 @@ impl N4mRolePipeline {
     pub fn n_features(&self) -> usize {
         self.n_features
     }
+
+    /// Fitted input column names, in order (`None`: positional input).
+    pub fn feature_names(&self) -> Option<&[String]> {
+        self.feature_names.as_deref()
+    }
+
+    /// The fitted native pipeline (transform, decision function, class
+    /// probabilities, step introspection).
+    pub fn pipeline(&self) -> &RolePipeline {
+        &self.pipeline
+    }
 }
 
 #[cfg(test)]
 mod tests {
+    //! The negative envelope cases (recipe/state mismatch, empty pipeline,
+    //! feature permutation, training rows without opt-in, multi-target
+    //! routing) replay the Methods shared fixture
+    //! `n4m_role_pipeline_methods.json` and are identical in the Python,
+    //! JS/WASM and Rust suites.
+
     use super::*;
 
     fn configured() -> bool {
@@ -564,6 +502,25 @@ mod tests {
         }
     }
 
+    fn fixture(text: &str) -> Value {
+        serde_json::from_str(text).unwrap()
+    }
+
+    fn methods_fixture() -> Value {
+        fixture(include_str!(
+            "../tests/parity/fixtures/n4m_role_pipeline_methods.json"
+        ))
+    }
+
+    fn methods_case<'a>(fixture: &'a Value, name: &str) -> &'a Value {
+        fixture["cases"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|case| case["name"] == name)
+            .unwrap()
+    }
+
     fn rows(value: &Value) -> (Vec<f64>, usize, usize) {
         let rows = value.as_array().unwrap();
         let data: Vec<f64> = rows
@@ -583,13 +540,12 @@ mod tests {
             .collect()
     }
 
-    fn strings(value: &Value) -> Vec<String> {
-        value
-            .as_array()
-            .unwrap()
-            .iter()
-            .map(|v| v.as_str().unwrap().to_owned())
-            .collect()
+    fn names(value: &Value) -> Vec<String> {
+        strings(value).unwrap()
+    }
+
+    fn refs(names: &[String]) -> Vec<&str> {
+        names.iter().map(String::as_str).collect()
     }
 
     fn values(predictions: RolePredictions) -> Vec<f64> {
@@ -608,69 +564,145 @@ mod tests {
             .fold(0.0, f64::max)
     }
 
-    /// Fits the recipe in Rust, round trips the v8 envelope and returns the
-    /// replayed predictions (equal to the in-memory ones).
-    fn refit(
-        envelope: &Value,
-        x: &[f64],
-        n: usize,
-        p: usize,
-        y: &RoleTarget,
-        x_test: &[f64],
-        m: usize,
-    ) -> RolePredictions {
-        let fitted = N4mRolePipeline::fit_recipe(&envelope["recipe"], x, n, p, y).unwrap();
-        let direct = fitted.predict(x_test, m).unwrap();
-        let text = fitted.to_json().unwrap();
-        let replayed = N4mRolePipeline::from_json(&text).unwrap();
-        assert_eq!(replayed.n_features(), p);
-        assert_eq!(replayed.recipe(), &envelope["recipe"]);
-        let again = replayed.predict(x_test, m).unwrap();
-        assert_eq!(again, direct);
-        again
+    fn fails(result: Result<N4mRolePipeline, String>) -> String {
+        result.err().expect("the call must be refused")
+    }
+
+    fn assert_refused(error: &str, message: &str) {
+        assert!(error.contains(message), "expected '{message}' in '{error}'");
+    }
+
+    /// A v8 envelope of Methods fixture states: `{method_id, n4me_base64,
+    /// contains_training_rows}` or bare base64 bytes, then labelled with
+    /// their recipe step.
+    fn envelope(
+        steps: &Value,
+        states: &Value,
+        feature_names: Option<&Value>,
+        class_names: Option<&Value>,
+    ) -> String {
+        let stateful: Vec<&str> = steps
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|step| &step["class"].as_str().unwrap()[4..])
+            .filter(|id| !id.starts_with("filters."))
+            .collect();
+        let mut entries: Vec<Value> = stateful
+            .iter()
+            .zip(states.as_array().unwrap())
+            .map(|(method_id, state)| {
+                let mut entry = match state {
+                    Value::String(bytes) => json!({"method_id": method_id, "n4me_base64": bytes}),
+                    other => other.clone(),
+                };
+                let payload = STANDARD
+                    .decode(entry["n4me_base64"].as_str().unwrap())
+                    .unwrap();
+                entry["sha256"] = json!(format!("{:x}", Sha256::digest(&payload)));
+                entry
+            })
+            .collect();
+        if let (Some(names), Some(last)) = (class_names, entries.last_mut()) {
+            last["class_names"] = names.clone();
+        }
+        let mut document = json!({
+            "schema": N4M_TRAINED_PIPELINE_SCHEMA,
+            "recipe": {"pipeline": steps},
+            "n_features": 12,
+            "states": entries,
+        });
+        if let Some(names) = feature_names {
+            document["feature_names"] = names.clone();
+        }
+        document.to_string()
+    }
+
+    /// The envelope without its N4ME bytes (they record the writing ABI) and
+    /// without the per-state training-row flags.
+    fn without_bytes(mut document: Value) -> Value {
+        for state in document["states"].as_array_mut().unwrap() {
+            let state = state.as_object_mut().unwrap();
+            state.remove("n4me_base64");
+            state.remove("sha256");
+            state.remove("contains_training_rows");
+        }
+        document
+    }
+
+    fn training_row_flags(text: &str) -> Vec<bool> {
+        fixture(text)["states"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|state| state["contains_training_rows"].as_bool().unwrap())
+            .collect()
     }
 
     #[test]
-    fn python_trained_v8_envelopes_replay_and_refit_in_rust() {
+    fn envelopes_written_before_the_additive_fields_replay_and_refit() {
         if !configured() {
             return;
         }
-        let fixture: Value = serde_json::from_str(include_str!(
+        let fixture = fixture(include_str!(
             "../tests/parity/fixtures/n4m_roles_v8_python_trained.json"
-        ))
-        .unwrap();
+        ));
         let (x, n, p) = rows(&fixture["x_train"]);
         let (x_test, m, _) = rows(&fixture["x_test"]);
 
         let regression = &fixture["regression"];
         let expected = numbers(&regression["predict"]);
         let replayed = N4mRolePipeline::from_json(&regression["envelope"].to_string()).unwrap();
-        let diff = max_diff(&values(replayed.predict(&x_test, m).unwrap()), &expected);
+        assert!(replayed.feature_names().is_none());
+        let diff = max_diff(
+            &values(replayed.predict(&x_test, m, None).unwrap()),
+            &expected,
+        );
         eprintln!("python regression replay max diff {diff:e}");
         assert!(diff <= 1e-12);
+        let rewritten = replayed.to_json(false).unwrap();
+        assert_eq!(training_row_flags(&rewritten), [false, false, false]);
+        assert!(fixture_has_no_names(&rewritten));
+        assert_eq!(
+            without_bytes(super::tests::fixture(&rewritten)),
+            without_bytes(regression["envelope"].clone())
+        );
+
         let y = RoleTarget::Values {
             data: numbers(&regression["y_train"]),
             cols: 1,
         };
-        let diff = max_diff(
-            &values(refit(&regression["envelope"], &x, n, p, &y, &x_test, m)),
-            &expected,
-        );
+        let fitted =
+            N4mRolePipeline::fit_recipe(&regression["envelope"]["recipe"], &x, n, p, None, &y)
+                .unwrap();
+        let live = fitted.predict(&x_test, m, None).unwrap();
+        let diff = max_diff(&values(live.clone()), &expected);
         eprintln!("rust-fitted regression vs python max diff {diff:e}");
         assert!(diff <= 1e-9);
+        let text = fitted.to_json(false).unwrap();
+        assert_eq!(
+            without_bytes(super::tests::fixture(&text)),
+            without_bytes(regression["envelope"].clone())
+        );
+        let again = N4mRolePipeline::from_json(&text).unwrap();
+        assert_eq!(again.recipe(), &regression["envelope"]["recipe"]);
+        assert_eq!(again.predict(&x_test, m, None).unwrap(), live);
 
         let classification = &fixture["classification"];
-        let expected = strings(&classification["predict"]);
+        let expected = RolePredictions::Labels(names(&classification["predict"]));
         let replayed = N4mRolePipeline::from_json(&classification["envelope"].to_string()).unwrap();
-        assert_eq!(
-            replayed.predict(&x_test, m).unwrap(),
-            RolePredictions::Labels(expected.clone())
-        );
-        let y = RoleTarget::Labels(strings(&classification["y_train"]));
-        assert_eq!(
-            refit(&classification["envelope"], &x, n, p, &y, &x_test, m),
-            RolePredictions::Labels(expected)
-        );
+        assert_eq!(replayed.predict(&x_test, m, None).unwrap(), expected);
+        let y = RoleTarget::Labels(names(&classification["y_train"]));
+        let fitted =
+            N4mRolePipeline::fit_recipe(&classification["envelope"]["recipe"], &x, n, p, None, &y)
+                .unwrap();
+        assert_eq!(fitted.predict(&x_test, m, None).unwrap(), expected);
+        let again = N4mRolePipeline::from_json(&fitted.to_json(false).unwrap()).unwrap();
+        assert_eq!(again.predict(&x_test, m, None).unwrap(), expected);
+    }
+
+    fn fixture_has_no_names(text: &str) -> bool {
+        fixture(text).get("feature_names").is_none()
     }
 
     #[test]
@@ -678,54 +710,334 @@ mod tests {
         if !configured() {
             return;
         }
-        let envelope: Value = serde_json::from_str(include_str!(
+        let envelope = fixture(include_str!(
             "../tests/parity/fixtures/n4m_roles_v8_r_trained.json"
-        ))
-        .unwrap();
-        let oracle: Value = serde_json::from_str(include_str!(
+        ));
+        let oracle = fixture(include_str!(
             "../tests/parity/expected/n4m_roles_v8_r_trained_oracle.json"
-        ))
-        .unwrap();
+        ));
         let (x, n, p) = rows(&oracle["x_train"]);
         let (x_test, m, _) = rows(&oracle["x_test"]);
         let expected = numbers(&oracle["predict"]);
         let replayed = N4mRolePipeline::from_json(&envelope.to_string()).unwrap();
-        let diff = max_diff(&values(replayed.predict(&x_test, m).unwrap()), &expected);
+        let diff = max_diff(
+            &values(replayed.predict(&x_test, m, None).unwrap()),
+            &expected,
+        );
         eprintln!("R regression replay max diff {diff:e}");
         assert!(diff <= 1e-12);
         let y = RoleTarget::Values {
             data: numbers(&oracle["y_train"]),
             cols: 1,
         };
-        let diff = max_diff(
-            &values(refit(&envelope, &x, n, p, &y, &x_test, m)),
-            &expected,
-        );
+        let refit = N4mRolePipeline::fit_recipe(&envelope["recipe"], &x, n, p, None, &y).unwrap();
+        let diff = max_diff(&values(refit.predict(&x_test, m, None).unwrap()), &expected);
         eprintln!("rust-fitted regression vs R max diff {diff:e}");
         assert!(diff <= 1e-9);
     }
 
     #[test]
-    fn envelopes_refuse_tampered_states_and_other_schemas() {
+    fn python_trained_named_envelope_keeps_column_identity_and_training_rows() {
         if !configured() {
             return;
         }
-        let envelope: Value = serde_json::from_str(include_str!(
-            "../tests/parity/fixtures/n4m_roles_v8_r_trained.json"
+        let fixture = fixture(include_str!(
+            "../tests/parity/fixtures/n4m_roles_v8_python_named.json"
+        ));
+        let names = names(&fixture["feature_names"]);
+        let (x, n, p) = rows(&fixture["x_train"]);
+        let (x_test, m, _) = rows(&fixture["x_test"]);
+        let expected = numbers(&fixture["predict"]);
+        let replayed = N4mRolePipeline::from_json(&fixture["envelope"].to_string()).unwrap();
+        assert_eq!(replayed.feature_names(), Some(names.as_slice()));
+        let predicted = values(replayed.predict(&x_test, m, Some(&refs(&names))).unwrap());
+        assert!(max_diff(&predicted, &expected) <= 1e-12);
+        assert_refused(
+            &replayed.to_json(false).unwrap_err(),
+            "retains training rows",
+        );
+        let rewritten = replayed.to_json(true).unwrap();
+        assert_eq!(training_row_flags(&rewritten), [false, true]);
+        assert_eq!(
+            without_bytes(super::tests::fixture(&rewritten)),
+            without_bytes(fixture["envelope"].clone())
+        );
+
+        let y = RoleTarget::Values {
+            data: numbers(&fixture["y_train"]),
+            cols: 1,
+        };
+        let refit = N4mRolePipeline::fit_recipe(
+            &fixture["envelope"]["recipe"],
+            &x,
+            n,
+            p,
+            Some(&refs(&names)),
+            &y,
+        )
+        .unwrap();
+        assert_eq!(refit.feature_names(), Some(names.as_slice()));
+        let predicted = values(refit.predict(&x_test, m, Some(&refs(&names))).unwrap());
+        assert!(max_diff(&predicted, &expected) <= 1e-9);
+    }
+
+    #[test]
+    fn methods_shared_pipelines_replay() {
+        if !configured() {
+            return;
+        }
+        let shared = methods_fixture();
+        let names = names(&shared["feature_names"]);
+        let (x_test, m, _) = rows(&shared["x_test"]);
+        let case = &shared["regression"];
+        let regression = N4mRolePipeline::from_json(&envelope(
+            &case["steps"],
+            &case["states"],
+            Some(&shared["feature_names"]),
+            None,
         ))
         .unwrap();
-        let mut other = envelope.clone();
+        let predicted = values(regression.predict(&x_test, m, Some(&refs(&names))).unwrap());
+        assert!(max_diff(&predicted, &numbers(&case["predict"])) <= 1e-9);
+
+        let case = &shared["classification"];
+        let classification = N4mRolePipeline::from_json(&envelope(
+            &case["steps"],
+            &case["states"],
+            Some(&shared["feature_names"]),
+            Some(&case["class_names"]),
+        ))
+        .unwrap();
+        assert_eq!(
+            classification
+                .predict(&x_test, m, Some(&refs(&names)))
+                .unwrap(),
+            RolePredictions::Labels(super::tests::names(&case["predict"]))
+        );
+        let rewritten = fixture(&classification.to_json(false).unwrap());
+        assert_eq!(rewritten["states"][2]["class_names"], case["class_names"]);
+    }
+
+    #[test]
+    fn multi_target_y_reaches_supervised_transformers() {
+        if !configured() {
+            return;
+        }
+        let shared = methods_fixture();
+        let case = methods_case(&shared, "multi_target_supervised_transformer");
+        let (x, n, p) = rows(&shared["x_train"]);
+        let (x_test, m, _) = rows(&shared["x_test"]);
+        let (y, _, q) = rows(&shared["y2_train"]);
+        let fitted = N4mRolePipeline::fit_recipe(
+            &json!({"pipeline": case["steps"]}),
+            &x,
+            n,
+            p,
+            None,
+            &RoleTarget::Values { data: y, cols: q },
+        )
+        .unwrap();
+        let predicted = fitted.predict(&x_test, m, None).unwrap();
+        let RolePredictions::Values { data, cols, .. } = &predicted else {
+            panic!("expected values");
+        };
+        assert_eq!(*cols, 2);
+        assert!(max_diff(data, &rows(&case["predict"]).0) <= 1e-9);
+        let replayed = N4mRolePipeline::from_json(&fitted.to_json(false).unwrap()).unwrap();
+        assert_eq!(replayed.predict(&x_test, m, None).unwrap(), predicted);
+    }
+
+    #[test]
+    fn invalid_recipes_are_refused() {
+        if !configured() {
+            return;
+        }
+        let shared = methods_fixture();
+        let (x, n, p) = rows(&shared["x_train"]);
+        let y = RoleTarget::Values {
+            data: numbers(&shared["y_train"]),
+            cols: 1,
+        };
+        for name in ["empty_recipe", "wrong_role_order", "missing_terminal"] {
+            let case = methods_case(&shared, name);
+            let error = fails(N4mRolePipeline::fit_recipe(
+                &json!({"pipeline": case["steps"]}),
+                &x,
+                n,
+                p,
+                None,
+                &y,
+            ));
+            assert_refused(&error, case["message"].as_str().unwrap());
+        }
+        let error = fails(N4mRolePipeline::from_json(&envelope(
+            &json!([]),
+            &json!([]),
+            None,
+            None,
+        )));
+        assert_refused(&error, "at least one step");
+        let error = fails(N4mRolePipeline::fit_recipe(
+            &json!({"pipeline": ["sklearn.cross_decomposition.PLSRegression"]}),
+            &x,
+            n,
+            p,
+            None,
+            &y,
+        ));
+        assert_refused(&error, "n4m:<method id> steps only");
+    }
+
+    #[test]
+    fn states_that_contradict_the_recipe_are_refused() {
+        if !configured() {
+            return;
+        }
+        let shared = methods_fixture();
+        for name in [
+            "recipe_param_differs_from_state",
+            "method_mismatch",
+            "state_count_mismatch",
+        ] {
+            let case = methods_case(&shared, name);
+            let error = fails(N4mRolePipeline::from_json(&envelope(
+                &case["steps"],
+                &case["states"],
+                None,
+                None,
+            )));
+            assert_refused(&error, case["message"].as_str().unwrap());
+        }
+        let case = &shared["regression"];
+        let mut contradicting = case["states"].clone();
+        contradicting[0]["contains_training_rows"] = json!(true);
+        let error = fails(N4mRolePipeline::from_json(&envelope(
+            &case["steps"],
+            &contradicting,
+            None,
+            None,
+        )));
+        assert_refused(&error, "contains_training_rows");
+    }
+
+    #[test]
+    fn permuted_or_missing_columns_are_refused() {
+        if !configured() {
+            return;
+        }
+        let shared = methods_fixture();
+        let names = names(&shared["feature_names"]);
+        let (x, n, p) = rows(&shared["x_train"]);
+        let (x_test, m, _) = rows(&shared["x_test"]);
+        let case = &shared["regression"];
+        let pipeline = N4mRolePipeline::from_json(&envelope(
+            &case["steps"],
+            &case["states"],
+            Some(&shared["feature_names"]),
+            None,
+        ))
+        .unwrap();
+        let permuted = methods_case(&shared, "feature_name_permutation");
+        let permuted_names = super::tests::names(&permuted["feature_names"]);
+        let error = pipeline
+            .predict(&x_test, m, Some(&refs(&permuted_names)))
+            .unwrap_err();
+        assert_refused(&error, permuted["message"].as_str().unwrap());
+        let narrow: Vec<f64> = x_test
+            .chunks(p)
+            .flat_map(|row| row[..p - 1].to_vec())
+            .collect();
+        let error = pipeline.predict(&narrow, m, None).unwrap_err();
+        assert_refused(
+            &error,
+            methods_case(&shared, "width_mismatch")["message"]
+                .as_str()
+                .unwrap(),
+        );
+
+        let y = RoleTarget::Values {
+            data: numbers(&shared["y_train"]),
+            cols: 1,
+        };
+        let fitted = N4mRolePipeline::fit_recipe(
+            &json!({"pipeline": case["steps"]}),
+            &x,
+            n,
+            p,
+            Some(&refs(&names)),
+            &y,
+        )
+        .unwrap();
+        let replayed = N4mRolePipeline::from_json(&fitted.to_json(false).unwrap()).unwrap();
+        assert_eq!(replayed.feature_names(), Some(names.as_slice()));
+        let error = replayed
+            .predict(&x_test, m, Some(&refs(&permuted_names)))
+            .unwrap_err();
+        assert_refused(&error, "reordered");
+    }
+
+    #[test]
+    fn training_rows_need_the_export_opt_in() {
+        if !configured() {
+            return;
+        }
+        let shared = methods_fixture();
+        let case = methods_case(&shared, "training_rows_without_opt_in");
+        let (x, n, p) = rows(&shared["x_train"]);
+        let (x_test, m, _) = rows(&shared["x_test"]);
+        let y = RoleTarget::Values {
+            data: numbers(&shared[case["y"].as_str().unwrap()]),
+            cols: 1,
+        };
+        let fitted =
+            N4mRolePipeline::fit_recipe(&json!({"pipeline": case["steps"]}), &x, n, p, None, &y)
+                .unwrap();
+        assert_refused(
+            &fitted.to_json(false).unwrap_err(),
+            case["message"].as_str().unwrap(),
+        );
+        let text = fitted.to_json(true).unwrap();
+        assert_eq!(training_row_flags(&text), [false, true]);
+        let replayed = N4mRolePipeline::from_json(&text).unwrap();
+        assert_eq!(
+            replayed.predict(&x_test, m, None).unwrap(),
+            fitted.predict(&x_test, m, None).unwrap()
+        );
+    }
+
+    #[test]
+    fn tampered_or_foreign_envelopes_are_refused() {
+        if !configured() {
+            return;
+        }
+        let source = fixture(include_str!(
+            "../tests/parity/fixtures/n4m_roles_v8_python_trained.json"
+        ))["regression"]["envelope"]
+            .clone();
+        let mut other = source.clone();
         other["schema"] = json!("nirs4all.n4m.trained_pipeline.v7");
-        assert!(N4mRolePipeline::from_json(&other.to_string()).is_err());
-        let mut tampered = envelope.clone();
+        assert_refused(
+            &fails(N4mRolePipeline::from_json(&other.to_string())),
+            "unsupported trained n4m pipeline envelope",
+        );
+        let mut tampered = source.clone();
         tampered["states"][0]["sha256"] = json!("0".repeat(64));
-        assert!(N4mRolePipeline::from_json(&tampered.to_string())
-            .err()
-            .unwrap()
-            .contains("checksum"));
-        let mut missing = envelope;
-        missing["states"].as_array_mut().unwrap().pop();
-        assert!(N4mRolePipeline::from_json(&missing.to_string()).is_err());
+        assert_refused(
+            &fails(N4mRolePipeline::from_json(&tampered.to_string())),
+            "fails its checksum",
+        );
+        let mut relabelled = source.clone();
+        relabelled["states"][0]["method_id"] = json!("preprocessing.scatter.msc");
+        assert_refused(
+            &fails(N4mRolePipeline::from_json(&relabelled.to_string())),
+            "does not match its recipe step",
+        );
+        let mut narrow = source;
+        narrow["n_features"] = json!(3);
+        assert_refused(
+            &fails(N4mRolePipeline::from_json(&narrow.to_string())),
+            "n_features",
+        );
     }
 
     #[test]

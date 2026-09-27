@@ -483,6 +483,12 @@ fn configure_methods_library_identity(
     let abi_error = MethodsRuntime::configure(&snapshot_path)
         .err()
         .map(|error| format!("cannot configure the attested Methods runtime: {error}"));
+    // Core's own n4m instance (the ABI 2.14 role pipelines) serves the same
+    // snapshot. An older libn4m still replays Archive V2 but cannot load the
+    // role-pipeline symbols; role recipes then report the unconfigured runtime.
+    if abi_error.is_none() {
+        let _ = n4m::configure_library(&snapshot_path);
+    }
     *configured = Some(ConfiguredMethodsLibrary {
         source_canonical_path: attested.source_canonical_path,
         sha256: attested.sha256,
