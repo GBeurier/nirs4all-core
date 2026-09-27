@@ -749,6 +749,9 @@ test('native X augmentation parses the closed 22-kind R contract', () => {
   const reordered = augmentedDefinition('gaussian_noise', [0.03]);
   reordered.pipeline.unshift({ class: 'nirs4all.operators.transforms.StandardNormalVariate' });
   assert.throws(() => parseExecutionPlan(reordered), /before preprocessing/);
+  const afterMsc = augmentedDefinition('gaussian_noise', [0.03]);
+  afterMsc.pipeline.unshift({ class: 'n4m.MSC' });
+  assert.throws(() => parseExecutionPlan(afterMsc), /before preprocessing/);
   const duplicate = augmentedDefinition('gaussian_noise', [0.03]);
   duplicate.pipeline.splice(1, 0, duplicate.pipeline[0]);
   assert.throws(() => parseExecutionPlan(duplicate), /once/);
