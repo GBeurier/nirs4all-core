@@ -2,13 +2,20 @@
 
 A recipe step is the language-neutral token ``"n4m:<catalog method id>"`` (or
 ``{"class": "n4m:<id>", "params": {...}}``), resolved through the
-``nirs4all-methods`` manifest (``n4m.roles.method_class``). Parameters, fitting,
-numerics and the portable N4ME state stay in Methods; this module orders the
-steps and reads/writes the envelope shared with the full Python ``nirs4all``,
-the R package and the Rust and JS/WASM bindings.
+``nirs4all-methods`` manifest. The recipe (sample filters, transformers and
+selectors, then one regressor or classifier) runs in the native role pipeline
+of Methods (``n4m.roles.RolePipeline``, ABI 2.14), which validates the recipe,
+routes every target column to the steps that need it, keeps filters on the
+training rows, checks the input column names and refuses states that
+contradict the recipe. This module only reads and writes the envelope shared
+with the full Python ``nirs4all``, the R package and the Rust and JS/WASM
+bindings.
 
-Recipe steps, in order: sample filters (training rows only, no state),
-transformers and selectors, then one regressor or classifier.
+The envelope holds ``schema``, ``recipe``, ``n_features``, ``feature_names``
+(the fitted column names, when the fit had names) and one entry per stateful
+step: ``method_id``, ``n4me_base64``, ``sha256``, ``contains_training_rows``
+and, for a classifier trained on label names, ``class_names``. Envelopes
+written before ``feature_names`` and ``contains_training_rows`` still load.
 """
 
 from __future__ import annotations
@@ -30,8 +37,8 @@ def _roles():
         from n4m import roles
     except ImportError as exc:  # pragma: no cover - exercised by optional installs
         raise ImportError(
-            "n4m role recipes require the nirs4all-methods Python binding with ABI 2.13 "
-            "estimator roles. Install `nirs4all-core[methods]`."
+            "n4m role recipes require the nirs4all-methods Python binding with ABI 2.14 "
+            "role pipelines. Install `nirs4all-core[methods]`."
         ) from exc
     return roles
 
@@ -73,13 +80,16 @@ def n4m_role_capabilities() -> tuple[dict[str, Any], ...]:
     )
 
 
-def _step(token: Any) -> Any:
-    name = token["class"] if isinstance(token, dict) else token
-    method_id = n4m_role_method_id(name)
-    if method_id is None:
-        raise ValueError(f"n4m role recipes contain n4m:<method id> steps only, got {token!r}")
-    params = (token.get("params") or {}) if isinstance(token, dict) else {}
-    return _roles().method_class(method_id)(**params)
+def _steps(recipe: Any) -> list[Any]:
+    """The recipe tokens, each an ``n4m:<method id>`` step."""
+
+    pipeline = recipe.get("pipeline") if isinstance(recipe, dict) else None
+    if not isinstance(pipeline, list):
+        raise ValueError('an n4m role recipe is {"pipeline": [n4m:<method id> steps]}')
+    for token in pipeline:
+        if n4m_role_method_id(token["class"] if isinstance(token, dict) else token) is None:
+            raise ValueError(f"n4m role recipes contain n4m:<method id> steps only, got {token!r}")
+    return pipeline
 
 
 class N4mRolePipeline:
@@ -87,111 +97,109 @@ class N4mRolePipeline:
 
     Args:
         recipe: ``{"pipeline": [step tokens]}``.
-        estimators: The fitted transformers / selectors and the final model,
-            in recipe order (filters excluded).
-        n_features: Input width.
+        pipeline: The fitted native ``n4m.roles.RolePipeline`` of that recipe
+            (also used for ``transform``, ``decision_function``,
+            ``predict_proba`` and ``steps_info_``).
     """
 
-    def __init__(self, recipe: dict[str, Any], estimators: list[Any], n_features: int) -> None:
+    def __init__(self, recipe: dict[str, Any], pipeline: Any) -> None:
         self.recipe = recipe
-        self.estimators = estimators
-        self.n_features = n_features
+        self.pipeline = pipeline
+
+    @property
+    def n_features(self) -> int:
+        """Input width."""
+
+        return int(self.pipeline.n_features_in_)
+
+    @property
+    def feature_names(self) -> list[str] | None:
+        """Fitted input column names, in order (None: positional input)."""
+
+        names = getattr(self.pipeline, "feature_names_in_", None)
+        return None if names is None else [str(name) for name in names]
 
     @classmethod
     def fit_recipe(cls, recipe: dict[str, Any], X: Any, y: Any) -> N4mRolePipeline:
-        """Fit every step of ``recipe`` natively on ``X``, ``y``."""
+        """Fit ``recipe`` natively on ``X`` (DataFrame column names are kept) and ``y``.
 
-        import numpy as np
+        ``y`` holds the responses of a final regressor (one or several
+        columns) or the labels of a final classifier.
+        """
 
-        roles = _roles()
-        steps = [_step(token) for token in recipe["pipeline"]]
-        if not steps or not isinstance(steps[-1], (roles.NativeRegressor, roles.NativeClassifier)):
-            raise ValueError("an n4m role recipe ends with one regressor or classifier")
-        values = np.asarray(X, dtype=np.float64)
-        targets = np.asarray(y)
-        n_features = values.shape[1]
-        fitted: list[Any] = []
-        for step in steps[:-1]:
-            # Intermediate steps see y only when their method requires it.
-            step_y = targets if step.input_requirements()["y"] == "required" else None
-            if isinstance(step, roles.NativeSampleFilter):
-                keep = step.fit(values, step_y).get_mask(values, step_y)
-                values, targets = values[keep], targets[keep]
-            elif isinstance(step, (roles.NativeTransformer, roles.NativeSelector)):
-                values = step.fit(values, step_y).transform(values)
-                fitted.append(step)
-            else:
-                raise ValueError(f"{type(step).__name__} is not a portable pipeline step")
-        fitted.append(steps[-1].fit(values, targets))
-        return cls(recipe, fitted, n_features)
+        return cls(recipe, _roles().RolePipeline(_steps(recipe)).fit(X, y))
 
     @classmethod
     def from_json(cls, source: str | Path) -> N4mRolePipeline:
-        """Read a v8 envelope (JSON text or path) and rebuild its estimators."""
+        """Read a v8 envelope (JSON text or path) and rebuild its fitted pipeline."""
 
-        import numpy as np
-
-        roles = _roles()
         if isinstance(source, Path) or not source.lstrip().startswith("{"):
             source = Path(source).read_text(encoding="utf-8")
         document = json.loads(source)
         if not isinstance(document, dict) or document.get("schema") != N4M_TRAINED_PIPELINE_SCHEMA:
             raise ValueError("unsupported trained n4m pipeline envelope")
         recipe, states = document["recipe"], document["states"]
-        stateful = [step for step in map(_step, recipe["pipeline"]) if not isinstance(step, roles.NativeSampleFilter)]
-        if len(states) != len(stateful):
-            raise ValueError("envelope states do not match the recipe steps")
-        estimators = []
-        for step, state in zip(stateful, states, strict=True):
+        payloads = []
+        for state in states:
             payload = base64.b64decode(state["n4me_base64"], validate=True)
             if hashlib.sha256(payload).hexdigest() != state["sha256"]:
                 raise ValueError(f"N4ME state of {state['method_id']} fails its checksum")
-            estimator = roles.NativeEstimator.from_n4me(payload)
-            if not state["method_id"] == estimator._method_id == step._method_id:
+            payloads.append(payload)
+        feature_names = document.get("feature_names")
+        if feature_names is not None and not (isinstance(feature_names, list) and all(isinstance(name, str) for name in feature_names)):
+            raise ValueError("feature_names must be a list of strings")
+        class_names = states[-1].get("class_names") if states else None
+        pipeline = _roles().RolePipeline.from_states(_steps(recipe), payloads, feature_names, class_names)
+        fitted = [step for step in pipeline.steps_info_ if step["state_index"] >= 0]
+        for step, state in zip(fitted, states, strict=True):
+            if state["method_id"] != step["method_id"]:
                 raise ValueError(f"N4ME state {state['method_id']} does not match its recipe step")
-            if "class_names" in state:
-                estimator._label_names_ = np.asarray(state["class_names"])
-            estimators.append(estimator)
-        return cls(recipe, estimators, int(document["n_features"]))
+            if state.get("contains_training_rows", step["contains_training_rows"]) != step["contains_training_rows"]:
+                raise ValueError(f"contains_training_rows of {state['method_id']} contradicts its N4ME state")
+        if int(document["n_features"]) != pipeline.n_features_in_:
+            raise ValueError(f"n_features is {document['n_features']} but the states take {pipeline.n_features_in_} columns")
+        return cls(recipe, pipeline)
 
-    def to_json(self, file: str | Path | None = None) -> str:
-        """The v8 envelope; also written to ``file`` when given."""
+    def to_json(self, file: str | Path | None = None, *, allow_training_rows: bool = False) -> str:
+        """The v8 envelope; also written to ``file`` when given.
 
-        states = []
-        for estimator in self.estimators:
-            payload = estimator.to_n4me(allow_training_rows=True)
-            state = {
-                "method_id": estimator._method_id,
+        A state that embeds training rows (kernel PLS, LW-PLS, ...) is
+        refused unless ``allow_training_rows`` is set.
+        """
+
+        states = [
+            {
+                "method_id": method_id,
                 "n4me_base64": base64.b64encode(payload).decode("ascii"),
                 "sha256": hashlib.sha256(payload).hexdigest(),
+                "contains_training_rows": contains_training_rows,
             }
-            # Classifier label names (N4ME holds integer class ids only).
-            names = getattr(estimator, "_label_names_", None)
-            if names is not None:
-                state["class_names"] = names.tolist()
-            states.append(state)
-        document = {
+            for method_id, payload, contains_training_rows in self.pipeline.export_states(allow_training_rows=allow_training_rows)
+        ]
+        # Classifier label names (N4ME holds integer class ids only).
+        class_names = getattr(self.pipeline, "_label_names_", None)
+        if class_names is not None:
+            states[-1]["class_names"] = class_names.tolist()
+        document: dict[str, Any] = {
             "schema": N4M_TRAINED_PIPELINE_SCHEMA,
             "recipe": self.recipe,
             "n_features": self.n_features,
-            "states": states,
         }
+        if self.feature_names is not None:
+            document["feature_names"] = self.feature_names
+        document["states"] = states
         text = json.dumps(document, indent=1)
         if file is not None:
             Path(file).write_text(text + "\n", encoding="utf-8")
         return text
 
     def predict(self, X: Any) -> Any:
-        """Predictions (regressor) or class labels (classifier) of the final model."""
+        """Predictions (regressor) or class labels (classifier) of the final model.
 
-        import numpy as np
+        A DataFrame is checked against the fitted column names and order.
+        """
 
-        values = np.asarray(X, dtype=np.float64)
-        if values.ndim != 2 or values.shape[1] != self.n_features:
-            raise ValueError(f"expected {self.n_features} input columns")
-        for step in self.estimators[:-1]:
-            values = step.transform(values)
-        return self.estimators[-1].predict(values)
+        return self.pipeline.predict(X)
 
     def retrain(self, X: Any, y: Any) -> N4mRolePipeline:
         """Fit the same recipe afresh on new training rows."""

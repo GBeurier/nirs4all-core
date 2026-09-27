@@ -89,17 +89,24 @@ in the Methods manifest (`n4m.roles.method_class`); `n4m_role_capabilities()`
 lists the usable steps from that manifest.
 
 `N4mRolePipeline` fits such a recipe (sample filters on training rows only,
-transformers and selectors, then one regressor or classifier) and reads/writes
-the `nirs4all.n4m.trained_pipeline.v8` envelope, so a pipeline trained in any
+transformers and selectors, then one regressor or classifier) in the native
+Methods role pipeline (`n4m.roles.RolePipeline`) and reads/writes the
+`nirs4all.n4m.trained_pipeline.v8` envelope, so a pipeline trained in any
 binding predicts identically here:
 
 ```python
 import nirs4all_core as n4core
 
-fitted = n4core.N4mRolePipeline.fit_recipe(recipe, X_train, y_train)
+fitted = n4core.N4mRolePipeline.fit_recipe(recipe, X_train_frame, y_train)
 fitted.to_json("trained-v8.json")
-predictions = n4core.N4mRolePipeline.from_json("trained-v8.json").predict(X_new)
+predictions = n4core.N4mRolePipeline.from_json("trained-v8.json").predict(X_new_frame)
 ```
 
-It requires `nirs4all-methods` with ABI 2.13 estimator roles (1.1.0 or later).
+Every target column reaches the steps that need `y`. DataFrame column names are
+stored (`feature_names` in the envelope) and a DataFrame with renamed or
+reordered columns is refused; arrays are positional. The native import refuses
+states that contradict the recipe. A state that embeds training rows (kernel
+PLS, LW-PLS, ...) is written only with `to_json(..., allow_training_rows=True)`
+and flagged `contains_training_rows`. Envelopes written before these two fields
+still load. It requires `nirs4all-methods` 1.2.0 or later (ABI 2.14).
 

@@ -28,6 +28,8 @@ include = [
     "tests/parity/fixtures/execution_contract_cases.json",
     "tests/parity/fixtures/n4m_roles_v8_python_trained.json",
     "tests/parity/fixtures/n4m_roles_v8_r_trained.json",
+    "tests/parity/fixtures/n4m_roles_v8_python_named.json",
+    "tests/parity/fixtures/n4m_role_pipeline_methods.json",
     "tests/parity/expected/portable_python_oracle.json",
     "tests/parity/expected/n4m_roles_v8_r_trained_oracle.json",
 ]
@@ -50,7 +52,7 @@ dag_ml_core = { package = "dag-ml-core", version = "=0.3.28", features = ["metho
 dag_ml_data_crate = { package = "dag-ml-data", version = "=0.2.12" }
 dag_ml_data_provider_crate = { package = "dag-ml-data-provider", version = "=0.2.12" }
 libloading = "0.8"
-n4m = { version = "=0.2.0", features = ["dynamic"], default-features = false }
+n4m = { version = "=0.3.0", features = ["dynamic"], default-features = false }
 nirs4all_formats_crate = { package = "nirs4all-formats", version = "=0.2.9", default-features = false }
 nirs4all_io_crate = { package = "nirs4all-io", version = "=0.1.18" }
 nirs4all_io_dagml = { package = "nirs4all-io-dagml", version = "=0.1.18" }

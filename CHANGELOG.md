@@ -8,6 +8,39 @@ binding manifest.
 
 ## [Unreleased]
 
+### Changed
+
+- `N4mRolePipeline` (Python, Rust, JS/WASM) is a thin wrapper over the native
+  Methods role pipeline (`n4m.roles.RolePipeline`, `n4m::roles::RolePipeline`,
+  `RolePipeline`, Methods ABI 2.14): recipe validation, fit routing, feature
+  identity and recipe/state consistency are native, the three bindings keep
+  only the v8 envelope JSON. This fixes, on the Core side, the 2026-09-27
+  integration audit findings F03 (column identity: names are stored and a
+  renamed or reordered column is refused), F05 (an envelope whose recipe
+  contradicts its states, or an empty pipeline, is refused on import), F06
+  (WASM passes every target column to supervised intermediate steps) and F10
+  (exporting a state that embeds training rows needs an explicit opt-in:
+  Python `to_json(allow_training_rows=True)`, JS
+  `toJSON({ allowTrainingRows: true })`, Rust `to_json(true)`).
+- The `nirs4all.n4m.trained_pipeline.v8` envelope gains two additive fields:
+  top-level `feature_names` (written when the fit had column names) and
+  per-state `contains_training_rows`. Envelopes without them still load.
+- Rust API: `N4mRolePipeline::fit_recipe` and `predict` take optional feature
+  names, `to_json` takes the training-row opt-in; `feature_names()` and
+  `pipeline()` are new. JS: datasets take `featureNames`; `featureNames` and
+  `pipeline` are new. Python: `feature_names` and `pipeline` are new;
+  `estimators` is gone.
+- Requires Methods 1.2.0 (`nirs4all-methods>=1.2.0,<2`, npm
+  `@nirs4all/methods ^1.2.0`, crate `n4m =0.3.0`).
+
+### Added
+
+- Parity fixtures `n4m_role_pipeline_methods.json` (the Methods shared
+  role-pipeline fixture) and `n4m_roles_v8_python_named.json` (a
+  Python-trained envelope with `feature_names` and a kernel PLS state
+  exported with the training-row opt-in), replayed with the same negative
+  cases by the Python, Rust and JS/WASM suites.
+
 ## [0.3.36] - 2026-09-27
 
 ### Added

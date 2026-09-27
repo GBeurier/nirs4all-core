@@ -42,16 +42,19 @@ the portable subset is checked; `load_pipeline_definition_str()` resolves it
 through the native n4m manifest (`n4m::roles`), and `n4m_role_capabilities()`
 lists the manifest methods usable as recipe steps. `N4mRolePipeline` fits such
 a recipe (sample filters, transformers and selectors, then one regressor or
-classifier) and reads/writes the `nirs4all.n4m.trained_pipeline.v8` envelope,
+classifier) in the native role pipeline (`n4m::roles::RolePipeline`, Methods
+ABI 2.14) and reads/writes the `nirs4all.n4m.trained_pipeline.v8` envelope,
 whose per-step N4ME states replay identically in the Python, R and JS/WASM
-bindings. Select the runtime with `n4m::configure_library()` or
-`N4M_LIBRARY_PATH`.
+bindings. With feature names, a prediction given renamed or reordered columns
+is refused; a state embedding training rows is written only with
+`to_json(true)`. Select the runtime with `n4m::configure_library()` or
+`N4M_LIBRARY_PATH` (ABI 2.14 or later).
 
 ```rust
-let fitted = nirs4all::N4mRolePipeline::fit_recipe(&recipe, &x, rows, cols, &y)?;
-let envelope = fitted.to_json()?;
+let fitted = nirs4all::N4mRolePipeline::fit_recipe(&recipe, &x, rows, cols, Some(&names), &y)?;
+let envelope = fitted.to_json(false)?;
 let replayed = nirs4all::N4mRolePipeline::from_json(&envelope)?;
-let predictions = replayed.predict(&x_new, new_rows)?;
+let predictions = replayed.predict(&x_new, new_rows, Some(&names))?;
 ```
 
 ## Archive V1

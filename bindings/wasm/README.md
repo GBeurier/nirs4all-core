@@ -142,22 +142,29 @@ class names above; `n4mRoleCapabilities()` lists the usable steps from the
 same manifest instead of a hand-maintained list.
 
 `N4mRolePipeline` fits such a recipe (sample filters on training rows only,
-transformers and selectors, then one regressor or classifier) through the
-Methods `NativeEstimator` roles and reads/writes the
-`nirs4all.n4m.trained_pipeline.v8` envelope (`{schema, recipe, n_features,
-states: [{method_id, n4me_base64, sha256, class_names?}]}`). A pipeline trained
-in Python or R replays in the browser from its N4ME states (level L2):
+transformers and selectors, then one regressor or classifier) in the native
+Methods `RolePipeline`, which validates the recipe, passes every target column
+to the steps that need `y`, checks the column names and refuses states that
+contradict the recipe. It reads/writes the `nirs4all.n4m.trained_pipeline.v8`
+envelope (`{schema, recipe, n_features, feature_names?, states: [{method_id,
+n4me_base64, sha256, contains_training_rows, class_names?}]}`); envelopes
+without `feature_names` / `contains_training_rows` still load. A pipeline
+trained in Python or R replays in the browser from its N4ME states (level L2):
 
 ```js
 import { N4mRolePipeline } from 'nirs4all';
 
 const fitted = await N4mRolePipeline.fromJSON(envelopeText);
-const { data } = fitted.predict({ X, rows, cols });          // regressor
-const { labels } = classifier.predict({ X, rows, cols });    // classifier
-const text = JSON.stringify(await N4mRolePipeline.fit(recipe, { X, rows, cols, y }));
+const { data } = fitted.predict({ X, rows, cols, featureNames }); // regressor
+const { labels } = classifier.predict({ X, rows, cols });          // classifier
+const trained = await N4mRolePipeline.fit(recipe, { X, rows, cols, y, featureNames });
+const text = JSON.stringify(trained.toJSON({ allowTrainingRows: false }));
 ```
 
-This path requires `@nirs4all/methods` with ABI 2.13 estimator roles.
+With `featureNames`, renamed or reordered columns are refused. A state that
+embeds training rows (kernel PLS, LW-PLS, ...) is exported only with
+`toJSON({ allowTrainingRows: true })`. This path requires `@nirs4all/methods`
+1.2 (ABI 2.14 role pipelines).
 
 Custom app hosts can inspect `capabilityManifest()`, `controllerCapabilities`,
 `runtimeSurfaces`, and `runtimeContracts` before rendering graph nodes or

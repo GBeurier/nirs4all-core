@@ -118,9 +118,14 @@ executing binding fits and replays role recipes through the
 | JavaScript/WASM | `@nirs4all/methods` `methodClass` | `N4mRolePipeline.fit()` / `.fromJSON()` | `bindings/wasm/tests/n4m-roles.test.js` |
 | MATLAB/Octave | not yet (the `+n4m` MATLAB binding has no role manifest) | — | — |
 
-The gates replay the Python- and R-trained fixture envelopes
-(`tests/parity/fixtures/n4m_roles_v8_*`) within 1e-12 and round-trip an
-envelope trained in the binding itself.
+Every binding wraps the native Methods role pipeline (ABI 2.14), which owns
+recipe validation, target routing, feature identity and recipe/state
+consistency; the bindings keep only the envelope JSON (including the additive
+`feature_names` and per-state `contains_training_rows`). The gates replay the
+Python- and R-trained fixture envelopes (`tests/parity/fixtures/n4m_roles_v8_*`)
+within 1e-12, round-trip an envelope trained in the binding itself, and replay
+the Methods shared fixture (`n4m_role_pipeline_methods.json`) with identical
+negative cases.
 
 ## Native Archive V2 execution and presentation
 
