@@ -8,11 +8,16 @@ binding manifest.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-27
+
+Requires Methods 1.2.1 (ABI 2.14, crate `n4m` 0.3.0) and DAG-ML 0.3.30. Minor
+bump: the Rust `RolePredictions::Labels` now holds `ClassLabel` values
+(breaking for Rust callers matching on it).
+
 ### Fixed
 
 Core side of the 2026-09-27 n4m re-audit (R04, R05, R14, R16), following the
-shared label/input contract; the checks hold against the released Methods
-1.2.0.
+shared label/input contract.
 
 - JS/WASM: nested `X` rows (`flattenMatrix`, used by `N4mRolePipeline` and the
   portable execution) and nested `y` rows of `N4mRolePipeline.fit` are
