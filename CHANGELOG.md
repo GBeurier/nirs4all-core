@@ -24,7 +24,8 @@ shared label/input contract; the checks hold against the released Methods
   `cols`.
 - `class_names` of a v8 envelope is checked on import in Python, JS/WASM and
   Rust: a non-empty list of unique labels, all strings or all finite numbers
-  (no null, NaN, ±Inf, boolean or mix of both) that labels every native class id of the fitted
+  (no null, NaN, ±Inf, boolean or mix of both; an integral number beyond
+  ±2^53 is refused rather than rounded into another label) that labels every native class id of the fitted
   classifier (`0 <= id < len`; a longer table keeps labels a filter removed),
   and only on a final classifier. `[]`, `["only"]` and duplicated names used
   to import, then fail or merge at predict (R05). Python also refuses a

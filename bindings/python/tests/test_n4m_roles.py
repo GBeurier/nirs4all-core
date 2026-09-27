@@ -268,6 +268,9 @@ class N4mRoleRecipeTests(unittest.TestCase):
         self.assertEqual(json.loads(numeric.to_json())["states"][-1]["class_names"], [0.5, 1.5])
         with self.assertRaisesRegex(ValueError, "class_names mixes strings and numbers"):
             n4core.N4mRolePipeline.from_json(_with_class_names(source, ["high", 2]))
+        for inexact in (2**53 + 1, 1e17):
+            with self.subTest(inexact), self.assertRaisesRegex(ValueError, "not exactly representable as float64"):
+                n4core.N4mRolePipeline.from_json(_with_class_names(source, [inexact, 1.5]))
 
         # States fitted on class ids 10 and 20 have no entry in a two-label table.
         ids = [10 if label == "high" else 20 for label in PYTHON_TRAINED["classification"]["y_train"]]

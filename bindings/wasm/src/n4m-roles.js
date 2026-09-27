@@ -295,6 +295,10 @@ function checkLabelTable(names) {
   if (new Set(names.map((name) => typeof name)).size > 1) {
     throw new TypeError('class_names mixes strings and numbers.');
   }
+  const inexact = names.find((name) => Number.isInteger(name) && Math.abs(name) > 2 ** 53);
+  if (inexact !== undefined) {
+    throw new RangeError(`class label ${inexact} is not exactly representable as float64 (beyond ±2^53).`);
+  }
 }
 
 async function sha256Hex(bytes) {
