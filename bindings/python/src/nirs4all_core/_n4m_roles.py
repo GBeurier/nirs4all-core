@@ -177,7 +177,7 @@ class N4mRolePipeline:
             for method_id, payload, contains_training_rows in self.pipeline.export_states(allow_training_rows=allow_training_rows)
         ]
         # Classifier label names (N4ME holds integer class ids only).
-        class_names = getattr(self.pipeline, "_label_names_", None)
+        class_names = self.pipeline.label_names_
         if class_names is not None:
             states[-1]["class_names"] = class_names.tolist()
         document: dict[str, Any] = {
