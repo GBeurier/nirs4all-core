@@ -1,0 +1,60 @@
+{
+  "oracle_provenance": {
+    "native": "nirs4all-methods ABI 2.11 JS/WASM build from 4cbbd5ae, seed 42, 8x32 row-major fixture",
+    "r": "nirs4all-methods e1a3313 bindings/js/test/run_native_augmentation.mjs frozen n4m-R oracle"
+  },
+  "cases": [
+    ["gaussian_noise", "GaussianNoise", [0.03]],
+    ["multiplicative_noise", "MultiplicativeNoise", [0.03]],
+    ["spike_noise", "SpikeNoise", [1, 2, 0.1, 0.2]],
+    ["hetero_noise", "HeteroNoise", [0.01, 0.02]],
+    ["linear_drift", "LinearDrift", [0.01, 0.02, 0.001, 0.002]],
+    ["path_length", "PathLength", [0.05, 0.5]],
+    ["band_perturb", "BandPerturb", [1, 2, 4, 0.9, 1.1, -0.01, 0.01]],
+    ["band_mask", "BandMask", [1, 1, 2, 4, 0]],
+    ["channel_dropout", "ChannelDropout", [0.1, 0]],
+    ["gauss_jitter", "GaussJitter", [0.5, 1, 5]],
+    ["unsharp_mask", "UnsharpMask", [0.1, 0.2, 1, 5]],
+    ["local_clip", "LocalClip", [1, 2, 4]],
+    ["rotate_translate", "RotateTranslate", [0.05, 0.05]],
+    ["random_x_op", "RandomXOp", [0, 0.9, 1.1]],
+    ["scatter_sim_msc", "ScatterSimMSC", [0.9, 1.1, -0.01, 0.01]],
+    ["dead_band", "DeadBand", [1, 2, 4, 0.01, 0.5, 0]],
+    ["batch_effect", "BatchEffect", [0.01, 0.01, 0.01, 0]],
+    ["spline_smoothing", "SplineSmoothing", []],
+    ["spline_x_perturb", "SplineXPerturb", [3, 0.2, -0.1, 0.1]],
+    ["spline_y_perturb", "SplineYPerturb", [4, 0.1]],
+    ["spline_x_simplify", "SplineXSimplify", [8, 1]],
+    ["spline_curve_simplify", "SplineCurveSimplify", [8, 1]]
+  ],
+  "native_oracle": {
+    "gaussian_noise": [335.29953033891439, 447.93442481713896],
+    "multiplicative_noise": [332.23377240448161, 440.11311378275218],
+    "spike_noise": [337.22713664081965, 453.46087949824152],
+    "hetero_noise": [335.02754166699390, 447.70392801623387],
+    "linear_drift": [339.64345732610258, 460.70886900241590],
+    "path_length": [330.14962067413620, 435.28259500751966],
+    "band_perturb": [335.45486514881992, 448.45605777483297],
+    "band_mask": [313.52000000000004, 417.70719999999977],
+    "channel_dropout": [308.34000000000009, 412.66119999999984],
+    "gauss_jitter": [335.36000000000001, 447.92942338135430],
+    "unsharp_mask": [335.36000000000001, 448.06645645123643],
+    "local_clip": [335.34400000000011, 448.00931199999985],
+    "rotate_translate": [1107.5001376812793, 5729.1724184396417],
+    "random_x_op": [335.27264829118417, 449.47285897480720],
+    "scatter_sim_msc": [264.88033265406841, 274.76085353952516],
+    "dead_band": [322.36826130320253, 430.94828673135595],
+    "batch_effect": [334.74922700964510, 446.59279091944080],
+    "spline_smoothing": [335.36000000000007, 448.05119999999982],
+    "spline_x_perturb": [335.32596744464394, 447.94217484919562],
+    "spline_y_perturb": [367.58505944257342, 537.91933822567410],
+    "spline_x_simplify": [335.36000000000007, 448.05119999999982],
+    "spline_curve_simplify": [335.36000000000007, 448.05119999999982]
+  },
+  "r_oracle": {
+    "gaussian_noise": [335.29953033891428, 447.93442481713896, [1.0016880886187998, 1.0142386382315953, 1.0441573912549518, 1.0652105927054174]],
+    "band_mask": [313.51999999999998, 417.7072, [1, 1.02, 1.04, 1.06]],
+    "scatter_sim_msc": [264.88033265406824, 274.76085353952521, [1.0473534823647035, 1.0472047278177739, 1.047055973270844, 1.0469072187239143]],
+    "spline_x_perturb": [335.32596744464371, 447.94217484919568, [0.9988897753638542, 1.0191525993091798, 1.0394154232551045, 1.0596782472007296]]
+  }
+}
