@@ -6,7 +6,7 @@
 [[upstream]]
 key = "dag_ml"
 repo = "GBeurier/dag-ml"
-ref = "d351c33caf7264a9ed5faf7ad6223c5b492b9fb1"
+ref = "4ebc1fdaec898407af40ad372b8153d4dda0431f"
 role = "Leakage-safe DAG/ML execution coordinator"
 bindings = ["rust", "c", "python", "r", "matlab", "octave", "wasm"]
 python_imports = ["dag_ml"]
@@ -27,7 +27,7 @@ wasm_packages = ["dag-ml-data-wasm"]
 [[upstream]]
 key = "formats"
 repo = "GBeurier/nirs4all-formats"
-ref = "9ddb8f5851b37b03e57736ea06198991eff0c109"
+ref = "3e5a05674dfab4bbcebf23fe9d615d231ca4d551"
 role = "Spectroscopy/NIRS vendor file readers"
 bindings = ["rust", "python", "r", "wasm", "c"]
 python_imports = ["nirs4all_formats", "nirs4all.formats"]

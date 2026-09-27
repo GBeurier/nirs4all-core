@@ -45,8 +45,8 @@ default = []
 datasets = []
 [dependencies]
 base64 = "0.23"
-dag_ml_crate = { package = "dag-ml", version = "=0.3.27" }
-dag_ml_core = { package = "dag-ml-core", version = "=0.3.27", features = ["methods-optimizer"] }
+dag_ml_crate = { package = "dag-ml", version = "=0.3.28" }
+dag_ml_core = { package = "dag-ml-core", version = "=0.3.28", features = ["methods-optimizer"] }
 dag_ml_data_crate = { package = "dag-ml-data", version = "=0.2.12" }
 dag_ml_data_provider_crate = { package = "dag-ml-data-provider", version = "=0.2.12" }
 libloading = "0.8"
