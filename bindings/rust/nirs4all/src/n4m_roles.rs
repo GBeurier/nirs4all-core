@@ -7,7 +7,10 @@
 //! exchanges every fitted step as its native N4ME state, so the Python, R,
 //! JS/WASM and Rust bindings replay one another's pipelines. Parameters,
 //! role checks and all numerics stay in libn4m; the runtime is selected with
-//! `n4m::configure_library` or `N4M_LIBRARY_PATH`.
+//! `n4m::configure_library` or `N4M_LIBRARY_PATH`. A process fixes a single
+//! libn4m file, so a process that also replays Archive V2 selects it once
+//! through [`crate::preflight_methods_archive_v2_library`], whose attested
+//! snapshot then serves both the role recipes and the replay.
 
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine as _;
@@ -543,7 +546,12 @@ mod tests {
     fn configured() -> bool {
         match std::env::var("NIRS4ALL_METHODS_LIB") {
             Ok(path) => {
-                n4m::configure_library(path).expect("NIRS4ALL_METHODS_LIB must name libn4m");
+                // Share the attested process identity of the Archive V2 tests
+                // that run in this binary instead of a second libn4m file.
+                crate::native_methods_replay::configure_methods_runtime_for_source(
+                    std::path::Path::new(&path),
+                )
+                .expect("NIRS4ALL_METHODS_LIB must name libn4m");
                 true
             }
             Err(error) => {
