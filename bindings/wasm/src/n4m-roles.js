@@ -279,7 +279,7 @@ function checkColumnNames(names) {
   }
 }
 
-// A label table (index = class id): non-empty, unique strings or finite numbers.
+// A label table (index = class id): non-empty, unique, all strings or all finite numbers.
 function checkLabelTable(names) {
   if (!Array.isArray(names) || names.length === 0) {
     throw new TypeError('class_names must be a non-empty list of labels.');
@@ -291,6 +291,9 @@ function checkLabelTable(names) {
     }
     if (seen.has(name)) throw new TypeError(`class label ${JSON.stringify(name)} is duplicated.`);
     seen.add(name);
+  }
+  if (new Set(names.map((name) => typeof name)).size > 1) {
+    throw new TypeError('class_names mixes strings and numbers.');
   }
 }
 

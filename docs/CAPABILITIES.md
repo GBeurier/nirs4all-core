@@ -128,7 +128,7 @@ the Methods shared fixture (`n4m_role_pipeline_methods.json`) with identical
 negative cases. The envelope fields a binding reads itself are checked the same
 way in the three bindings before they reach the native pipeline: `n_features`
 is a positive JSON integer equal to the native width, `class_names` is a
-non-empty list of unique strings or finite numbers labelling every fitted class
+non-empty list of unique labels (all strings or all finite numbers) labelling every fitted class
 id (index = id), column names hold no NUL, and nested X/y rows match the
 declared shape; the exported recipe is a snapshot of the recipe the states
 attest.
