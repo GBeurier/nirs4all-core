@@ -602,7 +602,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             self.assertTrue(package["peerDependenciesMeta"][peer]["optional"])
             self.assertTrue(root_lock["peerDependenciesMeta"][peer]["optional"])
             self.assertEqual(package["devDependencies"][peer], version)
-        self.assertEqual(package["devDependencies"]["dag-ml-wasm"], "^0.3.27")
+        self.assertEqual(package["devDependencies"]["dag-ml-wasm"], "^0.3.28")
 
         typescript = lock["packages"]["node_modules/typescript"]
         self.assertEqual(typescript["version"], package["devDependencies"]["typescript"])

@@ -53,7 +53,7 @@
   },
   "devDependencies": {
     "@tensorflow/tfjs": "^3.21.0",
-    "dag-ml-wasm": "^0.3.27",
+    "dag-ml-wasm": "^0.3.28",
     "ml": "^8.0.0",
     "ml-random-forest": "^2.1.0",
     "scikitjs": "^1.24.0",
