@@ -120,6 +120,10 @@ def _check_label_table(names: Any) -> None:
             raise ValueError(f"class label {name!r} is not a string or a finite number")
     if len({isinstance(name, str) for name in names}) > 1:
         raise ValueError("class_names mixes strings and numbers")
+    for name in names:
+        # JSON, JS and R numbers are doubles: an integral label beyond 2^53 would round into another.
+        if not isinstance(name, str) and float(name).is_integer() and abs(name) > 2**53:
+            raise ValueError(f"class label {name!r} is not exactly representable as float64 (beyond ±2^53)")
     seen: set[Any] = set()
     for name in names:
         if name in seen:

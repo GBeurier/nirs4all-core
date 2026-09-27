@@ -113,11 +113,23 @@ impl ClassLabel {
     fn from_json(value: &Value) -> Result<Self, String> {
         match value {
             Value::String(name) => Ok(Self::Name(name.clone())),
-            Value::Number(number) => number
-                .as_f64()
-                .filter(|v| v.is_finite())
-                .map(Self::Number)
-                .ok_or_else(|| format!("class label {value} is not a string or a finite number")),
+            Value::Number(number) => {
+                let label = number.as_f64().filter(|v| v.is_finite()).ok_or_else(|| {
+                    format!("class label {value} is not a string or a finite number")
+                })?;
+                // JSON, JS and R numbers are doubles: an integral label beyond 2^53
+                // would be rounded into another one.
+                let beyond = |v: u64| v > 1u64 << 53;
+                let integral_beyond = number.as_u64().is_some_and(beyond)
+                    || number.as_i64().is_some_and(|v| beyond(v.unsigned_abs()))
+                    || (label.fract() == 0.0 && label.abs() > (1u64 << 53) as f64);
+                if integral_beyond {
+                    return Err(format!(
+                        "class label {value} is not exactly representable as float64 (beyond ±2^53)"
+                    ));
+                }
+                Ok(Self::Number(label))
+            }
             other => Err(format!(
                 "class label {other} is not a string or a finite number"
             )),
@@ -1151,6 +1163,14 @@ mod tests {
                 "class id 1 has no entry in class_names (1 labels)",
             ),
             (json!(["high", 2]), "class_names mixes strings and numbers"),
+            (
+                json!([9_007_199_254_740_993_u64, 1.5]),
+                "class label 9007199254740993 is not exactly representable as float64",
+            ),
+            (
+                json!([1e17, 1.5]),
+                "is not exactly representable as float64",
+            ),
             (
                 json!(["same", "same"]),
                 "class label \"same\" is duplicated",
