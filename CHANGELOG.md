@@ -8,6 +8,11 @@ binding manifest.
 
 ## [Unreleased]
 
+## [0.3.37] - 2026-09-27
+
+Requires Methods 1.2.0 (ABI 2.14, crate `n4m` 0.3.0) and DAG-ML 0.3.29, so the
+Rust build links a single `n4m`.
+
 ### Changed
 
 - `N4mRolePipeline` (Python, Rust, JS/WASM) is a thin wrapper over the native

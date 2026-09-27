@@ -6,7 +6,7 @@
 [[upstream]]
 key = "dag_ml"
 repo = "GBeurier/dag-ml"
-ref = "4ebc1fdaec898407af40ad372b8153d4dda0431f"
+ref = "560ff2a7eef1a4ab6142020bcf5cdc962cfdac3b"
 role = "Leakage-safe DAG/ML execution coordinator"
 bindings = ["rust", "c", "python", "r", "matlab", "octave", "wasm"]
 python_imports = ["dag_ml"]

@@ -1,6 +1,6 @@
 {
   "name": "nirs4all",
-  "version": "0.3.36",
+  "version": "0.3.37",
   "description": "Portable nirs4all aggregate binding for JavaScript and WASM",
   "type": "module",
   "exports": {
@@ -53,7 +53,7 @@
   },
   "devDependencies": {
     "@tensorflow/tfjs": "^3.21.0",
-    "dag-ml-wasm": "^0.3.28",
+    "dag-ml-wasm": "^0.3.29",
     "ml": "^8.0.0",
     "ml-random-forest": "^2.1.0",
     "scikitjs": "^1.24.0",
