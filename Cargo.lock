@@ -507,21 +507,21 @@ dependencies = [
 
 [[package]]
 name = "dag-ml"
-version = "0.3.28"
+version = "0.3.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aaf0ecb63496caca02e576a0fd2cef0c3816c7366c5a501c58bcadfa605ff745"
+checksum = "45eac5b9399aaa739f813d6ae4077a6e55ca720a38d0576ead64ff84b3f0787c"
 dependencies = [
  "dag-ml-core",
 ]
 
 [[package]]
 name = "dag-ml-core"
-version = "0.3.28"
+version = "0.3.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aea855c132102ca3f5d0d80742de7c88aae8f35acced92e81393df10ccb4d4b7"
+checksum = "1663e9b96f28e312a349cbed057251cebd5910d8b83bfd3c8d9407f0300587e5"
 dependencies = [
  "indexmap",
- "n4m 0.2.0",
+ "n4m",
  "serde",
  "serde_ignored",
  "serde_json",
@@ -962,16 +962,6 @@ dependencies = [
 
 [[package]]
 name = "n4m"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6fbc43698d7c0da4092f21672890fc369211b7f9451573406963436ce4be5e8a"
-dependencies = [
- "cc",
- "libloading",
-]
-
-[[package]]
-name = "n4m"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a28300dc578f910c1878f5587351d2ff17578a04f051f7b07f104da7c41f25fc"
@@ -990,7 +980,7 @@ dependencies = [
  "dag-ml-data",
  "dag-ml-data-provider",
  "libloading",
- "n4m 0.3.0",
+ "n4m",
  "nirs4all-formats",
  "nirs4all-io",
  "nirs4all-io-dagml",
