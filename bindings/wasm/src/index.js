@@ -1,5 +1,5 @@
 import { parse as parseYaml } from 'yaml';
-
+import { NATIVE_X_AUGMENTATION_CLASS, parseTrainAugmentation } from './native-augmentation.js';
 import { n4mRoleMethodId, resolvesN4mRole } from './n4m-roles.js';
 
 export const upstreams = Object.freeze([
@@ -530,11 +530,19 @@ export function loadPipelineDefinition(source, options = {}) {
     definition.random_state = normalized.random_state;
   }
 
+  const augmentationSteps = definition.pipeline.filter((step) => step && typeof step === 'object'
+    && !Array.isArray(step) && Object.prototype.hasOwnProperty.call(step, 'train_augmentation'));
+  for (const step of augmentationSteps) parseTrainAugmentation(step);
+
   // Legacy class names use the portable subset; "n4m:<method id>" tokens
   // resolve through the loaded Methods manifest.
   const methods = options.methods ?? methodsModule;
-  const unsupported = portableClassNames(definition)
-    .filter((name) => !portableOperatorSet.has(name) && !resolvesN4mRole(name, methods));
+  const classes = portableClassNames(definition);
+  const augmentationClassCount = classes.filter((name) => name === NATIVE_X_AUGMENTATION_CLASS).length;
+  const unsupported = classes.filter((name) => !portableOperatorSet.has(name)
+    && !resolvesN4mRole(name, methods)
+    && !(name === NATIVE_X_AUGMENTATION_CLASS && augmentationSteps.length === 1
+      && augmentationClassCount === 1));
   if (unsupported.length > 0) {
     const hint = !methods && unsupported.some((name) => n4mRoleMethodId(name) !== null)
       ? ' (n4m:<method id> steps resolve through the Methods manifest: await loadMethodsWasm() or pass {methods})'
