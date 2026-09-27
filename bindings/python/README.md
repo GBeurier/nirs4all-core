@@ -108,5 +108,10 @@ reordered columns is refused; arrays are positional. The native import refuses
 states that contradict the recipe. A state that embeds training rows (kernel
 PLS, LW-PLS, ...) is written only with `to_json(..., allow_training_rows=True)`
 and flagged `contains_training_rows`. Envelopes written before these two fields
-still load. It requires `nirs4all-methods` 1.2.0 or later (ABI 2.14).
+still load. The import also refuses an `n_features` that is not a positive JSON
+integer equal to the native width, a column name holding NUL, and a
+`class_names` table that is not a non-empty list of unique strings or finite
+numbers labelling every fitted class id (index = id); missing or non-finite
+labels are refused at fit. `recipe` is a copy of the recipe the states attest,
+which is also the one exported. It requires `nirs4all-methods` 1.2.0 or later (ABI 2.14).
 

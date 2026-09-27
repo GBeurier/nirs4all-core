@@ -161,7 +161,13 @@ const trained = await N4mRolePipeline.fit(recipe, { X, rows, cols, y, featureNam
 const text = JSON.stringify(trained.toJSON({ allowTrainingRows: false }));
 ```
 
-With `featureNames`, renamed or reordered columns are refused. A state that
+With `featureNames`, renamed or reordered columns are refused. Nested `X` and
+`y` rows must match the declared `rows`/`cols` (every row is checked before
+flattening). The import refuses an `n_features` that is not a positive
+integer equal to the native width, a column name holding NUL, and a
+`class_names` table that is not a non-empty list of unique strings or finite
+numbers labelling every fitted class id (index = id). `recipe` is a copy of
+the recipe the states attest, which is also the one exported. A state that
 embeds training rows (kernel PLS, LW-PLS, ...) is exported only with
 `toJSON({ allowTrainingRows: true })`. This path requires `@nirs4all/methods`
 1.2 (ABI 2.14 role pipelines).

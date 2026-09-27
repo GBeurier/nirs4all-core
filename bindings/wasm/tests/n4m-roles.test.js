@@ -3,7 +3,8 @@
 // The negative envelope cases (recipe/state mismatch, empty pipeline, feature
 // permutation, training rows without opt-in, multi-target routing) replay the
 // Methods shared fixture n4m_role_pipeline_methods.json and are identical in
-// the Python, JS/WASM and Rust suites.
+// the Python, JS/WASM and Rust suites, as are the label-table, n_features, NUL
+// column-name, ragged-shape and attested-recipe mutations.
 
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -280,4 +281,130 @@ test('tampered or foreign envelopes are refused', async (t) => {
   relabelled.states[0].method_id = 'preprocessing.scatter.msc';
   await assert.rejects(N4mRolePipeline.fromJSON(relabelled, { methods }), /does not match its recipe step/);
   await assert.rejects(N4mRolePipeline.fromJSON({ ...source, n_features: 3 }, { methods }), /n_features/);
+});
+
+// The Python-trained classification envelope with its label table replaced.
+function withClassNames(source, classNames) {
+  const document = structuredClone(source);
+  document.states.at(-1).class_names = classNames;
+  return document;
+}
+
+test('label tables that contradict the states are refused (R05)', async (t) => {
+  const methods = await loadMethods(t);
+  if (!methods) return;
+  const source = pythonTrained.classification.envelope;
+  const xTest = matrix(pythonTrained.x_test);
+  for (const [classNames, message] of [
+    [[], 'class_names must be a non-empty list of labels'],
+    ['high', 'class_names must be a non-empty list of labels'],
+    [null, 'class_names must be a non-empty list of labels'],
+    [['only'], 'class id 1 has no entry in class_names (1 labels)'],
+    [['same', 'same'], 'class label "same" is duplicated'],
+    [[1.5, 1.5], 'class label 1.5 is duplicated'],
+    [['high', null], 'class label null is not a string or a finite number'],
+    [[true, false], 'class label true is not a string or a finite number'],
+    [['high', Number.NaN], 'class label NaN is not a string or a finite number'],
+  ]) {
+    await assert.rejects(N4mRolePipeline.fromJSON(withClassNames(source, classNames), { methods }),
+      escape(message), JSON.stringify(classNames));
+  }
+
+  // Index = class id: a longer table keeps the slots of labels a filter removed,
+  // and finite numbers are labels too.
+  const longer = await N4mRolePipeline.fromJSON(withClassNames(source, ['a', 'b', 'c']), { methods });
+  assert.equal(longer.predict(xTest).labels.length, xTest.rows);
+  longer.dispose();
+  const numeric = await N4mRolePipeline.fromJSON(JSON.stringify(withClassNames(source, [0.5, 1.5])), { methods });
+  assert.deepEqual(numeric.predict(xTest).labels,
+    pythonTrained.classification.predict.map((label) => (label === 'high' ? 0.5 : 1.5)));
+  assert.deepEqual(numeric.toJSON().states.at(-1).class_names, [0.5, 1.5]);
+  numeric.dispose();
+
+  // States fitted on class ids 10 and 20 have no entry in a two-label table.
+  const ids = pythonTrained.classification.y_train.map((label) => (label === 'high' ? 10 : 20));
+  const byIds = await N4mRolePipeline.fit(source.recipe, { ...matrix(pythonTrained.x_train), y: ids }, { methods });
+  const document = byIds.toJSON();
+  assert.equal('class_names' in document.states.at(-1), false);
+  byIds.dispose();
+  await assert.rejects(N4mRolePipeline.fromJSON(withClassNames(document, ['high', 'low']), { methods }),
+    /class id 10 has no entry in class_names \(2 labels\)/);
+  await assert.rejects(
+    N4mRolePipeline.fromJSON(withClassNames(pythonTrained.regression.envelope, ['high', 'low']), { methods }),
+    /class_names label the classes of a final classifier/);
+});
+
+test('envelope widths are positive JSON integers (R16)', async (t) => {
+  const methods = await loadMethods(t);
+  if (!methods) return;
+  const source = pythonTrained.regression.envelope;
+  for (const [value, shown] of [[24.9, '24.9'], ['24', '"24"'], [true, 'true'], [0, '0'], [-24, '-24'], [null, 'null']]) {
+    await assert.rejects(N4mRolePipeline.fromJSON({ ...source, n_features: value }, { methods }),
+      escape(`n_features must be a positive JSON integer, got ${shown}`), String(value));
+  }
+  const { n_features: _, ...missing } = source;
+  await assert.rejects(N4mRolePipeline.fromJSON(missing, { methods }), /n_features must be a positive JSON integer/);
+});
+
+test('column names with NUL are refused before the native call', async (t) => {
+  const methods = await loadMethods(t);
+  if (!methods) return;
+  const { steps, states } = shared.regression;
+  const names = [...shared.feature_names];
+  names[3] = 'nm1006\0';
+  await assert.rejects(N4mRolePipeline.fromJSON(envelope(steps, states, names), { methods }), /contains a NUL character/);
+  await assert.rejects(
+    N4mRolePipeline.fit({ pipeline: steps }, { ...matrix(shared.x_train, names), y: shared.y_train }, { methods }),
+    /contains a NUL character/);
+  const pipeline = await N4mRolePipeline.fromJSON(envelope(steps, states, shared.feature_names), { methods });
+  assert.throws(() => pipeline.predict(matrix(shared.x_test, names)), /contains a NUL character/);
+  pipeline.dispose();
+});
+
+test('ragged or contradictory X and Y are refused before flattening (R04, F02)', async (t) => {
+  const methods = await loadMethods(t);
+  if (!methods) return;
+  const recipe = { pipeline: [{ class: 'n4m:models.regularized.ridge', params: { alpha: 1 } }] };
+  const X = shared.x_train;
+  const y = shared.y2_train;
+  const fit = (dataset) => N4mRolePipeline.fit(recipe, { ...matrix(X), y, ...dataset }, { methods });
+  (await fit({})).dispose();
+
+  // Rows of widths 1 and 3 keep the n*q total but shift every later sample.
+  const ragged = structuredClone(y);
+  ragged[1] = [10];
+  ragged[2] = [20, 21, 22];
+  await assert.rejects(fit({ y: ragged }), /y row 1 has 1 targets but row 0 has 2/);
+  await assert.rejects(fit({ y: y.slice(1) }), /y has 35 rows but X has 36/);
+  await assert.rejects(fit({ y: [...y, y[0]] }), /y has 37 rows but X has 36/);
+  await assert.rejects(fit({ y: y.map(() => []) }), /y rows must hold at least one target/);
+  await assert.rejects(fit({ y: y.map((row) => row[0]).slice(1) }), /y must have length 36/);
+
+  const extraColumn = X.map((row) => [...row, 123]);
+  await assert.rejects(fit({ X: extraColumn }), /Dataset X row 0 has 13 values but declares 12 columns/);
+  const raggedX = structuredClone(X);
+  raggedX[5] = raggedX[5].slice(1);
+  await assert.rejects(fit({ X: raggedX }), /Dataset X row 5 has 11 values but declares 12 columns/);
+  await assert.rejects(fit({ X: X.slice(1) }), /Dataset X has 35 rows but declares 36/);
+  await assert.rejects(fit({ X: [...X, X[0]] }), /Dataset X has 37 rows but declares 36/);
+
+  const fitted = await fit({});
+  assert.throws(() => fitted.predict({ X: shared.x_test.map((row) => [...row, 0]), rows: shared.x_test.length, cols: 12 }),
+    /Dataset X row 0 has 13 values but declares 12 columns/);
+  fitted.dispose();
+});
+
+test('the exported recipe is the one the states attest (R14)', async (t) => {
+  const methods = await loadMethods(t);
+  if (!methods) return;
+  const recipe = structuredClone(pythonTrained.regression.envelope.recipe);
+  const fitted = await N4mRolePipeline.fit(recipe, { ...matrix(pythonTrained.x_train), y: pythonTrained.regression.y_train }, { methods });
+  recipe.pipeline.at(-1).params.n_components = 1;
+  fitted.recipe.pipeline.at(-1).params.n_components = 1;
+  const text = JSON.stringify(fitted);
+  assert.deepEqual(JSON.parse(text).recipe, pythonTrained.regression.envelope.recipe);
+  const replayed = await N4mRolePipeline.fromJSON(text, { methods });
+  assert.deepEqual(replayed.predict(matrix(pythonTrained.x_test)), fitted.predict(matrix(pythonTrained.x_test)));
+  fitted.dispose();
+  replayed.dispose();
 });

@@ -53,8 +53,8 @@ pub use io_training::{
     DatasetPackageMethodsProvider,
 };
 pub use n4m_roles::{
-    n4m_role_capabilities, n4m_role_method_id, resolve_n4m_role, N4mRolePipeline, RolePredictions,
-    RoleTarget, N4M_ROLE_PREFIX, N4M_TRAINED_PIPELINE_SCHEMA,
+    n4m_role_capabilities, n4m_role_method_id, resolve_n4m_role, ClassLabel, N4mRolePipeline,
+    RolePredictions, RoleTarget, N4M_ROLE_PREFIX, N4M_TRAINED_PIPELINE_SCHEMA,
 };
 pub use native_methods_replay::{
     inspect_methods_archive_v2_predictors, inspect_methods_archive_v2_predictors_json,

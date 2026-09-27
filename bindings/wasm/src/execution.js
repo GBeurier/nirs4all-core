@@ -502,6 +502,14 @@ function flattenMatrix(value, rows, cols, label) {
     return value;
   }
   if (Array.isArray(value) && Array.isArray(value[0])) {
+    if (value.length !== rows) {
+      throw new RangeError(`Dataset ${label} has ${value.length} rows but declares ${rows}.`);
+    }
+    value.forEach((row, r) => {
+      if (!Array.isArray(row) || row.length !== cols) {
+        throw new RangeError(`Dataset ${label} row ${r} has ${row?.length} values but declares ${cols} columns.`);
+      }
+    });
     const out = new Float64Array(rows * cols);
     for (let r = 0; r < rows; r += 1) {
       for (let c = 0; c < cols; c += 1) {

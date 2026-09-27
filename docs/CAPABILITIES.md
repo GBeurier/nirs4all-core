@@ -125,7 +125,13 @@ consistency; the bindings keep only the envelope JSON (including the additive
 Python- and R-trained fixture envelopes (`tests/parity/fixtures/n4m_roles_v8_*`)
 within 1e-12, round-trip an envelope trained in the binding itself, and replay
 the Methods shared fixture (`n4m_role_pipeline_methods.json`) with identical
-negative cases.
+negative cases. The envelope fields a binding reads itself are checked the same
+way in the three bindings before they reach the native pipeline: `n_features`
+is a positive JSON integer equal to the native width, `class_names` is a
+non-empty list of unique strings or finite numbers labelling every fitted class
+id (index = id), column names hold no NUL, and nested X/y rows match the
+declared shape; the exported recipe is a snapshot of the recipe the states
+attest.
 
 ## Native Archive V2 execution and presentation
 
