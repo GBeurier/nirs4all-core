@@ -151,7 +151,7 @@ export class N4mRolePipeline {
       };
     });
     // Classifier label names (N4ME holds integer class ids only): the facade's label table.
-    const classNames = this.pipeline.classNames;
+    const classNames = this.pipeline.labelNames();
     if (classNames !== undefined) states.at(-1).class_names = [...classNames];
     const envelope = { schema: N4M_TRAINED_PIPELINE_SCHEMA, recipe: clone(this.recipe), n_features: this.nFeatures };
     if (this.featureNames !== undefined) envelope.feature_names = this.featureNames;
