@@ -8,6 +8,41 @@ binding manifest.
 
 ## [Unreleased]
 
+### Fixed
+
+Core side of the 2026-09-27 n4m re-audit (R04, R05, R14, R16), following the
+shared label/input contract; the checks hold against the released Methods
+1.2.0.
+
+- JS/WASM: nested `X` rows (`flattenMatrix`, used by `N4mRolePipeline` and the
+  portable execution) and nested `y` rows of `N4mRolePipeline.fit` are
+  checked before flattening: the row count must match the declared `rows` (and
+  X), and every row must have the declared width (`y`: the width of row 0,
+  at least one target). A ragged `y` that kept the `n*q` total, or X rows with
+  extra columns, used to be accepted and silently realigned (R04). The JS
+  estimator controller refuses nested X whose width contradicts a declared
+  `cols`.
+- `class_names` of a v8 envelope is checked on import in Python, JS/WASM and
+  Rust: a non-empty list of unique strings or finite numbers (no null, NaN,
+  ±Inf or boolean) that labels every native class id of the fitted
+  classifier (`0 <= id < len`; a longer table keeps labels a filter removed),
+  and only on a final classifier. `[]`, `["only"]` and duplicated names used
+  to import, then fail or merge at predict (R05). Python also refuses a
+  missing or non-finite label at fit, and keeps a table mixing strings and
+  numbers without converting it. Column names holding NUL are refused on
+  import, fit and predict (Python, JS/WASM) before any C string is built.
+- Rust: `class_names` may hold finite numbers, as the Python writer produces;
+  classifier predictions are `RolePredictions::Labels(Vec<ClassLabel>)` with
+  the new `ClassLabel::{Name, Number}`.
+- `n_features` must be a positive JSON integer (not a boolean, string or
+  fractional number) and equal the native width exactly, in Python, JS/WASM and
+  Rust; Python used to truncate `6.9` to `6` (R16). Python also requires a
+  boolean `contains_training_rows`.
+- Python and JS/WASM `N4mRolePipeline` snapshot a deep copy of the recipe at
+  fit and import, export and retrain from it, and return a copy from `recipe`:
+  editing the caller's dict (or `recipe`) after fit no longer produces an
+  envelope whose recipe contradicts its states (R14).
+
 ## [0.3.37] - 2026-09-27
 
 Requires Methods 1.2.0 (ABI 2.14, crate `n4m` 0.3.0) and DAG-ML 0.3.29, so the

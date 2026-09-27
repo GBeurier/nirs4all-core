@@ -47,7 +47,10 @@ ABI 2.14) and reads/writes the `nirs4all.n4m.trained_pipeline.v8` envelope,
 whose per-step N4ME states replay identically in the Python, R and JS/WASM
 bindings. With feature names, a prediction given renamed or reordered columns
 is refused; a state embedding training rows is written only with
-`to_json(true)`. Select the runtime with `n4m::configure_library()` or
+`to_json(true)`. The import refuses an `n_features` that is not a positive
+JSON integer equal to the native width and a `class_names` table that is not a
+non-empty list of unique strings or finite numbers (`ClassLabel`) labelling
+every fitted class id (index = id). Select the runtime with `n4m::configure_library()` or
 `N4M_LIBRARY_PATH` (ABI 2.14 or later).
 
 ```rust

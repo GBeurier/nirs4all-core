@@ -15,6 +15,13 @@
 //! label names). Envelopes written before `feature_names` and
 //! `contains_training_rows` still load.
 //!
+//! Every envelope field this module reads is checked before it reaches the
+//! native pipeline: `n_features` is a positive JSON integer equal to the
+//! native width, and `class_names` is a non-empty table of unique strings or
+//! finite numbers that labels every fitted class id (index = id; it may keep
+//! labels a sample filter removed). Column names holding NUL are refused by
+//! the n4m crate before any C string is built.
+//!
 //! The runtime is selected with `n4m::configure_library` or
 //! `N4M_LIBRARY_PATH`. A process fixes a single libn4m file, so a process that
 //! also replays Archive V2 selects it once through
@@ -94,6 +101,54 @@ pub enum RoleTarget {
     ClassIds(Vec<i64>),
 }
 
+/// One entry of a classifier label table (`class_names`, index = class id).
+#[derive(Debug, Clone, PartialEq)]
+pub enum ClassLabel {
+    Name(String),
+    /// A finite number.
+    Number(f64),
+}
+
+impl ClassLabel {
+    fn from_json(value: &Value) -> Result<Self, String> {
+        match value {
+            Value::String(name) => Ok(Self::Name(name.clone())),
+            Value::Number(number) => number
+                .as_f64()
+                .filter(|v| v.is_finite())
+                .map(Self::Number)
+                .ok_or_else(|| format!("class label {value} is not a string or a finite number")),
+            other => Err(format!(
+                "class label {other} is not a string or a finite number"
+            )),
+        }
+    }
+
+    fn to_json(&self) -> Value {
+        match self {
+            Self::Name(name) => json!(name),
+            Self::Number(number) => json!(number),
+        }
+    }
+}
+
+/// The label table of an envelope: non-empty, unique strings or finite numbers.
+fn label_table(value: &Value) -> Result<Vec<ClassLabel>, String> {
+    let entries = value
+        .as_array()
+        .filter(|entries| !entries.is_empty())
+        .ok_or("class_names must be a non-empty list of labels")?;
+    let mut labels: Vec<ClassLabel> = Vec::with_capacity(entries.len());
+    for entry in entries {
+        let label = ClassLabel::from_json(entry)?;
+        if labels.contains(&label) {
+            return Err(format!("class label {entry} is duplicated"));
+        }
+        labels.push(label);
+    }
+    Ok(labels)
+}
+
 /// Predictions of the final step.
 #[derive(Debug, Clone, PartialEq)]
 pub enum RolePredictions {
@@ -102,7 +157,7 @@ pub enum RolePredictions {
         rows: usize,
         cols: usize,
     },
-    Labels(Vec<String>),
+    Labels(Vec<ClassLabel>),
     ClassIds(Vec<i64>),
 }
 
@@ -220,14 +275,14 @@ pub struct N4mRolePipeline {
     n_features: usize,
     feature_names: Option<Vec<String>>,
     classifier: bool,
-    class_names: Option<Vec<String>>,
+    class_names: Option<Vec<ClassLabel>>,
 }
 
 impl N4mRolePipeline {
     fn fitted(
         recipe: &Value,
         pipeline: RolePipeline,
-        class_names: Option<Vec<String>>,
+        class_names: Option<Vec<ClassLabel>>,
     ) -> Result<Self, String> {
         let steps = pipeline.steps().map_err(native)?;
         let names = pipeline.feature_names().map_err(native)?;
@@ -277,7 +332,7 @@ impl N4mRolePipeline {
                     .map(|label| names.binary_search(label).map(|index| index as i64))
                     .collect::<Result<Vec<_>, _>>()
                     .map_err(|_| "label encoding failed".to_string())?;
-                (ids, Some(names))
+                (ids, Some(names.into_iter().map(ClassLabel::Name).collect()))
             }
         };
         pipeline
@@ -296,10 +351,10 @@ impl N4mRolePipeline {
         let recipe = document
             .get("recipe")
             .ok_or_else(|| "envelope has no recipe".to_string())?;
-        let n_features = document
-            .get("n_features")
-            .and_then(Value::as_u64)
-            .ok_or_else(|| "envelope has no n_features".to_string())?;
+        let n_features = document.get("n_features").unwrap_or(&Value::Null);
+        let n_features = n_features.as_u64().filter(|&n| n > 0).ok_or_else(|| {
+            format!("n_features must be a positive JSON integer, got {n_features}")
+        })?;
         let states = document
             .get("states")
             .and_then(Value::as_array)
@@ -311,7 +366,7 @@ impl N4mRolePipeline {
         let class_names = states
             .last()
             .and_then(|state| state.get("class_names"))
-            .map(|names| strings(names).ok_or("class_names must be strings"))
+            .map(label_table)
             .transpose()?;
         let mut payloads = Vec::with_capacity(states.len());
         for state in states {
@@ -369,6 +424,19 @@ impl N4mRolePipeline {
                 fitted.n_features
             ));
         }
+        if let Some(names) = &fitted.class_names {
+            if !fitted.classifier {
+                return Err("class_names label the classes of a final classifier".into());
+            }
+            for id in fitted.pipeline.classes().map_err(native)? {
+                if usize::try_from(id).map_or(true, |index| index >= names.len()) {
+                    return Err(format!(
+                        "class id {id} has no entry in class_names ({} labels)",
+                        names.len()
+                    ));
+                }
+            }
+        }
         Ok(fitted)
     }
 
@@ -395,7 +463,7 @@ impl N4mRolePipeline {
             })
             .collect();
         if let (Some(names), Some(state)) = (&self.class_names, states.last_mut()) {
-            state["class_names"] = json!(names);
+            state["class_names"] = names.iter().map(ClassLabel::to_json).collect();
         }
         let mut document = json!({
             "schema": N4M_TRAINED_PIPELINE_SCHEMA,
@@ -477,7 +545,8 @@ mod tests {
     //! feature permutation, training rows without opt-in, multi-target
     //! routing) replay the Methods shared fixture
     //! `n4m_role_pipeline_methods.json` and are identical in the Python,
-    //! JS/WASM and Rust suites.
+    //! JS/WASM and Rust suites, as are the label-table, `n_features` and shape
+    //! mutations.
 
     use super::*;
 
@@ -542,6 +611,10 @@ mod tests {
 
     fn names(value: &Value) -> Vec<String> {
         strings(value).unwrap()
+    }
+
+    fn labels(value: &Value) -> RolePredictions {
+        RolePredictions::Labels(names(value).into_iter().map(ClassLabel::Name).collect())
     }
 
     fn refs(names: &[String]) -> Vec<&str> {
@@ -689,7 +762,7 @@ mod tests {
         assert_eq!(again.predict(&x_test, m, None).unwrap(), live);
 
         let classification = &fixture["classification"];
-        let expected = RolePredictions::Labels(names(&classification["predict"]));
+        let expected = labels(&classification["predict"]);
         let replayed = N4mRolePipeline::from_json(&classification["envelope"].to_string()).unwrap();
         assert_eq!(replayed.predict(&x_test, m, None).unwrap(), expected);
         let y = RoleTarget::Labels(names(&classification["y_train"]));
@@ -812,7 +885,7 @@ mod tests {
             classification
                 .predict(&x_test, m, Some(&refs(&names)))
                 .unwrap(),
-            RolePredictions::Labels(super::tests::names(&case["predict"]))
+            labels(&case["predict"])
         );
         let rewritten = fixture(&classification.to_json(false).unwrap());
         assert_eq!(rewritten["states"][2]["class_names"], case["class_names"]);
@@ -1038,6 +1111,203 @@ mod tests {
             &fails(N4mRolePipeline::from_json(&narrow.to_string())),
             "n_features",
         );
+    }
+
+    fn with_class_names(envelope: &Value, names: Value) -> String {
+        let mut document = envelope.clone();
+        let states = document["states"].as_array_mut().unwrap();
+        states.last_mut().unwrap()["class_names"] = names;
+        document.to_string()
+    }
+
+    #[test]
+    fn label_tables_that_contradict_the_states_are_refused() {
+        if !configured() {
+            return;
+        }
+        let fixture = fixture(include_str!(
+            "../tests/parity/fixtures/n4m_roles_v8_python_trained.json"
+        ));
+        let (x, n, p) = rows(&fixture["x_train"]);
+        let (x_test, m, _) = rows(&fixture["x_test"]);
+        let envelope = &fixture["classification"]["envelope"];
+        for (names, message) in [
+            (json!([]), "class_names must be a non-empty list of labels"),
+            (
+                json!("high"),
+                "class_names must be a non-empty list of labels",
+            ),
+            (
+                Value::Null,
+                "class_names must be a non-empty list of labels",
+            ),
+            (
+                json!(["only"]),
+                "class id 1 has no entry in class_names (1 labels)",
+            ),
+            (
+                json!(["same", "same"]),
+                "class label \"same\" is duplicated",
+            ),
+            (json!([1.5, 1.5]), "class label 1.5 is duplicated"),
+            (
+                json!(["high", null]),
+                "class label null is not a string or a finite number",
+            ),
+            (
+                json!([true, false]),
+                "class label true is not a string or a finite number",
+            ),
+        ] {
+            assert_refused(
+                &fails(N4mRolePipeline::from_json(&with_class_names(
+                    envelope, names,
+                ))),
+                message,
+            );
+        }
+
+        // Index = class id: a longer table keeps the slots of labels a filter
+        // removed, and finite numbers are labels too.
+        let longer =
+            N4mRolePipeline::from_json(&with_class_names(envelope, json!(["a", "b", "c"])))
+                .unwrap();
+        assert!(longer.predict(&x_test, m, None).is_ok());
+        let numeric =
+            N4mRolePipeline::from_json(&with_class_names(envelope, json!([0.5, 1.5]))).unwrap();
+        let RolePredictions::Labels(predicted) = numeric.predict(&x_test, m, None).unwrap() else {
+            panic!("expected labels");
+        };
+        let expected: Vec<ClassLabel> = names(&fixture["classification"]["predict"])
+            .iter()
+            .map(|label| ClassLabel::Number(if label == "high" { 0.5 } else { 1.5 }))
+            .collect();
+        assert_eq!(predicted, expected);
+        let rewritten = super::tests::fixture(&numeric.to_json(false).unwrap());
+        assert_eq!(rewritten["states"][1]["class_names"], json!([0.5, 1.5]));
+
+        // States fitted on class ids 10 and 20 have no entry in a two-label table.
+        let ids: Vec<i64> = names(&fixture["classification"]["y_train"])
+            .iter()
+            .map(|label| if label == "high" { 10 } else { 20 })
+            .collect();
+        let fitted = N4mRolePipeline::fit_recipe(
+            &envelope["recipe"],
+            &x,
+            n,
+            p,
+            None,
+            &RoleTarget::ClassIds(ids),
+        )
+        .unwrap();
+        let by_ids = super::tests::fixture(&fitted.to_json(false).unwrap());
+        assert!(by_ids["states"][1].get("class_names").is_none());
+        assert_refused(
+            &fails(N4mRolePipeline::from_json(&with_class_names(
+                &by_ids,
+                json!(["high", "low"]),
+            ))),
+            "class id 10 has no entry in class_names (2 labels)",
+        );
+        assert_refused(
+            &fails(N4mRolePipeline::from_json(&with_class_names(
+                &fixture["regression"]["envelope"],
+                json!(["high", "low"]),
+            ))),
+            "class_names label the classes of a final classifier",
+        );
+    }
+
+    #[test]
+    fn envelope_widths_are_positive_json_integers() {
+        if !configured() {
+            return;
+        }
+        let source = fixture(include_str!(
+            "../tests/parity/fixtures/n4m_roles_v8_python_trained.json"
+        ))["regression"]["envelope"]
+            .clone();
+        for (value, shown) in [
+            (json!(24.9), "24.9"),
+            (json!(24.0), "24.0"),
+            (json!("24"), "\"24\""),
+            (json!(true), "true"),
+            (json!(0), "0"),
+            (json!(-24), "-24"),
+            (Value::Null, "null"),
+        ] {
+            let mut mutated = source.clone();
+            mutated["n_features"] = value;
+            assert_refused(
+                &fails(N4mRolePipeline::from_json(&mutated.to_string())),
+                &format!("n_features must be a positive JSON integer, got {shown}"),
+            );
+        }
+        let mut missing = source;
+        missing.as_object_mut().unwrap().remove("n_features");
+        assert_refused(
+            &fails(N4mRolePipeline::from_json(&missing.to_string())),
+            "n_features must be a positive JSON integer, got null",
+        );
+    }
+
+    #[test]
+    fn column_names_with_nul_are_refused() {
+        if !configured() {
+            return;
+        }
+        let shared = methods_fixture();
+        let case = &shared["regression"];
+        let mut names = shared["feature_names"].clone();
+        names[3] = json!("nm1006\0");
+        let error = fails(N4mRolePipeline::from_json(&envelope(
+            &case["steps"],
+            &case["states"],
+            Some(&names),
+            None,
+        )));
+        assert_refused(&error, "feature name must not contain NUL");
+        let pipeline = N4mRolePipeline::from_json(&envelope(
+            &case["steps"],
+            &case["states"],
+            Some(&shared["feature_names"]),
+            None,
+        ))
+        .unwrap();
+        let (x_test, m, _) = rows(&shared["x_test"]);
+        let names = super::tests::names(&names);
+        let error = pipeline
+            .predict(&x_test, m, Some(&refs(&names)))
+            .unwrap_err();
+        assert_refused(&error, "feature name must not contain NUL");
+    }
+
+    #[test]
+    fn shapes_that_contradict_the_declared_dimensions_are_refused() {
+        if !configured() {
+            return;
+        }
+        let shared = methods_fixture();
+        let recipe = json!({"pipeline": ["n4m:models.regularized.ridge"]});
+        let (x, n, p) = rows(&shared["x_train"]);
+        let (y, _, q) = rows(&shared["y2_train"]);
+        let fit = |x: &[f64], y: Vec<f64>, cols: usize| {
+            N4mRolePipeline::fit_recipe(
+                &recipe,
+                x,
+                n,
+                p,
+                None,
+                &RoleTarget::Values { data: y, cols },
+            )
+        };
+        assert!(fit(&x, y.clone(), q).is_ok());
+        let row_major = "row-major matrix data length does not match dimensions";
+        assert_refused(&fails(fit(&x[1..], y.clone(), q)), row_major);
+        assert_refused(&fails(fit(&x, y[1..].to_vec(), q)), row_major);
+        assert!(fit(&x, y[q..].to_vec(), q).is_err());
+        assert!(fit(&x, [y.clone(), y[..q].to_vec()].concat(), q).is_err());
+        assert!(fit(&x, Vec::new(), 0).is_err());
     }
 
     #[test]

@@ -3,7 +3,8 @@
 The negative envelope cases (recipe/state mismatch, empty pipeline, feature
 permutation, training rows without opt-in, multi-target routing) replay the
 Methods shared fixture ``n4m_role_pipeline_methods.json`` and are identical in
-the Python, JS/WASM and Rust suites.
+the Python, JS/WASM and Rust suites, as are the label-table, ``n_features``,
+NUL column-name, ragged-shape and attested-recipe mutations.
 """
 
 import base64
@@ -238,6 +239,109 @@ class N4mRoleRecipeTests(unittest.TestCase):
             n4core.N4mRolePipeline.from_json(json.dumps(relabelled))
         with self.assertRaisesRegex(ValueError, "n_features"):
             n4core.N4mRolePipeline.from_json(json.dumps({**envelope, "n_features": 3}))
+
+    def test_refuses_label_tables_that_contradict_the_states(self) -> None:
+        source = PYTHON_TRAINED["classification"]["envelope"]
+        x_test = PYTHON_TRAINED["x_test"]
+        expected = PYTHON_TRAINED["classification"]["predict"]
+        for class_names, message in (
+            ([], "class_names must be a non-empty list of labels"),
+            ("high", "class_names must be a non-empty list of labels"),
+            (None, "class_names must be a non-empty list of labels"),
+            (["only"], "class id 1 has no entry in class_names (1 labels)"),
+            (["same", "same"], "class label 'same' is duplicated"),
+            ([1.5, 1.5], "class label 1.5 is duplicated"),
+            (["high", None], "class label None is not a string or a finite number"),
+            ([True, False], "class label True is not a string or a finite number"),
+            (["high", float("nan")], "class label nan is not a string or a finite number"),
+            (["high", float("inf")], "class label inf is not a string or a finite number"),
+        ):
+            with self.subTest(class_names), self.assertRaisesRegex(ValueError, re.escape(message)):
+                n4core.N4mRolePipeline.from_json(_with_class_names(source, class_names))
+
+        # Index = class id: a longer table keeps the slots of labels a filter
+        # removed, and finite numbers (even beside strings) are labels too.
+        longer = n4core.N4mRolePipeline.from_json(_with_class_names(source, ["a", "b", "c"]))
+        self.assertEqual(len(longer.predict(x_test)), len(x_test))
+        numeric = n4core.N4mRolePipeline.from_json(_with_class_names(source, [0.5, 1.5]))
+        self.assertEqual(numeric.predict(x_test).tolist(), [0.5 if label == "high" else 1.5 for label in expected])
+        self.assertEqual(json.loads(numeric.to_json())["states"][-1]["class_names"], [0.5, 1.5])
+        mixed = n4core.N4mRolePipeline.from_json(_with_class_names(source, ["high", 2]))
+        self.assertEqual(mixed.predict(x_test).tolist(), [label if label == "high" else 2 for label in expected])
+
+        # States fitted on class ids 10 and 20 have no entry in a two-label table.
+        ids = [10 if label == "high" else 20 for label in PYTHON_TRAINED["classification"]["y_train"]]
+        by_ids = json.loads(n4core.N4mRolePipeline.fit_recipe(source["recipe"], PYTHON_TRAINED["x_train"], ids).to_json())
+        self.assertNotIn("class_names", by_ids["states"][-1])
+        with self.assertRaisesRegex(ValueError, re.escape("class id 10 has no entry in class_names (2 labels)")):
+            n4core.N4mRolePipeline.from_json(_with_class_names(by_ids, ["high", "low"]))
+        with self.assertRaisesRegex(ValueError, "class_names label the classes of a final classifier"):
+            n4core.N4mRolePipeline.from_json(_with_class_names(PYTHON_TRAINED["regression"]["envelope"], ["high", "low"]))
+
+    def test_refuses_missing_or_non_finite_labels_at_fit(self) -> None:
+        recipe = PYTHON_TRAINED["classification"]["envelope"]["recipe"]
+        x_train = PYTHON_TRAINED["x_train"]
+        labels = [0.5 if label == "high" else 1.5 for label in PYTHON_TRAINED["classification"]["y_train"]]
+        fitted = n4core.N4mRolePipeline.fit_recipe(recipe, x_train, labels)
+        self.assertEqual(json.loads(fitted.to_json())["states"][-1]["class_names"], [0.5, 1.5])
+        for bad, shown in ((float("nan"), "nan"), (float("inf"), "inf")):
+            with self.subTest(shown), self.assertRaisesRegex(ValueError, f"class label {shown} is not a string or a finite number"):
+                n4core.N4mRolePipeline.fit_recipe(recipe, x_train, [bad, *labels[1:]])
+        with self.assertRaisesRegex(ValueError, "class label False is not a string or a finite number"):
+            n4core.N4mRolePipeline.fit_recipe(recipe, x_train, [label == 0.5 for label in labels])
+
+    def test_envelope_widths_are_positive_json_integers(self) -> None:
+        source = PYTHON_TRAINED["regression"]["envelope"]
+        for value in (24.9, 24.0, "24", True, 0, -24, None):
+            with self.subTest(value), self.assertRaisesRegex(ValueError, re.escape(f"n_features must be a positive JSON integer, got {value!r}")):
+                n4core.N4mRolePipeline.from_json(json.dumps({**source, "n_features": value}))
+        missing = {key: value for key, value in source.items() if key != "n_features"}
+        with self.assertRaisesRegex(ValueError, "n_features must be a positive JSON integer, got None"):
+            n4core.N4mRolePipeline.from_json(json.dumps(missing))
+
+    def test_refuses_column_names_with_nul(self) -> None:
+        case = METHODS["regression"]
+        names = list(METHODS["feature_names"])
+        names[3] = "nm1006\0"
+        with self.assertRaisesRegex(ValueError, "contains a NUL character"):
+            n4core.N4mRolePipeline.from_json(_envelope(case["steps"], case["states"], names))
+        with self.assertRaisesRegex(ValueError, "contains a NUL character"):
+            n4core.N4mRolePipeline.fit_recipe({"pipeline": case["steps"]}, self.frame(METHODS["x_train"], names), METHODS["y_train"])
+        pipeline = n4core.N4mRolePipeline.from_json(_envelope(case["steps"], case["states"], METHODS["feature_names"]))
+        with self.assertRaisesRegex(ValueError, "contains a NUL character"):
+            pipeline.predict(self.frame(METHODS["x_test"], names))
+
+    def test_refuses_ragged_or_contradictory_targets(self) -> None:
+        recipe = {"pipeline": [{"class": "n4m:models.regularized.ridge", "params": {"alpha": 1}}]}
+        x_train, y = METHODS["x_train"], METHODS["y2_train"]
+        n4core.N4mRolePipeline.fit_recipe(recipe, x_train, y)
+        ragged = copy.deepcopy(y)
+        ragged[1], ragged[2] = [10], [20, 21, 22]
+        for name, target in (("ragged", ragged), ("short", y[1:]), ("long", [*y, y[0]]), ("no column", [[] for _ in y])):
+            with self.subTest(name), self.assertRaises(ValueError):
+                n4core.N4mRolePipeline.fit_recipe(recipe, x_train, target)
+        with self.assertRaises(ValueError):
+            n4core.N4mRolePipeline.fit_recipe(recipe, [[*row, 123] if i == 0 else row for i, row in enumerate(x_train)], y)
+
+    def test_exports_the_recipe_the_states_attest(self) -> None:
+        recipe = copy.deepcopy(PYTHON_TRAINED["regression"]["envelope"]["recipe"])
+        x_train, x_test, y_train = PYTHON_TRAINED["x_train"], PYTHON_TRAINED["x_test"], PYTHON_TRAINED["regression"]["y_train"]
+        fitted = n4core.N4mRolePipeline.fit_recipe(recipe, x_train, y_train)
+        recipe["pipeline"][-1]["params"]["n_components"] = 1
+        fitted.recipe["pipeline"][-1]["params"]["n_components"] = 1
+        text = fitted.to_json()
+        self.assertEqual(json.loads(text)["recipe"], PYTHON_TRAINED["regression"]["envelope"]["recipe"])
+        replayed = n4core.N4mRolePipeline.from_json(text)
+        self.assertEqual(replayed.predict(x_test).tolist(), fitted.predict(x_test).tolist())
+        self.assertEqual(fitted.retrain(x_train, y_train).predict(x_test).tolist(), fitted.predict(x_test).tolist())
+
+
+def _with_class_names(source: dict, class_names) -> str:
+    """``source`` with the label table of its last state replaced."""
+
+    document = copy.deepcopy(source)
+    document["states"][-1]["class_names"] = class_names
+    return json.dumps(document)
 
 
 if __name__ == "__main__":
