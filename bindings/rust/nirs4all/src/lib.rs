@@ -37,8 +37,9 @@ pub use archive_v3::{
     load_archive_v3, write_archive_v3, ArchiveV3Reference, ArchiveV3WriteRequest, LoadedArchiveV3,
 };
 pub use archive_view::{
-    archive_v2_view, archive_view, ArchivePayloadView, ArchiveReplayExecutionStatus,
-    ArchiveReplayView, ArchiveView, ArchiveViewError,
+    archive_v2_view, archive_v3_view, archive_view, ArchivePayloadView,
+    ArchiveReplayExecutionStatus, ArchiveReplayView, ArchiveV3MethodsView, ArchiveV3N4mmView,
+    ArchiveV3ReplayView, ArchiveV3View, ArchiveView, ArchiveViewError,
 };
 pub use dag_ml_core::NativePredictorDescriptorV1;
 pub use formats_io::{

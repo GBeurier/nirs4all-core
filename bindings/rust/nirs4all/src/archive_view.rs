@@ -10,7 +10,10 @@ use std::fmt;
 use serde::Serialize;
 use serde_json::{Map, Value};
 
-use crate::{ArchiveReference, ArchiveV2Reference, LoadedArchiveV1, LoadedArchiveV2};
+use crate::{
+    ArchiveReference, ArchiveV2Reference, ArchiveV3Reference, LoadedArchiveV1, LoadedArchiveV2,
+    LoadedArchiveV3,
+};
 
 /// Serializable, read-only summary of an archive's replay and evidence refs.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
@@ -57,9 +60,58 @@ pub struct ArchivePayloadView {
     pub raw_sha256: String,
     pub semantic_fingerprint: String,
     pub semantic_profile: String,
-    /// Present for the V2 training artifacts whose replay provenance is bound
-    /// to the producing output port.
+    /// Present when replay provenance is bound to the producing output port.
     pub producer_port_required: Option<bool>,
+}
+
+/// Serializable, read-only V3 archive inventory for an application host.
+///
+/// It exposes only the V3 manifest declarations that Core validates: opaque
+/// DAG-ML replay references and N4MM artifact inventory metadata. It does not
+/// deserialize those members, execute them, or infer results, OOF data,
+/// scores, HPO state, or conformal state.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+pub struct ArchiveV3View {
+    pub archive_id: String,
+    pub schema_version: u32,
+    pub profile: String,
+    pub archive_sha256: String,
+    pub replay: ArchiveV3ReplayView,
+    pub methods: ArchiveV3MethodsView,
+}
+
+/// V3's opaque DAG-ML replay member references.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+pub struct ArchiveV3ReplayView {
+    pub portable_refit_package: ArchivePayloadView,
+    pub graph: ArchivePayloadView,
+    pub execution_bundle: ArchivePayloadView,
+    pub refit_outcome: ArchivePayloadView,
+    /// V3 declares native method artifacts; Core does not execute them.
+    pub execution_status: ArchiveReplayExecutionStatus,
+}
+
+/// The native-method artifact declarations validated for an Archive V3.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+pub struct ArchiveV3MethodsView {
+    pub n4mm: Vec<ArchiveV3N4mmView>,
+}
+
+/// Metadata for one declared N4MM member; this never includes artifact bytes.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+pub struct ArchiveV3N4mmView {
+    pub artifact_id: String,
+    pub kind: String,
+    pub owner: String,
+    pub format_version: u32,
+    pub abi_major: u32,
+    /// Optional minimum Methods ABI minor declared by the archive.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub abi_min_minor: Option<u32>,
+    pub member_path: String,
+    pub raw_sha256: String,
+    pub semantic_fingerprint: String,
+    pub semantic_profile: String,
 }
 
 /// A malformed persisted manifest prevented a host projection.
@@ -86,6 +138,12 @@ pub fn archive_view(archive: &LoadedArchiveV1) -> Result<ArchiveView, ArchiveVie
 /// therefore expected to be null.
 pub fn archive_v2_view(archive: &LoadedArchiveV2) -> Result<ArchiveView, ArchiveViewError> {
     archive_v2_view_from_manifest(archive.reference(), archive.manifest())
+}
+
+/// Project an integrity-checked Archive V3 into its native-artifact inventory
+/// view without parsing DAG-ML or N4MM members or executing a replay.
+pub fn archive_v3_view(archive: &LoadedArchiveV3) -> Result<ArchiveV3View, ArchiveViewError> {
+    archive_v3_view_from_manifest(archive.reference(), archive.manifest())
 }
 
 fn archive_view_from_manifest(
@@ -205,6 +263,54 @@ fn archive_v2_view_from_manifest(
     })
 }
 
+fn archive_v3_view_from_manifest(
+    reference: &ArchiveV3Reference,
+    manifest: &Value,
+) -> Result<ArchiveV3View, ArchiveViewError> {
+    let root = object(manifest, "manifest")?;
+    let replay = object(member(root, "replay", "manifest")?, "replay")?;
+    let refit_artifacts = object(
+        member(replay, "refit_artifacts", "replay")?,
+        "replay.refit_artifacts",
+    )?;
+    let payloads = object(member(root, "payloads", "manifest")?, "payloads")?;
+    let methods = object(member(payloads, "methods", "payloads")?, "payloads.methods")?;
+    let n4mm = array(
+        member(methods, "n4mm", "payloads.methods")?,
+        "payloads.methods.n4mm",
+    )?
+    .iter()
+    .map(n4mm_view)
+    .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(ArchiveV3View {
+        archive_id: reference.archive_id().to_owned(),
+        schema_version: reference.schema_version(),
+        profile: reference.profile().to_owned(),
+        archive_sha256: reference.archive_sha256().to_owned(),
+        replay: ArchiveV3ReplayView {
+            portable_refit_package: payload_view(member(
+                replay,
+                "portable_refit_package",
+                "replay",
+            )?)?,
+            graph: payload_view(member(refit_artifacts, "graph", "replay.refit_artifacts")?)?,
+            execution_bundle: payload_view(member(
+                refit_artifacts,
+                "execution_bundle",
+                "replay.refit_artifacts",
+            )?)?,
+            refit_outcome: payload_view(member(
+                refit_artifacts,
+                "refit_outcome",
+                "replay.refit_artifacts",
+            )?)?,
+            execution_status: ArchiveReplayExecutionStatus::RequiresNativeArtifactExecutor,
+        },
+        methods: ArchiveV3MethodsView { n4mm },
+    })
+}
+
 fn optional_payload_view(
     object: &Map<String, Value>,
     key: &str,
@@ -257,10 +363,62 @@ fn payload_view(value: &Value) -> Result<ArchivePayloadView, ArchiveViewError> {
     })
 }
 
+fn n4mm_view(value: &Value) -> Result<ArchiveV3N4mmView, ArchiveViewError> {
+    let object = object(value, "V3 N4MM inventory entry")?;
+    Ok(ArchiveV3N4mmView {
+        artifact_id: string(
+            member(object, "artifact_id", "V3 N4MM inventory entry")?,
+            "V3 N4MM inventory entry.artifact_id",
+        )?,
+        kind: string(
+            member(object, "kind", "V3 N4MM inventory entry")?,
+            "V3 N4MM inventory entry.kind",
+        )?,
+        owner: string(
+            member(object, "owner", "V3 N4MM inventory entry")?,
+            "V3 N4MM inventory entry.owner",
+        )?,
+        format_version: u32_value(
+            member(object, "format_version", "V3 N4MM inventory entry")?,
+            "V3 N4MM inventory entry.format_version",
+        )?,
+        abi_major: u32_value(
+            member(object, "abi_major", "V3 N4MM inventory entry")?,
+            "V3 N4MM inventory entry.abi_major",
+        )?,
+        abi_min_minor: object
+            .get("abi_min_minor")
+            .map(|value| u32_value(value, "V3 N4MM inventory entry.abi_min_minor"))
+            .transpose()?,
+        member_path: string(
+            member(object, "member_path", "V3 N4MM inventory entry")?,
+            "V3 N4MM inventory entry.member_path",
+        )?,
+        raw_sha256: string(
+            member(object, "raw_sha256", "V3 N4MM inventory entry")?,
+            "V3 N4MM inventory entry.raw_sha256",
+        )?,
+        semantic_fingerprint: string(
+            member(object, "semantic_fingerprint", "V3 N4MM inventory entry")?,
+            "V3 N4MM inventory entry.semantic_fingerprint",
+        )?,
+        semantic_profile: string(
+            member(object, "semantic_profile", "V3 N4MM inventory entry")?,
+            "V3 N4MM inventory entry.semantic_profile",
+        )?,
+    })
+}
+
 fn object<'a>(value: &'a Value, context: &str) -> Result<&'a Map<String, Value>, ArchiveViewError> {
     value
         .as_object()
         .ok_or_else(|| ArchiveViewError(format!("{context} must be an object")))
+}
+
+fn array<'a>(value: &'a Value, context: &str) -> Result<&'a Vec<Value>, ArchiveViewError> {
+    value
+        .as_array()
+        .ok_or_else(|| ArchiveViewError(format!("{context} must be an array")))
 }
 
 fn member<'a>(

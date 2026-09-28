@@ -61,6 +61,7 @@ class FacadeImportSurfaceTests(unittest.TestCase):
             "portable_class_names",
             "predict_methods_archive_v2_matrix",
             "release_topology_manifest",
+            "read_archive_v3_view",
             "read_portable_predictor_package_v2",
             "read_portable_refit_package_v3",
             "replay_methods_archive_v2",

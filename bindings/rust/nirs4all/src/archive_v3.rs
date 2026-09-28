@@ -955,6 +955,117 @@ mod tests {
     }
 
     #[test]
+    fn v3_host_view_projects_native_refs_and_inventory_without_result_semantics() {
+        let archive = path("host-view.n4a");
+        write_archive_v3(&archive, request()).expect("write V3");
+        let loaded = load_archive_v3(&archive).expect("load V3");
+
+        let view = crate::archive_v3_view(&loaded).expect("project V3 host view");
+        assert_eq!(view.archive_id, "archive:v3-test");
+        assert_eq!(view.schema_version, 3);
+        assert_eq!(view.replay.portable_refit_package.member_path, PACKAGE);
+        assert_eq!(view.replay.graph.member_path, GRAPH);
+        assert_eq!(view.replay.execution_bundle.member_path, BUNDLE);
+        assert_eq!(view.replay.refit_outcome.member_path, OUTCOME);
+        assert_eq!(
+            view.replay.execution_status,
+            crate::ArchiveReplayExecutionStatus::RequiresNativeArtifactExecutor
+        );
+        assert_eq!(view.methods.n4mm.len(), 1);
+        assert_eq!(view.methods.n4mm[0].artifact_id, "artifact:model:refit");
+        assert_eq!(view.methods.n4mm[0].member_path, "methods/model.n4mm");
+        assert_eq!(view.methods.n4mm[0].kind, "N4MM");
+        assert_eq!(view.methods.n4mm[0].owner, "nirs4all-methods");
+        assert_eq!(view.methods.n4mm[0].format_version, 1);
+        assert_eq!(view.methods.n4mm[0].abi_major, 2);
+        assert_eq!(view.methods.n4mm[0].abi_min_minor, None);
+        assert_eq!(view.methods.n4mm[0].semantic_profile, "n4mm_raw_sha256");
+        assert_eq!(
+            view.methods.n4mm[0].raw_sha256,
+            view.methods.n4mm[0].semantic_fingerprint
+        );
+
+        let document = serde_json::to_value(&view).expect("serialize V3 host view");
+        let root = document.as_object().expect("V3 host view object");
+        assert_eq!(root.len(), 6);
+        for key in [
+            "archive_id",
+            "schema_version",
+            "profile",
+            "archive_sha256",
+            "replay",
+            "methods",
+        ] {
+            assert!(root.contains_key(key), "missing host view field `{key}`");
+        }
+        let replay = root["replay"].as_object().expect("replay view object");
+        assert_eq!(replay.len(), 5);
+        for key in [
+            "portable_refit_package",
+            "graph",
+            "execution_bundle",
+            "refit_outcome",
+            "execution_status",
+        ] {
+            assert!(
+                replay.contains_key(key),
+                "missing replay view field `{key}`"
+            );
+        }
+        assert_eq!(
+            replay["execution_status"],
+            Value::String("requires_native_artifact_executor".into())
+        );
+        let methods = root["methods"].as_object().expect("methods view object");
+        assert_eq!(methods.len(), 1);
+        let n4mm = methods["n4mm"].as_array().expect("N4MM inventory array");
+        assert_eq!(n4mm.len(), 1);
+        assert_eq!(n4mm[0].as_object().expect("N4MM inventory object").len(), 9);
+        assert!(n4mm[0].get("abi_min_minor").is_none());
+        assert!(!root.contains_key("conformal"));
+        assert!(!root.contains_key("robustness"));
+        assert!(!root.contains_key("results"));
+        assert!(!root.contains_key("oof"));
+        assert!(!root.contains_key("scores"));
+        assert!(!root.contains_key("hpo"));
+
+        let _ = fs::remove_file(archive);
+    }
+
+    #[test]
+    fn v3_host_view_preserves_explicit_methods_abi_minor_floor() {
+        let archive = path("host-view-abi-minor.n4a");
+        let mut input = request();
+        input.manifest["payloads"]["methods"]["n4mm"][0]["abi_min_minor"] = Value::from(3);
+        write_archive_v3(&archive, input).expect("write V3 with ABI 2.3 floor");
+        let loaded = load_archive_v3(&archive).expect("load V3");
+        let view = crate::archive_v3_view(&loaded).expect("project V3 host view");
+        assert_eq!(view.methods.n4mm[0].abi_min_minor, Some(3));
+        let document = serde_json::to_value(&view).expect("serialize V3 host view");
+        assert_eq!(document["methods"]["n4mm"][0]["abi_min_minor"], 3);
+        let _ = fs::remove_file(archive);
+    }
+
+    #[test]
+    fn v3_host_view_refuses_malformed_inventory_instead_of_inventing_an_entry() {
+        let archive = path("host-view-malformed.n4a");
+        write_archive_v3(&archive, request()).expect("write V3");
+        let mut loaded = load_archive_v3(&archive).expect("load V3");
+        loaded.manifest["payloads"]["methods"]["n4mm"][0]
+            .as_object_mut()
+            .expect("N4MM inventory entry")
+            .remove("abi_major");
+
+        let error = crate::archive_v3_view(&loaded).expect_err("refuse malformed N4MM inventory");
+        assert_eq!(
+            error.to_string(),
+            "archive view refusal: V3 N4MM inventory entry.abi_major is required"
+        );
+
+        let _ = fs::remove_file(archive);
+    }
+
+    #[test]
     fn v3_refuses_mixed_family_and_host_before_write() {
         let archive = path("mixed.n4a");
         let mut mixed = request();
