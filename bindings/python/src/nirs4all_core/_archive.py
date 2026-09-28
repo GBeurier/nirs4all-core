@@ -61,6 +61,27 @@ def _decode_replay_outcome(payload: Any, version: str) -> dict[str, Any]:
     return outcome
 
 
+def read_archive_v3_view(path: str | Path) -> dict[str, Any]:
+    """Project a Rust-validated Archive V3 into host-safe inventory metadata.
+
+    The returned mapping contains only Core's validated replay references and
+    N4MM inventory declarations. This facade never opens ZIP members in
+    Python, decodes a DAG-ML/N4MM payload, or executes a replay.
+    """
+
+    try:
+        from . import _native
+    except ImportError as error:  # pragma: no cover - depends on wheel build
+        raise NativeArchiveUnavailableError(
+            "Archive V3 access requires the nirs4all-core native wheel; "
+            "install a matching nirs4all-core distribution."
+        ) from error
+    result = _native.read_archive_v3_view(str(Path(path)))
+    if not isinstance(result, dict):  # pragma: no cover - native bridge contract guard
+        raise RuntimeError("native Archive V3 view did not return a mapping")
+    return result
+
+
 def read_portable_predictor_package_v2(path: str | Path) -> bytes:
     """Read exact Package V2 bytes from a Rust-validated Archive V2.
 

@@ -10,6 +10,7 @@ from unittest.mock import patch
 
 from nirs4all_core import (
     NativeArchiveUnavailableError,
+    read_archive_v3_view,
     inspect_methods_archive_v2_predictors,
     predict_methods_archive_v2_matrix,
     read_portable_predictor_package_v2,
@@ -107,6 +108,31 @@ class ArchiveFacadeTests(unittest.TestCase):
             result = read_portable_refit_package_v3("/tmp/model.n4a")
 
         self.assertEqual(result, b'{"schema_version":3}')
+        self.assertEqual(observed, ["/tmp/model.n4a"])
+
+    def test_v3_view_missing_native_bridge_fails_closed(self) -> None:
+        with patch.dict(sys.modules, {"nirs4all_core._native": None}):
+            with self.assertRaises(NativeArchiveUnavailableError):
+                read_archive_v3_view("/tmp/model.n4a")
+
+    def test_returns_native_v3_host_view_without_python_archive_logic(self) -> None:
+        observed: list[str] = []
+        expected = {
+            "archive_id": "archive:v3-test",
+            "schema_version": 3,
+            "replay": {"execution_status": "requires_native_artifact_executor"},
+            "methods": {"n4mm": []},
+        }
+
+        def view(path: str) -> dict[str, object]:
+            observed.append(path)
+            return expected
+
+        module = types.SimpleNamespace(read_archive_v3_view=view)
+        with patch.dict(sys.modules, {"nirs4all_core._native": module}):
+            result = read_archive_v3_view("/tmp/model.n4a")
+
+        self.assertEqual(result, expected)
         self.assertEqual(observed, ["/tmp/model.n4a"])
 
     def test_v2_replay_forwards_strict_json_without_callbacks(self) -> None:

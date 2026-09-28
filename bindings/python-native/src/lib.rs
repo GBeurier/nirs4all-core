@@ -12,6 +12,7 @@ use std::path::Path;
 use std::path::PathBuf;
 
 use nirs4all::{
+    archive_v3_view,
     inspect_methods_archive_v2_predictors_json as core_inspect_methods_archive_v2_predictors_json,
     load_archive_v2, load_archive_v3,
     predict_methods_archive_v2_matrix_json as core_predict_methods_archive_v2_matrix_json,
@@ -31,6 +32,10 @@ use serde_json::Value;
 
 fn archive_error(error: impl std::fmt::Display) -> PyErr {
     PyValueError::new_err(format!("Archive V2 validation refused: {error}"))
+}
+
+fn archive_v3_error(error: impl std::fmt::Display) -> PyErr {
+    PyValueError::new_err(format!("Archive V3 validation refused: {error}"))
 }
 
 fn replay_error(error: impl std::fmt::Display) -> PyErr {
@@ -88,6 +93,17 @@ fn read_portable_refit_package_v3<'py>(
         PyValueError::new_err(format!("Archive V3 validation refused: {error}"))
     })?;
     Ok(PyBytes::new(py, package))
+}
+
+/// Return Core's validated Archive V3 replay references and N4MM inventory.
+/// Python does not open archive members or execute replay.
+#[pyfunction]
+fn read_archive_v3_view(py: Python<'_>, path: &str) -> PyResult<Py<PyAny>> {
+    let archive = load_archive_v3(Path::new(path)).map_err(archive_v3_error)?;
+    let view = archive_v3_view(&archive).map_err(archive_v3_error)?;
+    let encoded = serde_json::to_string(&view).map_err(archive_v3_error)?;
+    let json = py.import("json")?;
+    Ok(json.call_method1("loads", (encoded,))?.unbind())
 }
 
 /// Inspect every native predictor in a validated Archive V2.
@@ -376,6 +392,7 @@ fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
         module
     )?)?;
     module.add_function(wrap_pyfunction!(read_portable_refit_package_v3, module)?)?;
+    module.add_function(wrap_pyfunction!(read_archive_v3_view, module)?)?;
     module.add_function(wrap_pyfunction!(
         inspect_methods_archive_v2_predictors_json,
         module

@@ -22,6 +22,12 @@ It does not parse ZIP members in Python, deserialize the package, or execute a
 prediction. Pass the returned bytes to DAG-ML's typed package/replay surface;
 the aggregate remains only the container and integrity boundary.
 
+## Archive V3 host view
+
+`nirs4all_core.read_archive_v3_view(path)` invokes the Rust Archive V3 reader
+and returns validated replay references and N4MM inventory. It does not parse
+ZIP members in Python or execute a replay.
+
 `replay_methods_archive_v2(...)` and `replay_methods_archive_v3(...)` provide
 the callback-free execution path. Rust validates the complete archive before
 DAG-ML parses the signed request and numeric Methods inputs or opens the
@@ -114,4 +120,3 @@ integer equal to the native width, a column name holding NUL, and a
 numbers labelling every fitted class id (index = id); missing or non-finite
 labels are refused at fit. `recipe` is a copy of the recipe the states attest,
 which is also the one exported. It requires `nirs4all-methods` 1.2.0 or later (ABI 2.14).
-
