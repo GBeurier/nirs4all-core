@@ -4,11 +4,12 @@
 in-memory Archive V2 parser and validator. It does not invoke Python or duplicate
 ZIP, manifest, inventory, or payload validation.
 
-With `cargo-fuzz` already installed, check or run it from the repository root:
+With `cargo-fuzz` and a nightly Rust toolchain already installed, check or run it
+from the repository root:
 
 ```console
-cargo fuzz check archive_v2_bytes
-cargo fuzz run archive_v2_bytes -- -max_len=2097152
+cargo +nightly fuzz check archive_v2_bytes
+cargo +nightly fuzz run archive_v2_bytes -- -max_len=2097152
 ```
 
 Generated corpora and crash artifacts are intentionally untracked. Qualifying

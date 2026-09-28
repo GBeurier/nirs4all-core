@@ -10,6 +10,7 @@ target/
 fuzz/artifacts/
 fuzz/corpus/
 fuzz/target/
+fuzz/Cargo.lock
 bindings/wasm/native/
 node_modules/
 dist/
