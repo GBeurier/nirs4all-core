@@ -27,10 +27,10 @@ const PROFILE: &str = "nirs4all.archive_workspace.v2";
 const WRITER_ID: &str = "nirs4all-core.archive_workspace_writer.v2";
 const MANIFEST: &str = "manifest.json";
 const PACKAGE: &str = "dagml/portable_predictor_package.json";
-const MAX_ENTRIES: usize = 256;
-const MAX_MEMBER: usize = 134_217_728;
-const MAX_TOTAL: usize = 536_870_912;
-const MAX_MANIFEST: usize = 1_048_576;
+pub(crate) const MAX_ENTRIES: usize = 256;
+pub(crate) const MAX_MEMBER: usize = 134_217_728;
+pub(crate) const MAX_TOTAL: usize = 536_870_912;
+pub(crate) const MAX_MANIFEST: usize = 1_048_576;
 const MAX_MANIFEST_JSON_NESTING: usize = 64;
 const MAX_ARCHIVE: usize = MAX_TOTAL + MAX_ENTRIES * (4096 + 76) + 22;
 const PACKAGE_SCHEMA: &str =
@@ -132,6 +132,11 @@ impl LoadedArchiveV2 {
             ArchiveStoreError::Integrity(format!("V2 member `{path}` disappeared after validation"))
         })
     }
+    /// Exact opaque payload inventory, after container integrity validation.
+    /// DAG-ML remains responsible for package semantics and controller trust.
+    pub fn members(&self) -> &BTreeMap<String, Vec<u8>> {
+        &self.members
+    }
     pub fn portable_predictor_package(&self) -> Result<&[u8], ArchiveStoreError> {
         self.member(PACKAGE)
     }
@@ -185,14 +190,22 @@ pub fn write_archive_v2(
     path: &Path,
     request: ArchiveV2WriteRequest,
 ) -> Result<ArchiveV2Reference, ArchiveStoreError> {
+    let (reference, bytes) = write_archive_v2_bytes(request)?;
+    atomic_create(path, &bytes)?;
+    Ok(reference)
+}
+
+/// Assemble the same validated stored-ZIP bytes for browser/download hosts.
+pub fn write_archive_v2_bytes(
+    request: ArchiveV2WriteRequest,
+) -> Result<(ArchiveV2Reference, Vec<u8>), ArchiveStoreError> {
     let (manifest, members, archive_id) = prepare(request.manifest, request.payloads, true)?;
     let bytes = stored_zip(&manifest, &members)?;
     let reference = ArchiveV2Reference {
         archive_id,
         archive_sha256: sha256(&bytes),
     };
-    atomic_create(path, &bytes)?;
-    Ok(reference)
+    Ok((reference, bytes))
 }
 
 pub fn load_archive_v2(path: &Path) -> Result<LoadedArchiveV2, ArchiveStoreError> {
@@ -483,7 +496,15 @@ fn validate_manifest_declarations(
         }
     }
     let methods = object(required(payloads, "methods")?, "payloads.methods")?;
-    closed(methods, &["n4mm", "n4mopt"], "payloads.methods")?;
+    if methods.contains_key("role_pipelines") {
+        closed(
+            methods,
+            &["n4mm", "n4mopt", "role_pipelines"],
+            "payloads.methods",
+        )?;
+    } else {
+        closed(methods, &["n4mm", "n4mopt"], "payloads.methods")?;
+    }
     if root.get("workspace") != Some(&Value::Null) {
         return refuse("V2 P0 refuses workspace snapshots");
     }
@@ -533,13 +554,19 @@ fn validate_manifest_declarations(
             }
         }
     }
-    if object(required(payloads, "methods")?, "payloads.methods")?
-        .get("n4mm")
-        .and_then(Value::as_array)
-        .filter(|v| !v.is_empty())
-        .is_none()
-    {
-        return refuse("V2 requires at least one N4MM member");
+    let n4mm = required(methods, "n4mm")?
+        .as_array()
+        .ok_or_else(|| fmt_err("payloads.methods.n4mm must be array"))?;
+    let role_pipelines = methods
+        .get("role_pipelines")
+        .map(|value| {
+            value
+                .as_array()
+                .ok_or_else(|| fmt_err("role_pipelines must be array"))
+        })
+        .transpose()?;
+    if n4mm.is_empty() && role_pipelines.is_none_or(|roles| roles.is_empty()) {
+        return refuse("V2 requires at least one N4MM or Methods role pipeline member");
     }
     let inventory = root
         .get("member_inventory")
@@ -697,7 +724,9 @@ fn derive_inventory(
     for entry in inventory {
         let e = object_mut(entry, "inventory")?;
         let path = required_str(e, "path")?.to_owned();
-        let bytes = &members[&path];
+        let bytes = members
+            .get(&path)
+            .ok_or_else(|| fmt_err("inventory path missing from supplied payloads"))?;
         e.insert("raw_sha256".into(), Value::String(sha256(bytes)));
         e.insert("uncompressed_size_bytes".into(), Value::from(bytes.len()));
         if path.ends_with(".n4mm") {
@@ -705,6 +734,14 @@ fn derive_inventory(
             e.insert(
                 "semantic_profile".into(),
                 Value::String("n4mm_raw_sha256".into()),
+            );
+        } else if e.get("semantic_profile").and_then(Value::as_str)
+            == Some("dagml_methods_role_pipeline_raw_sha256")
+        {
+            e.insert("semantic_fingerprint".into(), Value::String(sha256(bytes)));
+            e.insert(
+                "semantic_profile".into(),
+                Value::String("dagml_methods_role_pipeline_raw_sha256".into()),
             );
         }
     }
@@ -723,6 +760,12 @@ fn derive_inventory(
             o.insert(
                 "semantic_profile".into(),
                 Value::String("n4mm_raw_sha256".into()),
+            );
+        } else if o.get("kind").and_then(Value::as_str) == Some("methods_role_pipeline") {
+            o.insert("semantic_fingerprint".into(), Value::String(sha256(bytes)));
+            o.insert(
+                "semantic_profile".into(),
+                Value::String("dagml_methods_role_pipeline_raw_sha256".into()),
             );
         }
         Ok(())
@@ -749,7 +792,10 @@ fn derive_inventory(
         )?,
         "methods",
     )?;
-    for key in ["n4mm", "n4mopt"] {
+    for key in ["n4mm", "n4mopt", "role_pipelines"] {
+        if key == "role_pipelines" && !methods.contains_key(key) {
+            continue;
+        }
         for item in required_mut(methods, key)?
             .as_array_mut()
             .ok_or_else(|| fmt_err("methods payload list must be array"))?
@@ -812,6 +858,7 @@ fn declared_inventory_metadata(
                 "dagml_tcv1"
                     | "dagml_historical_serde_json_v1"
                     | "n4mm_raw_sha256"
+                    | "dagml_methods_role_pipeline_raw_sha256"
                     | "methods_rfc8785_jcs"
                     | "none"
             )
@@ -950,6 +997,46 @@ fn validate_reference_declarations(
             return refuse("unsafe or duplicate N4MM member path");
         }
         validate_ref(item, inventory_meta, None, None, &mut declared_paths)?;
+    }
+    if let Some(roles) = methods.get("role_pipelines") {
+        for item in roles
+            .as_array()
+            .ok_or_else(|| fmt_err("role_pipelines must be array"))?
+        {
+            let o = object(item, "Methods role pipeline reference")?;
+            closed(
+                o,
+                &[
+                    "artifact_id",
+                    "kind",
+                    "owner",
+                    "format_version",
+                    "member_path",
+                    "raw_sha256",
+                    "semantic_fingerprint",
+                    "semantic_profile",
+                ],
+                "Methods role pipeline reference",
+            )?;
+            let raw_sha = required_str(o, "raw_sha256")?;
+            let path = required_str(o, "member_path")?;
+            let artifact_id = required_str(o, "artifact_id")?;
+            if o.get("kind").and_then(Value::as_str) != Some("methods_role_pipeline")
+                || o.get("owner").and_then(Value::as_str) != Some("dag-ml")
+                || o.get("format_version").and_then(Value::as_u64) != Some(1)
+                || o.get("semantic_profile").and_then(Value::as_str)
+                    != Some("dagml_methods_role_pipeline_raw_sha256")
+                || o.get("semantic_fingerprint") != o.get("raw_sha256")
+                || !sha256_text(Some(raw_sha))
+                || path != format!("artifacts/{raw_sha}.json")
+                || !is_id(artifact_id)
+                || !n4mm_ids.insert(artifact_id)
+                || !n4mm_paths.insert(path)
+            {
+                return refuse("invalid or duplicate Methods role pipeline reference");
+            }
+            validate_ref(item, inventory_meta, None, None, &mut declared_paths)?;
+        }
     }
     for item in required(methods, "n4mopt")?
         .as_array()
@@ -1919,7 +2006,7 @@ fn n4mm_path_ok(path: &str) -> bool {
             .bytes()
             .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'.' | b'-'))
 }
-fn path_ok(path: &str) -> Result<(), ArchiveStoreError> {
+pub(crate) fn path_ok(path: &str) -> Result<(), ArchiveStoreError> {
     if path.is_empty()
         || path.len() > 512
         || path == MANIFEST
@@ -2081,6 +2168,104 @@ mod tests {
             assert!(!message.contains("cannot configure the Methods runtime"));
         }
         let _ = std::fs::remove_file(target);
+    }
+
+    // Storage-only fixtures deliberately cannot authorize a replay: the real
+    // captured five-model package is exercised by the cross-binding campaign.
+    fn role_pipeline_storage_request() -> ArchiveV2WriteRequest {
+        let mut request = request();
+        request
+            .payloads
+            .retain(|member| member.path != "methods/model.n4mm");
+        request.manifest["member_inventory"]
+            .as_array_mut()
+            .unwrap()
+            .retain(|member| member["path"] != "methods/model.n4mm");
+        request.manifest["payloads"]["methods"]["n4mm"] = serde_json::json!([]);
+        let mut roles = Vec::new();
+        for index in 0..5 {
+            let bytes = format!("opaque Methods role state {index}").into_bytes();
+            let digest = sha256(&bytes);
+            let member_path = format!("artifacts/{digest}.json");
+            roles.push(serde_json::json!({
+                "artifact_id": format!("artifact:role:{index}"),
+                "kind": "methods_role_pipeline", "owner": "dag-ml", "format_version": 1,
+                "member_path": member_path, "raw_sha256": digest,
+                "semantic_fingerprint": digest,
+                "semantic_profile": "dagml_methods_role_pipeline_raw_sha256",
+            }));
+            request.manifest["member_inventory"]
+                .as_array_mut()
+                .unwrap()
+                .push(serde_json::json!({
+                    "path": member_path, "regular_file": true, "raw_sha256": digest,
+                    "uncompressed_size_bytes": bytes.len(), "semantic_fingerprint": digest,
+                    "semantic_profile": "dagml_methods_role_pipeline_raw_sha256",
+                }));
+            request.payloads.push(ArchivePayload {
+                path: member_path,
+                bytes,
+            });
+        }
+        request.manifest["payloads"]["methods"]["role_pipelines"] = Value::Array(roles);
+        request
+    }
+
+    #[test]
+    fn role_pipeline_storage_roundtrip_preserves_all_five_exact_payloads() {
+        let request = role_pipeline_storage_request();
+        let expected = request.payloads.clone();
+        let target = path("five-role-storage");
+        let (_, in_memory) = write_archive_v2_bytes(request.clone()).unwrap();
+        write_archive_v2(&target, request).unwrap();
+        assert_eq!(in_memory, std::fs::read(&target).unwrap());
+        let archive = load_archive_v2_bytes(&in_memory).unwrap();
+        assert_eq!(
+            archive.methods_n4mm_artifacts().unwrap(),
+            Vec::<ArchiveV2MethodsArtifact>::new()
+        );
+        assert_eq!(
+            archive.manifest()["payloads"]["methods"]["role_pipelines"]
+                .as_array()
+                .unwrap()
+                .len(),
+            5
+        );
+        for member in expected {
+            assert_eq!(archive.member(&member.path).unwrap(), member.bytes);
+        }
+        assert_eq!(archive.members().len(), 11);
+        std::fs::remove_file(target).unwrap();
+    }
+
+    #[test]
+    fn role_pipeline_storage_refuses_unknown_family_and_duplicate_identity() {
+        for mutation in 0..5 {
+            let mut request = role_pipeline_storage_request();
+            let roles = &mut request.manifest["payloads"]["methods"]["role_pipelines"];
+            match mutation {
+                0 => roles[0]["format_version"] = Value::from(2),
+                1 => roles[0]["owner"] = Value::from("python"),
+                2 => roles[0]["member_path"] = Value::from("../escape.json"),
+                3 => roles[0]["host_pickle"] = Value::Bool(true),
+                _ => roles[1]["artifact_id"] = roles[0]["artifact_id"].clone(),
+            }
+            assert!(
+                write_archive_v2_bytes(request).is_err(),
+                "mutation {mutation}"
+            );
+        }
+    }
+
+    #[test]
+    fn role_pipeline_storage_requires_payload_closure_and_a_predictor() {
+        let mut missing = role_pipeline_storage_request();
+        missing.payloads.pop();
+        assert!(write_archive_v2_bytes(missing).is_err());
+        let mut empty = request();
+        empty.manifest["payloads"]["methods"]["n4mm"] = serde_json::json!([]);
+        empty.manifest["payloads"]["methods"]["role_pipelines"] = serde_json::json!([]);
+        assert!(write_archive_v2_bytes(empty).is_err());
     }
 
     fn rewrite_manifest_same_length(bytes: &mut [u8], from: &[u8], to: &[u8]) {

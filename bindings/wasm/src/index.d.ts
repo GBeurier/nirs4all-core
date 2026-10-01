@@ -377,6 +377,20 @@ export function predictPortablePipeline(
   options?: { methods?: unknown },
 ): Promise<PortablePredictionResult>;
 export function loadArchiveV2Native(): Promise<unknown>;
+/** Native-validated storage only; DAG-ML owns package semantics and trust. */
+export interface PortableArchiveV2Payloads {
+  archiveId: string;
+  archiveSha256: string;
+  manifest: Record<string, unknown>;
+  members: Readonly<Record<string, Uint8Array>>;
+}
+export function readPortableArchiveV2(
+  archiveBytes: ArrayBuffer | ArrayBufferView,
+): Promise<PortableArchiveV2Payloads>;
+export function writePortableArchiveV2(
+  manifest: Record<string, unknown>,
+  members: Readonly<Record<string, ArrayBuffer | ArrayBufferView>>,
+): Promise<Uint8Array>;
 export function inspectMethodsArchiveV2Predictors(
   archiveBytes: ArrayBuffer | ArrayBufferView,
 ): Promise<readonly NativePredictorDescriptorV1[]>;

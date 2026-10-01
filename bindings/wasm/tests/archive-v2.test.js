@@ -4,6 +4,8 @@ import test from 'node:test';
 import {
   inspectMethodsArchiveV2Predictors,
   loadArchiveV2Native,
+  readPortableArchiveV2,
+  writePortableArchiveV2,
   replayMethodsArchiveV2,
 } from '../src/index.js';
 
@@ -20,6 +22,33 @@ test('Archive V2 native surface is a Rust/WASM validator', async () => {
   assert.throws(
     () => new native.ValidatedMethodsArchiveV2(new Uint8Array([0x4e, 0x34, 0x61])),
     /Core Archive V2 refusal/,
+  );
+});
+
+test('portable inventory keeps native-first corruption refusal', async () => {
+  await assert.rejects(
+    readPortableArchiveV2(new Uint8Array([0x50, 0x4b, 0x03, 0x04])),
+    /archive|ZIP|zip/i,
+  );
+});
+
+test('portable writer refuses traversal and duplicate entries in native builder', async () => {
+  const native = await loadArchiveV2Native();
+  const builder = new native.ArchiveV2Builder('{}');
+  try {
+    assert.throws(() => builder.add_member('../escape.json', new Uint8Array()), /unsafe/);
+    builder.add_member('dagml/model.json', new Uint8Array([1]));
+    assert.throws(() => builder.add_member('dagml/model.json', new Uint8Array([2])), /duplicate/);
+    assert.throws(() => builder.finish(), /member_inventory must be array/);
+    assert.throws(() => builder.finish(), /already finished/);
+    assert.throws(() => builder.add_member('dagml/new.json', new Uint8Array()), /already finished/);
+  } finally {
+    builder.free();
+  }
+  await assert.rejects(writePortableArchiveV2({}, {}), /member_inventory must be array/);
+  await assert.rejects(
+    writePortableArchiveV2({ member_inventory: [{ path: 'dagml/missing.json' }] }, {}),
+    /inventory path missing from supplied payloads/,
   );
 });
 

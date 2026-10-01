@@ -6,7 +6,7 @@
 //! a second archive parser and contains no numerical code.
 
 use std::{
-    collections::BTreeSet,
+    collections::{BTreeMap, BTreeSet},
     path::{Path, PathBuf},
 };
 
@@ -96,6 +96,119 @@ pub fn load_archive_v3(_path: &Path) -> Result<LoadedArchiveV3, ArchiveStoreErro
 mod core_archive_v2;
 #[path = "../../rust/nirs4all/src/durability.rs"]
 mod durability;
+
+/// Core-validated storage inventory, not a controller authorization.
+/// DAG-ML must validate the opaque package/member links before replay.
+#[wasm_bindgen]
+pub struct ValidatedPortableArchiveV2 {
+    archive_id: String,
+    archive_sha256: String,
+    manifest_json: String,
+    members: BTreeMap<String, Vec<u8>>,
+}
+
+#[wasm_bindgen]
+impl ValidatedPortableArchiveV2 {
+    #[wasm_bindgen(constructor)]
+    pub fn new(archive_bytes: &[u8]) -> Result<ValidatedPortableArchiveV2, JsValue> {
+        let archive = core_archive_v2::load_archive_v2_bytes(archive_bytes)
+            .map_err(|error| JsValue::from_str(&error.to_string()))?;
+        Ok(Self {
+            archive_id: archive.reference().archive_id().to_owned(),
+            archive_sha256: archive.reference().archive_sha256().to_owned(),
+            manifest_json: serde_json::to_string(archive.manifest())
+                .map_err(|error| JsValue::from_str(&error.to_string()))?,
+            members: archive.members().clone(),
+        })
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn archive_id(&self) -> String {
+        self.archive_id.clone()
+    }
+    #[wasm_bindgen(getter)]
+    pub fn archive_sha256(&self) -> String {
+        self.archive_sha256.clone()
+    }
+    pub fn manifest_json(&self) -> String {
+        self.manifest_json.clone()
+    }
+    pub fn member_paths_json(&self) -> String {
+        serde_json::to_string(&self.members.keys().collect::<Vec<_>>())
+            .expect("member paths are validated strings")
+    }
+    pub fn member_bytes(&self, path: &str) -> Result<Vec<u8>, JsValue> {
+        self.members
+            .get(path)
+            .cloned()
+            .ok_or_else(|| JsValue::from_str("Archive V2 member is not in the validated inventory"))
+    }
+}
+
+/// Bounded browser writer over the canonical Core stored-ZIP implementation.
+#[wasm_bindgen]
+pub struct ArchiveV2Builder {
+    manifest: Option<serde_json::Value>,
+    payloads: Vec<ArchivePayload>,
+    total_bytes: usize,
+}
+
+#[wasm_bindgen]
+impl ArchiveV2Builder {
+    #[wasm_bindgen(constructor)]
+    pub fn new(manifest_json: &str) -> Result<ArchiveV2Builder, JsValue> {
+        if manifest_json.len() > core_archive_v2::MAX_MANIFEST {
+            return Err(JsValue::from_str("Archive V2 manifest exceeds byte budget"));
+        }
+        let manifest = serde_json::from_str(manifest_json)
+            .map_err(|error| JsValue::from_str(&format!("Archive V2 manifest: {error}")))?;
+        Ok(Self {
+            manifest: Some(manifest),
+            payloads: Vec::new(),
+            total_bytes: 0,
+        })
+    }
+
+    pub fn add_member(&mut self, path: &str, bytes: &[u8]) -> Result<(), JsValue> {
+        if self.manifest.is_none() {
+            return Err(JsValue::from_str("Archive V2 builder has already finished"));
+        }
+        core_archive_v2::path_ok(path).map_err(|error| JsValue::from_str(&error.to_string()))?;
+        let total = self
+            .total_bytes
+            .checked_add(bytes.len())
+            .ok_or_else(|| JsValue::from_str("Archive V2 payload size overflow"))?;
+        if self.payloads.len() + 2 > core_archive_v2::MAX_ENTRIES
+            || bytes.len() > core_archive_v2::MAX_MEMBER
+            || total > core_archive_v2::MAX_TOTAL
+            || self.payloads.iter().any(|member| member.path == path)
+        {
+            return Err(JsValue::from_str(
+                "Archive V2 duplicate member or payload byte budget exceeded",
+            ));
+        }
+        self.payloads.push(ArchivePayload {
+            path: path.to_owned(),
+            bytes: bytes.to_vec(),
+        });
+        self.total_bytes = total;
+        Ok(())
+    }
+
+    pub fn finish(&mut self) -> Result<Vec<u8>, JsValue> {
+        let manifest = self
+            .manifest
+            .take()
+            .ok_or_else(|| JsValue::from_str("Archive V2 builder has already finished"))?;
+        let request = core_archive_v2::ArchiveV2WriteRequest {
+            manifest,
+            payloads: std::mem::take(&mut self.payloads),
+        };
+        core_archive_v2::write_archive_v2_bytes(request)
+            .map(|(_, bytes)| bytes)
+            .map_err(|error| JsValue::from_str(&error.to_string()))
+    }
+}
 
 /// A fully validated, single-model Methods Archive V2 projection.
 #[wasm_bindgen]

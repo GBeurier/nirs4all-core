@@ -122,6 +122,28 @@ and closed scenario can be replayed with:
 npm run qualify:archive-v2 -- /path/to/archive.n4a /path/to/scenario.json
 ```
 
+### Complete portable predictor transport
+
+`writePortableArchiveV2(manifest, members)` writes DAG-ML-assembled opaque
+payloads through the canonical Core stored-ZIP writer. `members` is a mapping
+of relative paths to typed byte arrays. `readPortableArchiveV2(archiveBytes)`
+returns `{ archiveId, archiveSha256, manifest, members }` after native inventory,
+hash and byte-budget validation. Both reuse the same Core Rust source as the
+file/Python surfaces; JavaScript implements no ZIP format or numerical code.
+
+The additive optional `payloads.methods.role_pipelines` family transports
+complete RAW `methods_role_pipeline` wrappers at SHA-addressed
+`artifacts/<sha256>.json` paths. It retains the original signed DAG-ML package
+and controller trust contract; it does not relabel N4ME states as N4MM.
+These functions validate storage only. Before hydration, use DAG-ML's native
+portable-payload validator and replay driver with explicitly trusted controller
+manifests and signed current-cohort envelopes. The existing single-model
+`replayMethodsArchiveV2` remains a separate closed N4MM execution surface.
+
+This transport supports a complete captured ensemble, including its learned
+meta-model. It does not claim the canonical U07 N-D encoders or the same-DAG
+R/Octave training profile.
+
 The qualification command asserts the ordered two-dimensional result from one
 model import and one multi-target prediction, checks that no Methods fit symbol
 was called, and proves tampered-digest and inventory refusals. The isolated
