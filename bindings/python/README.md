@@ -22,6 +22,21 @@ It does not parse ZIP members in Python, deserialize the package, or execute a
 prediction. Pass the returned bytes to DAG-ML's typed package/replay surface;
 the aggregate remains only the container and integrity boundary.
 
+`read_archive_v2_payloads(path)` returns the native-validated `manifest` and
+exact opaque `members` (a path-to-bytes mapping). Archive V2 also transports
+the explicitly declared RAW Methods RolePipeline family: signed DAG-ML
+packages retain every captured N4ME state, binding and controller trust
+requirement in SHA-addressed `artifacts/<sha256>.json` members. Existing N4MM
+archives retain their original profile and declarations.
+
+Storage validation does not authorize a controller or interpret the models.
+Pass this inventory to DAG-ML's `validate_archive_v2_portable_payloads` before
+using its replay driver, with explicit trusted manifests and a signed current
+cohort. The full Python SDK exposes `write_portable_predictor_archive_v2`,
+`read_portable_predictor_archive_v2` and `replay_portable_predictor_archive_v2`
+for that composition. This adds portable transport, not N-D encoders or a
+generalization of the existing callback-free N4MM replay functions.
+
 ## Archive V3 host view
 
 `nirs4all_core.read_archive_v3_view(path)` invokes the Rust Archive V3 reader

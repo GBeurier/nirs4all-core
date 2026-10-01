@@ -18,6 +18,25 @@ class NativeArchiveUnavailableError(RuntimeError):
     """The installed Python facade has no matching native archive bridge."""
 
 
+def read_archive_v2_payloads(path: str | Path) -> dict[str, Any]:
+    """Read the exact opaque inventory from a native-validated Archive V2.
+
+    This validates storage integrity only. DAG-ML must validate package
+    semantics, artifact closure and controller trust before any replay.
+    """
+    read = _native_replay("read_archive_v2_payloads", "V2 payload inventory")
+    result = read(str(Path(path)))
+    if not isinstance(result, dict) or set(result) != {"manifest", "members"}:
+        raise RuntimeError("native Archive V2 inventory returned an invalid mapping")
+    if not isinstance(result["manifest"], dict) or not isinstance(result["members"], dict):
+        # A native bridge contract violation is a runtime failure, not bad user input.
+        raise RuntimeError("native Archive V2 inventory returned invalid payloads")  # noqa: TRY004
+    if not all(isinstance(path, str) and isinstance(data, bytes)
+               for path, data in result["members"].items()):
+        raise RuntimeError("native Archive V2 inventory returned invalid member bytes")
+    return result
+
+
 def _contract_json(value: Any, label: str) -> str:
     if isinstance(value, bytes):
         try:

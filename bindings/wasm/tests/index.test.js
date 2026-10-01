@@ -90,6 +90,7 @@ test('public V1 WASM surface exports expected names', () => {
       'portableClassNames',
       'portableOperatorClasses',
       'predictPortablePipeline',
+      'readPortableArchiveV2',
       'replayMethodsArchiveV2',
       'requiredKeywordRegistryEntries',
       'runPortablePipeline',
@@ -97,6 +98,7 @@ test('public V1 WASM surface exports expected names', () => {
       'runtimeSurfaces',
       'upstream',
       'upstreams',
+      'writePortableArchiveV2',
     ].sort(),
   );
   assert.equal(nirs4all.loadPipelineDefinition, loadPipelineDefinition);

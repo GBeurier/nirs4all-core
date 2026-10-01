@@ -662,5 +662,7 @@ export { createAsyncJsEstimatorController, createDagMlModelManifest, createDagMl
 export {
   inspectMethodsArchiveV2Predictors,
   loadArchiveV2Native,
+  readPortableArchiveV2,
+  writePortableArchiveV2,
   replayMethodsArchiveV2,
 } from './archive-v2.js';

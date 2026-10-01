@@ -29,7 +29,7 @@ pub use archive_v1::{
     ArchiveV1WriteRequest, LoadedArchiveV1,
 };
 pub use archive_v2::{
-    load_archive, load_archive_v2, load_archive_v2_bytes, write_archive_v2,
+    load_archive, load_archive_v2, load_archive_v2_bytes, write_archive_v2, write_archive_v2_bytes,
     ArchiveV2MethodsArtifact, ArchiveV2Reference, ArchiveV2WriteRequest, LoadedArchive,
     LoadedArchiveV2,
 };

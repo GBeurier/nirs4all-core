@@ -26,7 +26,7 @@ use nirs4all::{
 use pyo3::{
     exceptions::PyValueError,
     prelude::*,
-    types::{PyAny, PyBytes},
+    types::{PyAny, PyBytes, PyDict},
 };
 use serde_json::Value;
 
@@ -93,6 +93,23 @@ fn read_portable_refit_package_v3<'py>(
         PyValueError::new_err(format!("Archive V3 validation refused: {error}"))
     })?;
     Ok(PyBytes::new(py, package))
+}
+
+/// Expose opaque members only after native container/inventory validation.
+/// Callers must delegate package semantics and controller trust to DAG-ML.
+#[pyfunction]
+fn read_archive_v2_payloads<'py>(py: Python<'py>, path: &str) -> PyResult<Bound<'py, PyDict>> {
+    let archive = load_archive_v2(Path::new(path)).map_err(archive_error)?;
+    let manifest_json = serde_json::to_string(archive.manifest()).map_err(archive_error)?;
+    let manifest = py.import("json")?.call_method1("loads", (manifest_json,))?;
+    let members = PyDict::new(py);
+    for (path, bytes) in archive.members() {
+        members.set_item(path, PyBytes::new(py, bytes))?;
+    }
+    let result = PyDict::new(py);
+    result.set_item("manifest", manifest)?;
+    result.set_item("members", members)?;
+    Ok(result)
 }
 
 /// Return Core's validated Archive V3 replay references and N4MM inventory.
@@ -387,6 +404,7 @@ fn write_archive_v3_from_native_payloads(
 /// Python extension module installed as ``nirs4all_core._native``.
 #[pymodule]
 fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_function(wrap_pyfunction!(read_archive_v2_payloads, module)?)?;
     module.add_function(wrap_pyfunction!(
         read_portable_predictor_package_v2,
         module
