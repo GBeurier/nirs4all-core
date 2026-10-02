@@ -496,15 +496,13 @@ fn validate_manifest_declarations(
         }
     }
     let methods = object(required(payloads, "methods")?, "payloads.methods")?;
-    if methods.contains_key("role_pipelines") {
-        closed(
-            methods,
-            &["n4mm", "n4mopt", "role_pipelines"],
-            "payloads.methods",
-        )?;
-    } else {
-        closed(methods, &["n4mm", "n4mopt"], "payloads.methods")?;
+    let mut methods_fields = vec!["n4mm", "n4mopt"];
+    for optional in ["role_pipelines", "multimodal_pipelines"] {
+        if methods.contains_key(optional) {
+            methods_fields.push(optional);
+        }
     }
+    closed(methods, &methods_fields, "payloads.methods")?;
     if root.get("workspace") != Some(&Value::Null) {
         return refuse("V2 P0 refuses workspace snapshots");
     }
@@ -557,16 +555,21 @@ fn validate_manifest_declarations(
     let n4mm = required(methods, "n4mm")?
         .as_array()
         .ok_or_else(|| fmt_err("payloads.methods.n4mm must be array"))?;
-    let role_pipelines = methods
-        .get("role_pipelines")
-        .map(|value| {
-            value
+    let mut has_predictor = !n4mm.is_empty();
+    for key in ["role_pipelines", "multimodal_pipelines"] {
+        if let Some(value) = methods.get(key) {
+            let pipelines = value
                 .as_array()
-                .ok_or_else(|| fmt_err("role_pipelines must be array"))
-        })
-        .transpose()?;
-    if n4mm.is_empty() && role_pipelines.is_none_or(|roles| roles.is_empty()) {
-        return refuse("V2 requires at least one N4MM or Methods role pipeline member");
+                .ok_or_else(|| fmt_err(&format!("{key} must be array")))?;
+            has_predictor |= !pipelines.is_empty();
+        }
+    }
+    if !has_predictor {
+        return refuse(if methods.contains_key("multimodal_pipelines") {
+            "V2 requires at least one N4MM or Methods pipeline member"
+        } else {
+            "V2 requires at least one N4MM or Methods role pipeline member"
+        });
     }
     let inventory = root
         .get("member_inventory")
@@ -735,14 +738,14 @@ fn derive_inventory(
                 "semantic_profile".into(),
                 Value::String("n4mm_raw_sha256".into()),
             );
-        } else if e.get("semantic_profile").and_then(Value::as_str)
-            == Some("dagml_methods_role_pipeline_raw_sha256")
-        {
+        } else if matches!(
+            e.get("semantic_profile").and_then(Value::as_str),
+            Some(
+                "dagml_methods_role_pipeline_raw_sha256"
+                    | "dagml_methods_multimodal_pipeline_raw_sha256"
+            )
+        ) {
             e.insert("semantic_fingerprint".into(), Value::String(sha256(bytes)));
-            e.insert(
-                "semantic_profile".into(),
-                Value::String("dagml_methods_role_pipeline_raw_sha256".into()),
-            );
         }
     }
     fn sync(
@@ -761,12 +764,15 @@ fn derive_inventory(
                 "semantic_profile".into(),
                 Value::String("n4mm_raw_sha256".into()),
             );
-        } else if o.get("kind").and_then(Value::as_str) == Some("methods_role_pipeline") {
+        } else if let Some(profile) = match o.get("kind").and_then(Value::as_str) {
+            Some("methods_role_pipeline") => Some("dagml_methods_role_pipeline_raw_sha256"),
+            Some("methods_multimodal_pipeline") => {
+                Some("dagml_methods_multimodal_pipeline_raw_sha256")
+            }
+            _ => None,
+        } {
             o.insert("semantic_fingerprint".into(), Value::String(sha256(bytes)));
-            o.insert(
-                "semantic_profile".into(),
-                Value::String("dagml_methods_role_pipeline_raw_sha256".into()),
-            );
+            o.insert("semantic_profile".into(), Value::String(profile.into()));
         }
         Ok(())
     }
@@ -792,8 +798,8 @@ fn derive_inventory(
         )?,
         "methods",
     )?;
-    for key in ["n4mm", "n4mopt", "role_pipelines"] {
-        if key == "role_pipelines" && !methods.contains_key(key) {
+    for key in ["n4mm", "n4mopt", "role_pipelines", "multimodal_pipelines"] {
+        if matches!(key, "role_pipelines" | "multimodal_pipelines") && !methods.contains_key(key) {
             continue;
         }
         for item in required_mut(methods, key)?
@@ -859,6 +865,7 @@ fn declared_inventory_metadata(
                     | "dagml_historical_serde_json_v1"
                     | "n4mm_raw_sha256"
                     | "dagml_methods_role_pipeline_raw_sha256"
+                    | "dagml_methods_multimodal_pipeline_raw_sha256"
                     | "methods_rfc8785_jcs"
                     | "none"
             )
@@ -998,10 +1005,24 @@ fn validate_reference_declarations(
         }
         validate_ref(item, inventory_meta, None, None, &mut declared_paths)?;
     }
-    if let Some(roles) = methods.get("role_pipelines") {
+    for (key, kind, semantic_profile) in [
+        (
+            "role_pipelines",
+            "methods_role_pipeline",
+            "dagml_methods_role_pipeline_raw_sha256",
+        ),
+        (
+            "multimodal_pipelines",
+            "methods_multimodal_pipeline",
+            "dagml_methods_multimodal_pipeline_raw_sha256",
+        ),
+    ] {
+        let Some(roles) = methods.get(key) else {
+            continue;
+        };
         for item in roles
             .as_array()
-            .ok_or_else(|| fmt_err("role_pipelines must be array"))?
+            .ok_or_else(|| fmt_err(&format!("{key} must be array")))?
         {
             let o = object(item, "Methods role pipeline reference")?;
             closed(
@@ -1021,11 +1042,10 @@ fn validate_reference_declarations(
             let raw_sha = required_str(o, "raw_sha256")?;
             let path = required_str(o, "member_path")?;
             let artifact_id = required_str(o, "artifact_id")?;
-            if o.get("kind").and_then(Value::as_str) != Some("methods_role_pipeline")
+            if o.get("kind").and_then(Value::as_str) != Some(kind)
                 || o.get("owner").and_then(Value::as_str) != Some("dag-ml")
                 || o.get("format_version").and_then(Value::as_u64) != Some(1)
-                || o.get("semantic_profile").and_then(Value::as_str)
-                    != Some("dagml_methods_role_pipeline_raw_sha256")
+                || o.get("semantic_profile").and_then(Value::as_str) != Some(semantic_profile)
                 || o.get("semantic_fingerprint") != o.get("raw_sha256")
                 || !sha256_text(Some(raw_sha))
                 || path != format!("artifacts/{raw_sha}.json")
@@ -2266,6 +2286,156 @@ mod tests {
         empty.manifest["payloads"]["methods"]["n4mm"] = serde_json::json!([]);
         empty.manifest["payloads"]["methods"]["role_pipelines"] = serde_json::json!([]);
         assert!(write_archive_v2_bytes(empty).is_err());
+    }
+
+    fn append_multimodal_storage_payload(request: &mut ArchiveV2WriteRequest) {
+        // Opaque storage bytes are deliberately insufficient for DAG replay.
+        // Full native-state validation and scientific parity live upstream.
+        let bytes = b"opaque complete Methods U07 state".to_vec();
+        let digest = sha256(&bytes);
+        let member_path = format!("artifacts/{digest}.json");
+        request.manifest["payloads"]["methods"]["multimodal_pipelines"] = serde_json::json!([{
+            "artifact_id": "artifact:multimodal:refit",
+            "kind": "methods_multimodal_pipeline", "owner": "dag-ml", "format_version": 1,
+            "member_path": member_path, "raw_sha256": digest,
+            "semantic_fingerprint": digest,
+            "semantic_profile": "dagml_methods_multimodal_pipeline_raw_sha256",
+        }]);
+        request.manifest["member_inventory"]
+            .as_array_mut()
+            .unwrap()
+            .push(serde_json::json!({
+                "path": member_path, "regular_file": true, "raw_sha256": digest,
+                "uncompressed_size_bytes": bytes.len(), "semantic_fingerprint": digest,
+                "semantic_profile": "dagml_methods_multimodal_pipeline_raw_sha256",
+            }));
+        request.payloads.push(ArchivePayload {
+            path: member_path,
+            bytes,
+        });
+    }
+
+    fn multimodal_storage_request() -> ArchiveV2WriteRequest {
+        let mut request = request();
+        request
+            .payloads
+            .retain(|member| member.path != "methods/model.n4mm");
+        request.manifest["member_inventory"]
+            .as_array_mut()
+            .unwrap()
+            .retain(|member| member["path"] != "methods/model.n4mm");
+        request.manifest["payloads"]["methods"]["n4mm"] = serde_json::json!([]);
+        append_multimodal_storage_payload(&mut request);
+        request
+    }
+
+    #[test]
+    fn multimodal_storage_roundtrip_preserves_exact_complete_payload() {
+        let request = multimodal_storage_request();
+        let expected = request.payloads.clone();
+        let target = path("multimodal-storage");
+        let (_, in_memory) = write_archive_v2_bytes(request.clone()).unwrap();
+        write_archive_v2(&target, request).unwrap();
+        assert_eq!(in_memory, std::fs::read(&target).unwrap());
+        let archive = load_archive_v2_bytes(&in_memory).unwrap();
+        assert!(archive.methods_n4mm_artifacts().unwrap().is_empty());
+        assert_eq!(archive.members().len(), 7);
+        for member in expected {
+            assert_eq!(archive.member(&member.path).unwrap(), member.bytes);
+        }
+        std::fs::remove_file(target).unwrap();
+    }
+
+    #[test]
+    fn multimodal_storage_coexists_with_historical_role_family() {
+        let mut request = role_pipeline_storage_request();
+        append_multimodal_storage_payload(&mut request);
+        let expected = request.payloads.clone();
+        let (_, bytes) = write_archive_v2_bytes(request).unwrap();
+        let archive = load_archive_v2_bytes(&bytes).unwrap();
+        assert_eq!(archive.members().len(), 12);
+        for member in expected {
+            assert_eq!(archive.member(&member.path).unwrap(), member.bytes);
+        }
+    }
+
+    #[test]
+    fn multimodal_storage_refuses_unregistered_or_inconsistent_declarations() {
+        for mutation in 0..8 {
+            let mut request = multimodal_storage_request();
+            let pipeline = &mut request.manifest["payloads"]["methods"]["multimodal_pipelines"][0];
+            match mutation {
+                0 => pipeline["format_version"] = Value::from(2),
+                1 => pipeline["owner"] = Value::from("python"),
+                2 => pipeline["kind"] = Value::from("methods_role_pipeline"),
+                3 => pipeline["kind"] = Value::from("host_multimodal_pipeline"),
+                4 => pipeline["member_path"] = Value::from("../escape.json"),
+                5 => pipeline["host_pickle"] = Value::Bool(true),
+                6 => pipeline["artifact_id"] = Value::from(""),
+                _ => request.manifest["payloads"]["methods"]["multimodal_pipelines"] = Value::Null,
+            }
+            assert!(
+                write_archive_v2_bytes(request).is_err(),
+                "mutation {mutation}"
+            );
+        }
+    }
+
+    #[test]
+    fn multimodal_storage_identity_is_unique_across_methods_families() {
+        for base_is_role in [false, true] {
+            let mut request = if base_is_role {
+                role_pipeline_storage_request()
+            } else {
+                request()
+            };
+            append_multimodal_storage_payload(&mut request);
+            let key = if base_is_role {
+                "role_pipelines"
+            } else {
+                "n4mm"
+            };
+            let existing_id =
+                request.manifest["payloads"]["methods"][key][0]["artifact_id"].clone();
+            request.manifest["payloads"]["methods"]["multimodal_pipelines"][0]["artifact_id"] =
+                existing_id;
+            assert!(write_archive_v2_bytes(request).is_err());
+        }
+    }
+
+    #[test]
+    fn multimodal_storage_requires_complete_member_closure_and_a_predictor() {
+        let mut missing = multimodal_storage_request();
+        missing.payloads.pop();
+        assert!(write_archive_v2_bytes(missing).is_err());
+        let mut empty = multimodal_storage_request();
+        empty.manifest["payloads"]["methods"]["multimodal_pipelines"] = serde_json::json!([]);
+        assert!(write_archive_v2_bytes(empty).is_err());
+    }
+
+    #[test]
+    fn multimodal_storage_refuses_unknown_family_before_payload_reads() {
+        let (_, mut bytes) = write_archive_v2_bytes(multimodal_storage_request()).unwrap();
+        rewrite_manifest_same_length(
+            &mut bytes,
+            b"\"methods_multimodal_pipeline\"",
+            b"\"methods_unauthored_pipeline\"",
+        );
+        // Even invalid payload CRCs must not be examined before the family is
+        // refused by the manifest-only capability dispatch.
+        let preflight = preflight_zip_reader(&mut Cursor::new(&bytes), bytes.len()).unwrap();
+        let entry = preflight
+            .entries
+            .iter()
+            .find(|entry| entry.name != MANIFEST)
+            .unwrap();
+        bytes[entry.data_start] ^= 1;
+        let error = load_archive_v2_bytes(&bytes).unwrap_err().to_string();
+        assert!(
+            error.contains("invalid or duplicate Methods role pipeline reference"),
+            "{error}"
+        );
+        assert!(!error.contains("CRC"), "{error}");
     }
 
     fn rewrite_manifest_same_length(bytes: &mut [u8], from: &[u8], to: &[u8]) {
