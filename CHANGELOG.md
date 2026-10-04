@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.1
+
+- Store and replay the closed native RolePipeline/N4ME Archive V3 profiles alongside existing V2 routes, retaining genuine parent/refit identities.
+- Require DAG 0.3.34, IO 0.2.4 and n4m 0.4.0 in Rust; align documented Python/npm extras with Methods 1.3.2 and ABI 2.17.
+- Keep orchestration and numerics in their owning upstreams; Python Torch sidecars remain trusted host content rather than portable weights.
+
+
 All notable changes to **nirs4all-core** are documented here. The project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html). The Rust
 crate `[package]` version in `bindings/rust/nirs4all/Cargo.toml` is the

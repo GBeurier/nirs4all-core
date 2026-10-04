@@ -49,7 +49,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.0
       - uses: dtolnay/rust-toolchain@stable
-      - name: Resolve published n4m source tag
+      - name: Resolve published binding and pinned Methods runtime
         id: n4m-release
         shell: python
         run: |
@@ -62,15 +62,23 @@ jobs:
           if not requirement.startswith("="):
               raise SystemExit(f"n4m must remain exactly pinned, got {requirement!r}")
           version = requirement.removeprefix("=")
+          upstreams = tomllib.loads(Path("compat/upstreams.toml").read_text())["upstream"]
+          methods = [entry for entry in upstreams if entry["key"] == "methods"]
+          if len(methods) != 1:
+              raise SystemExit("exactly one Methods runtime source pin is required")
+          runtime_ref = methods[0]["ref"]
+          if len(runtime_ref) != 40 or any(char not in "0123456789abcdef" for char in runtime_ref):
+              raise SystemExit("Methods runtime must use an immutable lowercase commit SHA")
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
               output.write(f"tag=n4m-v{version}\n")
+              output.write(f"runtime_ref={runtime_ref}\n")
       - uses: actions/checkout@v7.0.0
         with:
           repository: GBeurier/nirs4all-methods
-          ref: ${{ inputs.methods_ref || steps.n4m-release.outputs.tag }}
+          ref: ${{ inputs.methods_ref || steps.n4m-release.outputs.runtime_ref }}
           path: nirs4all-methods
       - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends cmake ninja-build
-      - name: Build libn4m from its published n4m release tag
+      - name: Build libn4m from its pinned runtime source
         run: |
           cmake --preset dev-release
           cmake --build --preset dev-release --target n4m_c --parallel
