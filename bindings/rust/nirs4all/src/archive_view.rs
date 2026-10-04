@@ -67,7 +67,7 @@ pub struct ArchivePayloadView {
 /// Serializable, read-only V3 archive inventory for an application host.
 ///
 /// It exposes only the V3 manifest declarations that Core validates: opaque
-/// DAG-ML replay references and N4MM artifact inventory metadata. It does not
+/// DAG-ML replay references and native artifact inventory metadata. It does not
 /// deserialize those members, execute them, or infer results, OOF data,
 /// scores, HPO state, or conformal state.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
@@ -95,6 +95,10 @@ pub struct ArchiveV3ReplayView {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct ArchiveV3MethodsView {
     pub n4mm: Vec<ArchiveV3N4mmView>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub n4me: Vec<ArchiveV3N4meView>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub role_pipelines: Vec<ArchiveV3RolePipelineView>,
 }
 
 /// Metadata for one declared N4MM member; this never includes artifact bytes.
@@ -108,6 +112,23 @@ pub struct ArchiveV3N4mmView {
     /// Optional minimum Methods ABI minor declared by the archive.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub abi_min_minor: Option<u32>,
+    pub member_path: String,
+    pub raw_sha256: String,
+    pub semantic_fingerprint: String,
+    pub semantic_profile: String,
+}
+
+/// Native estimator metadata has the same ABI-bound fields as N4MM metadata.
+/// The validated `kind` and semantic profile distinguish the state families.
+pub type ArchiveV3N4meView = ArchiveV3N4mmView;
+
+/// Reference to a DAG-ML-owned wrapper containing native N4ME role states.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+pub struct ArchiveV3RolePipelineView {
+    pub artifact_id: String,
+    pub kind: String,
+    pub owner: String,
+    pub format_version: u32,
     pub member_path: String,
     pub raw_sha256: String,
     pub semantic_fingerprint: String,
@@ -282,6 +303,26 @@ fn archive_v3_view_from_manifest(
     .iter()
     .map(n4mm_view)
     .collect::<Result<Vec<_>, _>>()?;
+    let n4me = methods
+        .get("n4me")
+        .map(|value| {
+            array(value, "payloads.methods.n4me")
+                .and_then(|values| values.iter().map(n4mm_view).collect::<Result<Vec<_>, _>>())
+        })
+        .transpose()?
+        .unwrap_or_default();
+    let role_pipelines = methods
+        .get("role_pipelines")
+        .map(|value| {
+            array(value, "payloads.methods.role_pipelines").and_then(|values| {
+                values
+                    .iter()
+                    .map(role_pipeline_view)
+                    .collect::<Result<Vec<_>, _>>()
+            })
+        })
+        .transpose()?
+        .unwrap_or_default();
 
     Ok(ArchiveV3View {
         archive_id: reference.archive_id().to_owned(),
@@ -307,7 +348,11 @@ fn archive_v3_view_from_manifest(
             )?)?,
             execution_status: ArchiveReplayExecutionStatus::RequiresNativeArtifactExecutor,
         },
-        methods: ArchiveV3MethodsView { n4mm },
+        methods: ArchiveV3MethodsView {
+            n4mm,
+            n4me,
+            role_pipelines,
+        },
     })
 }
 
@@ -406,6 +451,24 @@ fn n4mm_view(value: &Value) -> Result<ArchiveV3N4mmView, ArchiveViewError> {
             member(object, "semantic_profile", "V3 N4MM inventory entry")?,
             "V3 N4MM inventory entry.semantic_profile",
         )?,
+    })
+}
+
+fn role_pipeline_view(value: &Value) -> Result<ArchiveV3RolePipelineView, ArchiveViewError> {
+    let object = object(value, "V3 RolePipeline inventory entry")?;
+    let text = |key| string(member(object, key, "V3 RolePipeline inventory entry")?, key);
+    Ok(ArchiveV3RolePipelineView {
+        artifact_id: text("artifact_id")?,
+        kind: text("kind")?,
+        owner: text("owner")?,
+        format_version: u32_value(
+            member(object, "format_version", "V3 RolePipeline inventory entry")?,
+            "format_version",
+        )?,
+        member_path: text("member_path")?,
+        raw_sha256: text("raw_sha256")?,
+        semantic_fingerprint: text("semantic_fingerprint")?,
+        semantic_profile: text("semantic_profile")?,
     })
 }
 

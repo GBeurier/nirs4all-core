@@ -23,7 +23,7 @@ use dag_ml_core::{
     PortableRefitPackageV3, PortableRefitReplayOutcomeV3, PredictionKind, PredictionPartition,
     RunId, RuntimeControllerRegistry, SampleId, SampleRelation, SampleRelationSet,
     TrainingReplayOutcome, TrainingReplayRequest, EXTERNAL_DATA_PLAN_ENVELOPE_SCHEMA_VERSION_V1,
-    TRAINING_REPLAY_REQUEST_SCHEMA_VERSION,
+    METHODS_RUNTIME_ABI_MINOR, TRAINING_REPLAY_REQUEST_SCHEMA_VERSION,
 };
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -93,7 +93,9 @@ struct MethodsArchiveMatrixPredictComposition {
 
 const MAX_ATTESTED_METHODS_LIBRARY_BYTES: u64 = 64 * 1024 * 1024;
 const CORE_METHODS_ABI_MAJOR: u64 = 2;
-const CORE_METHODS_ABI_MINOR: u64 = 5;
+// This is the upstream binding's admitted ABI, not a guessed libn4m version.
+// Its dynamic-library negotiation still runs against the attested snapshot.
+const CORE_METHODS_ABI_MINOR: u64 = METHODS_RUNTIME_ABI_MINOR as u64;
 
 struct AttestedMethodsLibrary {
     source_canonical_path: PathBuf,
@@ -205,6 +207,11 @@ fn methods_dataset_from_json(
     input: MethodsDatasetJson,
     label: &str,
 ) -> Result<MethodsPlsDataset, NativeMethodsReplayError> {
+    if input.y.is_some() {
+        return Err(replay_error(format!(
+            "{label} is a PREDICT input and must not contain target values"
+        )));
+    }
     let sample_ids = input
         .sample_ids
         .into_iter()
@@ -214,10 +221,7 @@ fn methods_dataset_from_json(
     let dataset = MethodsPlsDataset {
         sample_ids,
         x: matrix_from_rows(input.x, &format!("{label}.x"))?,
-        y: input
-            .y
-            .map(|rows| matrix_from_rows(rows, &format!("{label}.y")))
-            .transpose()?,
+        y: None,
         target_names: input.target_names,
     };
     dataset
@@ -382,7 +386,7 @@ fn ensure_same_configured_methods_library(
     }
     if let Some(error) = &configured.abi_error {
         return Err(replay_error(format!(
-            "the configured libn4m process identity failed ABI 2.5 verification: {error}"
+            "the configured libn4m process identity failed Methods ABI verification: {error}"
         )));
     }
     Ok(snapshot_path)
@@ -498,7 +502,7 @@ fn configure_methods_library_identity(
     });
     if let Some(error) = abi_error {
         return Err(replay_error(format!(
-            "the attested libn4m failed ABI 2.5 verification: {error}"
+            "the attested libn4m failed Methods ABI verification: {error}"
         )));
     }
     Ok(snapshot_path)
@@ -526,7 +530,7 @@ pub(crate) fn configure_methods_runtime_for_source(
 ///
 /// This closed preflight hashes a canonical, non-symlink source file, loads a
 /// private snapshot of those already-attested bytes, and creates then drops a
-/// native context to verify the n4m ABI 2.5 contract. The first successful
+/// native context to verify the upstream n4m ABI contract. The first successful
 /// call fixes both source path and SHA-256 for the process. No runtime path,
 /// native handle, archive input, callback or numerical result is returned.
 pub fn preflight_methods_archive_v2_library(
@@ -1221,9 +1225,12 @@ fn require_archive_methods_abi_for_runtime(
         .and_then(|value| value.get("methods"))
         .and_then(serde_json::Value::as_object)
         .ok_or_else(|| replay_error(format!("{archive_label} Methods manifest is absent")))?;
-    for kind in ["n4mm", "n4mopt"] {
-        let references = methods
-            .get(kind)
+    for kind in ["n4mm", "n4mopt", "n4me"] {
+        let value = match methods.get(kind) {
+            None if kind == "n4me" => continue,
+            value => value,
+        };
+        let references = value
             .and_then(serde_json::Value::as_array)
             .ok_or_else(|| replay_error(format!("{archive_label} {kind} references are absent")))?;
         for reference in references {
@@ -1233,7 +1240,11 @@ fn require_archive_methods_abi_for_runtime(
                 .ok_or_else(|| {
                     replay_error(format!("{archive_label} {kind} ABI major is absent"))
                 })?;
-            let historical_minimum = if kind == "n4mopt" { 2 } else { 0 };
+            let historical_minimum = match kind {
+                "n4mopt" => 2,
+                "n4me" => 13,
+                _ => 0,
+            };
             let required_minor = reference
                 .get("abi_min_minor")
                 .and_then(serde_json::Value::as_u64)
@@ -1245,6 +1256,68 @@ fn require_archive_methods_abi_for_runtime(
             }
         }
     }
+    if let Some(references) = methods.get("role_pipelines") {
+        for reference in references
+            .as_array()
+            .ok_or_else(|| replay_error("RolePipeline references must be an array"))?
+        {
+            let minimum = match reference
+                .get("semantic_profile")
+                .and_then(serde_json::Value::as_str)
+            {
+                Some("dagml_methods_role_pipeline_raw_sha256") => 14,
+                Some("dagml_methods_role_classifier_pipeline_raw_sha256") => 17,
+                _ => {
+                    return Err(replay_error(
+                        "unsupported Methods RolePipeline semantic profile",
+                    ))
+                }
+            };
+            if runtime_major != 2 || runtime_minor < minimum {
+                return Err(replay_error(format!(
+                    "{archive_label} RolePipeline payload requires Methods ABI 2.{minimum}; Core provides ABI {runtime_major}.{runtime_minor}"
+                )));
+            }
+        }
+    }
+    Ok(())
+}
+
+fn validate_methods_replay_inputs(
+    request: &TrainingReplayRequest,
+    envelopes: &BTreeMap<String, ExternalDataPlanEnvelope>,
+    inputs: &BTreeMap<String, MethodsPlsDataset>,
+) -> Result<(), NativeMethodsReplayError> {
+    request
+        .validate()
+        .map_err(|error| replay_error(format!("DAG-ML rejected replay request: {error}")))?;
+    if request.phase != Phase::Predict {
+        return Err(replay_error(
+            "DAG-ML rejected replay request: callback-free Methods package replay supports PREDICT only",
+        ));
+    }
+    for (key, envelope) in envelopes {
+        envelope.validate().map_err(|error| {
+            replay_error(format!(
+                "DAG-ML rejected Methods replay envelope `{key}`: {error}"
+            ))
+        })?;
+        if envelope.target_content_fingerprint.is_some() {
+            return Err(replay_error(
+                "Methods PREDICT envelope must not bind target values",
+            ));
+        }
+    }
+    for (key, dataset) in inputs {
+        if dataset.y.is_some() {
+            return Err(replay_error(format!(
+                "Methods PREDICT input `{key}` must not contain target values"
+            )));
+        }
+        dataset
+            .validate(&format!("native Methods replay input `{key}`"), false)
+            .map_err(|error| replay_error(format!("DAG-ML rejected Methods input: {error}")))?;
+    }
     Ok(())
 }
 
@@ -1253,25 +1326,12 @@ fn replay_methods_predictor_package(
     input: MethodsArchivePredictRequest,
 ) -> Result<TrainingReplayOutcome, NativeMethodsReplayError> {
     // Keep structural/package/request/input validation ahead of process-global
-    // libn4m configuration. Cross-contract scheduling and native N4MM hydration
+    // libn4m configuration. Cross-contract scheduling and native state hydration
     // remain DAG-ML-owned below.
     package.validate().map_err(|error| {
         replay_error(format!("DAG-ML rejected Core Archive V2 package: {error}"))
     })?;
-    input
-        .request
-        .validate()
-        .map_err(|error| replay_error(format!("DAG-ML rejected replay request: {error}")))?;
-    if input.request.phase != Phase::Predict {
-        return Err(replay_error(
-            "DAG-ML rejected replay request: callback-free Methods package replay supports PREDICT only",
-        ));
-    }
-    for (key, dataset) in &input.methods_inputs {
-        dataset
-            .validate(&format!("native Methods replay input `{key}`"), false)
-            .map_err(|error| replay_error(format!("DAG-ML rejected Methods input: {error}")))?;
-    }
+    validate_methods_replay_inputs(&input.request, &input.data_envelopes, &input.methods_inputs)?;
     let runtime = configure_methods_runtime_for_source(&input.methods_library_path)?;
     execute_loaded_methods_predictor_replay(MethodsPortablePredictorReplayInput {
         package,
@@ -1309,6 +1369,7 @@ pub fn replay_methods_archive_v3(
     let package = PortableRefitPackageV3::from_json(package_json).map_err(|error| {
         NativeMethodsReplayError(format!("DAG-ML rejected Core Archive V3 package: {error}"))
     })?;
+    validate_methods_replay_inputs(&input.request, &input.data_envelopes, &input.methods_inputs)?;
     let runtime = configure_methods_runtime_for_source(&input.methods_library_path)?;
     execute_loaded_methods_portable_refit_replay_v3(MethodsPortableRefitReplayInputV3 {
         package: &package,
@@ -1415,6 +1476,59 @@ pub fn replay_methods_archive_v3_json(
 #[cfg(test)]
 mod json_tests {
     use super::*;
+
+    #[test]
+    fn predict_contract_refuses_targets_and_refit_without_a_native_library() {
+        let mut request = TrainingReplayRequest {
+            schema_version: TRAINING_REPLAY_REQUEST_SCHEMA_VERSION,
+            request_id: "replay:target-free".into(),
+            source_outcome_fingerprint: "a".repeat(64),
+            phase: Phase::Predict,
+            data_envelope_keys: vec!["model.x".into()],
+            output_binding_ids: vec!["output:y".into()],
+            request_fingerprint: String::new(),
+        };
+        request.request_fingerprint = request.compute_fingerprint().unwrap();
+        let mut dataset = MethodsPlsDataset {
+            sample_ids: vec![SampleId::new("sample:1").unwrap()],
+            x: MethodsPlsMatrix {
+                values: vec![2.0],
+                rows: 1,
+                cols: 1,
+            },
+            y: None,
+            target_names: vec!["target".into()],
+        };
+        let mut inputs = BTreeMap::from([("model.x".into(), dataset.clone())]);
+        validate_methods_replay_inputs(&request, &BTreeMap::new(), &inputs).unwrap();
+        dataset.y = Some(MethodsPlsMatrix {
+            values: vec![3.0],
+            rows: 1,
+            cols: 1,
+        });
+        inputs.insert("model.x".into(), dataset);
+        assert!(
+            validate_methods_replay_inputs(&request, &BTreeMap::new(), &inputs)
+                .unwrap_err()
+                .to_string()
+                .contains("target values")
+        );
+        request.phase = Phase::Refit;
+        request.request_fingerprint = request.compute_fingerprint().unwrap();
+        assert!(
+            validate_methods_replay_inputs(&request, &BTreeMap::new(), &BTreeMap::new()).is_err()
+        );
+        let json = MethodsDatasetJson {
+            sample_ids: vec!["sample:1".into()],
+            x: vec![vec![2.0]],
+            y: Some(vec![vec![3.0]]),
+            target_names: vec!["target".into()],
+        };
+        assert!(methods_dataset_from_json(json, "current cohort")
+            .unwrap_err()
+            .to_string()
+            .contains("target values"));
+    }
 
     #[test]
     fn windows_verbatim_path_compatibility_is_prefix_only() {
@@ -1546,11 +1660,15 @@ mod json_tests {
             .expect("an absent minor is the documented historical PLS ABI 2.0 profile");
         manifest["payloads"]["methods"]["n4mm"][0]["abi_min_minor"] = serde_json::Value::from(5);
         require_archive_methods_abi(&manifest, "Archive V2")
-            .expect("this candidate provides Methods ABI 2.5");
-        manifest["payloads"]["methods"]["n4mm"][0]["abi_min_minor"] = serde_json::Value::from(6);
+            .expect("the upstream runtime preserves the historical Methods ABI 2.5 profile");
+        let future_minor = CORE_METHODS_ABI_MINOR + 1;
+        manifest["payloads"]["methods"]["n4mm"][0]["abi_min_minor"] =
+            serde_json::Value::from(future_minor);
         let error = require_archive_methods_abi(&manifest, "Archive V2")
             .expect_err("a future Methods minor must be refused before import");
-        assert!(error.to_string().contains("requires Methods ABI 2.6"));
+        assert!(error
+            .to_string()
+            .contains(&format!("requires Methods ABI 2.{future_minor}")));
 
         manifest["payloads"]["methods"]["n4mm"] = serde_json::json!([]);
         manifest["payloads"]["methods"]["n4mopt"] = serde_json::json!([{"abi_major": 2}]);
@@ -1559,6 +1677,29 @@ mod json_tests {
         assert!(error.to_string().contains("requires Methods ABI 2.2"));
         require_archive_methods_abi_for_runtime(&manifest, "Archive V2", 2, 2)
             .expect("Methods ABI 2.2 accepts a historical N4MOPT reference");
+    }
+
+    #[test]
+    fn native_estimator_and_role_pipeline_require_their_real_abi_floor() {
+        let mut manifest = serde_json::json!({
+            "payloads": {"methods": {
+                "n4mm": [], "n4mopt": [],
+                "n4me": [{"abi_major": 2, "abi_min_minor": 13}]
+            }}
+        });
+        assert!(require_archive_methods_abi_for_runtime(&manifest, "Archive V3", 2, 12).is_err());
+        require_archive_methods_abi_for_runtime(&manifest, "Archive V3", 2, 13).unwrap();
+        manifest["payloads"]["methods"]["role_pipelines"] = serde_json::json!([
+            {"semantic_profile": "dagml_methods_role_pipeline_raw_sha256"}
+        ]);
+        assert!(require_archive_methods_abi_for_runtime(&manifest, "Archive V3", 2, 13).is_err());
+        require_archive_methods_abi_for_runtime(&manifest, "Archive V3", 2, 14).unwrap();
+        require_archive_methods_abi(&manifest, "Archive V3").unwrap();
+        assert!(require_archive_methods_abi_for_runtime(&manifest, "Archive V3", 3, 99).is_err());
+        manifest["payloads"]["methods"]["role_pipelines"][0]["semantic_profile"] =
+            serde_json::json!("dagml_methods_role_classifier_pipeline_raw_sha256");
+        assert!(require_archive_methods_abi_for_runtime(&manifest, "Archive V2", 2, 16).is_err());
+        require_archive_methods_abi_for_runtime(&manifest, "Archive V2", 2, 17).unwrap();
     }
 
     #[test]
@@ -1620,7 +1761,7 @@ mod json_tests {
             ensure_same_configured_methods_library(&failed_abi, &matching)
                 .unwrap_err()
                 .to_string()
-                .contains("failed ABI 2.5 verification")
+                == "the configured libn4m process identity failed Methods ABI verification: incompatible ABI"
         );
     }
 

@@ -138,6 +138,13 @@ that actually exist in each host; numerical and parsing behavior stays
 delegated to those upstream packages, and `nirs4all-core` does not vendor or
 reimplement their engines.
 
+Archive V2 also transports DAG-owned RAW multimodal and role classifier
+references, with distinct closed semantic profiles and the same member hashes,
+content-addressed paths and reference closure as regression pipelines. Core
+treats these bytes as opaque: DAG validates the recipe, native state and class
+metadata before an available host controller replays them. Storage support
+does not imply classifier replay in a host without that controller.
+
 ## Local checks
 
 ```bash

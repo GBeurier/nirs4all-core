@@ -743,6 +743,8 @@ fn derive_inventory(
             Some(
                 "dagml_methods_role_pipeline_raw_sha256"
                     | "dagml_methods_multimodal_pipeline_raw_sha256"
+                    | "dagml_methods_role_classifier_pipeline_raw_sha256"
+                    | "dagml_methods_multimodal_classifier_pipeline_raw_sha256"
             )
         ) {
             e.insert("semantic_fingerprint".into(), Value::String(sha256(bytes)));
@@ -768,6 +770,12 @@ fn derive_inventory(
             Some("methods_role_pipeline") => Some("dagml_methods_role_pipeline_raw_sha256"),
             Some("methods_multimodal_pipeline") => {
                 Some("dagml_methods_multimodal_pipeline_raw_sha256")
+            }
+            Some("methods_role_classifier_pipeline") => {
+                Some("dagml_methods_role_classifier_pipeline_raw_sha256")
+            }
+            Some("methods_multimodal_classifier_pipeline") => {
+                Some("dagml_methods_multimodal_classifier_pipeline_raw_sha256")
             }
             _ => None,
         } {
@@ -866,6 +874,8 @@ fn declared_inventory_metadata(
                     | "n4mm_raw_sha256"
                     | "dagml_methods_role_pipeline_raw_sha256"
                     | "dagml_methods_multimodal_pipeline_raw_sha256"
+                    | "dagml_methods_role_classifier_pipeline_raw_sha256"
+                    | "dagml_methods_multimodal_classifier_pipeline_raw_sha256"
                     | "methods_rfc8785_jcs"
                     | "none"
             )
@@ -1005,18 +1015,7 @@ fn validate_reference_declarations(
         }
         validate_ref(item, inventory_meta, None, None, &mut declared_paths)?;
     }
-    for (key, kind, semantic_profile) in [
-        (
-            "role_pipelines",
-            "methods_role_pipeline",
-            "dagml_methods_role_pipeline_raw_sha256",
-        ),
-        (
-            "multimodal_pipelines",
-            "methods_multimodal_pipeline",
-            "dagml_methods_multimodal_pipeline_raw_sha256",
-        ),
-    ] {
+    for key in ["role_pipelines", "multimodal_pipelines"] {
         let Some(roles) = methods.get(key) else {
             continue;
         };
@@ -1042,10 +1041,25 @@ fn validate_reference_declarations(
             let raw_sha = required_str(o, "raw_sha256")?;
             let path = required_str(o, "member_path")?;
             let artifact_id = required_str(o, "artifact_id")?;
-            if o.get("kind").and_then(Value::as_str) != Some(kind)
+            let profile = match (key, o.get("kind").and_then(Value::as_str)) {
+                ("role_pipelines", Some("methods_role_pipeline")) => {
+                    Some("dagml_methods_role_pipeline_raw_sha256")
+                }
+                ("role_pipelines", Some("methods_role_classifier_pipeline")) => {
+                    Some("dagml_methods_role_classifier_pipeline_raw_sha256")
+                }
+                ("multimodal_pipelines", Some("methods_multimodal_pipeline")) => {
+                    Some("dagml_methods_multimodal_pipeline_raw_sha256")
+                }
+                ("multimodal_pipelines", Some("methods_multimodal_classifier_pipeline")) => {
+                    Some("dagml_methods_multimodal_classifier_pipeline_raw_sha256")
+                }
+                _ => None,
+            };
+            if profile.is_none()
                 || o.get("owner").and_then(Value::as_str) != Some("dag-ml")
                 || o.get("format_version").and_then(Value::as_u64) != Some(1)
-                || o.get("semantic_profile").and_then(Value::as_str) != Some(semantic_profile)
+                || o.get("semantic_profile").and_then(Value::as_str) != profile
                 || o.get("semantic_fingerprint") != o.get("raw_sha256")
                 || !sha256_text(Some(raw_sha))
                 || path != format!("artifacts/{raw_sha}.json")
@@ -2327,6 +2341,187 @@ mod tests {
         request.manifest["payloads"]["methods"]["n4mm"] = serde_json::json!([]);
         append_multimodal_storage_payload(&mut request);
         request
+    }
+
+    fn append_classifier_storage_payload(request: &mut ArchiveV2WriteRequest, raw: bool) {
+        // Storage-only opaque fixture: it cannot authorize classifier replay.
+        let (key, kind, profile, name) = if raw {
+            (
+                "multimodal_pipelines",
+                "methods_multimodal_classifier_pipeline",
+                "dagml_methods_multimodal_classifier_pipeline_raw_sha256",
+                "raw",
+            )
+        } else {
+            (
+                "role_pipelines",
+                "methods_role_classifier_pipeline",
+                "dagml_methods_role_classifier_pipeline_raw_sha256",
+                "meta",
+            )
+        };
+        let bytes = format!("opaque Methods classifier storage {name}").into_bytes();
+        let digest = sha256(&bytes);
+        let member_path = format!("artifacts/{digest}.json");
+        let reference = serde_json::json!({
+            "artifact_id": format!("artifact:classifier:{name}"), "kind": kind,
+            "owner": "dag-ml", "format_version": 1, "member_path": member_path,
+            "raw_sha256": digest, "semantic_fingerprint": digest, "semantic_profile": profile,
+        });
+        let methods = request.manifest["payloads"]["methods"]
+            .as_object_mut()
+            .unwrap();
+        methods
+            .entry(key)
+            .or_insert_with(|| serde_json::json!([]))
+            .as_array_mut()
+            .unwrap()
+            .push(reference);
+        request.manifest["member_inventory"]
+            .as_array_mut()
+            .unwrap()
+            .push(serde_json::json!({
+                "path": member_path, "regular_file": true, "raw_sha256": digest,
+                "uncompressed_size_bytes": bytes.len(), "semantic_fingerprint": digest,
+                "semantic_profile": profile,
+            }));
+        request.payloads.push(ArchivePayload {
+            path: member_path,
+            bytes,
+        });
+    }
+
+    fn classifier_storage_request(raw: bool) -> ArchiveV2WriteRequest {
+        let mut request = multimodal_storage_request();
+        let old_path = request.manifest["payloads"]["methods"]["multimodal_pipelines"][0]
+            ["member_path"]
+            .as_str()
+            .unwrap()
+            .to_owned();
+        request.payloads.retain(|member| member.path != old_path);
+        request.manifest["member_inventory"]
+            .as_array_mut()
+            .unwrap()
+            .retain(|member| member["path"] != old_path);
+        request.manifest["payloads"]["methods"]["multimodal_pipelines"] = serde_json::json!([]);
+        append_classifier_storage_payload(&mut request, raw);
+        request
+    }
+
+    #[test]
+    fn classifier_storage_roundtrip_preserves_both_exact_opaque_families() {
+        for raw in [false, true] {
+            let request = classifier_storage_request(raw);
+            let expected = request.payloads.clone();
+            let target = path(if raw {
+                "raw-classifier-storage"
+            } else {
+                "meta-classifier-storage"
+            });
+            let (_, bytes) = write_archive_v2_bytes(request.clone()).unwrap();
+            write_archive_v2(&target, request).unwrap();
+            assert_eq!(bytes, std::fs::read(&target).unwrap());
+            let archive = load_archive_v2_bytes(&bytes).unwrap();
+            assert!(archive.methods_n4mm_artifacts().unwrap().is_empty());
+            assert_eq!(archive.members().len(), 7);
+            for member in expected {
+                assert_eq!(archive.member(&member.path).unwrap(), member.bytes);
+            }
+            std::fs::remove_file(target).unwrap();
+        }
+    }
+
+    #[test]
+    fn classifier_storage_coexists_with_both_historical_regression_families() {
+        let mut request = role_pipeline_storage_request();
+        append_multimodal_storage_payload(&mut request);
+        append_classifier_storage_payload(&mut request, false);
+        append_classifier_storage_payload(&mut request, true);
+        let expected = request.payloads.clone();
+        let (_, bytes) = write_archive_v2_bytes(request).unwrap();
+        let archive = load_archive_v2_bytes(&bytes).unwrap();
+        assert_eq!(archive.members().len(), 14);
+        for member in expected {
+            assert_eq!(archive.member(&member.path).unwrap(), member.bytes);
+        }
+    }
+
+    #[test]
+    fn classifier_storage_refuses_cross_family_and_unknown_declarations() {
+        for raw in [false, true] {
+            let key = if raw {
+                "multimodal_pipelines"
+            } else {
+                "role_pipelines"
+            };
+            for mutation in 0..7 {
+                let mut request = classifier_storage_request(raw);
+                let reference = &mut request.manifest["payloads"]["methods"][key][0];
+                match mutation {
+                    0 => {
+                        reference["kind"] = Value::from(if raw {
+                            "methods_role_classifier_pipeline"
+                        } else {
+                            "methods_multimodal_classifier_pipeline"
+                        })
+                    }
+                    1 => reference["owner"] = Value::from("python"),
+                    2 => reference["format_version"] = Value::from(2),
+                    3 => reference["kind"] = Value::from("methods_future_classifier_pipeline"),
+                    4 => reference["host_pickle"] = Value::Bool(true),
+                    5 => reference["member_path"] = Value::from("../escape.json"),
+                    _ => reference["artifact_id"] = Value::from(""),
+                }
+                assert!(
+                    write_archive_v2_bytes(request).is_err(),
+                    "raw={raw},mutation={mutation}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn classifier_storage_refuses_duplicates_and_incomplete_member_closure() {
+        for raw in [false, true] {
+            let mut missing = classifier_storage_request(raw);
+            missing.payloads.pop();
+            assert!(write_archive_v2_bytes(missing).is_err());
+            let mut duplicate = role_pipeline_storage_request();
+            append_classifier_storage_payload(&mut duplicate, raw);
+            let id = duplicate.manifest["payloads"]["methods"]["role_pipelines"][0]["artifact_id"]
+                .clone();
+            let key = if raw {
+                "multimodal_pipelines"
+            } else {
+                "role_pipelines"
+            };
+            let position = if raw { 0 } else { 5 };
+            duplicate.manifest["payloads"]["methods"][key][position]["artifact_id"] = id;
+            assert!(write_archive_v2_bytes(duplicate).is_err());
+        }
+    }
+
+    #[test]
+    fn classifier_storage_refuses_unknown_profile_before_payload_reads() {
+        let (_, mut bytes) = write_archive_v2_bytes(classifier_storage_request(true)).unwrap();
+        rewrite_manifest_same_length(
+            &mut bytes,
+            b"dagml_methods_multimodal_classifier_pipeline_raw_sha256",
+            b"dagml_methods_multimodal_regression_pipeline_raw_sha256",
+        );
+        let preflight = preflight_zip_reader(&mut Cursor::new(&bytes), bytes.len()).unwrap();
+        let entry = preflight
+            .entries
+            .iter()
+            .find(|entry| entry.name != MANIFEST)
+            .unwrap();
+        bytes[entry.data_start] ^= 1;
+        let error = load_archive_v2_bytes(&bytes).unwrap_err().to_string();
+        assert!(!error.contains("CRC"), "{error}");
+        assert!(
+            error.contains("semantic") || error.contains("pipeline reference"),
+            "{error}"
+        );
     }
 
     #[test]
