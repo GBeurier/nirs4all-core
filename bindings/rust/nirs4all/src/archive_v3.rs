@@ -259,19 +259,32 @@ fn validate_declarations(
         return refuse("Archive V3 refuses nonportable sidecars and copied calibration state");
     }
     let methods = object(required(payloads, "methods")?, "payloads.methods")?;
-    closed(methods, &["n4mm", "n4mopt"], "payloads.methods")?;
+    let mut method_fields = vec!["n4mm", "n4mopt"];
+    for family in ["n4me", "role_pipelines"] {
+        if methods.contains_key(family) {
+            method_fields.push(family);
+            if methods
+                .get(family)
+                .and_then(Value::as_array)
+                .is_none_or(Vec::is_empty)
+            {
+                return refuse("Archive V3 optional native families must be nonempty arrays");
+            }
+        }
+    }
+    closed(methods, &method_fields, "payloads.methods")?;
+    let n4mm = required(methods, "n4mm")?
+        .as_array()
+        .ok_or_else(|| fmt_err("n4mm must be an array"))?;
     if methods
-        .get("n4mm")
+        .get("n4mopt")
         .and_then(Value::as_array)
-        .filter(|items| !items.is_empty())
-        .is_none()
-        || methods
-            .get("n4mopt")
-            .and_then(Value::as_array)
-            .filter(|items| items.is_empty())
-            .is_none()
+        .is_none_or(|items| !items.is_empty())
+        || n4mm.is_empty() && method_fields.len() == 2
     {
-        return refuse("Archive V3 requires N4MM and forbids resumable N4MOPT payloads");
+        return refuse(
+            "Archive V3 requires native fitted artifacts and forbids resumable N4MOPT payloads",
+        );
     }
     let replay = object(required(root, "replay")?, "replay")?;
     closed(
@@ -329,68 +342,17 @@ fn validate_declarations(
         OUTCOME.to_owned(),
     ]);
     let mut artifact_ids = BTreeSet::new();
-    for reference in methods
-        .get("n4mm")
-        .and_then(Value::as_array)
-        .ok_or_else(|| fmt_err("n4mm must be an array"))?
-    {
-        let reference = object(reference, "N4MM reference")?;
-        let fields = if reference.contains_key("abi_min_minor") {
-            &[
-                "artifact_id",
-                "kind",
-                "owner",
-                "format_version",
-                "abi_major",
-                "abi_min_minor",
-                "member_path",
-                "raw_sha256",
-                "semantic_fingerprint",
-                "semantic_profile",
-            ][..]
-        } else {
-            &[
-                "artifact_id",
-                "kind",
-                "owner",
-                "format_version",
-                "abi_major",
-                "member_path",
-                "raw_sha256",
-                "semantic_fingerprint",
-                "semantic_profile",
-            ][..]
-        };
-        closed(reference, fields, "N4MM reference")?;
-        let artifact_id = required_str(reference, "artifact_id")?;
-        let path = required_str(reference, "member_path")?;
-        if !is_id(artifact_id)
-            || !artifact_ids.insert(artifact_id.to_owned())
-            || !n4mm_path_ok(path)
-            || !declared.insert(path.to_owned())
-            || reference.get("kind").and_then(Value::as_str) != Some("N4MM")
-            || reference.get("owner").and_then(Value::as_str) != Some("nirs4all-methods")
-            || reference.get("format_version").and_then(Value::as_u64) != Some(1)
-            || reference.get("abi_major").and_then(Value::as_u64) != Some(2)
-            || reference
-                .get("abi_min_minor")
-                .is_some_and(|value| value.as_u64().is_none_or(|minor| minor > u32::MAX as u64))
-            || reference.get("semantic_profile").and_then(Value::as_str) != Some("n4mm_raw_sha256")
-            || reference.get("semantic_fingerprint") != reference.get("raw_sha256")
-        {
-            return refuse("Archive V3 N4MM reference is not exact ABI-2 raw data");
-        }
-        let meta = inventory
-            .get(path)
-            .ok_or_else(|| fmt_err("N4MM member is absent from inventory"))?;
-        if reference.get("raw_sha256").and_then(Value::as_str) != Some(meta.0.as_str())
-            || reference
-                .get("semantic_fingerprint")
-                .and_then(Value::as_str)
-                != Some(meta.1.as_str())
-            || meta.2 != "n4mm_raw_sha256"
-        {
-            return refuse("Archive V3 N4MM does not bind its inventory member");
+    for family in ["n4mm", "n4me", "role_pipelines"] {
+        if let Some(references) = methods.get(family).and_then(Value::as_array) {
+            for reference in references {
+                let (artifact_id, path) = validate_methods_ref(reference, family, &inventory)?;
+                if !artifact_ids.insert(artifact_id.to_owned()) || !declared.insert(path.to_owned())
+                {
+                    return refuse(
+                        "Archive V3 native artifact IDs and member paths must be globally unique",
+                    );
+                }
+            }
         }
     }
     if declared.len() != inventory.len()
@@ -399,6 +361,91 @@ fn validate_declarations(
         return refuse("Archive V3 member inventory is not closed over declared members");
     }
     Ok(())
+}
+
+fn validate_methods_ref<'a>(
+    value: &'a Value,
+    family: &str,
+    inventory: &InventoryMeta,
+) -> Result<(&'a str, &'a str), ArchiveStoreError> {
+    let reference = object(value, "native artifact reference")?;
+    let mut fields = vec![
+        "artifact_id",
+        "kind",
+        "owner",
+        "format_version",
+        "member_path",
+        "raw_sha256",
+        "semantic_fingerprint",
+        "semantic_profile",
+    ];
+    if family != "role_pipelines" {
+        fields.push("abi_major");
+        if family == "n4me" || reference.contains_key("abi_min_minor") {
+            fields.push("abi_min_minor");
+        }
+    }
+    closed(reference, &fields, "native artifact reference")?;
+    let artifact_id = required_str(reference, "artifact_id")?;
+    let path = required_str(reference, "member_path")?;
+    let raw = required_str(reference, "raw_sha256")?;
+    let (kind, owner, profile, valid_path) = match family {
+        "n4mm" => (
+            "N4MM",
+            "nirs4all-methods",
+            "n4mm_raw_sha256",
+            n4mm_path_ok(path),
+        ),
+        "n4me" => (
+            "N4ME",
+            "nirs4all-methods",
+            "n4me_raw_sha256",
+            path.starts_with("methods/") && path.ends_with(".n4me"),
+        ),
+        "role_pipelines" => (
+            "methods_role_pipeline",
+            "dag-ml",
+            "dagml_methods_role_pipeline_raw_sha256",
+            path == format!("artifacts/{raw}.json"),
+        ),
+        _ => return refuse("unsupported Archive V3 native artifact family"),
+    };
+    path_ok(path)?;
+    let version = reference.get("format_version").and_then(Value::as_u64);
+    let minor = reference.get("abi_min_minor").and_then(Value::as_u64);
+    let valid_version = version == Some(1)
+        || family == "n4mm" && version == Some(2) && minor.is_some_and(|minor| minor >= 5);
+    if !is_id(artifact_id)
+        || !valid_path
+        || !valid_version
+        || reference.get("kind").and_then(Value::as_str) != Some(kind)
+        || reference.get("owner").and_then(Value::as_str) != Some(owner)
+        || reference.get("semantic_profile").and_then(Value::as_str) != Some(profile)
+        || reference.get("semantic_fingerprint") != reference.get("raw_sha256")
+        || family != "role_pipelines"
+            && reference.get("abi_major").and_then(Value::as_u64) != Some(2)
+        || reference
+            .get("abi_min_minor")
+            .is_some_and(|_| minor.is_none_or(|minor| minor > u32::MAX as u64))
+        || family == "n4me" && minor != Some(13)
+    {
+        return refuse(
+            "Archive V3 native artifact reference is not an exact supported raw profile",
+        );
+    }
+    let meta = inventory
+        .get(path)
+        .ok_or_else(|| fmt_err("native artifact member is absent from inventory"))?;
+    if raw != meta.0
+        || reference
+            .get("semantic_fingerprint")
+            .and_then(Value::as_str)
+            != Some(meta.1.as_str())
+        || meta.2 != profile
+    {
+        return refuse("Archive V3 native artifact does not bind its inventory member");
+    }
+    Ok((artifact_id, path))
 }
 
 fn derive_inventory(
@@ -417,12 +464,11 @@ fn derive_inventory(
             .ok_or_else(|| fmt_err("inventory path is absent from payloads"))?;
         item.insert("raw_sha256".into(), Value::String(sha256(bytes)));
         item.insert("uncompressed_size_bytes".into(), Value::from(bytes.len()));
-        if path.ends_with(".n4mm") {
+        if let Some(profile) =
+            raw_methods_profile(&path, item.get("semantic_profile").and_then(Value::as_str))
+        {
             item.insert("semantic_fingerprint".into(), Value::String(sha256(bytes)));
-            item.insert(
-                "semantic_profile".into(),
-                Value::String("n4mm_raw_sha256".into()),
-            );
+            item.insert("semantic_profile".into(), Value::String(profile.into()));
         }
     }
     let sync =
@@ -433,12 +479,12 @@ fn derive_inventory(
                 .get(&path)
                 .ok_or_else(|| fmt_err("reference path is absent from payloads"))?;
             reference.insert("raw_sha256".into(), Value::String(sha256(bytes)));
-            if path.ends_with(".n4mm") {
+            if let Some(profile) = raw_methods_profile(
+                &path,
+                reference.get("semantic_profile").and_then(Value::as_str),
+            ) {
                 reference.insert("semantic_fingerprint".into(), Value::String(sha256(bytes)));
-                reference.insert(
-                    "semantic_profile".into(),
-                    Value::String("n4mm_raw_sha256".into()),
-                );
+                reference.insert("semantic_profile".into(), Value::String(profile.into()));
             }
             Ok(())
         };
@@ -455,13 +501,29 @@ fn derive_inventory(
         )?,
         "methods",
     )?;
-    for reference in required_mut(methods, "n4mm")?
-        .as_array_mut()
-        .ok_or_else(|| fmt_err("n4mm must be an array"))?
-    {
-        sync(reference, members)?;
+    for family in ["n4mm", "n4me", "role_pipelines"] {
+        if let Some(value) = methods.get_mut(family) {
+            for reference in value
+                .as_array_mut()
+                .ok_or_else(|| fmt_err("native artifact family must be an array"))?
+            {
+                sync(reference, members)?;
+            }
+        }
     }
     Ok(())
+}
+
+fn raw_methods_profile(path: &str, declared: Option<&str>) -> Option<&'static str> {
+    if path.ends_with(".n4mm") {
+        Some("n4mm_raw_sha256")
+    } else if path.ends_with(".n4me") {
+        Some("n4me_raw_sha256")
+    } else if declared == Some("dagml_methods_role_pipeline_raw_sha256") {
+        Some("dagml_methods_role_pipeline_raw_sha256")
+    } else {
+        None
+    }
 }
 
 fn validate_raw_closure(
@@ -525,7 +587,11 @@ fn inventory_meta(
             || !sha256_text(semantic)
             || !matches!(
                 profile,
-                "dagml_tcv1" | "dagml_historical_serde_json_v1" | "n4mm_raw_sha256"
+                "dagml_tcv1"
+                    | "dagml_historical_serde_json_v1"
+                    | "n4mm_raw_sha256"
+                    | "n4me_raw_sha256"
+                    | "dagml_methods_role_pipeline_raw_sha256"
             )
             || entry.get("uncompressed_size_bytes").and_then(Value::as_u64)
                 != physical_members.get(path).map(|size| *size as u64)
@@ -1098,5 +1164,148 @@ mod tests {
             Err(ArchiveStoreError::Integrity(_))
         ));
         let _ = fs::remove_file(archive);
+    }
+
+    // These are deliberately opaque storage witnesses. DAG-ML owns package
+    // semantics; real fitted states and fresh numerical replay have separate
+    // integration witnesses and are not simulated by this container fixture.
+    fn native_family_request(keep_n4mm: bool, n4me: bool, roles: bool) -> ArchiveV3WriteRequest {
+        let mut result = request();
+        if !keep_n4mm {
+            result.payloads.pop();
+            result.manifest["member_inventory"]
+                .as_array_mut()
+                .unwrap()
+                .pop();
+            result.manifest["payloads"]["methods"]["n4mm"] = serde_json::json!([]);
+        }
+        for (family, bytes) in [
+            ("n4me", b"opaque estimator state: storage only".as_slice()),
+            (
+                "role_pipelines",
+                b"opaque role wrapper: storage only".as_slice(),
+            ),
+        ] {
+            if family == "n4me" && !n4me || family == "role_pipelines" && !roles {
+                continue;
+            }
+            let raw = sha256(bytes);
+            let (kind, owner, profile, path) = if family == "n4me" {
+                (
+                    "N4ME",
+                    "nirs4all-methods",
+                    "n4me_raw_sha256",
+                    "methods/native.n4me".to_owned(),
+                )
+            } else {
+                (
+                    "methods_role_pipeline",
+                    "dag-ml",
+                    "dagml_methods_role_pipeline_raw_sha256",
+                    format!("artifacts/{raw}.json"),
+                )
+            };
+            let mut reference = serde_json::json!({
+                "artifact_id": format!("artifact:{family}:refit"), "kind": kind, "owner": owner,
+                "format_version": 1, "member_path": path, "raw_sha256": raw,
+                "semantic_fingerprint": raw, "semantic_profile": profile
+            });
+            if family == "n4me" {
+                reference["abi_major"] = Value::from(2);
+                reference["abi_min_minor"] = Value::from(13);
+            }
+            result.manifest["payloads"]["methods"][family] = serde_json::json!([reference]);
+            result.manifest["member_inventory"].as_array_mut().unwrap().push(serde_json::json!({
+                "path": path, "regular_file": true, "raw_sha256": raw,
+                "uncompressed_size_bytes": bytes.len(), "semantic_fingerprint": raw, "semantic_profile": profile
+            }));
+            result.payloads.push(ArchivePayload {
+                path,
+                bytes: bytes.to_vec(),
+            });
+        }
+        result
+    }
+
+    #[test]
+    fn v3_native_families_round_trip_exact_bytes_and_optional_host_views() {
+        for (index, (old, estimator, roles)) in [
+            (false, true, false),
+            (false, false, true),
+            (true, true, true),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let archive = path(&format!("native-family-{index}.n4a"));
+            let request = native_family_request(old, estimator, roles);
+            let expected = request.payloads.clone();
+            write_archive_v3(&archive, request).unwrap();
+            let loaded = load_archive_v3(&archive).unwrap();
+            for payload in expected {
+                assert_eq!(loaded.member(&payload.path).unwrap(), payload.bytes);
+            }
+            let view = crate::archive_v3_view(&loaded).unwrap();
+            assert_eq!(view.methods.n4mm.len(), usize::from(old));
+            assert_eq!(view.methods.n4me.len(), usize::from(estimator));
+            assert_eq!(view.methods.role_pipelines.len(), usize::from(roles));
+            let json = serde_json::to_value(view).unwrap();
+            assert_eq!(json["methods"].get("n4me").is_some(), estimator);
+            assert_eq!(json["methods"].get("role_pipelines").is_some(), roles);
+            fs::remove_file(archive).unwrap();
+        }
+    }
+
+    #[test]
+    fn v3_native_families_reject_cross_family_identity_and_abi_smuggling() {
+        let cases: Vec<(&str, ArchiveV3WriteRequest)> = {
+            let mut duplicate = native_family_request(true, true, true);
+            duplicate.manifest["payloads"]["methods"]["n4me"][0]["artifact_id"] =
+                serde_json::json!("artifact:model:refit");
+            let mut owner = native_family_request(false, false, true);
+            owner.manifest["payloads"]["methods"]["role_pipelines"][0]["owner"] =
+                serde_json::json!("nirs4all-methods");
+            let mut missing_abi = native_family_request(false, true, false);
+            missing_abi.manifest["payloads"]["methods"]["n4me"][0]
+                .as_object_mut()
+                .unwrap()
+                .remove("abi_min_minor");
+            let mut downgraded_abi = native_family_request(false, true, false);
+            downgraded_abi.manifest["payloads"]["methods"]["n4me"][0]["abi_min_minor"] =
+                Value::from(0);
+            let mut empty = request();
+            empty.manifest["payloads"]["methods"]["role_pipelines"] = serde_json::json!([]);
+            let mut extra = request();
+            extra.manifest["payloads"]["methods"]["joblib"] = serde_json::json!([]);
+            vec![
+                ("duplicate", duplicate),
+                ("owner", owner),
+                ("missing-abi", missing_abi),
+                ("downgrade", downgraded_abi),
+                ("empty", empty),
+                ("host", extra),
+            ]
+        };
+        for (name, request) in cases {
+            let archive = path(&format!("invalid-native-{name}.n4a"));
+            assert!(write_archive_v3(&archive, request).is_err(), "{name}");
+            assert!(
+                !archive.exists(),
+                "rejected declaration must not create a partial archive"
+            );
+        }
+    }
+
+    #[test]
+    fn v3_n4mm_pipeline_format_requires_the_declared_abi_floor() {
+        let mut request = request();
+        request.manifest["payloads"]["methods"]["n4mm"][0]["format_version"] = Value::from(2);
+        let archive = path("pipeline-format.n4a");
+        assert!(write_archive_v3(&archive, request.clone()).is_err());
+        request.manifest["payloads"]["methods"]["n4mm"][0]["abi_min_minor"] = Value::from(5);
+        write_archive_v3(&archive, request).unwrap();
+        let view = crate::archive_v3_view(&load_archive_v3(&archive).unwrap()).unwrap();
+        assert_eq!(view.methods.n4mm[0].format_version, 2);
+        fs::remove_file(archive).unwrap();
     }
 }
