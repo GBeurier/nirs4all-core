@@ -122,7 +122,7 @@ impl DatasetPackageMethodsProvider {
         &self.source_id
     }
 
-    fn bind_replay_requirement(
+    pub(crate) fn bind_replay_requirement(
         &mut self,
         requirement: &BundleDataRequirement,
     ) -> Result<(), String> {
@@ -319,7 +319,7 @@ impl DatasetPackageMethodsProvider {
         })
     }
 
-    fn conformal_truth(
+    pub(crate) fn conformal_truth(
         &self,
         replay: &TrainingReplayOutcome,
         binding_id: &str,
@@ -413,6 +413,14 @@ pub fn canonical_pls_training_request(
     let mut sample_ids = Vec::new();
     let mut seen = BTreeSet::new();
     for relation in &provider.relations.records {
+        let partitions: Vec<_> = relation
+            .tags
+            .iter()
+            .filter(|tag| tag.starts_with("partition:"))
+            .collect();
+        if partitions.len() != 1 || partitions[0] != "partition:train" {
+            return Err("canonical PLS training requires only train partition rows".into());
+        }
         if relation.is_augmented || relation.excluded || relation.origin_sample_id.is_some() {
             return Err(
                 "canonical PLS requires unaugmented, included, origin-free samples".to_string(),
@@ -653,6 +661,17 @@ impl RuntimeDataProvider for DatasetPackageMethodsProvider {
             source_ids: vec![IoSourceId::new(&self.source_id)
                 .map_err(|error| dag_ml_core::DagMlError::RuntimeValidation(error.to_string()))?],
             require_relations: request.binding.require_relations,
+            predict_cohort: request
+                .predict_cohort
+                .as_ref()
+                .map(|cohort| {
+                    serde_json::to_value(cohort)
+                        .and_then(serde_json::from_value)
+                        .map_err(|error| {
+                            dag_ml_core::DagMlError::RuntimeValidation(error.to_string())
+                        })
+                })
+                .transpose()?,
         };
         let record = self
             .provider
@@ -796,7 +815,7 @@ impl RuntimeDataProvider for DatasetPackageMethodsProvider {
     }
 }
 
-fn convert_relations(
+pub(crate) fn convert_relations(
     relations: &dag_ml_data_crate::CoordinatorRelationSet,
 ) -> Result<SampleRelationSet, String> {
     let records = relations
@@ -939,8 +958,30 @@ fn execute_dataset_package_methods_training(
         .map_err(|error| error.to_string())?;
     let mut controllers = RuntimeControllerRegistry::new();
     controllers
-        .register(Box::new(MethodsPlsController::new(runtime)))
+        .register(Box::new(MethodsPlsController::new(runtime.clone())))
         .map_err(|error| error.to_string())?;
+    if let Some(study) = training_request
+        .campaign
+        .metadata
+        .get("methods_hpo_operation")
+        .and_then(|operation| operation.get("study"))
+    {
+        controllers
+            .register(Box::new(
+                dag_ml_core::MethodsNativeRegressionController::new(runtime.clone()),
+            ))
+            .map_err(|error| error.to_string())?;
+        let id = study
+            .get("controller_id")
+            .and_then(serde_json::Value::as_str)
+            .ok_or("native HPO study lacks controller_id")?;
+        controllers
+            .register(Box::new(dag_ml_core::MethodsHpoController::new(
+                dag_ml_core::ControllerId::new(id).map_err(|error| error.to_string())?,
+                runtime,
+            )))
+            .map_err(|error| error.to_string())?;
+    }
     execute_training(TrainingExecutionInput {
         request: training_request,
         outcome_id: outcome_id.to_string(),
@@ -1200,6 +1241,24 @@ mod tests {
             data: values.to_vec(),
             n_rows: rows,
             n_cols: columns,
+        }
+    }
+
+    #[test]
+    fn canonical_training_refuses_nontrain_and_missing_partition_authority() {
+        let dataset = numeric_multi_source_package();
+        let mut provider = DatasetPackageMethodsProvider::new(&dataset, "spectra").unwrap();
+        canonical_pls_training_request(&provider, CanonicalPlsProfile::Raw).unwrap();
+        for tags in [
+            vec!["partition:test".into()],
+            vec!["partition:predict".into()],
+            vec![],
+            vec!["partition:train".into(), "partition:test".into()],
+        ] {
+            provider.relations.records[0].tags = tags;
+            let error =
+                canonical_pls_training_request(&provider, CanonicalPlsProfile::Raw).unwrap_err();
+            assert!(error.contains("only train partition"), "{error}");
         }
     }
 

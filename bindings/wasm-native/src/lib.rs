@@ -22,6 +22,166 @@ use dag_ml_core::{
 use sha2::{Digest, Sha256};
 use wasm_bindgen::prelude::*;
 
+#[path = "../../rust/nirs4all/src/conformal_json.rs"]
+mod public_conformal;
+mod public_generation;
+#[path = "../../rust/nirs4all/src/result_projection.rs"]
+mod public_results;
+#[path = "../../rust/nirs4all/src/robustness_json.rs"]
+mod public_robustness;
+
+#[wasm_bindgen]
+pub fn project_training_predictions_json(
+    outcome_json: &str,
+    dataset_label: &str,
+    task_type_label: &str,
+) -> Result<String, JsValue> {
+    public_results::project_training_predictions_json(outcome_json, dataset_label, task_type_label)
+        .map_err(|error| JsValue::from_str(&error))
+}
+
+#[wasm_bindgen]
+pub fn validate_training_predictions_json(
+    outcome_json: &str,
+    predictions_json: &str,
+) -> Result<(), JsValue> {
+    public_results::validate_training_predictions_json(outcome_json, predictions_json)
+        .map_err(|error| JsValue::from_str(&error))
+}
+
+#[wasm_bindgen]
+pub fn validate_robustness_scenarios_json(scenarios: &str) -> Result<String, JsValue> {
+    public_robustness::validate_robustness_scenarios_json(scenarios)
+        .map_err(|error| JsValue::from_str(&error))
+}
+
+#[wasm_bindgen]
+pub fn robustness_report_json(
+    package: &str,
+    scenarios: &str,
+    replays: &str,
+    truth: &str,
+) -> Result<String, JsValue> {
+    public_robustness::robustness_report_json(package, scenarios, replays, truth)
+        .map_err(|error| JsValue::from_str(&error))
+}
+
+#[wasm_bindgen]
+pub fn calibrate_workflow_replay_json(
+    source: &str,
+    replay: &str,
+    relations: &str,
+    truth: &str,
+    coverages: &str,
+    small_sample_policy: &str,
+) -> Result<String, JsValue> {
+    public_conformal::calibrate_workflow_replay_json(
+        source,
+        replay,
+        relations,
+        truth,
+        coverages,
+        small_sample_policy,
+    )
+    .map_err(|error| JsValue::from_str(&error))
+}
+
+#[wasm_bindgen]
+pub fn calibrated_prediction_json(
+    package: &str,
+    request: &str,
+    replay: &str,
+) -> Result<String, JsValue> {
+    public_conformal::calibrated_prediction_json(package, request, replay)
+        .map_err(|error| JsValue::from_str(&error))
+}
+
+#[wasm_bindgen]
+pub fn conformal_metrics_json(
+    calibration: &str,
+    intervals: &str,
+    truth: &str,
+) -> Result<String, JsValue> {
+    public_conformal::conformal_metrics_json(calibration, intervals, truth)
+        .map_err(|error| JsValue::from_str(&error))
+}
+
+#[wasm_bindgen]
+pub fn calibrated_methods_points_json(
+    package: &str,
+    archive_sha: &str,
+    sample_ids: &str,
+    values: &str,
+    descriptor: &str,
+) -> Result<String, JsValue> {
+    public_conformal::calibrated_methods_points_json(
+        package,
+        archive_sha,
+        sample_ids,
+        values,
+        descriptor,
+    )
+    .map_err(|error| JsValue::from_str(&error))
+}
+
+#[wasm_bindgen]
+pub fn frozen_methods_points_json(
+    package: &str,
+    archive_sha: &str,
+    sample_ids: &str,
+    values: &str,
+    descriptor: &str,
+) -> Result<String, JsValue> {
+    public_robustness::frozen_methods_points_json(
+        package,
+        archive_sha,
+        sample_ids,
+        values,
+        descriptor,
+    )
+    .map_err(|error| JsValue::from_str(&error))
+}
+
+#[wasm_bindgen]
+pub fn robustness_methods_points_json(
+    package: &str,
+    scenarios: &str,
+    points: &str,
+    truth: &str,
+) -> Result<String, JsValue> {
+    public_robustness::robustness_methods_points_json(package, scenarios, points, truth)
+        .map_err(|error| JsValue::from_str(&error))
+}
+
+/// Validate the complete native portable payload closure for any supported
+/// DAG predictor profile, without selecting a host execution backend.
+#[wasm_bindgen]
+pub fn validate_portable_archive_v2(bytes: &[u8]) -> Result<String, JsValue> {
+    let archive = core_archive_v2::load_archive_v2_bytes(bytes)
+        .map_err(|error| JsValue::from_str(&error.to_string()))?;
+    let text = std::str::from_utf8(
+        archive
+            .portable_predictor_package()
+            .map_err(|error| JsValue::from_str(&error.to_string()))?,
+    )
+    .map_err(|error| JsValue::from_str(&error.to_string()))?;
+    let package = PortablePredictorPackage::from_json(text)
+        .map_err(|error| JsValue::from_str(&error.to_string()))?;
+    dag_ml_core::validate_archive_v2_portable_payloads(
+        archive.manifest(),
+        &package,
+        archive.members(),
+    )
+    .map_err(|error| JsValue::from_str(&error.to_string()))?;
+    Ok(text.to_owned())
+}
+
+/// Synchronous artifact hashing for native DAG controller callbacks.
+#[wasm_bindgen]
+pub fn sha256_bytes(bytes: &[u8]) -> String {
+    format!("{:x}", Sha256::digest(bytes))
+}
+
 // The canonical module's V1/V3 dispatch types live at the aggregate root. They
 // are unavailable in this deliberately small wasm32 crate, so these private
 // placeholders satisfy only the uncalled dual-dispatch signatures. Archive V2
@@ -446,12 +606,16 @@ fn project_archive(bytes: &[u8]) -> Result<ValidatedMethodsArchiveV2, String> {
         || package.effective_plan.node_plans.len() != 1
         || package.execution_bundle.refit_artifacts.len() != 1
         || package.execution_bundle.raw_artifact_payloads.len() != 1
-        || package.conformal_calibration.is_some()
-        || package.conformal_calibration_replay.is_some()
-        || package.execution_bundle.conformal_calibration.is_some()
     {
         return refuse("package is outside the bounded single-node Methods replay contract");
     }
+
+    dag_ml_core::validate_archive_v2_portable_payloads(
+        archive.manifest(),
+        &package,
+        archive.members(),
+    )
+    .map_err(|error| format!("DAG-ML rejected archive payload closure: {error}"))?;
 
     let node_id = &package.predictor_node_ids[0];
     let node = package
@@ -587,13 +751,11 @@ fn validate_bounded_manifest(manifest: &serde_json::Value) -> Result<(), String>
         return refuse("bounded WASM replay requires one N4MM and no optimization payloads");
     }
     if !host_artifacts.is_empty()
-        || ["n4d_aggregate_reference", "conformal", "robustness"]
+        || ["n4d_aggregate_reference", "robustness"]
             .iter()
             .any(|key| !payloads.get(*key).is_some_and(serde_json::Value::is_null))
     {
-        return refuse(
-            "bounded WASM replay refuses data, conformal, robustness and host-only payloads",
-        );
+        return refuse("bounded WASM replay refuses data, robustness and host-only payloads");
     }
     let future_artifacts = root
         .get("replay")
@@ -636,7 +798,7 @@ mod tests {
 
     #[test]
     fn bounded_manifest_refuses_every_unconsumed_payload_class() {
-        for path in ["n4mopt", "host_artifacts", "conformal", "robustness"] {
+        for path in ["n4mopt", "host_artifacts", "robustness"] {
             let mut manifest = bounded_manifest();
             match path {
                 "n4mopt" => manifest["payloads"]["methods"]["n4mopt"] = json!([{}]),

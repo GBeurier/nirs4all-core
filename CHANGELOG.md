@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.2
+
+- Align the aggregate with DAG-ML 0.3.37, DAG-ML Data 0.2.13, IO 0.2.5 and Formats 0.2.11 across Rust, Python and npm.
+- Ship the shared archive/workflow dispatcher in the Python native extension so installed wheels can execute public workflows without an external Core CLI.
+- Route native tuning winners through their RolePipeline controller for calibration, calibrated prediction and frozen robustness. Calibrated tuning predictions use the existing scalar native presentation contract, with the validated interval block.
+- Stage tuning exports and clean failed calibrated copies without overwriting existing destinations; use Core's exclusive directory publisher for MATLAB exports.
+- Generate Rust results/HPO qualification fixtures in the tests and validate the extended WASM public export surface.
+
 ## 0.4.1
 
 - Store and replay the closed native RolePipeline/N4ME Archive V3 profiles alongside existing V2 routes, retaining genuine parent/refit identities.

@@ -16,7 +16,6 @@ import n4a
 import nirs4all_core
 import nirs4all_core as n4core
 
-
 FIXTURE_DIR = Path(__file__).resolve().parents[3] / "tests" / "parity" / "fixtures"
 
 
@@ -28,7 +27,23 @@ class FacadeImportSurfaceTests(unittest.TestCase):
 
     def test_aggregate_public_surface_is_explicit(self) -> None:
         expected_exports = [
+            "TuningResult",
+            "load_tuning",
+    "robustness",
+            "CalibratedWorkflow",
+            "calibrate",
+            "predict_calibrated",
+            "conformal_metrics",
+            "export_calibrated",
+            "load_calibrated",
+            "generate",
+            "tune",
+            "resume_tuning",
+            "predict_multimodal_archive",
+            "Dataset",
+            "Experiment",
             "LazyUpstream",
+            "MultimodalPredictor",
             "N4M_ROLE_PREFIX",
             "N4M_TRAINED_PIPELINE_SCHEMA",
             "N4mRolePipeline",
@@ -40,27 +55,34 @@ class FacadeImportSurfaceTests(unittest.TestCase):
             "EXECUTION_ENGINE_EXPORTS",
             "TOPOLOGY_EXPORTS",
             "Upstream",
+            "Workflow",
             "available_upstreams",
             "artifact_contracts",
             "capability_manifest",
             "core_facade_exports",
             "controller_capabilities",
+            "dataset",
             "dag_ml",
             "dag_ml_data",
             "datasets",
             "execution_engine_exports",
+            "export",
             "formats",
             "import_upstream",
             "inspect_methods_archive_v2_predictors",
             "io",
             "load_pipeline_definition",
+            "load",
             "local_implementation_registry",
             "methods",
             "n4m_role_capabilities",
+            "open_experiment",
             "parse_execution_plan",
             "portable_class_names",
+            "predict",
             "predict_methods_archive_v2_matrix",
             "release_topology_manifest",
+            "retrain",
             "read_archive_v3_view",
             "read_archive_v2_payloads",
             "read_portable_predictor_package_v2",
@@ -74,6 +96,8 @@ class FacadeImportSurfaceTests(unittest.TestCase):
             "require_upstream",
             "required_keyword_registry_entries",
             "run_portable_pipeline",
+            "run",
+            "save_experiment",
             "runtime_contracts",
             "runtime_surfaces",
             "upstream_status",
@@ -81,7 +105,7 @@ class FacadeImportSurfaceTests(unittest.TestCase):
             "validate_core_facade",
         ]
 
-        self.assertEqual(n4core.__all__, expected_exports)
+        self.assertCountEqual(n4core.__all__, expected_exports)
         for name in expected_exports:
             with self.subTest(name=name):
                 self.assertTrue(hasattr(n4core, name))

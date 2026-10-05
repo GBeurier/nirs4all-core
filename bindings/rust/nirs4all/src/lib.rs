@@ -14,16 +14,29 @@ use std::ptr;
 use libloading::{Library, Symbol};
 use serde_json::Value;
 
+pub mod archive_command;
 mod archive_v1;
 pub(crate) mod archive_v2;
 mod archive_v3;
 mod archive_view;
+pub mod conformal;
+pub mod conformal_json;
 mod durability;
 mod formats_io;
+pub mod generation;
 mod io_training;
 mod n4m_roles;
 mod native_methods_replay;
 mod portable_session;
+mod publication;
+pub mod result_projection;
+pub mod results;
+pub mod robustness;
+pub mod robustness_json;
+#[cfg(test)]
+mod test_fixture;
+pub mod tuning;
+mod workflow;
 pub use archive_v1::{
     load_archive_v1, write_archive_v1, ArchivePayload, ArchiveReference, ArchiveStoreError,
     ArchiveV1WriteRequest, LoadedArchiveV1,
@@ -62,8 +75,9 @@ pub use native_methods_replay::{
     inspect_methods_archive_v2_predictors, inspect_methods_archive_v2_predictors_json,
     load_methods_archive_v2_conformal_presentation_v2, predict_methods_archive_v2_matrix,
     predict_methods_archive_v2_matrix_conformal_presentation_v2,
-    predict_methods_archive_v2_matrix_json, preflight_methods_archive_v2_library,
-    replay_methods_archive_v2, replay_methods_archive_v2_conformal_presentation_v1,
+    predict_methods_archive_v2_matrix_json, predict_tuning_archive_v2_matrix,
+    preflight_methods_archive_v2_library, replay_methods_archive_v2,
+    replay_methods_archive_v2_conformal_presentation_v1,
     replay_methods_archive_v2_conformal_presentation_v1_json,
     replay_methods_archive_v2_conformal_presentation_v2,
     replay_methods_archive_v2_conformal_presentation_v2_json, replay_methods_archive_v2_json,
@@ -75,6 +89,12 @@ pub use native_methods_replay::{
 pub use portable_session::{
     PortableSession, PortableSessionError, PortableSessionState, PORTABLE_SESSION_EXPORT_SCHEMA,
     PORTABLE_SESSION_EXPORT_SCHEMA_V2,
+};
+pub use publication::publish_directory_noreplace;
+pub use workflow::{
+    dense_regression_training_request, dense_regression_workflow_config,
+    preflight_workflow_archive_path, run_dense_regression_workflow, DenseRegressionPreprocessing,
+    DenseRegressionWorkflowRequest,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

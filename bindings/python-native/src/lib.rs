@@ -401,9 +401,51 @@ fn write_archive_v3_from_native_payloads(
     ))
 }
 
+#[pyfunction]
+fn project_training_predictions_json(
+    outcome_json: &str,
+    dataset_label: &str,
+    task_type_label: &str,
+) -> PyResult<String> {
+    nirs4all::result_projection::project_training_predictions_json(
+        outcome_json,
+        dataset_label,
+        task_type_label,
+    )
+    .map_err(PyValueError::new_err)
+}
+
+#[pyfunction]
+fn validate_training_predictions_json(outcome_json: &str, predictions_json: &str) -> PyResult<()> {
+    nirs4all::result_projection::validate_training_predictions_json(outcome_json, predictions_json)
+        .map_err(PyValueError::new_err)
+}
+
+#[pyfunction]
+fn publish_directory_noreplace(source: &str, target: &str) -> PyResult<()> {
+    nirs4all::publish_directory_noreplace(Path::new(source), Path::new(target))
+        .map_err(PyValueError::new_err)
+}
+
+/// Shared Rust dispatcher used when no external CLI was requested.
+#[pyfunction]
+fn execute_archive_command(args: Vec<String>) -> PyResult<()> {
+    nirs4all::archive_command::execute_archive_command(
+        args.into_iter().map(std::ffi::OsString::from),
+    )
+    .map_err(|error| pyo3::exceptions::PyRuntimeError::new_err(error.to_string()))
+}
+
 /// Python extension module installed as ``nirs4all_core._native``.
 #[pymodule]
 fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_function(wrap_pyfunction!(execute_archive_command, module)?)?;
+    module.add_function(wrap_pyfunction!(project_training_predictions_json, module)?)?;
+    module.add_function(wrap_pyfunction!(
+        validate_training_predictions_json,
+        module
+    )?)?;
+    module.add_function(wrap_pyfunction!(publish_directory_noreplace, module)?)?;
     module.add_function(wrap_pyfunction!(read_archive_v2_payloads, module)?)?;
     module.add_function(wrap_pyfunction!(
         read_portable_predictor_package_v2,
