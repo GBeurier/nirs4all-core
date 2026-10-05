@@ -590,7 +590,13 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertEqual(set(root_lock["peerDependenciesMeta"]), expected_peers)
         self.assertEqual(root_lock["license"], package["license"])
         # Methods is floored at the release carrying ABI 2.17 multimodal classifiers.
-        pinned_peers = {"@nirs4all/methods": "^1.3.2", "dag-ml-wasm": ">=0.3.34", "@nirs4all/io-wasm": ">=0.2.4"}
+        pinned_peers = {
+            "@nirs4all/methods": "^1.3.2",
+            "dag-ml-wasm": ">=0.3.37",
+            "dag-ml-data-wasm": ">=0.2.13",
+            "@nirs4all/formats-wasm": ">=0.2.11",
+            "@nirs4all/io-wasm": ">=0.2.5",
+        }
         for peer in upstream_peers:
             self.assertEqual(package["peerDependencies"][peer], pinned_peers.get(peer, "*"))
             self.assertTrue(package["peerDependenciesMeta"][peer]["optional"])
@@ -602,7 +608,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             self.assertTrue(package["peerDependenciesMeta"][peer]["optional"])
             self.assertTrue(root_lock["peerDependenciesMeta"][peer]["optional"])
             self.assertEqual(package["devDependencies"][peer], version)
-        self.assertEqual(package["devDependencies"]["dag-ml-wasm"], "^0.3.34")
+        self.assertEqual(package["devDependencies"]["dag-ml-wasm"], "^0.3.37")
 
         typescript = lock["packages"]["node_modules/typescript"]
         self.assertEqual(typescript["version"], package["devDependencies"]["typescript"])
@@ -651,13 +657,13 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             any(dependency.startswith("nirs4all-datasets") for dependency in all_extra)
         )
         self.assertEqual(extras["datasets"], ["nirs4all-datasets>=0.3.5"])
-        self.assertEqual(extras["dag-ml"], ["dag-ml>=0.3.34,<0.4"])
+        self.assertEqual(extras["dag-ml"], ["dag-ml>=0.3.37,<0.4"])
         self.assertIn("nirs4all-methods>=1.3.2,<2", extras["methods"])
         self.assertIn("pls4all>=1.3.2,<2", extras["methods"])
         self.assertIn("scikit-learn>=1.3", extras["methods"])
-        self.assertIn("nirs4all-formats>=0.2.9", all_extra)
-        self.assertIn("nirs4all-io>=0.2.4", all_extra)
-        self.assertIn("dag-ml>=0.3.34,<0.4", all_extra)
+        self.assertIn("nirs4all-formats>=0.2.11", all_extra)
+        self.assertIn("nirs4all-io>=0.2.5", all_extra)
+        self.assertIn("dag-ml>=0.3.37,<0.4", all_extra)
         self.assertIn("nirs4all-methods>=1.3.2,<2", all_extra)
         self.assertIn("pls4all>=1.3.2,<2", all_extra)
         self.assertNotIn("nirs4all-methods>=1.0.5", extras["methods"])

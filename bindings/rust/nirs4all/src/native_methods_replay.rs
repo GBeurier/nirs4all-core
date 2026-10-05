@@ -49,6 +49,7 @@ pub struct MethodsArchivePredictRequest {
 /// data envelopes and Methods datasets from these host values. Callers cannot
 /// inject a fit/refit phase, target values, controller callbacks, artifact
 /// handles or a fallback engine.
+#[derive(Clone)]
 pub struct MethodsArchiveMatrixPredictRequest {
     pub sample_ids: Vec<String>,
     pub x: Vec<Vec<f64>>,
@@ -986,6 +987,80 @@ pub fn predict_methods_archive_v2_matrix(
         &output_binding_id,
     )?;
     Ok(outcome)
+}
+
+/// Replay the bounded native HPO RolePipeline model, including its exact archive closure.
+/// RolePipeline artifacts are hydrated and inspected by the native DAG controller;
+/// they are distinct from the legacy N4MM matrix-profile artifacts.
+pub fn predict_tuning_archive_v2_matrix(
+    archive: &LoadedArchiveV2,
+    input: MethodsArchiveMatrixPredictRequest,
+) -> Result<TrainingReplayOutcome, NativeMethodsReplayError> {
+    let package = load_v2_predictor_package(archive)?;
+    dag_ml_core::validate_archive_v2_portable_payloads(
+        archive.manifest(),
+        &package,
+        archive.members(),
+    )
+    .map_err(|error| replay_error(format!("DAG-ML refused tuning archive closure: {error}")))?;
+    if package.execution_bundle.methods_hpo_resume_state.is_none()
+        || package.template.graph.nodes.len() != 1
+        || package.template.graph.nodes[0].params.get("native_profile")
+            != Some(&serde_json::json!("n4m.pls_role_pipeline.v1"))
+        || package.execution_bundle.refit_artifacts.is_empty()
+        || package
+            .execution_bundle
+            .refit_artifacts
+            .iter()
+            .any(|record| {
+                record.artifact.kind != "methods_role_pipeline"
+                    || record.artifact.controller_id.as_str()
+                        != "controller:methods.native.regression"
+                    || record.artifact.backend != Some(dag_ml_core::ArtifactBackend::Raw)
+            })
+    {
+        return Err(replay_error(
+            "tuning prediction requires the official native PLS RolePipeline HPO profile",
+        ));
+    }
+    let expected_library_sha256 = input.methods_library_sha256.clone();
+    let MethodsArchiveMatrixPredictComposition {
+        input,
+        sample_ids,
+        target_names,
+        output_binding_id,
+    } = compose_methods_archive_matrix_predict(&package, input)?;
+    let snapshot_path =
+        configure_attested_methods_library(&input.methods_library_path, &expected_library_sha256)?;
+    let mut input = input;
+    input.methods_library_path = snapshot_path;
+    let outcome = replay_methods_predictor_package(&package, input)?;
+    validate_methods_archive_matrix_outcome(
+        &outcome,
+        &sample_ids,
+        &target_names,
+        &output_binding_id,
+    )?;
+    Ok(outcome)
+}
+
+/// Replay RolePipeline calibration through the scalar presentation supported
+/// by DAG-ML, retaining its native interval block and validated replay closure.
+pub(crate) fn predict_tuning_archive_v2_calibrated(
+    archive: &LoadedArchiveV2,
+    input: MethodsArchiveMatrixPredictRequest,
+) -> Result<serde_json::Value, NativeMethodsReplayError> {
+    let package = load_v2_predictor_package(archive)?;
+    let composition = compose_methods_archive_matrix_predict(&package, input.clone())?;
+    let request_json = serde_json::to_string(&composition.input.request).map_err(replay_error)?;
+    let outcome = predict_tuning_archive_v2_matrix(archive, input)?;
+    let result = crate::conformal_json::calibrated_prediction_json(
+        &serde_json::to_string(&package).map_err(replay_error)?,
+        &request_json,
+        &serde_json::to_string(&outcome).map_err(replay_error)?,
+    )
+    .map_err(replay_error)?;
+    serde_json::from_str(&result).map_err(replay_error)
 }
 
 /// Execute the closed X-only product surface and return DAG-ML's Archive-bound

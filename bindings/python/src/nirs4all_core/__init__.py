@@ -1,21 +1,13 @@
 """Python surface for the nirs4all-core aggregate distribution."""
 
-__version__ = "0.4.1"
+__version__ = "0.4.2"
 
-from ._capabilities import (
-    artifact_contracts,
-    capability_manifest,
-    controller_capabilities,
-    required_keyword_registry_entries,
-    runtime_contracts,
-    runtime_surfaces,
-)
 from ._archive import (
     NativeArchiveUnavailableError,
-    read_archive_v2_payloads,
-    read_archive_v3_view,
     inspect_methods_archive_v2_predictors,
     predict_methods_archive_v2_matrix,
+    read_archive_v2_payloads,
+    read_archive_v3_view,
     read_portable_predictor_package_v2,
     read_portable_refit_package_v3,
     replay_methods_archive_v2,
@@ -25,7 +17,26 @@ from ._archive import (
     write_archive_v2_from_native_payloads,
     write_archive_v3_from_native_payloads,
 )
+from ._capabilities import (
+    artifact_contracts,
+    capability_manifest,
+    controller_capabilities,
+    required_keyword_registry_entries,
+    runtime_contracts,
+    runtime_surfaces,
+)
+from ._conformal import (
+    CalibratedWorkflow,
+    calibrate,
+    conformal_metrics,
+    export_calibrated,
+    load_calibrated,
+    predict_calibrated,
+)
+from ._dataset import Dataset, dataset
 from ._execution import PortableDataset, parse_execution_plan, run_portable_pipeline
+from ._multimodal import MultimodalPredictor
+from ._multimodal_archive import predict_multimodal_archive
 from ._n4m_roles import (
     N4M_ROLE_PREFIX,
     N4M_TRAINED_PIPELINE_SCHEMA,
@@ -38,6 +49,8 @@ from ._pipeline import (
     load_pipeline_definition,
     portable_class_names,
 )
+from ._results import Experiment, open_experiment, save_experiment
+from ._robustness import robustness
 from ._topology import (
     CORE_FACADE_EXPORTS,
     EXECUTION_ENGINE_EXPORTS,
@@ -47,6 +60,7 @@ from ._topology import (
     release_topology_manifest,
     validate_core_facade,
 )
+from ._tuning import TuningResult, generate, load_tuning, resume_tuning, tune
 from ._upstreams import (
     LazyUpstream,
     Upstream,
@@ -57,6 +71,7 @@ from ._upstreams import (
     upstream_status,
     upstreams,
 )
+from ._workflow import Workflow, export, load, predict, retrain, run
 
 dag_ml = LazyUpstream("dag_ml")
 dag_ml_data = LazyUpstream("dag_ml_data")
@@ -68,55 +83,80 @@ methods = LazyUpstream("methods")
 __aggregate_import__ = __name__
 
 __all__ = [
-    "LazyUpstream",
-    "N4M_ROLE_PREFIX",
-    "N4M_TRAINED_PIPELINE_SCHEMA",
-    "N4mRolePipeline",
-    "NativeArchiveUnavailableError",
-    "PORTABLE_OPERATOR_CLASSES",
-    "PortableDataset",
-    "PipelineDefinition",
     "CORE_FACADE_EXPORTS",
     "EXECUTION_ENGINE_EXPORTS",
+    "N4M_ROLE_PREFIX",
+    "N4M_TRAINED_PIPELINE_SCHEMA",
+    "PORTABLE_OPERATOR_CLASSES",
     "TOPOLOGY_EXPORTS",
+    "CalibratedWorkflow",
+    "Dataset",
+    "Experiment",
+    "LazyUpstream",
+    "MultimodalPredictor",
+    "N4mRolePipeline",
+    "NativeArchiveUnavailableError",
+    "PipelineDefinition",
+    "PortableDataset",
+    "TuningResult",
     "Upstream",
-    "available_upstreams",
+    "Workflow",
     "artifact_contracts",
+    "available_upstreams",
+    "calibrate",
     "capability_manifest",
-    "core_facade_exports",
+    "conformal_metrics",
     "controller_capabilities",
+    "core_facade_exports",
     "dag_ml",
     "dag_ml_data",
+    "dataset",
     "datasets",
     "execution_engine_exports",
+    "export",
+    "export_calibrated",
     "formats",
+    "generate",
     "import_upstream",
     "inspect_methods_archive_v2_predictors",
     "io",
+    "load",
+    "load_calibrated",
     "load_pipeline_definition",
+    "load_tuning",
     "local_implementation_registry",
     "methods",
     "n4m_role_capabilities",
+    "open_experiment",
     "parse_execution_plan",
     "portable_class_names",
+    "predict",
+    "predict_calibrated",
     "predict_methods_archive_v2_matrix",
-    "release_topology_manifest",
-    "read_archive_v3_view",
+    "predict_multimodal_archive",
     "read_archive_v2_payloads",
+    "read_archive_v3_view",
     "read_portable_predictor_package_v2",
     "read_portable_refit_package_v3",
+    "release_topology_manifest",
     "replay_methods_archive_v2",
     "replay_methods_archive_v2_conformal_presentation_v1",
     "replay_methods_archive_v2_conformal_presentation_v2",
     "replay_methods_archive_v3",
-    "write_archive_v2_from_native_payloads",
-    "write_archive_v3_from_native_payloads",
     "require_upstream",
     "required_keyword_registry_entries",
+    "resume_tuning",
+    "retrain",
+    "robustness",
+    "run",
     "run_portable_pipeline",
     "runtime_contracts",
     "runtime_surfaces",
+    "save_experiment",
+    "tune",
     "upstream_status",
     "upstreams",
     "validate_core_facade",
+    "write_archive_v2_from_native_payloads",
+    "write_archive_v3_from_native_payloads",
 ]
