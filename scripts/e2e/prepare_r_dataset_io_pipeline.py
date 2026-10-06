@@ -257,7 +257,7 @@ def prepare(
     from nirs4all_providers import DatasetProvider
 
     datasets_root = workspace_root / "nirs4all-datasets"
-    pipeline_path = _repo_root() / "bindings" / "r" / "inst" / "extdata" / "portable_methods_pipeline.json"
+    pipeline_path = _repo_root() / "tests" / "parity" / "fixtures" / "portable_methods_pipeline.json"
     if not pipeline_path.is_file():
         raise FileNotFoundError(f"pipeline fixture not found: {pipeline_path}")
 
