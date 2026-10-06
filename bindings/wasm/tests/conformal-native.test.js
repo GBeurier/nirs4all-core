@@ -274,3 +274,41 @@ test('public calibration joins nonlexical IDs and independently permuted truth n
     assert.deepEqual(loaded.calibration.quantiles, calibrated.calibration.quantiles);
   } finally { methods.RolePipeline.prototype.fit = originalFit; }
 });
+
+test('browser calibrates a CPU N4MM archive by frozen DAG replay and exports CPU-readable calibration',
+  { skip: !qualified || !process.env.NIRS4ALL_BLOCK5_FIXTURE }, async () => {
+    const fixture = process.env.NIRS4ALL_BLOCK5_FIXTURE;
+    const methods = await import(pathToFileURL(methodsPath)), io = await import(pathToFileURL(ioPath));
+    dag.initSync({ module: fs.readFileSync(new URL(import.meta.resolve('dag-ml-wasm/dag_ml_wasm_bg.wasm'))) });
+    const options = { dagMl: dag, methods, io, coverages: [0.8, 0.9] };
+    const file = path.join(fixture, 'shared-model.n4a');
+    const bytes = fs.readFileSync(file), record = cohort('browser.calibration.');
+    await methods.loadModule();
+    const module = methods.getModule(), original = module.ccall;
+    module.ccall = function(name, ...args) {
+      if (/^n4m_(model|role_pipeline|estimator)_fit/.test(name)) throw Error('CPU archive calibration FIT forbidden');
+      return original.call(this, name, ...args);
+    };
+    try {
+      const calibrated = await calibrate(bytes, record, options);
+      assert.equal(calibrated.calibration.sample_ids.length, 12);
+      const loaded = await loadCalibrated(exportCalibrated(calibrated), options);
+      assert.deepEqual(loaded.calibration, calibrated.calibration);
+      const result = await predictCalibrated(loaded, cohort('browser.predict.', false), options);
+      assert.equal(result.execution, 'callback_free_methods_n4mm');
+      const overlap = structuredClone(record);
+      const archive = await readPortableArchiveV2(bytes);
+      const pkg = JSON.parse(new TextDecoder().decode(archive.members[archive.manifest.replay.portable_predictor_package.member_path]));
+      const ids = pkg.effective_plan.fold_set.sample_ids;
+      overlap.dataset.sample_ids = ids; overlap.origin_ids = ids; overlap.dataset.sources[0].sample_ids = ids;
+      await assert.rejects(calibrate(bytes, overlap, options), /overlap|influence/);
+      const masked = structuredClone(record); masked.dataset.target_mask = { dtype: 'bool', shape: [12], values: Array.from({ length: 12 }, (_, i) => i !== 0) };
+      await assert.rejects(calibrate(bytes, masked, options), /complete finite truth/);
+      const renamed = structuredClone(record); renamed.dataset.target_names = ['wrong'];
+      await assert.rejects(calibrate(bytes, renamed, options), /target schema/);
+      if (process.env.NIRS4ALL_BROWSER_CALIBRATION_OUTPUT) {
+        fs.writeFileSync(process.env.NIRS4ALL_BROWSER_CALIBRATION_OUTPUT, exportCalibrated(calibrated));
+        fs.writeFileSync(process.env.NIRS4ALL_BROWSER_CALIBRATION_OUTPUT + '.json', JSON.stringify({ data: cohort('browser.predict.', false), prediction: result }));
+      }
+    } finally { module.ccall = original; }
+  });
