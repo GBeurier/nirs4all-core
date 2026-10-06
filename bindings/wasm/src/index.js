@@ -686,3 +686,5 @@ export {
 export { robustness } from './robustness.js';
 
 export { predictMultimodalArchive } from './multimodal-archive.js';
+
+export { NativePipeline, runPipeline } from "./native-pipeline.js";

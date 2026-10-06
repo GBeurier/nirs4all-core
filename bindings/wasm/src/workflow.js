@@ -50,6 +50,7 @@ const recipe = deepFreeze({ type: 'N4mRolePipeline', steps: [
   { class: 'n4m:preprocessing.derivatives.savitzky_golay', params: { window_length: 5, polyorder: 2 } },
   { class: 'n4m:models.pls.pls_regression', params: {} },
 ] });
+const rawRecipe = deepFreeze({ type: 'N4mRolePipeline', steps: [recipe.steps[2]] });
 function boundedProfile(pkg) {
   const nodes = pkg.template?.graph?.nodes;
   if (!Array.isArray(nodes) || nodes.length !== 1 || nodes[0].id !== 'model:pls'
@@ -71,12 +72,12 @@ function boundedProfile(pkg) {
   const expectedCpuPipeline = { schema_version: 1, pipeline_type: 'n4m.snv_savgol_smooth.v1', savgol_window: 5, savgol_poly_degree: 2 };
   const isCpu = node.operator === 'pls'
     && Object.keys(node.params).every(key => ['n_components', 'pipeline'].includes(key))
-    && json(ordered(node.params?.pipeline)) === json(ordered(expectedCpuPipeline))
+    && (!Object.hasOwn(node.params, 'pipeline') || json(ordered(node.params?.pipeline)) === json(ordered(expectedCpuPipeline)))
     && pkg.effective_plan.node_plans['model:pls']?.controller_id === 'controller:methods.pls';
-  const isRole = json(ordered(node.operator)) === json(ordered(recipe))
+  const isRole = [recipe, rawRecipe].some(candidate => json(ordered(node.operator)) === json(ordered(candidate)))
     && Object.keys(node.params).every(key => key === 'n_components')
     && pkg.effective_plan.node_plans['model:pls']?.controller_id === 'controller:methods.wasm.regression';
-  if (!isCpu && !isRole) throw new TypeError('Archive preprocessing differs from the fixed snv_savgol workflow recipe');
+  if (!isCpu && !isRole) throw new TypeError('Archive preprocessing differs from supported raw or snv_savgol recipes');
   return isCpu ? 'native_n4mm' : 'wasm_role_pipeline';
 }
 function controller(deps, operators, targetNames, sourceId, dense) {
@@ -119,7 +120,9 @@ export async function run(value, options = {}) {
   const sourceId = options.sourceId ?? 'spectra', components = options.components ?? [1, 2];
   if (!Array.isArray(components) || components.length < 2 || components.length > 32 || new Set(components).size !== components.length
     || components.some(n => !Number.isInteger(n) || n < 1 || n > 2147483647)) throw new TypeError('2 to 32 distinct positive i32 component candidates required');
-  if ((options.preprocessing ?? 'snv_savgol') !== 'snv_savgol') throw new TypeError('Only snv_savgol preprocessing is supported');
+  const preprocessing = options.preprocessing ?? 'snv_savgol';
+  if (!['raw', 'snv_savgol'].includes(preprocessing)) throw new TypeError('preprocessing must be raw or snv_savgol');
+  const selectedRecipe = preprocessing === 'raw' ? rawRecipe : recipe;
   const dense = ds.toDenseRegression(sourceId);
   if (raw.partitions.values.some(p => p !== 'train') || raw.y.shape.length !== 1 || dense.y.some(y => !Number.isFinite(y))) throw new TypeError('Training requires one observed numeric target and train rows');
   if (new Set(record.origin_ids).size !== record.origin_ids.length || record.origin_ids.some((origin, i) => origin !== dense.sample_ids[i])
@@ -133,14 +136,14 @@ export async function run(value, options = {}) {
     plan_fingerprint: env.plan_fingerprint, relation_fingerprint: env.relation_fingerprint, output_representation: 'tabular_numeric',
     feature_set_id: 'x', source_ids: [sourceId], require_relations: true, view_policy: { fit_partition: 'fold_train', predict_partition: 'fold_validation',
       include_augmented_train: false, include_augmented_validation: false, include_excluded: false, require_sample_ids: true }, metadata: {} };
-  const nativeController = controller(deps, { 'model:pls': recipe }, raw.target_names, sourceId, dense);
+  const nativeController = controller(deps, { 'model:pls': selectedRecipe }, raw.target_names, sourceId, dense);
   try {
     const manifest = nativeController.manifest(dag);
     const policy = { split_unit: 'sample', forbid_origin_cross_fold: true, allow_observation_split_with_shared_target: false, require_group_ids: false, unsafe_flags: [] };
     const compiled = JSON.parse(dag.compile_pipeline_dsl_artifact_with_controllers_json(json({ id: 'dsl:workflow',
       input: { name: 'x', representation: 'tabular_numeric' }, campaign_id: 'campaign:workflow', root_seed: seed,
       leakage_policy: policy, data_bindings: [binding], split_invocation: { id: 'split:workflow', controller_id: null,
-        leakage_policy: policy, params: {}, fold_set: foldSet }, steps: [{ kind: 'model', id: 'model:pls', operator: recipe, params: { n_components: components[0] } }],
+        leakage_policy: policy, params: {}, fold_set: foldSet }, steps: [{ kind: 'model', id: 'model:pls', operator: selectedRecipe, params: { n_components: components[0] } }],
     }), json([manifest])));
     compiled.campaign_template.metadata = { ...compiled.campaign_template.metadata, raw_source_schema: io.publicSourceSchema(record, sourceId), input_sample_ids: [...dense.sample_ids] };
     compiled.campaign_template.generation = { strategy: 'cartesian', max_variants: components.length, dimensions: [{ name: 'pls_components',
@@ -160,7 +163,7 @@ export async function run(value, options = {}) {
       json(env.coordinator_relations), `package:${runId}`, `outcome:${runId}`, runId, `bundle:${runId}`, nativeController.callback));
     const payloads = JSON.parse(dag.build_archive_v2_native_portable_payloads_json(`archive:${runId}`, capture.training_outcome_json, capture.portable_predictor_package_json));
     const archive = await writePortableArchiveV2(payloads.manifest, Object.fromEntries(Object.entries(payloads.members).map(([name, bytes]) => [name, Uint8Array.from(bytes)])));
-    return new Workflow(archive, JSON.parse(capture.training_outcome_json), { sourceId, components: [...components], preprocessing: 'snv_savgol', seed, folds, inputSampleIds: [...dense.sample_ids] });
+    return new Workflow(archive, JSON.parse(capture.training_outcome_json), { sourceId, components: [...components], preprocessing, seed, folds, inputSampleIds: [...dense.sample_ids] });
   } finally { nativeController.close(); }
 }
 
@@ -181,7 +184,7 @@ export async function predict(model, value, options = {}) {
   return workflowReplay(model, value, options, false);
 }
 export async function workflowReplay(model, value, options = {}, calibration = false, details = false) {
-  if (options.preprocessing !== undefined && options.preprocessing !== 'snv_savgol') throw new TypeError('Only snv_savgol preprocessing is supported');
+  if (options.preprocessing !== undefined && !['raw', 'snv_savgol'].includes(options.preprocessing)) throw new TypeError('preprocessing must be raw or snv_savgol');
   const deps = await workflowDependencies(options), { dag, io } = deps, hash = hashes(deps.digest);
   const archive = await readPortableArchiveV2(model instanceof Workflow ? model.archive : model);
   const packagePath = archive.manifest.replay.portable_predictor_package.member_path;
@@ -252,7 +255,7 @@ export function exportWorkflow(model) {
   return { schema: 'nirs4all.workflow.v1', archive: [...model.archive], outcome: structuredClone(model.outcome), config: structuredClone(model.config) };
 }
 export async function load(value, options = {}) {
-  if (options.preprocessing !== undefined && options.preprocessing !== 'snv_savgol') throw new TypeError('Only snv_savgol preprocessing is supported');
+  if (options.preprocessing !== undefined && !['raw', 'snv_savgol'].includes(options.preprocessing)) throw new TypeError('preprocessing must be raw or snv_savgol');
   const rawArchive = value instanceof Uint8Array || value instanceof ArrayBuffer;
   const record = typeof value === 'string' ? JSON.parse(value) : value;
   if (!rawArchive && (record?.schema !== 'nirs4all.workflow.v1' || !Array.isArray(record.archive) || !record.archive.length
@@ -268,7 +271,9 @@ export async function load(value, options = {}) {
   const actualOutcome = JSON.parse(decoder.decode(loaded.members[loaded.manifest.replay.training_artifacts.training_outcome.member_path]));
   const binding = Object.values(pkg.template.campaign.data_bindings).flat()[0];
   const actualConfig = { sourceId: binding.source_ids[0], components: pkg.template.campaign.generation.dimensions[0].choices.map(choice => choice.value),
-    preprocessing: 'snv_savgol', seed: pkg.template.campaign.root_seed, folds: pkg.effective_plan.fold_set.folds.length, inputSampleIds: pkg.template.campaign.metadata.input_sample_ids };
+    preprocessing: pkg.template.graph.nodes[0].operator === 'pls'
+      ? (Object.hasOwn(pkg.template.graph.nodes[0].params, 'pipeline') ? 'snv_savgol' : 'raw')
+      : (pkg.template.graph.nodes[0].operator.steps.length === 1 ? 'raw' : 'snv_savgol'), seed: pkg.template.campaign.root_seed, folds: pkg.effective_plan.fold_set.folds.length, inputSampleIds: pkg.template.campaign.metadata.input_sample_ids };
   if (!Number.isSafeInteger(actualConfig.seed) || actualConfig.seed < 0) throw new TypeError('seed must be a nonnegative safe integer');
   if (!Number.isSafeInteger(actualConfig.folds) || actualConfig.folds < 2) throw new TypeError('folds must be a safe integer of at least two');
   if (!rawArchive && (json(ordered(record.outcome)) !== json(ordered(actualOutcome)) || json(ordered(record.config)) !== json(ordered(actualConfig)))) {

@@ -19,9 +19,11 @@ use crate::io_training::{
     DatasetPackageMethodsProvider,
 };
 
-/// Exactly one native preprocessing sequence is supported initially.
+/// Native preprocessing profiles backed by Methods fitted-state transport.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum DenseRegressionPreprocessing {
+    /// PLS over raw numeric features, without spectral preprocessing.
+    Raw,
     /// Methods SNV, then Savitzky-Golay with window five and degree two.
     SnvSavitzkyGolay,
 }
@@ -69,6 +71,7 @@ pub fn dense_regression_training_request(
         );
     }
     let profile = match preprocessing {
+        DenseRegressionPreprocessing::Raw => CanonicalPlsProfile::Raw,
         DenseRegressionPreprocessing::SnvSavitzkyGolay => CanonicalPlsProfile::SnvSavitzkyGolay,
     };
     let mut request = canonical_pls_training_request(&provider, profile)?;
@@ -235,16 +238,25 @@ fn bounded_workflow_config(package: &Value) -> Result<Value, String> {
     if node["id"] != "model:pls"
         || node["kind"] != "model"
         || node["operator"] != "pls"
-        || params.len() != 2
         || node["params"]["n_components"] != 1
-        || node["params"]["pipeline"]
-            != json!({"schema_version": 1,
-            "pipeline_type": "n4m.snv_savgol_smooth.v1", "savgol_window": 5, "savgol_poly_degree": 2})
         || package["effective_plan"]["node_plans"]["model:pls"]["controller_id"]
             != "controller:methods.pls"
     {
         return Err(unsupported());
     }
+    let preprocessing = if params.len() == 1 && !params.contains_key("pipeline") {
+        "raw"
+    } else if params.len() == 2
+        && node["params"]["pipeline"]
+            == json!({
+                "schema_version": 1, "pipeline_type": "n4m.snv_savgol_smooth.v1",
+                "savgol_window": 5, "savgol_poly_degree": 2
+            })
+    {
+        "snv_savgol"
+    } else {
+        return Err(unsupported());
+    };
     let campaign = &template["campaign"];
     let selections = package["execution_bundle"]["selections"]
         .as_object()
@@ -360,5 +372,5 @@ fn bounded_workflow_config(package: &Value) -> Result<Value, String> {
     {
         return Err(unsupported());
     }
-    Ok(json!({"source_id": sources[0], "components": components, "preprocessing": "snv_savgol"}))
+    Ok(json!({"source_id": sources[0], "components": components, "preprocessing": preprocessing}))
 }
