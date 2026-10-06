@@ -23,7 +23,7 @@ function library(options) {
 }
 export class NativePipeline {
   #nativeJson; #options;
-  constructor(nativeJson, options = {}) { this.#nativeJson = nativeJson; this.#options = { cli: options.cli }; }
+  constructor(nativeJson, options = {}) { this.#nativeJson = nativeJson; this.#options = { cli: options.cli, methodsLibrary: options.methodsLibrary }; }
   get config() { return JSON.parse(this.#nativeJson).config; }
   get outcome() { return JSON.parse(this.#nativeJson).training_outcome; }
   // Preserve exact uint64 fingerprints/seed declarations by transporting native

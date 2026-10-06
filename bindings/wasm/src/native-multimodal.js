@@ -23,7 +23,7 @@ function library(options) {
 }
 export class NativeMultimodal {
   #nativeJson; #options;
-  constructor(nativeJson, options = {}) { this.#nativeJson = nativeJson; this.#options = { cli: options.cli }; }
+  constructor(nativeJson, options = {}) { this.#nativeJson = nativeJson; this.#options = { cli: options.cli, methodsLibrary: options.methodsLibrary }; }
   get config() { return JSON.parse(this.#nativeJson).config; }
   get outcomes() { return JSON.parse(this.#nativeJson).target_models.map(entry => entry.model.training_outcome); }
   toNativeJSON() { return this.#nativeJson; }
