@@ -27,6 +27,16 @@ class FacadeImportSurfaceTests(unittest.TestCase):
 
     def test_aggregate_public_surface_is_explicit(self) -> None:
         expected_exports = [
+            "NativePipeline",
+            "NativeMultimodal",
+            "run_multimodal",
+            "run_pipeline",
+            "BrowserTuningResult",
+            "Workspace",
+            "import_workspace",
+            "load_browser_tuning",
+            "open_workspace",
+            "save_workspace",
             "TuningResult",
             "load_tuning",
     "robustness",
