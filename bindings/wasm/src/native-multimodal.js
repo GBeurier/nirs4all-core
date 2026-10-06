@@ -21,41 +21,42 @@ function library(options) {
   if (!value) throw new TypeError('methodsLibrary or N4M_LIBRARY_PATH is required');
   return value;
 }
-export class NativePipeline {
+export class NativeMultimodal {
   #nativeJson; #options;
   constructor(nativeJson, options = {}) { this.#nativeJson = nativeJson; this.#options = { cli: options.cli }; }
   get config() { return JSON.parse(this.#nativeJson).config; }
-  get outcome() { return JSON.parse(this.#nativeJson).training_outcome; }
-  // Preserve exact uint64 fingerprints/seed declarations by transporting native
-  // JSON bytes. Parsed presentation views are never reserialized as a package.
+  get outcomes() { return JSON.parse(this.#nativeJson).target_models.map(entry => entry.model.training_outcome); }
   toNativeJSON() { return this.#nativeJson; }
-  async predict(X, options = {}) {
+  async predict(value, options = {}) {
     const merged = { ...this.#options, ...options };
-    const ids = options.sampleIds ?? X.map((_, i) => `predict:${i}`);
-    const record = `{"model":${this.#nativeJson},"x":${JSON.stringify(X)},"sample_ids":${JSON.stringify(ids)}}`;
-    return JSON.parse(await invoke('pipeline-predict', record, merged, { methods_library: library(merged), run_id: `run:predict:${crypto.randomUUID()}` }));
+    const io = options.io ?? await import('@nirs4all/io-wasm/public-dataset');
+    const record = io.dataset(typeof value?.toJSON === 'function' ? value.toJSON() : value).toJSON();
+    const payload = `{"model":${this.#nativeJson},"dataset":${JSON.stringify(record)}}`;
+    return JSON.parse(await invoke('native-multimodal-predict', payload, merged, {
+      methods_library: library(merged), run_id: options.runId ?? `run:multimodal:predict:${crypto.randomUUID()}`,
+    }));
   }
-  async export(path) { await invoke('pipeline-export', this.#nativeJson, this.#options, { destination: path }); return path; }
+  async export(path) { await invoke('native-multimodal-export', this.#nativeJson, this.#options, { destination: path }); return path; }
   async retrain(value, options = {}) {
     const merged = { ...this.#options, ...options };
     const io = options.io ?? await import('@nirs4all/io-wasm/public-dataset');
     const record = io.dataset(typeof value?.toJSON === 'function' ? value.toJSON() : value).toJSON();
     const payload = `{"model":${this.#nativeJson},"dataset":${JSON.stringify(record)}}`;
-    const native = await invoke('pipeline-retrain', payload, merged, {
+    const native = await invoke('native-multimodal-retrain', payload, merged, {
       methods_library: library(merged), run_id: options.runId ?? `run:retrain:${crypto.randomUUID()}`,
     });
-    return new NativePipeline(native, merged);
+    return new NativeMultimodal(native, merged);
   }
   static async load(nativeJson, options = {}) {
-    if (typeof nativeJson !== 'string') throw new TypeError('Native pipeline load requires exact native JSON text');
-    return new NativePipeline(await invoke('pipeline-load', nativeJson, options), options);
+    if (typeof nativeJson !== 'string') throw new TypeError('Native multimodal load requires exact native JSON text');
+    return new NativeMultimodal(await invoke('native-multimodal-load', nativeJson, options), options);
   }
 }
-export async function runPipeline(value, pipeline, options = {}) {
+export async function runMultimodal(value, pipeline, sourcePolicies, options = {}) {
   const io = options.io ?? await import('@nirs4all/io-wasm/public-dataset');
   const record = io.dataset(typeof value?.toJSON === 'function' ? value.toJSON() : value).toJSON();
-  const native = await invoke('pipeline-run', { dataset: record, pipeline }, options, {
-    source_id: options.sourceId ?? 'spectra', methods_library: library(options), run_id: options.runId ?? `run:pipeline:${crypto.randomUUID()}`,
+  const native = await invoke('native-multimodal-run', { dataset: record, pipeline, source_policies: sourcePolicies }, options, {
+    methods_library: library(options), run_id: options.runId ?? `run:multimodal:${crypto.randomUUID()}`,
   });
-  return new NativePipeline(native, options);
+  return new NativeMultimodal(native, options);
 }

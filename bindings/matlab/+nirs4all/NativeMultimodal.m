@@ -1,54 +1,55 @@
-classdef NativePipeline
-    %NATIVEPIPELINE Native DAG CV/OOF/refit over a live Methods catalog recipe.
+classdef NativeMultimodal
+    %NATIVEMULTIMODAL Native DAG CV/OOF/refit over a live Methods catalog recipe.
     % JSON Package V2 transport; this product envelope is distinct from .n4a.
     properties (SetAccess=private)
         nativeJson
         config
-        outcome
+        outcomes
         coreCli
     end
     methods (Access=private)
-        function self = NativePipeline(nativeJson, cli)
+        function self = NativeMultimodal(nativeJson, cli)
             record = jsondecode(nativeJson);
             self.nativeJson = nativeJson; self.config = record.config;
-            self.outcome = record.training_outcome; self.coreCli = cli;
+            self.outcomes = arrayfun(@(entry) entry.model.training_outcome, record.target_models, 'UniformOutput', false); self.coreCli = cli;
         end
     end
     methods (Static)
-        function self = fit(recipe, dataset, varargin)
+        function self = fit(recipe, sourcePolicies, dataset, varargin)
             p = inputParser;
-            addParameter(p, 'sourceId', 'spectra'); addParameter(p, 'cli', '');
+            addParameter(p, 'cli', '');
             addParameter(p, 'methodsLibrary', getenv('N4M_LIBRARY_PATH'));
             parse(p, varargin{:}); options = p.Results;
             if isempty(options.methodsLibrary), options.methodsLibrary = getenv('N4M_LIB_PATH'); end
             if isa(dataset, 'nirs4all.PublicDataset'), dataset = dataset.toJSON();
             elseif ~ischar(dataset), dataset = jsonencode(dataset); end
-            record = ['{"dataset":' dataset ',"pipeline":' nirs4all.nativeRecipeJSON(recipe) '}'];
+            if ~iscell(sourcePolicies), sourcePolicies = arrayfun(@(policy) policy, sourcePolicies, 'UniformOutput', false); end
+            record = ['{"dataset":' dataset ',"pipeline":' nirs4all.nativeRecipeJSON(recipe) ',"source_policies":' jsonencode(sourcePolicies) '}'];
             [~, id] = fileparts(tempname());
-            flags = struct('source_id', options.sourceId, 'methods_library', options.methodsLibrary, 'run_id', ['run:matlab:pipeline:' id]);
-            [~, nativeJson, cli] = nirs4all.workflowCli(options.cli, 'pipeline-run', record, flags);
-            self = nirs4all.NativePipeline(nativeJson, cli);
+            flags = struct('methods_library', options.methodsLibrary, 'run_id', ['run:matlab:pipeline:' id]);
+            [~, nativeJson, cli] = nirs4all.workflowCli(options.cli, 'native-multimodal-run', record, flags);
+            self = nirs4all.NativeMultimodal(nativeJson, cli);
         end
         function self = load(path, varargin)
             p = inputParser; addParameter(p, 'cli', ''); parse(p, varargin{:});
-            [~, nativeJson, cli] = nirs4all.workflowCli(p.Results.cli, 'pipeline-load', fileread(path), struct());
-            self = nirs4all.NativePipeline(nativeJson, cli);
+            [~, nativeJson, cli] = nirs4all.workflowCli(p.Results.cli, 'native-multimodal-load', fileread(path), struct());
+            self = nirs4all.NativeMultimodal(nativeJson, cli);
         end
     end
     methods
-        function result = predict(self, X, varargin)
-            p = inputParser; addParameter(p, 'sampleIds', {});
+        function result = predict(self, dataset, varargin)
+            p = inputParser;
             addParameter(p, 'methodsLibrary', getenv('N4M_LIBRARY_PATH'));
             parse(p, varargin{:}); options = p.Results;
             if isempty(options.methodsLibrary), options.methodsLibrary = getenv('N4M_LIB_PATH'); end
-            if isempty(options.sampleIds), options.sampleIds = arrayfun(@(i) sprintf('predict:%d', i), 1:size(X,1), 'UniformOutput', false); end
-            rows = mat2cell(X, ones(size(X,1),1), size(X,2));
-            record = ['{"model":' self.nativeJson ',"x":' jsonencode(rows) ',"sample_ids":' jsonencode(options.sampleIds) '}'];
+            if isa(dataset, 'nirs4all.PublicDataset'), dataset = dataset.toJSON();
+            elseif ~ischar(dataset), dataset = jsonencode(dataset); end
+            record = ['{"model":' self.nativeJson ',"dataset":' dataset '}'];
             [~, id] = fileparts(tempname());
-            result = nirs4all.workflowCli(self.coreCli, 'pipeline-predict', record, struct('methods_library', options.methodsLibrary, 'run_id', ['run:matlab:predict:' id]));
+            result = nirs4all.workflowCli(self.coreCli, 'native-multimodal-predict', record, struct('methods_library', options.methodsLibrary, 'run_id', ['run:matlab:predict:' id]));
         end
         function path = export(self, path)
-            nirs4all.workflowCli(self.coreCli, 'pipeline-export', self.nativeJson, struct('destination', path));
+            nirs4all.workflowCli(self.coreCli, 'native-multimodal-export', self.nativeJson, struct('destination', path));
         end
         function model = retrain(self, dataset, varargin)
             p = inputParser;
@@ -59,9 +60,9 @@ classdef NativePipeline
             elseif ~ischar(dataset), dataset = jsonencode(dataset); end
             record = ['{"model":' self.nativeJson ',"dataset":' dataset '}'];
             [~, id] = fileparts(tempname());
-            [~, nativeJson, cli] = nirs4all.workflowCli(self.coreCli, 'pipeline-retrain', record, ...
+            [~, nativeJson, cli] = nirs4all.workflowCli(self.coreCli, 'native-multimodal-retrain', record, ...
                 struct('methods_library', options.methodsLibrary, 'run_id', ['run:matlab:retrain:' id]));
-            model = nirs4all.NativePipeline(nativeJson, cli);
+            model = nirs4all.NativeMultimodal(nativeJson, cli);
         end
     end
 end
