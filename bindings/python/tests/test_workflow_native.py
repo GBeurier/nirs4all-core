@@ -26,6 +26,33 @@ def fixture():
 
 @unittest.skipUnless(os.environ.get("NIRS4ALL_CORE_CLI") and os.environ.get("N4M_LIBRARY_PATH"), "explicit native workflow runtime required")
 class NativeWorkflowTest(unittest.TestCase):
+    def test_raw_pls_refit_matches_independent_sklearn(self):
+        import numpy as np
+        from sklearn.cross_decomposition import PLSRegression
+        data = fixture()
+        x = np.asarray(data["dataset"]["sources"][0]["array"]["values"], dtype=np.float32)
+        y = np.asarray(data["dataset"]["y"]["values"], dtype=np.float32)
+        with tempfile.TemporaryDirectory() as directory:
+            model = run(data, components=[1, 2], preprocessing="raw", archive=Path(directory) / "raw.n4a")
+            self.assertEqual(model.config["preprocessing"], "raw")
+            predictions = []
+            for components in [1, 2]:
+                predicted = np.empty(len(y))
+                for validation in [np.arange(0, len(y), 2), np.arange(1, len(y), 2)]:
+                    training = np.setdiff1d(np.arange(len(y)), validation)
+                    oracle = PLSRegression(n_components=components, scale=True).fit(x[training], y[training])
+                    predicted[validation] = oracle.predict(x[validation]).reshape(-1)
+                predictions.append(predicted)
+            expected = 1 + int(np.mean((predictions[1] - y) ** 2) < np.mean((predictions[0] - y) ** 2))
+            exported = export(model, Path(directory) / "exported")
+            loaded = load(exported)
+            self.assertEqual(loaded.config["preprocessing"], "raw")
+            replay = predict(loaded, x.tolist(), sample_ids=data["origin_ids"])
+            values = replay["outputs"][0]["predictions"][0]["values"]
+            oracle = PLSRegression(n_components=expected, scale=True).fit(x, y)
+            np.testing.assert_allclose(np.asarray(values).reshape(-1), oracle.predict(x).reshape(-1), rtol=2e-4, atol=2e-4)
+            self.assertEqual(len(model.outcome["training_outcome"]["execution_bundle"]["refit_artifacts"]), 1)
+
     def test_candidates_export_relocated_fresh_replay_and_retrain(self):
         data = fixture()
         with tempfile.TemporaryDirectory() as root:
