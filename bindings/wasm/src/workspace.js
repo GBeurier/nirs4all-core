@@ -56,7 +56,7 @@ export async function openWorkspace(indexBytes, members) {
       sdkRunId: index.runs[runId].sdk_run_id, winnerVariantId: view.winnerVariantId, variantIds: [...view.variantIds] })); },
     compare(runId, query) { requireOpen(); const view = experiments.get(runId); if (!view) throw new RangeError('Unknown run'); return view.compare(query); },
     predictions(runId, query) { requireOpen(); const view = experiments.get(runId); if (!view) throw new RangeError('Unknown run'); return view.predictions(query); },
-    async predictMethods(runId, data) { requireOpen(); const view = experiments.get(runId); if (!view) throw new RangeError('Unknown run'); return view.predictMethods(data); },
+    async predictMethods(runId, data, options) { requireOpen(); const view = experiments.get(runId); if (!view) throw new RangeError('Unknown run'); return view.predictMethods(data, options); },
     export() { requireOpen(); return { indexBytes: new Uint8Array(retainedIndex), members: Object.fromEntries(Object.entries(inventory).map(([path, value]) => [path, new Uint8Array(value)])) }; },
   });
 }
