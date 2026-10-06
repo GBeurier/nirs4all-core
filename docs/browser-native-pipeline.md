@@ -21,7 +21,7 @@ const restored = await loadBrowserPipeline(exportedText);
 const prediction = await restored.predict(targetFreePredictionDataset);
 ```
 
-IO's public dataset owns row alignment and target shape. This profile accepts one
+IO's public dataset owns row alignment and target shape. Numeric feature/target buffers use float32 storage at the Core boundary, matching CPU DatasetPackage storage; native Methods owns the subsequent matrix arithmetic. This profile accepts one
 complete numeric source, one or more fully observed regression targets, or one
 integer classification target. The last step is a native regressor/classifier;
 preceding steps are catalog-native transformers/selectors. Parameters are checked
