@@ -13,9 +13,46 @@ metadata rows are enforced by `bindings/python/tests/test_capability_matrix.py`.
 The newer product workflows have separate native execution gates; the legacy
 ledger is not an exhaustive inventory of the public API.
 
-## Product workflows in Core 0.4.3 and R 0.7.0
+## Product extensions in Core 0.4.4 and R 0.7.1
 
-The released product facades now expose the following bounded native paths:
+This cohort uses DAG-ML 0.3.39, IO 0.2.6 and Methods/n4m 1.3.4. The current
+product paths below have separate native execution and cold-replay gates.
+Numerics remain in Methods, dataset projection in IO, and fitting, selection,
+scoring and replay orchestration in DAG. The older runner ledger is unchanged.
+
+| Profile | Public consumers | Qualified boundary |
+| --- | --- | --- |
+| Generic native CPU pipeline | Python `run_pipeline` / `NativePipeline`; R `nirs4all_run_pipeline`; Node `runPipeline` / `NativePipeline`; MATLAB/Octave `nirs4all.runPipeline` / `nirs4all.NativePipeline` | Finite raw PLS and StandardScale → Ridge regression profiles, complete multiple targets and explicit grouped folds; persisted N4ME state replays without FIT. See [native pipeline contract](native_pipeline_contract.md). |
+| Generic native browser pipeline | `runBrowserPipeline`, `BrowserNativePipeline`, `loadBrowserPipeline`, `predictBrowserPipeline` | StandardScale → Ridge with multiple regression targets and grouped folds; binary PLS-LDA label prediction. CPU/browser consumers share the exact native pipeline JSON envelope, distinct from Archive V2. See [browser pipeline contract](browser-native-pipeline.md). |
+| Native CPU multimodal workflow | Python `run_multimodal` / `NativeMultimodal`; R `nirs4all_run_multimodal`, `nirs4all_native_multimodal_export/load`; Node `runMultimodal` / `NativeMultimodal`; MATLAB/Octave `nirs4all.runMultimodal` / `nirs4all.NativeMultimodal` | Dense identity plus native ragged summary, explicit missing-source policies, observed target masks and one regressor/classifier per target. This is separate from legacy `MultimodalPredictor`. See [native multimodal contract](native_multimodal_contract.md). |
+| Browser tuning state consumed on CPU | Python `load_browser_tuning(...).predict(...)` | Bounded SNV/Savitzky–Golay/PLS initial-full-refit package; native request/search/checkpoint validation and frozen Methods replay without FIT. CPU optimizer continuation is outside this profile. See [browser transport](WORKSPACE_BROWSER_TRANSPORT.md). |
+| CPU archive calibrated in browser | JavaScript `calibrate(cpuArchiveBytes, labelledDataset, options)` | Published dense C-native N4MM/Methods PLS Archive V2 profile with disjoint labelled calibration inputs; frozen predictor replay and DAG calibrator fitting. See [transport and calibration contract](WORKSPACE_BROWSER_TRANSPORT.md). |
+| Modern SDK workspace and session bridge | Python `save_workspace`, `open_workspace`, `import_workspace`; R `nirs4all_open_workspace`, `nirs4all_workspace_*`; MATLAB/Octave `nirs4all.openWorkspace`, `nirs4all.Workspace`, `nirs4all.importWorkspace` | Actual SDK SQLite metadata and Parquet queries, validated snapshots and portable native sessions. R/MATLAB require Python Core plus the full SDK and reopen/close resources per command. See [workspace bridge](workspace-session-bridge.md). |
+| Browser workspace transport | JavaScript `openWorkspace(indexBytes, members)` | Exact member hashes and native experiment/model validation; native result queries and `predictMethods`. It does not decode or independently validate SDK SQLite/Parquet relations. See [workspace transport](WORKSPACE_BROWSER_TRANSPORT.md). |
+
+IO's opt-in masked matrix projection accepts multiple int64 classification
+columns with distinct target names and same-shape boolean observation masks.
+Masked placeholders become zero before float32 conversion; observed classes
+must be exactly representable in float32. The complete classification projection
+retains its single-vector contract. Native DAG selects each target's observed
+rows for supervised fitting and scoring; ragged sources require explicit native
+projection before matrix execution.
+
+PLS-LDA qualification compares sklearn PLS scores followed by independent NumPy
+class statistics and pooled covariance divided by `(n - k)`, where `k` is the
+number of observed classes. It does not claim exact sklearn LDA SVD parity or a
+`predict_proba` surface. Finite profiles do not qualify the whole Methods catalog,
+arbitrary host-model weights or every cross-language archive path. Multimodal
+SHAP, licensed MATLAB execution and Windows ARM64 remain deferred; Octave
+qualification does not qualify licensed MATLAB.
+
+## Historical product workflows: Core 0.4.3 and R 0.7.0
+
+The following table and limits describe the earlier release only. Core 0.4.4
+extensions above supersede its calibration/workspace refusals for the explicitly
+qualified profiles; other historical limits remain the boundaries of that table.
+
+The earlier product facades exposed the following bounded native paths:
 
 | Task | Python Core | R product | JavaScript/WASM | MATLAB/Octave |
 | --- | --- | --- | --- | --- |
@@ -102,9 +139,9 @@ Python, R and MATLAB/Octave do not expose that portable-runner selected-model
 contract. The separate Archive V2/V3 product APIs, including Python prediction,
 are described below; their availability is not inferred from the runner row.
 
-## Portable operator subset
+## Legacy portable runner operator subset
 
-The aggregate itself executes exactly one operator subset — Kennard-Stone split,
+The legacy portable runner executes exactly one operator subset — Kennard-Stone split,
 SNV, Savitzky-Golay, and PLS regression — and it does so by **delegating all
 numerics to the `methods` upstream** (`nirs4all-methods` / `libn4m` / `+n4m` /
 `n4m`). It never re-implements a kernel. The same nine class aliases are
@@ -163,7 +200,7 @@ id (index = id), column names hold no NUL, and nested X/y rows match the
 declared shape; the exported recipe is a snapshot of the recipe the states
 attest.
 
-## Native Archive V2 execution and presentation
+## Historical Archive V2 execution and presentation (Core 0.4.3)
 
 These operational APIs are separate from the full-Python metadata contracts
 below and do not alter `compat/capabilities.toml`.
