@@ -7,11 +7,41 @@ This page reports, honestly, what each language binding of the nirs4all aggregat
 
 `metadata` → `plan` → `execute-local` → `execute-remote` → `parity-validated`.
 
-The machine-readable source of truth is [`compat/capabilities.toml`](../compat/capabilities.toml).
-Every claim below is enforced against the binding sources and parity gate files
-by `bindings/python/tests/test_capability_matrix.py`, so the table cannot
-over-claim: a binding may not say `execute-local` without a real run symbol, nor
-`parity-validated` without a real parity gate.
+The machine-readable compatibility ledger is
+[`compat/capabilities.toml`](../compat/capabilities.toml). Its legacy runner and
+metadata rows are enforced by `bindings/python/tests/test_capability_matrix.py`.
+The newer product workflows have separate native execution gates; the legacy
+ledger is not an exhaustive inventory of the public API.
+
+## Product workflows in Core 0.4.3 and R 0.7.0
+
+The released product facades now expose the following bounded native paths:
+
+| Task | Python Core | R product | JavaScript/WASM | MATLAB/Octave |
+| --- | --- | --- | --- | --- |
+| CV/OOF, candidate selection and refit | `run` | `nirs4all_run` / `nirs4all_native_run` | `run` | `nirs4all.run` |
+| Predict, export, reload and retrain | `predict`, `export`, `load`, `retrain` | `nirs4all_workflow_*` / `nirs4all_native_*` | `predict`, `exportWorkflow`, `load`, `retrain` | `nirs4all.predict`, `export`, `load`, `retrain` |
+| Dataset declaration and raw multimodal state | `Dataset`, `dataset`, `MultimodalPredictor` | `nirs4all_dataset`, `nirs4all_multimodal_*` | `dataset`, `MultimodalPredictor` | `nirs4all.dataset`, `nirs4all.MultimodalPredictor.fit/load`, predictor `.export()` |
+| Persisted result views | `Experiment`, `open_experiment`, `save_experiment` | `nirs4all_open_experiment`, `nirs4all_save_experiment`, `nirs4all_result_*` | `openExperiment` | `nirs4all.saveExperiment`, `resultView`, `resultCompare`, `resultPredictions` |
+| Native search and resume | `tune`, `resume_tuning`, `load_tuning` | `nirs4all_tune`, `nirs4all_resume_tuning`, `nirs4all_load_tuning` | `tune`, `tuneBrowser`, result `.resume()` | `nirs4all.tune`, `resumeTuning`, `loadTuning` |
+| Calibration and frozen robustness audit | `calibrate`, `predict_calibrated`, `conformal_metrics`, `robustness` | `nirs4all_calibrate`, `nirs4all_predict_calibrated`, `nirs4all_conformal_metrics`, `nirs4all_robustness` | `calibrate`, `predictCalibrated`, `conformalMetrics`, `robustness` | `nirs4all.calibrate`, `predictCalibrated`, `conformalMetrics`, `robustness` |
+
+The shared workflow uses a complete dense numeric source, one regression
+target, independent observations and the SNV/Savitzky–Golay/PLS recipe. This is
+not the general SDK pipeline parser. Raw multimodal state transport is a
+separate four-source profile; it does not qualify arbitrary ragged inputs,
+missing modalities, multiple targets or portable host-model weights.
+
+Browser HPO uses its native initial-full-refit package. CPU-produced archives
+and browser-produced role states have different transport contracts. Consuming
+a supported CPU archive that is already calibrated is distinct from calibrating
+that CPU archive in the browser, which remains refused. Result views are not a
+replacement for the complete SDK workspace/session contract. Numerical methods,
+orchestration, calibration and dataset assembly remain upstream-owned.
+
+The native workflow, tuning, conformal, result and multimodal test suites qualify
+these paths separately from the legacy runner matrix below. MATLAB and Octave
+share sources; execution is qualified with Octave, not licensed MATLAB.
 
 ## Custom app host manifest
 
@@ -28,9 +58,9 @@ duplicating local rules:
 - JavaScript/WASM: `capabilityManifest()`, `controllerCapabilities`, and
   `runtimeSurfaces` / `runtimeContracts` / `artifactContracts` from the
   `nirs4all` package.
-- R: `nirs4all_capability_manifest()`,
-  `nirs4all_controller_capabilities()`, `nirs4all_runtime_surfaces()`,
-  `nirs4all_runtime_contracts()`, and `nirs4all_artifact_contracts()`.
+- R: the separately maintained product exposes `nirs4all_upstreams()` and its
+  task APIs. Core's generic manifest getter names are not exported by the
+  current R product namespace.
 - Rust: `capability_manifest()`, `CONTROLLER_CAPABILITIES`, and
   `RUNTIME_SURFACES` / `RUNTIME_CONTRACTS` / `ARTIFACT_CONTRACTS` from the
   `nirs4all` crate.
@@ -142,8 +172,9 @@ below and do not alter `compat/capabilities.toml`.
 | --- | --- | --- |
 | Rust | Validate/replay N4MM format 1 raw PLS and format 2 `SNV(ddof=0) -> SG(mode=interp) -> PLS`; train one selected dense IO package source; optionally calibrate from a disjoint package; return conformal presentation V1/V2. | DAG-ML owns scheduling/calibration, Methods owns numerics, IO owns package buffers, and Core owns the archive. No Python callbacks, implicit fusion, N-D flattening, or host recalibration. |
 | Python | Validate/replay the same native Methods archives and return scalar V1 or named multi-target V2 conformal presentations. | No native package-training facade and no Python preprocessing/model fallback. |
-| JavaScript/WASM | Validate/replay the bounded Methods Archive V2 path documented by the WASM binding. | Calibrated/conformal archives remain refused; no conformal presentation API. |
-| R product (`nirs4all-r`) / MATLAB/Octave | No Archive V2 execution API yet. | N4MM model bytes alone do not make a complete pipeline archive portable. |
+| JavaScript/WASM | Validate/replay the bounded Methods Archive V2 path, including supported CPU archives already calibrated; the product also exposes calibration for its own role-pipeline producer. | Browser calibration of a CPU archive remains refused; transport families are not interchangeable. |
+| R product (`nirs4all-r`) | `nirs4all_core_archive*` exposes native ZIP replay; `nirs4all_native_*` and `nirs4all_workflow_*` expose the shared workflow cycle. | General process V3 and historical internal graph snapshots are not qualified by the new dense workflow. |
+| MATLAB/Octave | `nirs4all.run`, `predict`, `export` and `load` expose the shared native workflow archive cycle. | N4MM bytes alone are not a complete archive; licensed MATLAB execution remains unqualified. |
 
 ## Upstream domains
 
@@ -172,8 +203,10 @@ not be read as npm/WASM package names or host-language runtime support.
 The full Python `nirs4all` package now owns the first native conformal and
 robustness artifact contracts, plus the lightweight native HPO/tuning summary
 and ordered search-space contracts. `nirs4all-core` records those contracts in
-[`compat/capabilities.toml`](../compat/capabilities.toml), but does not expose
-them as executable aggregate features yet.
+[`compat/capabilities.toml`](../compat/capabilities.toml) as metadata. Those
+particular SDK summary/store contracts are distinct from the executable
+product workflow APIs documented above; their metadata level does not mean
+that all native tuning, conformal or robustness tasks are unavailable.
 
 | Contract | Producer today | Binding level in nirs4all-core | Allowed consumer behavior |
 | --- | --- | --- | --- |
@@ -183,12 +216,10 @@ them as executable aggregate features yet.
 | `tuning.ordered_search_space` (`https://nirs4all.org/schemas/tuning-ordered-search-space/v1`) | full Python `inspect_tuning_space()` / `NativeTuning.inspect_space()` / `nirs4all tuning-space` | `metadata` for Python, R, JavaScript/WASM, Rust, MATLAB/Octave | Validate, transport or render an ordered pre-execution search-space preview, including `run.tuning.space` paths and `run.tuning.force_params` subset checks; do not mutate pipelines, drive optimizers, reproduce Python TCV1 fingerprints locally or infer native tuning execution from the preview. |
 | `keyword.registry` (`nirs4all.keyword_registry.v1`) | full Python `nirs4all.get_keyword_registry()` / `keyword_registry_json()` / `TUNING_OPTIMIZER_PERSISTENCE_KEYS` / `ROBUSTNESS_SCENARIO_KINDS` / `ROBUSTNESS_STOCHASTIC_SCENARIO_KINDS` / `ROBUSTNESS_SCENARIO_DISTRIBUTIONS` / `ROBUSTNESS_MODES` / `ROBUSTNESS_EXECUTABLE_MODES` | `metadata` for Python, R, JavaScript/WASM, Rust, MATLAB/Octave | Discover keywords, value schemas, UI hints, invalidation effects and grouped public discovery constants; read `published_constants.ROBUSTNESS_SCENARIO_DISTRIBUTIONS = ["normal", "uniform"]` for the currently published distribution values; preserve the manifest's `required_registry_entries` such as `run.tuning.space`, `run.tuning.force_params`, `predict.coverage`, robustness scenario fields, `robustness.X`, `robustness.predictor` and `robustness.predictor_bundle`; do not infer runtime execution capability from registry presence alone. |
 
-This distinction is intentional. The aggregate cannot claim a conformal or
-robustness binding, or a native HPO/tuning execution binding, until the upstream
-fixtures, schemas, host-language API, and round-trip parity gates exist for that
-binding. Until then, app hosts should
-display these rows as unavailable or externally produced evidence, not as
-native `nirs4all-core` execution capability.
+App hosts must evaluate the exact artifact contract and execution profile.
+The SDK metadata rows above remain transport/display contracts; the new native
+product paths have their own fixtures, APIs and execution gates. Neither set
+of rows establishes general parity for every SDK operation or model family.
 
 `required_registry_entries` is a metadata compatibility floor for app hosts and
 bindings that mirror the full Python keyword registry. It is not a schema copy
