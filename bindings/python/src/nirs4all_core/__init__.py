@@ -17,6 +17,7 @@ from ._archive import (
     write_archive_v2_from_native_payloads,
     write_archive_v3_from_native_payloads,
 )
+from ._browser_tuning import BrowserTuningResult, load_browser_tuning
 from ._capabilities import (
     artifact_contracts,
     capability_manifest,
@@ -72,6 +73,7 @@ from ._upstreams import (
     upstreams,
 )
 from ._workflow import Workflow, export, load, predict, retrain, run
+from ._workspace import Workspace, import_workspace, open_workspace, save_workspace
 
 dag_ml = LazyUpstream("dag_ml")
 dag_ml_data = LazyUpstream("dag_ml_data")
@@ -89,6 +91,7 @@ __all__ = [
     "N4M_TRAINED_PIPELINE_SCHEMA",
     "PORTABLE_OPERATOR_CLASSES",
     "TOPOLOGY_EXPORTS",
+    "BrowserTuningResult",
     "CalibratedWorkflow",
     "Dataset",
     "Experiment",
@@ -101,6 +104,7 @@ __all__ = [
     "TuningResult",
     "Upstream",
     "Workflow",
+    "Workspace",
     "artifact_contracts",
     "available_upstreams",
     "calibrate",
@@ -118,9 +122,11 @@ __all__ = [
     "formats",
     "generate",
     "import_upstream",
+    "import_workspace",
     "inspect_methods_archive_v2_predictors",
     "io",
     "load",
+    "load_browser_tuning",
     "load_calibrated",
     "load_pipeline_definition",
     "load_tuning",
@@ -128,6 +134,7 @@ __all__ = [
     "methods",
     "n4m_role_capabilities",
     "open_experiment",
+    "open_workspace",
     "parse_execution_plan",
     "portable_class_names",
     "predict",
@@ -153,6 +160,7 @@ __all__ = [
     "runtime_contracts",
     "runtime_surfaces",
     "save_experiment",
+    "save_workspace",
     "tune",
     "upstream_status",
     "upstreams",
