@@ -25,7 +25,7 @@ if exist('OCTAVE_VERSION', 'builtin') && exist('popen2', 'builtin')
         [waited, status] = waitpid(pid, WNOHANG());
         if waited ~= 0, break; end
         if toc(started) > 120
-            kill(pid, 15); waitpid(pid, 0);
+            kill(pid, 9); waitpid(pid, 0);
             error('nirs4all:workspace', 'Python workspace bridge timed out');
         end
         pause(0.01);
@@ -40,7 +40,13 @@ elseif usejava('jvm')
     builder.redirectErrorStream(true); builder.redirectOutput(javaObject('java.io.File', logPath));
     process = builder.start();
     processCleanup = onCleanup(@() closeProcess(process)); %#ok<NASGU>
-    status = process.waitFor();
+    seconds = javaMethod('valueOf', 'java.util.concurrent.TimeUnit', 'SECONDS');
+    if ~process.waitFor(int64(120), seconds)
+        process.destroyForcibly();
+        process.waitFor(int64(5), seconds);
+        error('nirs4all:workspace', 'Python workspace bridge timed out');
+    end
+    status = process.exitValue();
 else
     error('nirs4all:workspace', 'Workspace access requires Octave popen2 or a MATLAB JVM');
 end
@@ -59,5 +65,8 @@ function closeProcess(process)
 try, process.getOutputStream().close(); catch, end
 try, process.getInputStream().close(); catch, end
 try, process.getErrorStream().close(); catch, end
-try, process.destroy(); catch, end
+try
+    if process.isAlive(), process.destroyForcibly(); end
+catch
+end
 end
