@@ -130,9 +130,9 @@ export async function openExperiment(indexBytes, members) {
         && (partition === undefined || row.partition === partition)
         && (foldId === undefined || row.fold_id === foldId)));
     },
-    async predictMethods(dataset) {
+    async predictMethods(dataset, options = {}) {
       if (archive === null) throw new Error('Experiment has no portable model archive');
-      return replayMethodsArchiveV2(archive, dataset);
+      return replayMethodsArchiveV2(archive, dataset, options);
     },
   });
 }

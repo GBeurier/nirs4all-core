@@ -109,3 +109,21 @@ test('browser native HPO resumes without old fits and cold model replay never fi
     assert.deepEqual(JSON.parse(fresh.stdout.trim()), prediction.values);
   } finally { methods.RolePipeline.prototype.fit = originalFit; fs.rmSync(directory, { recursive: true, force: true }); }
 });
+
+test('browser publishes exact Methods state package for cold CPU interoperability', { skip: !qualified }, async () => {
+  const methods = await import(pathToFileURL(methodsPath)), io = await import(pathToFileURL(ioPath));
+  dag.initSync({ module: fs.readFileSync(new URL(import.meta.resolve('dag-ml-wasm/dag_ml_wasm_bg.wasm'))) });
+  const data = JSON.parse(fs.readFileSync(fixture));
+  const options = { dagMl: dag, methods, io, seed: 91, trials: 2, persist: () => {} };
+  const model = await tuneBrowser(data, options);
+  const record = await model.export(options);
+  const predictionData = structuredClone(data);
+  predictionData.dataset.y = null;
+  delete predictionData.dataset.target_mask; delete predictionData.dataset.target_names;
+  predictionData.dataset.partitions.values.fill('predict');
+  predictionData.dataset.partitions.dtype = '<U7';
+  const result = await model.predict(predictionData, options);
+  if (process.env.NIRS4ALL_BROWSER_TUNING_OUTPUT) fs.writeFileSync(process.env.NIRS4ALL_BROWSER_TUNING_OUTPUT,
+    JSON.stringify({ record, predictionData, result }));
+  assert.equal(record.packageKind, 'dagml.initial-full-refit.v1');
+});

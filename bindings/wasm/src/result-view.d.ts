@@ -36,7 +36,7 @@ export interface ExperimentResult {
   readonly selectionMetric: string | null;
   compare(query?: { variantId?: string; partition?: string }): NativeResultReport[];
   predictions(query?: { variantId?: string; partition?: string; foldId?: string }): NativePredictionRow[];
-  predictMethods(dataset: unknown): Promise<unknown>;
+  predictMethods(dataset: unknown, options?: { methods?: unknown }): Promise<unknown>;
 }
 
 /** Reopen the fixed experiment inventory from host-provided member bytes. */
