@@ -1,3 +1,4 @@
+export { runBrowserPipeline, loadBrowserPipeline, predictBrowserPipeline, BrowserNativePipeline } from './browser-native-pipeline.js';
 import { parse as parseYaml } from 'yaml';
 import { NATIVE_X_AUGMENTATION_CLASS, parseTrainAugmentation } from './native-augmentation.js';
 import { n4mRoleMethodId, resolvesN4mRole } from './n4m-roles.js';
@@ -688,3 +689,4 @@ export { robustness } from './robustness.js';
 export { predictMultimodalArchive } from './multimodal-archive.js';
 
 export { openWorkspace } from './workspace.js';
+export { NativePipeline, runPipeline } from "./native-pipeline.js";

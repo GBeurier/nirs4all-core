@@ -109,8 +109,8 @@ def run(data: Any, *, source_id: str = "spectra", components: Any = (1, 2),
         type(count) is not int or count < 1 or count > 2147483647 for count in counts
     ):
         raise ValueError("components must contain 2 to 32 distinct positive i32 integers")
-    if preprocessing != "snv_savgol":
-        raise ValueError("This native workflow supports preprocessing='snv_savgol'")
+    if preprocessing not in ("raw", "snv_savgol"):
+        raise ValueError("preprocessing must be raw or snv_savgol")
     library = methods_library_path or os.environ.get("N4M_LIBRARY_PATH") or os.environ.get("N4M_LIB_PATH")
     if library is None:
         raise ValueError("methods_library_path or N4M_LIBRARY_PATH is required")

@@ -1,3 +1,4 @@
+export { runBrowserPipeline, loadBrowserPipeline, predictBrowserPipeline, BrowserNativePipeline } from './browser-native-pipeline.js';
 export { openExperiment } from './result-view.js';
 export type { ExperimentResult, NativePredictionRow, NativeResultReport } from './result-view.js';
 export { Workflow, run, predict, retrain, exportWorkflow, load } from './workflow.js';
@@ -499,3 +500,4 @@ export { predictMultimodalArchive } from './multimodal-archive.js';
 
 export { openWorkspace } from './workspace.js';
 export type { WorkspaceSnapshot } from './workspace.js';
+export { NativePipeline, runPipeline } from "./native-pipeline.js";

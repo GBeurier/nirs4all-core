@@ -25,6 +25,8 @@ use wasm_bindgen::prelude::*;
 #[path = "../../rust/nirs4all/src/conformal_json.rs"]
 mod public_conformal;
 mod public_generation;
+#[path = "../../rust/nirs4all/src/native_pipeline_contract.rs"]
+mod public_native_pipeline;
 #[path = "../../rust/nirs4all/src/result_projection.rs"]
 mod public_results;
 #[path = "../../rust/nirs4all/src/robustness_json.rs"]
@@ -814,4 +816,18 @@ mod tests {
         future["replay"]["future_artifacts"] = json!([{}]);
         assert!(validate_bounded_manifest(&future).is_err());
     }
+}
+
+/// Validate the shared CPU/browser envelope in Rust before host presentation.
+/// JSON fragments stay strings so JavaScript never rounds native uint64 seeds.
+#[wasm_bindgen]
+pub fn native_pipeline_fragments_json(input: &str) -> Result<String, JsValue> {
+    let record = public_native_pipeline::parse_native_pipeline_record(input)
+        .map_err(|error| JsValue::from_str(&error))?;
+    let fragments = serde_json::json!({
+        "config_json": serde_json::to_string(&record["config"]).map_err(|error| JsValue::from_str(&error.to_string()))?,
+        "package_json": serde_json::to_string(&record["package"]).map_err(|error| JsValue::from_str(&error.to_string()))?,
+        "training_outcome_json": serde_json::to_string(&record["training_outcome"]).map_err(|error| JsValue::from_str(&error.to_string()))?
+    });
+    serde_json::to_string(&fragments).map_err(|error| JsValue::from_str(&error.to_string()))
 }
