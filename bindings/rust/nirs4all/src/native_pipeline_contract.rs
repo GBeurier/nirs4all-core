@@ -204,7 +204,27 @@ fn validate_recipe_closure(record: &Value, recipe: &NativePipelineRecipe) -> Res
     let expected_generation = serde_json::json!({"strategy":"cartesian",
         "dimensions":[{"name":"native_model_params", "choices":choices}],
         "max_variants":recipe.candidates.len()});
-    if package["template"]["campaign"]["generation"] != expected_generation {
+    let mut generation = package["template"]["campaign"]["generation"].clone();
+    // Native serializers may omit default empty overrides and null optional
+    // subsequences. Normalize these defaults, while rejecting nonempty closure
+    // extensions through exact equality below.
+    if let Some(dimensions) = generation["dimensions"].as_array_mut() {
+        for dimension in dimensions {
+            if let Some(choices) = dimension["choices"].as_array_mut() {
+                for choice in choices {
+                    if let Some(object) = choice.as_object_mut() {
+                        object
+                            .entry("param_overrides")
+                            .or_insert_with(|| serde_json::json!([]));
+                        if object.get("active_subsequence").is_some_and(Value::is_null) {
+                            object.remove("active_subsequence");
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if generation != expected_generation {
         return Err(fail());
     }
     let bindings = package["template"]["campaign"]["data_bindings"]
@@ -282,6 +302,12 @@ mod tests {
     fn closure_binds_retrain_recipe_to_execution_not_matching_metadata() {
         let (record, recipe) = fixture();
         validate_recipe_closure(&record, &recipe).unwrap();
+        let mut omitted = record.clone();
+        omitted["package"]["template"]["campaign"]["generation"]["dimensions"][0]["choices"][0]
+            .as_object_mut()
+            .unwrap()
+            .remove("param_overrides");
+        validate_recipe_closure(&omitted, &recipe).unwrap();
         let mut changed = recipe.clone();
         changed.steps[0].method_id = "models.pls.pls_nipals".into();
         assert!(validate_recipe_closure(&record, &changed).is_err());
