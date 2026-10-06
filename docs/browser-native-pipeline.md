@@ -25,7 +25,7 @@ IO's public dataset owns row alignment and target shape. This profile accepts on
 complete numeric source, one or more fully observed regression targets, or one
 integer classification target. The last step is a native regressor/classifier;
 preceding steps are catalog-native transformers/selectors. Parameters are checked
-against the live Methods manifest before any FIT. Training-row retention and
+against the live Methods manifest before any FIT. Browser integer parameters must be exactly representable safe JavaScript integers; CPU recipes with larger int64 parameters are refused by this profile. Training-row retention and
 additional fit inputs (weights, blocks, domain, groups as model inputs) are refused.
 
 Groups require explicit fold IDs. Native leakage validation checks their split;
