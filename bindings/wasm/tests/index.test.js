@@ -49,6 +49,15 @@ test('public V1 WASM surface exports expected names', () => {
   assert.deepEqual(
     Object.keys(nirs4all).sort(),
     [
+      'BrowserNativePipeline',
+      'NativeMultimodal',
+      'NativePipeline',
+      'loadBrowserPipeline',
+      'predictBrowserPipeline',
+      'runBrowserPipeline',
+      'runMultimodal',
+      'runPipeline',
+      'openWorkspace',
       'BrowserTuningResult',
       'CalibratedWorkflow',
       'MultimodalPredictor',

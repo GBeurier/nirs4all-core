@@ -690,3 +690,5 @@ export { predictMultimodalArchive } from './multimodal-archive.js';
 
 export { openWorkspace } from './workspace.js';
 export { NativePipeline, runPipeline } from "./native-pipeline.js";
+
+export { NativeMultimodal, runMultimodal } from "./native-multimodal.js";

@@ -50,10 +50,14 @@ schemas, recomputes stateless native projections and imports fitted N4ME states
 without FIT or REFIT. CPU CLI hosts are required for this multimodal profile;
 browser generic pipelines have a separate qualification.
 
-Qualification uses independent NumPy ragged summaries and sklearn
-StandardScaler/Ridge and binary PLS-LDA models per target, explicit partial masks and missing
-sequences, grouped-fold complete multi-target pipelines, binary PLS-LDA, and
-fresh-process cold replay. Malformed offsets, presence, time coordinates,
+Qualification uses independent NumPy ragged summaries, sklearn
+StandardScaler/Ridge, and sklearn PLS scores followed by an independent NumPy
+LDA head per target. The LDA oracle uses pooled within-class covariance divided
+by n minus the number of observed classes and empirical class priors, matching
+the documented native convention. It does not claim equivalence to sklearn
+LDA SVD normalization. Tests cover explicit partial masks, missing sequences,
+grouped-fold complete multi-target pipelines, native discriminants and labels,
+and fresh-process cold replay. Malformed offsets, presence, time coordinates,
 nonfinite features, unobserved targets and altered captured policies are refused.
 Licensed MATLAB execution is outside this profile; Octave exercises its thin
 transport facade.
