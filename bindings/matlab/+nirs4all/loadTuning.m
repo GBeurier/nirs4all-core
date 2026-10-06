@@ -3,7 +3,7 @@ function result = loadTuning(directory, cli)
 if nargin<2, cli=''; end
 saved=jsondecode(fileread(fullfile(directory,'tuning.json')));
 archive=fullfile(directory,'model.n4a');
-native=nirs4all.workflowCli(cli,'tuning-load',[],struct('archive',archive));
+[native, ~, cli]=nirs4all.workflowCli(cli,'tuning-load',[],struct('archive',archive));
 c=saved.config;
 if ~isnumeric(native.config.seed) || ~isscalar(native.config.seed) || ~isfinite(native.config.seed) || ...
  native.config.seed<0 || native.config.seed>flintmax-1 || native.config.seed~=fix(native.config.seed)
@@ -16,5 +16,5 @@ if ~strcmp(saved.schema,'nirs4all.tuning.v1') || ...
  ~strcmp(c.sampler,native.config.sampler) || c.seed~=native.config.seed || c.trials~=native.config.trials
  error('nirs4all:TuningExport','Tuning metadata differs from native archive');
 end
-result=struct('archive',archive,'outcome',native,'config',native.config);
+result=struct('archive',native.model_archive,'outcome',native,'config',native.config,'cli',cli);
 end

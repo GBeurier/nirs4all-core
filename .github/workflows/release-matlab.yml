@@ -82,6 +82,24 @@ jobs:
           NIRS4ALL_CORE_REQUIRE_METHODS_PARITY: "1"
         run: make test-matlab-parity
 
+      - name: Build the pinned native aggregate workflow CLI
+        run: cargo build --locked --release -p nirs4all --bin nirs4all-core-archive
+
+      - name: Qualify public MATLAB/Octave native workflows
+        env:
+          NIRS4ALL_CORE_CLI: ${{ github.workspace }}/target/release/nirs4all-core-archive
+          N4M_LIBRARY_PATH: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src/libn4m.so
+          LD_LIBRARY_PATH: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
+          OMP_NUM_THREADS: "1"
+          OPENBLAS_NUM_THREADS: "1"
+        run: |
+          export N4M_LIBRARY_PATH="$(readlink -f "$N4M_LIBRARY_PATH")"
+          python scripts/parity/generate_native_workflow_fixtures.py --output "$RUNNER_TEMP/native-fixtures"
+          export NIRS4ALL_TUNING_DATASET="$RUNNER_TEMP/native-fixtures/train.json"
+          export NIRS4ALL_BLOCK5_FIXTURE="$RUNNER_TEMP/native-fixtures"
+          export NIRS4ALL_EXPERIMENT_FIXTURE="$RUNNER_TEMP/native-fixtures/experiment"
+          octave --quiet --eval "addpath('bindings/matlab/tests'); smoke; workflow_native; tuning_native; conformal_native; result_view; native_runtime"
+
   matlab-package:
     needs: strict-matlab-parity
     runs-on: ubuntu-22.04

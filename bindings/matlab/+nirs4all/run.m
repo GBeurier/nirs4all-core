@@ -8,6 +8,7 @@ addParameter(p, 'methodsLibrary', getenv('N4M_LIBRARY_PATH'));
 addParameter(p, 'archive', [tempname() '.n4a']);
 [~, uniqueRun] = fileparts(tempname()); addParameter(p, 'runId', ['run:matlab:workflow:' uniqueRun]);
 parse(p, varargin{:}); options = p.Results;
+if isempty(options.cli) && isa(dataset, 'nirs4all.PublicDataset'), options.cli = dataset.coreCli; end
 if isempty(options.methodsLibrary), options.methodsLibrary = getenv('N4M_LIB_PATH'); end
 if isempty(options.methodsLibrary), error('nirs4all:MethodsLibrary', 'methodsLibrary is required'); end
 counts = options.components;
@@ -19,7 +20,7 @@ if ~strcmp(options.preprocessing, 'snv_savgol'), error('nirs4all:Preprocessing',
 flags = struct('source_id', options.sourceId, 'components', jsonencode(counts(:).'), ...
     'preprocessing', options.preprocessing, 'methods_library', options.methodsLibrary, ...
     'archive', options.archive, 'run_id', options.runId, 'results_directory', [options.archive '.results']);
-outcome = nirs4all.workflowCli(options.cli, 'workflow-run', dataset, flags);
-workflow = struct('schema', 'nirs4all.workflow.v1', 'archive', options.archive, 'outcome', outcome, ...
+[outcome, ~, cli] = nirs4all.workflowCli(options.cli, 'workflow-run', dataset, flags);
+workflow = struct('schema', 'nirs4all.workflow.v1', 'archive', outcome.model_archive, 'outcome', outcome, 'cli', cli, ...
     'config', struct('sourceId', options.sourceId, 'components', counts, 'preprocessing', options.preprocessing));
 end

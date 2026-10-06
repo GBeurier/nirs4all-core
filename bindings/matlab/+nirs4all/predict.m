@@ -2,6 +2,7 @@ function outcome = predict(workflow, X, varargin)
 %PREDICT Replay a native Archive V2 using the supplied feature matrix only.
 p = inputParser(); addParameter(p, 'sampleIds', {}); addParameter(p, 'cli', '');
 addParameter(p, 'methodsLibrary', getenv('N4M_LIBRARY_PATH')); parse(p, varargin{:}); options=p.Results;
+if isempty(options.cli) && isfield(workflow, 'cli'), options.cli = workflow.cli; end
 if isempty(options.methodsLibrary), options.methodsLibrary=getenv('N4M_LIB_PATH'); end
 if isempty(options.methodsLibrary), error('nirs4all:MethodsLibrary', 'methodsLibrary is required'); end
 if isempty(options.sampleIds), options.sampleIds=arrayfun(@(i) sprintf('sample.%d',i-1),1:size(X,1),'UniformOutput',false); end

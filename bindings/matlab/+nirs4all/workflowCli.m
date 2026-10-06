@@ -1,7 +1,6 @@
-function [result, nativeJson] = workflowCli(cli, operation, record, flags)
+function [result, nativeJson, cli] = workflowCli(cli, operation, record, flags)
 %WORKFLOWCLI Transport strict JSON to the native aggregate workflow CLI.
-if isempty(cli), cli = getenv('NIRS4ALL_CORE_CLI'); end
-if isempty(cli), cli = 'nirs4all-core-archive'; end
+cli = nirs4all.nativeCli(cli);
 directory = tempname(); mkdir(directory);
 cleanup = onCleanup(@() rmdir(directory, 's')); %#ok<NASGU>
 input = fullfile(directory, 'input.json'); output = fullfile(directory, 'output.json');

@@ -4,6 +4,7 @@ p = inputParser(); addParameter(p, 'cli', '');
 addParameter(p, 'sourceId', '');
 addParameter(p, 'methodsLibrary', getenv('N4M_LIBRARY_PATH')); parse(p, varargin{:});
 o = p.Results;
+if isempty(o.cli) && isstruct(model) && isfield(model,'cli'), o.cli = model.cli; end
 if isempty(o.methodsLibrary), o.methodsLibrary = getenv('N4M_LIB_PATH'); end
 if isstruct(model), archive = model.archive; else, archive = model; end
 flags = struct('archive', archive, 'methods_library', o.methodsLibrary, ...

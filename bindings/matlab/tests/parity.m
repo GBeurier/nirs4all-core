@@ -25,11 +25,17 @@ end
 
 oraclePath = getenv('NIRS4ALL_CORE_PARITY_ORACLE');
 if isempty(oraclePath)
-    oraclePath = fullfile(root, 'tests', 'parity', 'expected', 'portable_python_oracle.json');
+    oraclePath = fullfile(scriptDir, 'parity', 'expected', 'portable_python_oracle.json');
+    if exist(oraclePath,'file') ~= 2
+        oraclePath = fullfile(root, 'tests', 'parity', 'expected', 'portable_python_oracle.json');
+    end
 end
 fixtureRoot = getenv('NIRS4ALL_CORE_PARITY_FIXTURES');
 if isempty(fixtureRoot)
-    fixtureRoot = fullfile(root, 'tests', 'parity', 'fixtures');
+    fixtureRoot = fullfile(scriptDir, 'parity', 'fixtures');
+    if exist(fixtureRoot,'dir') ~= 7
+        fixtureRoot = fullfile(root, 'tests', 'parity', 'fixtures');
+    end
 end
 
 if exist(oraclePath, 'file') ~= 2

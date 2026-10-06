@@ -56,7 +56,7 @@ classdef MultimodalPredictor < handle
     end
     methods (Static)
         function obj = fit(recipe, value, coreCli)
-            if nargin < 3, coreCli = 'nirs4all-core-archive'; end
+            if nargin < 3, coreCli = ''; end
             ds = nirs4all.dataset(value, coreCli); record = ds.record.dataset;
             if isempty(record.y) || numel(record.y.shape) ~= 1 || ~all(record.target_mask.values) || ...
                     any(~isfinite(record.y.values)) || any(~strcmp(record.partitions.values, 'train'))
@@ -73,7 +73,8 @@ classdef MultimodalPredictor < handle
             end
         end
         function obj = load(value, coreCli)
-            if nargin < 2, coreCli = 'nirs4all-core-archive'; end
+            if nargin < 2, coreCli = ''; end
+            coreCli = nirs4all.nativeCli(coreCli);
             if ischar(value) && exist(value, 'file') == 2, record = jsondecode(fileread(value)); elseif ischar(value), record = jsondecode(value); else, record = value; end
             fields = {'schema'; 'schema_version'; 'recipe'; 'source_schemas'; 'state'; 'target_names'};
             if ~isstruct(record) || ~isequal(sort(fieldnames(record)), sort(fields)) || ~strcmp(record.schema, 'nirs4all.multimodal-predictor.v1') || ...
