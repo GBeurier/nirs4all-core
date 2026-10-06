@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.4.4
+
+- Add generic native estimator pipelines and native multimodal campaigns with
+  explicit source policies, ragged summaries and per-target observation masks.
+- Train and replay the supported estimator pipelines in WASM; share exact native
+  state with CPU facades, and retain native JSON fragments without integer loss.
+- Replay browser tuning state on CPU and calibrate native CPU archives in the
+  browser. Reject unsupported profiles before training or state import.
+- Open, query, predict, export and import modern SDK workspace snapshots through
+  validated Python, R and MATLAB/Octave commands with bounded process lifetime.
+- Require DAG-ML 0.3.38, IO 0.2.6 and Methods 1.3.4; preserve Data 0.2.13,
+  Formats 0.2.11 and the Methods ABI 2.17.
+
+See [native pipeline](docs/native_pipeline_contract.md),
+[native multimodal](docs/native_multimodal_contract.md),
+[browser pipeline](docs/browser-native-pipeline.md) and
+[workspace transport](docs/WORKSPACE_BROWSER_TRANSPORT.md) for the finite
+supported profiles and explicit refusals.
+
 ## 0.4.3
 
 - Preserve the MATLAB/Octave native CLI through workflow prediction, retraining,

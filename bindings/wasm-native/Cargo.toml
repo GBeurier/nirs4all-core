@@ -1,6 +1,6 @@
 [package]
 name = "nirs4all-core-wasm-native"
-version = "0.4.3"
+version = "0.4.4"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -12,7 +12,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
-dag-ml-core = { version = "=0.3.37", default-features = false }
+dag-ml-core = { version = "=0.3.38", default-features = false }
 serde_json = { version = "1", features = ["preserve_order", "float_roundtrip"] }
 sha2 = "0.10"
 unicode-normalization = "0.1"
