@@ -248,17 +248,17 @@ class NativeMultimodalTest(unittest.TestCase):
         self,
     ):
         from sklearn.cross_decomposition import PLSRegression
-        from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
         data, policies, pipeline, x, _, mask = ragged_fixture()
         labels = np.array([(i // 2) % 2 for i in range(12)])
-        truth = np.column_stack([labels, 1 - labels])
+        truth = np.column_stack([labels, np.where(labels == 0, 3, 7)])
+        data["dataset"]["target_names"] = ["class_a", "class_b"]
         data["dataset"]["task_type"] = "classification"
         data["dataset"]["y"] = {
             "dtype": "int64",
             "shape": [12, 2],
             "values": [
-                [int(truth[i, t]) if mask[i, t] else None for t in range(2)]
+                [int(truth[i, t]) if mask[i, t] else 1e99 for t in range(2)]
                 for i in range(12)
             ],
         }
@@ -273,15 +273,68 @@ class NativeMultimodalTest(unittest.TestCase):
         scaler = StandardScaler().fit(x)
         for target, entry in enumerate(replay["target_results"]):
             train = mask[:, target]
+            classes = np.unique(truth[train, target])
+            dummy = (truth[train, target, None] == classes).astype(float)
             latent = PLSRegression(n_components=1, scale=False).fit(
-                scaler.transform(x[train]), np.eye(2)[truth[train, target]]
+                scaler.transform(x[train]), dummy
             )
-            lda = LinearDiscriminantAnalysis().fit(
-                latent.x_scores_, truth[train, target]
+            # Methods uses unbiased pooled within-class covariance and empirical
+            # priors; sklearn's default SVD normalizes imbalanced classes differently.
+            # Derive that contract from independent sklearn PLS scores and NumPy.
+            scores = latent.x_scores_
+            means = np.stack(
+                [
+                    scores[truth[train, target] == label].mean(axis=0)
+                    for label in classes
+                ]
             )
-            expected = lda.predict(latent.transform(scaler.transform(x)))
+            covariance = sum(
+                (scores[truth[train, target] == label] - means[index]).T
+                @ (scores[truth[train, target] == label] - means[index])
+                for index, label in enumerate(classes)
+            ) / (train.sum() - len(classes))
+            precision = np.linalg.inv(covariance)
+            weights = means @ precision
+            priors = np.array(
+                [(truth[train, target] == label).mean() for label in classes]
+            )
+            intercepts = -0.5 * np.sum(weights * means, axis=1) + np.log(priors)
+            discriminants = (
+                latent.transform(scaler.transform(x)) @ weights.T + intercepts
+            )
+            expected = classes[discriminants.argmax(axis=1)]
             block = entry["replay"]["outputs"][0]["predictions"][0]
             np.testing.assert_array_equal(np.asarray(block["values"]).ravel(), expected)
             self.assertEqual(
                 block["target_names"], [data["dataset"]["target_names"][target]]
             )
+
+            self.assertEqual(
+                {row["phase"] for row in entry["replay"]["lineage"]}, {"PREDICT"}
+            )
+        with tempfile.TemporaryDirectory() as directory:
+            path = model.export(Path(directory) / "classifier.json")
+            record_path = Path(directory) / "predict.json"
+            record_path.write_text(json.dumps(predict_record(data)))
+            cold = subprocess.run(
+                [
+                    sys.executable,
+                    "-c",
+                    "import json,sys; from nirs4all_core import NativeMultimodal; print(json.dumps(NativeMultimodal.load(sys.argv[1]).predict(json.load(open(sys.argv[2])))))",
+                    str(path),
+                    str(record_path),
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(cold.returncode, 0, cold.stderr)
+            for actual, expected in zip(
+                json.loads(cold.stdout)["target_results"], replay["target_results"]
+            ):
+                self.assertEqual(
+                    actual["replay"]["outputs"], expected["replay"]["outputs"]
+                )
+                self.assertEqual(
+                    {row["phase"] for row in actual["replay"]["lineage"]}, {"PREDICT"}
+                )
