@@ -28,6 +28,7 @@ mod io_training;
 mod n4m_roles;
 mod native_methods_replay;
 pub mod pipeline_workflow;
+pub mod native_pipeline_contract;
 mod portable_session;
 mod publication;
 pub mod result_projection;
