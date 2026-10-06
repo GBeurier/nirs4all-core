@@ -132,6 +132,8 @@ fn validate_recipe_closure(record: &Value, recipe: &NativePipelineRecipe) -> Res
             || (!final_node && !matches!(step.role.as_str(), "transformer" | "selector"))
             || step.method_id.is_empty()
             || step.params.contains_key("method_id")
+            || step.params.contains_key("unsafe_flags")
+            || (!final_node && step.params.contains_key("native_target_index"))
         {
             return Err(fail());
         }
@@ -160,6 +162,7 @@ fn validate_recipe_closure(record: &Value, recipe: &NativePipelineRecipe) -> Res
         if final_node
             && !recipe.candidates.iter().any(|candidate| {
                 if candidate.contains_key("method_id")
+                    || candidate.contains_key("unsafe_flags")
                     || candidate.contains_key("native_target_index")
                 {
                     return false;
