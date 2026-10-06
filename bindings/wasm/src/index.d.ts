@@ -506,4 +506,4 @@ export { NativeMultimodal, runMultimodal } from "./native-multimodal.js";
 
 export type { NativePipelineStep, NativePipelineRecipe, NativePipelineOptions } from "./native-pipeline.js";
 export type { NativeSourcePolicy } from "./native-multimodal.js";
-export type { BrowserNativeStep, BrowserNativeRecipe, BrowserNativePipelineOptions } from "./browser-native-pipeline.js";
+export type { BrowserNativeDatasetRecord, BrowserNativeStep, BrowserNativeRecipe, BrowserNativePipelineOptions } from "./browser-native-pipeline.js";
