@@ -151,3 +151,21 @@ def test_browser_loader_rejects_forged_provenance(mutation):
     from n4m._errors import N4MError
     with pytest.raises((ValueError, DagMlRuntimeError, N4MError)):
         load_browser_tuning(source)
+
+
+@pytest.mark.skipif(not FIXTURE, reason="native model experiment qualification fixture required")
+def test_workspace_rejects_orphan_chain_after_rehash(tmp_path):
+    import hashlib
+    import sqlite3
+    root = tmp_path / "workspace"
+    save_workspace([FIXTURE], root).close()
+    with sqlite3.connect(root / "store.sqlite") as writer:
+        columns = [row[1] for row in writer.execute("PRAGMA table_info(chains)")]
+        projection = ["'review-orphan-chain'" if name == "chain_id" else "'review-missing-pipeline'" if name == "pipeline_id" else '"' + name + '"' for name in columns]
+        writer.execute("INSERT INTO chains SELECT " + ",".join(projection) + " FROM chains LIMIT 1")
+    writer.close()
+    index = json.loads((root / "workspace.json").read_text())
+    index["files"]["store.sqlite"] = hashlib.sha256((root / "store.sqlite").read_bytes()).hexdigest()
+    (root / "workspace.json").write_text(json.dumps(index))
+    with pytest.raises(ValueError, match="Invalid SDK SQLite"):
+        open_workspace(root)

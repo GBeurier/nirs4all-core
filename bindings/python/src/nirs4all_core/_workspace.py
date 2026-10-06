@@ -211,7 +211,7 @@ def open_workspace(path: str | Path) -> Workspace:
         raise ValueError("Workspace inventory exceeds limits or lacks SDK store")
     connection = sqlite3.connect(f"{(root / 'store.sqlite').resolve().as_uri()}?mode=ro&immutable=1", uri=True)
     try:
-        if connection.execute("PRAGMA user_version").fetchone()[0] != SCHEMA_VERSION or connection.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
+        if connection.execute("PRAGMA user_version").fetchone()[0] != SCHEMA_VERSION or connection.execute("PRAGMA integrity_check").fetchone()[0] != "ok" or connection.execute("PRAGMA foreign_key_check").fetchall():
             raise ValueError("Invalid SDK SQLite workspace")
     finally:
         connection.close()
