@@ -35,6 +35,8 @@ test('WASM role nodes retain one N4ME each; grouped multi-target replay cannot f
     const bad=inference.toJSON();bad.dataset.sources[0].axis_units.wavelength='changed';
     await assert.rejects(restored.predict(bad,options),/schema differs/);
     await assert.rejects(runBrowserPipeline(input.toJSON(),{...options,pipeline:{...pipeline,candidates:[{alpha:'1'}]}}),/parameter type/);
+    const oversized=structuredClone(pipeline);oversized.steps[1].method_id='models.pls.pls_regression';oversized.steps[1].params.n_components=Number.MAX_SAFE_INTEGER+1;oversized.candidates=[{}];
+    await assert.rejects(runBrowserPipeline(input.toJSON(),{...options,pipeline:oversized}),/parameter type|method\/role/);
     const unsafe=structuredClone(pipeline);unsafe.steps[0].params.with_mean='yes';
     await assert.rejects(runBrowserPipeline(input.toJSON(),{...options,pipeline:unsafe}),/parameter type/);
   }finally{native.ccall=original;}
@@ -42,6 +44,10 @@ test('WASM role nodes retain one N4ME each; grouped multi-target replay cannot f
 test('PLS-LDA classification uses native labels through CV/refit/replay', {skip:!qualified}, async()=>{
   const options={...await dependencies(),pipeline:{steps:[{method_id:'models.classification.pls_lda',role:'classifier',params:{n_components:1}}],candidates:[{}]}};
   const input=options.io.Dataset.fromSources({spectra:X},{sampleIds:X.map((_,i)=>`id:${i}`),y:X.map((_,i)=>Math.floor(i/2)%2),taskType:'classification',targetNames:['class']});
+  const unsafeLabels=options.io.Dataset.fromSources({spectra:X},{sampleIds:X.map((_,i)=>`id:${i}`),y:X.map((_,i)=>i%2 ? 16777217 : 0),taskType:'classification',targetNames:['class']});
+  const fit=options.methods.NativeEstimator.prototype.fit;
+  options.methods.NativeEstimator.prototype.fit=()=>{throw Error('FIT before label validation');};
+  try {await assert.rejects(runBrowserPipeline(unsafeLabels.toJSON(),options),/exactly representable/);} finally {options.methods.NativeEstimator.prototype.fit=fit;}
   const model=await runBrowserPipeline(input.toJSON(),options);
   const input2=options.io.Dataset.fromSources({spectra:X.slice(0,3)},{sampleIds:['new:0','new:1','new:2'],partitions:['predict','predict','predict'],targetNames:['class']});
   const original=options.methods.NativeEstimator.prototype.fit;
