@@ -57,3 +57,5 @@ fresh-process cold replay. Malformed offsets, presence, time coordinates,
 nonfinite features, unobserved targets and altered captured policies are refused.
 Licensed MATLAB execution is outside this profile; Octave exercises its thin
 transport facade.
+
+Explicit Methods library paths supplied at training or loading are retained by the in-memory CPU facades for prediction and retraining. A per-call path overrides that runtime. Exported native model JSON contains no host library path; a new host supplies its own runtime when loading.

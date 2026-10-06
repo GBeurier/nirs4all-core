@@ -6,12 +6,13 @@ classdef NativeMultimodal
         config
         outcomes
         coreCli
+        methodsLibrary
     end
     methods (Access=private)
-        function self = NativeMultimodal(nativeJson, cli)
+        function self = NativeMultimodal(nativeJson, cli, library)
             record = jsondecode(nativeJson);
             self.nativeJson = nativeJson; self.config = record.config;
-            self.outcomes = arrayfun(@(entry) entry.model.training_outcome, record.target_models, 'UniformOutput', false); self.coreCli = cli;
+            self.outcomes = arrayfun(@(entry) entry.model.training_outcome, record.target_models, 'UniformOutput', false); self.coreCli = cli; self.methodsLibrary = library;
         end
     end
     methods (Static)
@@ -28,19 +29,22 @@ classdef NativeMultimodal
             [~, id] = fileparts(tempname());
             flags = struct('methods_library', options.methodsLibrary, 'run_id', ['run:matlab:pipeline:' id]);
             [~, nativeJson, cli] = nirs4all.workflowCli(options.cli, 'native-multimodal-run', record, flags);
-            self = nirs4all.NativeMultimodal(nativeJson, cli);
+            self = nirs4all.NativeMultimodal(nativeJson, cli, options.methodsLibrary);
         end
         function self = load(path, varargin)
-            p = inputParser; addParameter(p, 'cli', ''); parse(p, varargin{:});
+            p = inputParser; addParameter(p, 'cli', '');
+            addParameter(p, 'methodsLibrary', getenv('N4M_LIBRARY_PATH')); parse(p, varargin{:}); options = p.Results;
+            if isempty(options.methodsLibrary), options.methodsLibrary = getenv('N4M_LIB_PATH'); end
             [~, nativeJson, cli] = nirs4all.workflowCli(p.Results.cli, 'native-multimodal-load', fileread(path), struct());
-            self = nirs4all.NativeMultimodal(nativeJson, cli);
+            self = nirs4all.NativeMultimodal(nativeJson, cli, options.methodsLibrary);
         end
     end
     methods
         function result = predict(self, dataset, varargin)
             p = inputParser;
-            addParameter(p, 'methodsLibrary', getenv('N4M_LIBRARY_PATH'));
+            addParameter(p, 'methodsLibrary', self.methodsLibrary);
             parse(p, varargin{:}); options = p.Results;
+            if isempty(options.methodsLibrary), options.methodsLibrary = getenv('N4M_LIBRARY_PATH'); end
             if isempty(options.methodsLibrary), options.methodsLibrary = getenv('N4M_LIB_PATH'); end
             if isa(dataset, 'nirs4all.PublicDataset'), dataset = dataset.toJSON();
             elseif ~ischar(dataset), dataset = jsonencode(dataset); end
@@ -53,8 +57,9 @@ classdef NativeMultimodal
         end
         function model = retrain(self, dataset, varargin)
             p = inputParser;
-            addParameter(p, 'methodsLibrary', getenv('N4M_LIBRARY_PATH'));
+            addParameter(p, 'methodsLibrary', self.methodsLibrary);
             parse(p, varargin{:}); options = p.Results;
+            if isempty(options.methodsLibrary), options.methodsLibrary = getenv('N4M_LIBRARY_PATH'); end
             if isempty(options.methodsLibrary), options.methodsLibrary = getenv('N4M_LIB_PATH'); end
             if isa(dataset, 'nirs4all.PublicDataset'), dataset = dataset.toJSON();
             elseif ~ischar(dataset), dataset = jsonencode(dataset); end
@@ -62,7 +67,7 @@ classdef NativeMultimodal
             [~, id] = fileparts(tempname());
             [~, nativeJson, cli] = nirs4all.workflowCli(self.coreCli, 'native-multimodal-retrain', record, ...
                 struct('methods_library', options.methodsLibrary, 'run_id', ['run:matlab:retrain:' id]));
-            model = nirs4all.NativeMultimodal(nativeJson, cli);
+            model = nirs4all.NativeMultimodal(nativeJson, cli, options.methodsLibrary);
         end
     end
 end
