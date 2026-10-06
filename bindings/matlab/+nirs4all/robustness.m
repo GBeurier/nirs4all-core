@@ -6,6 +6,7 @@ addParameter(p, 'methodsLibrary', getenv('N4M_LIBRARY_PATH'));
 addParameter(p, 'scenarios', {struct('id','observed','kind','observed','severity',0,'seed',0), ...
     struct('id','gaussian','kind','spectral_noise','severity',0.01,'seed',1)});
 parse(p, varargin{:}); o = p.Results;
+if isempty(o.cli) && isstruct(model) && isfield(model,'cli'), o.cli = model.cli; end
 if isempty(o.methodsLibrary), o.methodsLibrary = getenv('N4M_LIB_PATH'); end
 if isstruct(model), archive = model.archive; else, archive = model; end
 values = arrayfun(@(i) num2cell(y(i,:)), (1:size(y,1)).', 'UniformOutput', false);

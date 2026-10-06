@@ -1,6 +1,7 @@
-function directory = exportBundle(archive, directory, metadata, metadataName)
+function directory = exportBundle(archive, directory, metadata, metadataName, cli)
 %EXPORTBUNDLE Stage the export and publish through Core's exclusive writer.
 if exist(directory, 'file'), error('nirs4all:Export', 'Destination must be new'); end
+if nargin < 5, cli = ''; end
 payload = jsonencode(metadata);
 parent = fileparts(directory);
 if isempty(parent), parent = '.'; end
@@ -15,7 +16,7 @@ closeFile = onCleanup(@() fclose(file));
 count = fprintf(file, '%s', payload);
 if count < numel(payload), error('nirs4all:Export', 'Incomplete export metadata'); end
 clear closeFile;
-nirs4all.workflowCli('', 'publish-directory', [], struct('input', stage, 'destination', directory));
+nirs4all.workflowCli(cli, 'publish-directory', [], struct('input', stage, 'destination', directory));
 end
 
 function cleanStage(stage)

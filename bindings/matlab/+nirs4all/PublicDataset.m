@@ -7,8 +7,8 @@ classdef PublicDataset
     end
     methods
         function obj = PublicDataset(value, coreCli)
-            if nargin < 2, coreCli = 'nirs4all-core-archive'; end
-            obj.coreCli = coreCli;
+            if nargin < 2, coreCli = ''; end
+            obj.coreCli = nirs4all.nativeCli(coreCli);
             obj.json = obj.invoke(value, 'dataset-normalize');
             obj.record = jsondecode(obj.json);
         end

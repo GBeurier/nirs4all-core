@@ -31,6 +31,23 @@ MATLAB/Octave execution support.
   aggregate upstream registry.
 - `nirs4all.localImplementationRegistry()` delegates to the upstream DAG-ML
   registry for process-local MATLAB/Octave loss and metric functions.
+- `nirs4all.dataset()` normalizes an aligned raw dataset through native IO.
+- `nirs4all.run()`, `predict()`, `retrain()`, `export()` and `load()` expose the
+  shared dense regression CV/OOF/refit archive profile.
+- `nirs4all.tune()` and `resumeTuning()` run and resume native OOF search;
+  `exportTuning()` and `loadTuning()` preserve the native study identity.
+- `nirs4all.calibrate()`, `predictCalibrated()`, `conformalMetrics()` and
+  `robustness()` expose held-out calibration and frozen native audits.
+
+These native workflows require `nirs4all-core-archive` 0.4.2 or later and
+Methods 1.3.2 (ABI 2.17). Supply the Core executable through `cli` or
+`NIRS4ALL_CORE_CLI`, and the numerical library through `methodsLibrary` or
+`N4M_LIBRARY_PATH`. Workflow, tuning and calibrated objects retain the supplied
+CLI for subsequent operations; exports contain portable model metadata, and
+the receiving host supplies its runtime when loading.
+
+The MATLAB source facade is shared with Octave. The release gate executes
+Octave; it does not establish a licensed MATLAB runtime qualification.
 
 `dataset` is a struct with `X`, `y`, and optionally `rows`/`cols` when `X` is
 flat. JSON-decoded numeric matrices and nested numeric cells are accepted so the

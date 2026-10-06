@@ -5,7 +5,10 @@ out_dir="${1:-dist/matlab}"
 # Version source of truth: the Rust crate [package] version (kept in sync across
 # bindings by scripts/bump_version.sh).
 version="$(sed -nE '/^\[package\]/,/^\[/{s/^version[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p}' bindings/rust/nirs4all/Cargo.toml | head -1)"
-version="${version:-0.0.0}"
+if [[ -z "$version" ]]; then
+  echo "Cannot resolve MATLAB/Octave package version from the Rust manifest" >&2
+  exit 2
+fi
 archive="nirs4all-matlab-octave-${version}.zip"
 
 mkdir -p "$out_dir"
@@ -18,6 +21,8 @@ trap 'rm -rf "$tmp_dir"' EXIT
 
 mkdir -p "$tmp_dir/nirs4all"
 cp -R bindings/matlab/+nirs4all "$tmp_dir/nirs4all/"
+cp -R bindings/matlab/tests "$tmp_dir/nirs4all/"
+cp -R tests/parity "$tmp_dir/nirs4all/tests/"
 cp bindings/matlab/README.md "$tmp_dir/nirs4all/"
 cp bindings/matlab/LICENSE "$tmp_dir/nirs4all/"
 cp -R bindings/matlab/LICENSES "$tmp_dir/nirs4all/"
@@ -43,6 +48,7 @@ fi
 find "$tmp_dir/nirs4all" -type f -exec touch -d "@$source_date_epoch" {} +
 (
   cd "$tmp_dir"
-  find nirs4all -type f -print | LC_ALL=C sort | TZ=UTC zip -q -X "$archive_path" -@
+  find nirs4all -type f -print | LC_ALL=C sort | TZ=UTC zip -q -X "$tmp_dir/$archive" -@
 )
+mv "$tmp_dir/$archive" "$archive_path"
 echo "$archive_path"

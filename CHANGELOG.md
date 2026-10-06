@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.3
+
+- Preserve the MATLAB/Octave native CLI through workflow prediction, retraining,
+  tuning resume, exports and calibrated replay. Honor the configured CLI when
+  constructing a dataset and inherit the dataset's runtime for new campaigns.
+- Gate MATLAB/Octave releases on native workflow, tuning, conformal, robustness,
+  result-view and runtime-path tests as well as strict Python-oracle parity.
+- Include executable source tests and their synthetic dense fixture in the
+  reproducible MATLAB/Octave ZIP distribution.
+- Rebuild MATLAB/Octave ZIPs from a fresh staging archive so obsolete members
+  cannot survive a rebuild into an existing output path.
+
 ## 0.4.2
 
 - Align the aggregate with DAG-ML 0.3.37, DAG-ML Data 0.2.13, IO 0.2.5 and Formats 0.2.11 across Rust, Python and npm.

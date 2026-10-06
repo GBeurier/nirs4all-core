@@ -85,7 +85,10 @@ catch err
     assert(strcmp(err.identifier, 'nirs4all:UnknownUpstream'));
 end
 
-fixture_dir = fullfile(fileparts(mfilename('fullpath')), '..', '..', '..', 'tests', 'parity', 'fixtures');
+fixture_dir = fullfile(fileparts(mfilename('fullpath')), 'parity', 'fixtures');
+if exist(fixture_dir, 'dir') ~= 7
+    fixture_dir = fullfile(fileparts(mfilename('fullpath')), '..', '..', '..', 'tests', 'parity', 'fixtures');
+end
 contractCases = jsondecode(fileread(fullfile(fixture_dir, 'execution_contract_cases.json')));
 for idx = 1:numel(contractCases.invalid)
     if iscell(contractCases.invalid)
