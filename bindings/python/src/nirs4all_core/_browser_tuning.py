@@ -22,7 +22,11 @@ class BrowserTuningResult:
     Study checkpoints remain in their browser-host optimizer contract. CPU
     prediction does not resume or reinterpret that optimizer history.
     """
-    record: dict[str, Any]
+    _record: dict[str, Any]
+
+    @property
+    def record(self) -> dict[str, Any]:
+        return deepcopy(self._record)
 
     def export(self, path: str | Path) -> Path:
         target = Path(path)
@@ -85,7 +89,42 @@ def load_browser_tuning(record: dict[str, Any] | str | Path) -> BrowserTuningRes
             or request["optimizer_descriptor"]["seed"] != config["seed"]
             or len(search["trials"]) != config["trials"]):
         raise ValueError("Browser study options differ from native package")
-    for key, selected in search["selected_params"].items():
-        if node["params"].get(key) != selected:
-            raise ValueError("Browser selected predictor differs from search selection")
+    from dag_ml import validate_host_hpo_snapshot
+    from n4m.model_selection import Direction, Metric, Optimizer, Sampler, SearchSpace
+
+    contracts, snapshot = value["contracts"], value["snapshot"]
+    options = {"sampler": config["sampler"], "pruner": "none", "direction": request["direction"],
+               "metric": config["metric"], "seed": config["seed"], "startupTrials": 2}
+    expected_contract = {"space": request["optimizer_descriptor"]["space"], "options": options,
+                         "objective": contracts["objective"], "warmStart": None}
+    if snapshot["schema"] != "dagml.n4m.wasm-hpo.v1" or snapshot["contract"] != expected_contract or snapshot["prepared"] is not None:
+        raise ValueError("Browser optimizer snapshot contract mismatch")
+    verified = validate_host_hpo_snapshot(contracts["plan"], contracts["envelope"], request, snapshot["committed"])
+    if search != verified or search["selected_params"] != node["params"]:
+        raise ValueError("Browser study history or selected predictor differs from native checkpoint")
+    if any(package["training_envelope"][key] != contracts["envelope"][key]
+           for key in ("schema_fingerprint", "data_content_fingerprint", "target_content_fingerprint")):
+        raise ValueError("Browser predictor training provenance differs from study")
+    expected_space = {"n_components": {"kind": "int", "low": 1, "high": 3},
+                      "scale": {"kind": "categorical", "type": "boolean", "choices": [False, True]}}
+    if request["optimizer_descriptor"]["space"] != expected_space:
+        raise ValueError("Browser optimizer space differs from supported native profile")
+    with SearchSpace() as space:
+        space.add_int("n_components", 1, 3)
+        space.add_categorical("scale", [False, True])
+        with Optimizer(space, sampler=Sampler[config["sampler"].upper()], direction=Direction[request["direction"].upper()],
+                       metric=Metric[config["metric"].upper()], seed=config["seed"], n_startup_trials=2) as expected_optimizer, Optimizer.load(bytes(snapshot["n4mopt"])) as optimizer:
+            if not optimizer.configuration_matches(expected_optimizer):
+                raise ValueError("Methods optimizer configuration differs from native study")
+            trials = optimizer.get_trials()
+    # Trial snapshots own their decoded data after their native owner closes.
+    terminal = snapshot["committed"]["trials"]
+    if len(trials) != len(terminal):
+        raise ValueError("Methods optimizer history differs from native checkpoint")
+    for index, (trial, recorded) in enumerate(zip(trials, terminal)):
+        evidence = recorded.get("evidence", recorded)
+        expected_status = {"complete": "COMPLETED", "failed": "FAILED", "pruned": "PRUNED"}[recorded["state"]]
+        if (trial.id != index or trial.status.name != expected_status or trial.params != evidence["params"]
+                or (recorded["state"] == "complete" and trial.score != evidence["score"])):
+            raise ValueError("Methods optimizer terminal history differs from native checkpoint")
     return BrowserTuningResult(value)

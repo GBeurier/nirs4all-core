@@ -43,3 +43,19 @@ test('SDK SQLite/Parquet workspace snapshot queries native results and exports f
   const bad = JSON.parse(indexBytes); bad.files['../escape'] = bad.files['store.sqlite'];
   await assert.rejects(openWorkspace(new TextEncoder().encode(JSON.stringify(bad)), snapshot.members), /member path/);
 });
+
+test('workspace retains __proto__ member bytes and rejects unlisted journals', { skip: !fixture }, async () => {
+  const { createHash } = await import('node:crypto');
+  const index = JSON.parse(fs.readFileSync(path.join(fixture, 'workspace.json')));
+  const members = Object.fromEntries(Object.keys(index.files).map(name => [name, fs.readFileSync(path.join(fixture, name))]));
+  const extra = new TextEncoder().encode('safe exact member');
+  Object.defineProperty(members, '__proto__', { value: extra, enumerable: true });
+  Object.defineProperty(index.files, '__proto__', { value: createHash('sha256').update(extra).digest('hex'), enumerable: true });
+  const workspace = await openWorkspace(new TextEncoder().encode(JSON.stringify(index)), members);
+  const snapshot = workspace.export();
+  assert.deepEqual(snapshot.members.__proto__, extra);
+  const reopened = await openWorkspace(snapshot.indexBytes, snapshot.members);
+  reopened.close();
+  workspace.close();
+  await assert.rejects(openWorkspace(snapshot.indexBytes, { ...snapshot.members, 'store.sqlite-wal': extra }), /unlisted/);
+});

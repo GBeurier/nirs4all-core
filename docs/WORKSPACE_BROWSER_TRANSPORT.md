@@ -61,3 +61,18 @@ quantiles and signed state. The resulting Archive V2 can be reopened on CPU with
 a complete numeric source, one finite target and valid truth masks are required;
 overlap with training influence is refused. This extends the existing calibration
 API without changing its native archive schema or ABI.
+
+Integrity validation now uses a closed file inventory: SQLite WAL/SHM files and
+unlisted members are refused. The Python gateway copies verified bytes into a
+private snapshot before opening the SDK store, compares the native ledger with
+SQL run/pipeline/chain/prediction fields and Parquet arrays and provenance, and
+keeps the snapshot alive until the workspace closes. A changed source index
+cannot be exported by an already opened workspace.
+
+CPU loading of a browser tuning study also verifies the complete DAG checkpoint
+against its original prepared execution plan, envelope, request and native
+selection, and checks the Methods N4MOPT configuration and terminal history.
+`dag_ml.validate_host_hpo_snapshot(plan, envelope, request, checkpoint)` is the
+native validation entry point; it accepts only a complete terminal budget and
+cannot ask, tell or execute an operator. This validation requires the matching
+DAG Python binding; no optimizer continuation on CPU is promised.
