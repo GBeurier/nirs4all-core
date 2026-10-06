@@ -1,4 +1,3 @@
-export { NativePipeline, runPipeline } from './native-pipeline.js';
 export { runBrowserPipeline, loadBrowserPipeline, predictBrowserPipeline, BrowserNativePipeline } from './browser-native-pipeline.js';
 export { openExperiment } from './result-view.js';
 export type { ExperimentResult, NativePredictionRow, NativeResultReport } from './result-view.js';

@@ -1,4 +1,3 @@
-export { NativePipeline, runPipeline } from './native-pipeline.js';
 export { runBrowserPipeline, loadBrowserPipeline, predictBrowserPipeline, BrowserNativePipeline } from './browser-native-pipeline.js';
 import { parse as parseYaml } from 'yaml';
 import { NATIVE_X_AUGMENTATION_CLASS, parseTrainAugmentation } from './native-augmentation.js';
