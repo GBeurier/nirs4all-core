@@ -6,7 +6,9 @@ use std::path::Path;
 use dag_ml_core::{DataBinding, NodeId, Phase, TrainingDataIdentity, TrainingRequest};
 use serde_json::{json, Value};
 
-pub use crate::native_pipeline_contract::{validate_pipeline, NativePipelineRecipe, NativePipelineStep};
+pub use crate::native_pipeline_contract::{
+    validate_pipeline, NativePipelineRecipe, NativePipelineStep,
+};
 
 use crate::io_training::{CanonicalPlsProfile, DatasetPackage, DatasetPackageMethodsProvider};
 
