@@ -10,7 +10,7 @@
   browser. Reject unsupported profiles before training or state import.
 - Open, query, predict, export and import modern SDK workspace snapshots through
   validated Python, R and MATLAB/Octave commands with bounded process lifetime.
-- Require DAG-ML 0.3.38, IO 0.2.6 and Methods 1.3.4; preserve Data 0.2.13,
+- Require DAG-ML 0.3.39, IO 0.2.6 and Methods 1.3.4; preserve Data 0.2.13,
   Formats 0.2.11 and the Methods ABI 2.17.
 
 See [native pipeline](docs/native_pipeline_contract.md),
