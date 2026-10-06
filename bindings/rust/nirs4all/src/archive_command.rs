@@ -51,6 +51,12 @@ fn options(
             | "dataset-compatible-schemas"
             | "dataset-u07-sources"
             | "multimodal-replay-inputs"
+            | "native-multimodal-run"
+            | "native-multimodal-load"
+            | "native-multimodal-predict"
+            | "native-multimodal-export"
+            | "pipeline-retrain"
+            | "native-multimodal-retrain"
             | "pipeline-run"
             | "pipeline-export"
             | "pipeline-load"
@@ -111,8 +117,12 @@ fn options(
             "small-sample-policy",
             "output",
         ],
-        "pipeline-export" => &["input", "output", "destination"],
-        "pipeline-run" | "pipeline-load" | "pipeline-predict" => {
+        "pipeline-export" | "native-multimodal-export" => &["input", "output", "destination"],
+        "native-multimodal-run"
+        | "native-multimodal-load"
+        | "native-multimodal-predict"
+        | "native-multimodal-retrain" => &["input", "output", "methods-library", "run-id"],
+        "pipeline-run" | "pipeline-load" | "pipeline-predict" | "pipeline-retrain" => {
             &["input", "output", "source-id", "methods-library", "run-id"]
         }
         "workflow-run" => &[
@@ -647,10 +657,55 @@ fn execute(command: &str, values: &BTreeMap<String, OsString>) -> Result<()> {
                 .map_err(|error| format!("experiment validation refused: {error}"))?;
         return emit_json(values, &serde_json::to_value(experiment.native)?);
     }
-    if command.starts_with("pipeline-") {
+    if command.starts_with("pipeline-") || command.starts_with("native-multimodal-") {
         let record: Value =
             serde_json::from_str(&read_json_transport(Path::new(required(values, "input")?))?)?;
         let result = match command {
+            "pipeline-retrain" | "native-multimodal-retrain" => {
+                if record.as_object().is_none_or(|fields| {
+                    fields.len() != 2
+                        || !fields.contains_key("model")
+                        || !fields.contains_key("dataset")
+                }) {
+                    return Err("native retrain requires exactly model and dataset".into());
+                }
+                let model = &record["model"];
+                let library = Path::new(required(values, "methods-library")?);
+                let run_id = text_option(values, "run-id")?;
+                if command == "pipeline-retrain" {
+                    crate::pipeline_workflow::validate_pipeline(model)?;
+                    crate::pipeline_workflow::run_pipeline(
+                        &json!({"dataset":record["dataset"], "pipeline":model["config"]["pipeline"]}),
+                        model["config"]["source_id"]
+                            .as_str()
+                            .ok_or("Invalid native source ID")?,
+                        library,
+                        run_id,
+                    )?
+                } else {
+                    crate::multimodal_workflow::validate_multimodal(model)?;
+                    crate::multimodal_workflow::run_multimodal(
+                        &json!({"dataset":record["dataset"], "pipeline":model["config"]["pipeline"],
+                            "source_policies":model["config"]["source_policies"]}),
+                        library,
+                        run_id,
+                    )?
+                }
+            }
+            "native-multimodal-run" => crate::multimodal_workflow::run_multimodal(
+                &record,
+                Path::new(required(values, "methods-library")?),
+                text_option(values, "run-id")?,
+            )?,
+            "native-multimodal-predict" => crate::multimodal_workflow::predict_multimodal(
+                &record,
+                Path::new(required(values, "methods-library")?),
+                text_option(values, "run-id")?,
+            )?,
+            "native-multimodal-load" => {
+                crate::multimodal_workflow::validate_multimodal(&record)?;
+                record
+            }
             "pipeline-run" => crate::pipeline_workflow::run_pipeline(
                 &record,
                 text_option(values, "source-id")?,
@@ -661,8 +716,12 @@ fn execute(command: &str, values: &BTreeMap<String, OsString>) -> Result<()> {
                 crate::pipeline_workflow::validate_pipeline(&record)?;
                 record
             }
-            "pipeline-export" => {
-                crate::pipeline_workflow::validate_pipeline(&record)?;
+            "pipeline-export" | "native-multimodal-export" => {
+                if command == "pipeline-export" {
+                    crate::pipeline_workflow::validate_pipeline(&record)?;
+                } else {
+                    crate::multimodal_workflow::validate_multimodal(&record)?;
+                }
                 let path = Path::new(required(values, "destination")?);
                 let parent = path
                     .parent()

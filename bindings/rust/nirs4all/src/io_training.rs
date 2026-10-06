@@ -62,6 +62,7 @@ pub struct DatasetPackageMethodsProvider {
     external_envelope: ExternalDataPlanEnvelope,
     relations: SampleRelationSet,
     source_id: String,
+    target_masks: Option<BTreeMap<String, Vec<bool>>>,
     handles: Mutex<ProviderHandles>,
 }
 
@@ -69,7 +70,15 @@ impl DatasetPackageMethodsProvider {
     /// Select one source from a dense numeric package. Fusion, N-D tensors and
     /// named processing stacks remain fail-closed in the IO owner.
     pub fn new(package: &DatasetPackage, source_id: &str) -> Result<Self, String> {
-        Self::for_product_pipeline(package, source_id, false)
+        let result = Self::for_product_pipeline(package, source_id, false)?;
+        if result
+            .target_masks
+            .as_ref()
+            .is_some_and(|rows| rows.values().any(|row| row.contains(&false)))
+        {
+            return Err("Legacy complete-target workflow refuses partial target masks".into());
+        }
+        Ok(result)
     }
 
     pub(crate) fn for_product_pipeline(
@@ -77,11 +86,15 @@ impl DatasetPackageMethodsProvider {
         source_id: &str,
         classification: bool,
     ) -> Result<Self, String> {
-        if package.task_type != "regression"
-            && !(classification && package.task_type == "classification")
+        if package.task_type
+            != if classification {
+                "classification"
+            } else {
+                "regression"
+            }
         {
             return Err(format!(
-                "Core Methods package training requires task_type=regression, got `{}`",
+                "Core native pipeline role/task_type disagree, got `{}`",
                 package.task_type
             ));
         }
@@ -97,8 +110,47 @@ impl DatasetPackageMethodsProvider {
                 .as_ref()
                 .ok_or("Core Methods package training requires coordinator relations")?,
         )?;
+        let mut target_masks = None;
+        for audit in &package.audits {
+            if let Some(mask) = audit.get("target_mask").filter(|mask| !mask.is_null()) {
+                let ids: Vec<String> = serde_json::from_value(audit["input_sample_ids"].clone())
+                    .map_err(|e| e.to_string())?;
+                let rows = mask["values"]
+                    .as_array()
+                    .ok_or("Invalid native target mask rows")?;
+                if rows.len() != ids.len() {
+                    return Err("Native mask/sample dimensions disagree".into());
+                }
+                let mut keyed = BTreeMap::new();
+                for (id, row) in ids.into_iter().zip(rows) {
+                    let cells = if let Some(value) = row.as_bool() {
+                        vec![value]
+                    } else {
+                        row.as_array()
+                            .ok_or("Invalid native target mask row")?
+                            .iter()
+                            .map(|value| value.as_bool().ok_or("Invalid native target mask cell"))
+                            .collect::<Result<Vec<_>, _>>()?
+                    };
+                    if cells.len() != provider.target_names().len()
+                        || keyed.insert(id, cells).is_some()
+                    {
+                        return Err("Native target mask schema or identity mismatch".into());
+                    }
+                }
+                if keyed.len() != relations.records.len()
+                    || relations
+                        .records
+                        .iter()
+                        .any(|r| !keyed.contains_key(r.sample_id.as_str()))
+                {
+                    return Err("Native target mask identities disagree with provider".into());
+                }
+                target_masks = Some(keyed);
+            }
+        }
         let relation_fingerprint = relations.fingerprint().map_err(|error| error.to_string())?;
-        let external_envelope = ExternalDataPlanEnvelope {
+        let mut external_envelope = ExternalDataPlanEnvelope {
             schema_version: 1,
             schema_fingerprint: provider.envelope().schema_fingerprint.clone(),
             plan_fingerprint: provider.envelope().plan_fingerprint.clone(),
@@ -108,6 +160,12 @@ impl DatasetPackageMethodsProvider {
             coordinator_relations: Some(relations.clone()),
             predict_cohort: None,
         };
+        if let Some(masks) = &target_masks {
+            use sha2::{Digest, Sha256};
+            let identity = serde_json::to_vec(&serde_json::json!({"target_content_fingerprint":external_envelope.target_content_fingerprint,"target_names":provider.target_names(),"observed_by_sample":masks})).map_err(|e|e.to_string())?;
+            external_envelope.target_content_fingerprint =
+                Some(format!("{:x}", Sha256::digest(identity)));
+        }
         external_envelope
             .validate()
             .map_err(|error| error.to_string())?;
@@ -116,6 +174,7 @@ impl DatasetPackageMethodsProvider {
             external_envelope,
             relations,
             source_id: source_id.to_string(),
+            target_masks,
             handles: Mutex::new(ProviderHandles::default()),
         })
     }
@@ -251,7 +310,25 @@ impl DatasetPackageMethodsProvider {
         } else {
             None
         };
+        let y_validity_masks = if require_targets {
+            self.target_masks
+                .as_ref()
+                .map(|masks| {
+                    sample_ids
+                        .iter()
+                        .map(|id| {
+                            masks.get(id.as_str()).cloned().ok_or_else(|| {
+                                "Native target mask missing sample identity".to_string()
+                            })
+                        })
+                        .collect::<Result<Vec<_>, _>>()
+                })
+                .transpose()?
+        } else {
+            None
+        };
         let dataset = MethodsPlsDataset {
+            y_validity_masks,
             sample_ids,
             x: MethodsPlsMatrix {
                 rows: feature.sample_ids.len(),

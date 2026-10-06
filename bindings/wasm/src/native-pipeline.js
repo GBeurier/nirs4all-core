@@ -36,7 +36,16 @@ export class NativePipeline {
     return JSON.parse(await invoke('pipeline-predict', record, merged, { methods_library: library(merged), run_id: `run:predict:${crypto.randomUUID()}` }));
   }
   async export(path) { await invoke('pipeline-export', this.#nativeJson, this.#options, { destination: path }); return path; }
-  async retrain(data, options = {}) { return runPipeline(data, this.config.pipeline, { ...this.#options, sourceId: this.config.source_id, ...options }); }
+  async retrain(value, options = {}) {
+    const merged = { ...this.#options, ...options };
+    const io = options.io ?? await import('@nirs4all/io-wasm/public-dataset');
+    const record = io.dataset(typeof value?.toJSON === 'function' ? value.toJSON() : value).toJSON();
+    const payload = `{"model":${this.#nativeJson},"dataset":${JSON.stringify(record)}}`;
+    const native = await invoke('pipeline-retrain', payload, merged, {
+      methods_library: library(merged), run_id: options.runId ?? `run:retrain:${crypto.randomUUID()}`,
+    });
+    return new NativePipeline(native, merged);
+  }
   static async load(nativeJson, options = {}) {
     if (typeof nativeJson !== 'string') throw new TypeError('Native pipeline load requires exact native JSON text');
     return new NativePipeline(await invoke('pipeline-load', nativeJson, options), options);

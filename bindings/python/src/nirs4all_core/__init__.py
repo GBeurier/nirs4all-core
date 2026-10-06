@@ -37,6 +37,7 @@ from ._conformal import (
 from ._dataset import Dataset, dataset
 from ._execution import PortableDataset, parse_execution_plan, run_portable_pipeline
 from ._native_pipeline import NativePipeline, run_pipeline
+from ._native_multimodal import NativeMultimodal, run_multimodal
 from ._multimodal import MultimodalPredictor
 from ._multimodal_archive import predict_multimodal_archive
 from ._n4m_roles import (
@@ -87,6 +88,8 @@ __aggregate_import__ = __name__
 
 __all__ = [
     "NativePipeline",
+    "NativeMultimodal",
+    "run_multimodal",
     "run_pipeline",
     "CORE_FACADE_EXPORTS",
     "EXECUTION_ENGINE_EXPORTS",
