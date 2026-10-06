@@ -44,6 +44,10 @@ test('WASM role nodes retain one N4ME each; grouped multi-target replay cannot f
 test('PLS-LDA classification uses native labels through CV/refit/replay', {skip:!qualified}, async()=>{
   const options={...await dependencies(),pipeline:{steps:[{method_id:'models.classification.pls_lda',role:'classifier',params:{n_components:1}}],candidates:[{}]}};
   const input=options.io.Dataset.fromSources({spectra:X},{sampleIds:X.map((_,i)=>`id:${i}`),y:X.map((_,i)=>Math.floor(i/2)%2),taskType:'classification',targetNames:['class']});
+  const unsafeLabels=options.io.Dataset.fromSources({spectra:X},{sampleIds:X.map((_,i)=>`id:${i}`),y:X.map((_,i)=>i%2 ? 16777217 : 0),taskType:'classification',targetNames:['class']});
+  const fit=options.methods.NativeEstimator.prototype.fit;
+  options.methods.NativeEstimator.prototype.fit=()=>{throw Error('FIT before label validation');};
+  try {await assert.rejects(runBrowserPipeline(unsafeLabels.toJSON(),options),/exactly representable/);} finally {options.methods.NativeEstimator.prototype.fit=fit;}
   const model=await runBrowserPipeline(input.toJSON(),options);
   const input2=options.io.Dataset.fromSources({spectra:X.slice(0,3)},{sampleIds:['new:0','new:1','new:2'],partitions:['predict','predict','predict'],targetNames:['class']});
   const original=options.methods.NativeEstimator.prototype.fit;
