@@ -35,6 +35,8 @@ test('WASM role nodes retain one N4ME each; grouped multi-target replay cannot f
     const bad=inference.toJSON();bad.dataset.sources[0].axis_units.wavelength='changed';
     await assert.rejects(restored.predict(bad,options),/schema differs/);
     await assert.rejects(runBrowserPipeline(input.toJSON(),{...options,pipeline:{...pipeline,candidates:[{alpha:'1'}]}}),/parameter type/);
+    const oversized=structuredClone(pipeline);oversized.steps[1].method_id='models.pls.pls_regression';oversized.steps[1].params.n_components=Number.MAX_SAFE_INTEGER+1;oversized.candidates=[{}];
+    await assert.rejects(runBrowserPipeline(input.toJSON(),{...options,pipeline:oversized}),/parameter type|method\/role/);
     const unsafe=structuredClone(pipeline);unsafe.steps[0].params.with_mean='yes';
     await assert.rejects(runBrowserPipeline(input.toJSON(),{...options,pipeline:unsafe}),/parameter type/);
   }finally{native.ccall=original;}
