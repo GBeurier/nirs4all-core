@@ -86,6 +86,17 @@ availability claim. Until the execution path exists, bindings must report the
 capability as unavailable instead of shipping a fake local implementation. See
 [`docs/OPERATORS.md`](docs/OPERATORS.md).
 
+## Native pipelines and workspace guides
+
+Core 0.4.4 adds separately qualified [native CPU pipelines](docs/native_pipeline_contract.md),
+[native multimodal workflows](docs/native_multimodal_contract.md) and
+[browser pipelines](docs/browser-native-pipeline.md). See the
+[browser/CPU transport and workspace contract](docs/WORKSPACE_BROWSER_TRANSPORT.md)
+and [R/MATLAB SDK workspace bridge](docs/workspace-session-bridge.md) for
+frozen replay, calibration and session requirements. The current
+[capability matrix](docs/CAPABILITIES.md) distinguishes these finite profiles
+from the historical portable runner and its retained limits.
+
 ## Pipeline definitions
 
 The lightweight parser accepts the same definition envelope as the full Python

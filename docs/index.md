@@ -109,6 +109,17 @@ COMPATIBILITY
 
 ```{toctree}
 :maxdepth: 2
+:caption: Native pipelines and workspace interoperability
+
+native_pipeline_contract
+native_multimodal_contract
+browser-native-pipeline
+WORKSPACE_BROWSER_TRANSPORT
+workspace-session-bridge
+```
+
+```{toctree}
+:maxdepth: 2
 :caption: Parity & releases
 
 PARITY
