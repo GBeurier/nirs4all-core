@@ -6,6 +6,12 @@ from copy import deepcopy
 from typing import Any
 
 CORE_FACADE_EXPORTS: tuple[str, ...] = (
+    "BrowserTuningResult",
+    "Workspace",
+    "load_browser_tuning",
+    "save_workspace",
+    "open_workspace",
+    "import_workspace",
     "NativePipeline",
     "NativeMultimodal",
     "run_multimodal",
