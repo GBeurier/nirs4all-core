@@ -21,10 +21,14 @@ export async function openWorkspace(indexBytes, members) {
       || !index.runs || !index.files || !Object.hasOwn(index.files, 'store.sqlite')) throw new TypeError('Unsupported SDK workspace snapshot');
   const native = await loadArchiveV2Native();
   let total = 0;
-  const inventory = {};
+  const inventory = Object.create(null);
+  Object.keys(index.files).forEach(member);
+  if (!members || Object.keys(members).length !== Object.keys(index.files).length
+      || Object.keys(members).some(name => !Object.hasOwn(index.files, name))) throw new TypeError('Workspace inventory includes unlisted members');
   if (Object.keys(index.files).length > 4096) throw new RangeError('Workspace inventory exceeds limits');
   for (const [path, digest] of Object.entries(index.files)) {
     member(path);
+    if (/-wal$|-shm$/u.test(path)) throw new TypeError("Workspace inventory contains an active SQLite journal");
     const value = members[path];
     if (!(value instanceof Uint8Array) || native.sha256_bytes(value) !== digest) throw new TypeError('Workspace member integrity mismatch');
     total += value.length;

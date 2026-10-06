@@ -88,3 +88,66 @@ def test_browser_native_state_cold_cpu_replay_and_identity_tamper(tmp_path):
     bad = json.loads(json.dumps(source["record"])); bad["config"]["metric"] = "mae"
     with pytest.raises(ValueError, match="study options"):
         load_browser_tuning(bad)
+
+@pytest.mark.skipif(not FIXTURE, reason="native model experiment qualification fixture required")
+@pytest.mark.parametrize("update", ["metric='fake_metric'", "val_score=-999", "model_name='foreign-model'", "task_type='classification'", "refit_context='foreign'", "n_samples=1"])
+def test_workspace_rejects_sql_projection_forgery_with_rehashed_file(tmp_path, update):
+    import hashlib
+    import sqlite3
+    root = tmp_path / "workspace"
+    save_workspace([FIXTURE], root).close()
+    with sqlite3.connect(root / "store.sqlite") as writer:
+        writer.execute("UPDATE predictions SET " + update)
+    writer.close()
+    index_path = root / "workspace.json"
+    index = json.loads(index_path.read_text())
+    index["files"]["store.sqlite"] = hashlib.sha256((root / "store.sqlite").read_bytes()).hexdigest()
+    index_path.write_text(json.dumps(index))
+    with pytest.raises(ValueError, match="metadata|provenance"):
+        open_workspace(root)
+
+
+@pytest.mark.skipif(not FIXTURE, reason="native model experiment qualification fixture required")
+def test_workspace_rejects_unlisted_live_wal_and_changed_export_index(tmp_path):
+    import sqlite3
+    root = tmp_path / "workspace"
+    workspace = save_workspace([FIXTURE], root)
+    with sqlite3.connect(root / "store.sqlite") as writer:
+        writer.execute("PRAGMA journal_mode=WAL")
+        writer.execute("PRAGMA wal_autocheckpoint=0")
+        writer.execute("UPDATE predictions SET metric='wal_forged_metric'")
+        writer.commit()
+        with pytest.raises(ValueError, match="inventory"):
+            open_workspace(root)
+        with pytest.raises(ValueError, match="inventory"):
+            workspace.query_predictions(next(iter(workspace.index["runs"])))
+    workspace.close()
+    # Closed reader owns no journal on the source. The index is itself immutable.
+    workspace = save_workspace([FIXTURE], tmp_path / "second")
+    index = json.loads((workspace.path / "workspace.json").read_text())
+    index["sdk_schema_version"] = 999
+    (workspace.path / "workspace.json").write_text(json.dumps(index))
+    with pytest.raises(ValueError, match="index changed"):
+        workspace.export(tmp_path / "forged.n4w")
+    assert not (tmp_path / "forged.n4w").exists()
+    workspace.close()
+
+
+@pytest.mark.skipif(not BROWSER, reason="real browser-produced package required")
+@pytest.mark.parametrize("mutation", ["selected", "score", "coupled_metric", "checkpoint_score", "optimizer_bytes"])
+def test_browser_loader_rejects_forged_provenance(mutation):
+    source = json.loads(Path(BROWSER).read_text())["record"]
+    if mutation == "selected":
+        source["search"]["selected_params"] = {}
+    elif mutation == "score":
+        source["search"]["trials"][0]["score"] = -999
+    elif mutation == "coupled_metric":
+        source["config"]["metric"] = source["contracts"]["request"]["metric"] = "mae"
+    elif mutation == "checkpoint_score":
+        source["snapshot"]["committed"]["trials"][0]["evidence"]["score"] = -999
+    else:
+        source["snapshot"]["n4mopt"][0] ^= 1
+    from dag_ml import DagMlRuntimeError
+    from n4m._errors import N4MError
+    with pytest.raises((ValueError, DagMlRuntimeError, N4MError)):
+        load_browser_tuning(source)
