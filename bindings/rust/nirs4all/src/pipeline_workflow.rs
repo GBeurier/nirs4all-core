@@ -89,6 +89,28 @@ pub fn native_pipeline_training_request(
         }
         ids.push(id);
     }
+    request["campaign"]["metadata"]["native_pipeline_target_names"] =
+        request["options"]["outputs"][0]["target_names"].clone();
+    if let Some(index) = recipe
+        .steps
+        .last()
+        .and_then(|step| step.params.get("native_target_index"))
+    {
+        let index = index
+            .as_u64()
+            .and_then(|value| usize::try_from(value).ok())
+            .ok_or("native_target_index requires addressable nonnegative integer")?;
+        for key in ["target_names", "target_units", "class_labels"] {
+            let values = request["options"]["outputs"][0][key]
+                .as_array()
+                .ok_or("Invalid native output target schema")?;
+            let value = values
+                .get(index)
+                .ok_or("native_target_index exceeds declared targets")?
+                .clone();
+            request["options"]["outputs"][0][key] = json!([value]);
+        }
+    }
     if classification {
         if request["options"]["outputs"][0]["target_names"]
             .as_array()
@@ -181,10 +203,8 @@ pub fn native_pipeline_training_request(
         request["campaign"]["split_invocation"]["id"] = json!("native:declared-folds");
     }
     if dependent {
-        for policy in ["leakage_policy"] {
-            request["campaign"][policy]["split_unit"] = json!("group");
-            request["campaign"][policy]["require_group_ids"] = json!(true);
-        }
+        request["campaign"]["leakage_policy"]["split_unit"] = json!("group");
+        request["campaign"]["leakage_policy"]["require_group_ids"] = json!(true);
         request["campaign"]["split_invocation"]["leakage_policy"] =
             request["campaign"]["leakage_policy"].clone();
     }
@@ -196,7 +216,10 @@ pub fn native_pipeline_training_request(
         .map(|r| r.sample_id.to_string())
         .collect::<Vec<_>>());
     for candidate in &recipe.candidates {
-        if candidate.contains_key("method_id") || candidate.contains_key("unsafe_flags") {
+        if candidate.contains_key("method_id")
+            || candidate.contains_key("unsafe_flags")
+            || candidate.contains_key("native_target_index")
+        {
             return Err("candidate parameters cannot override method identity or safety".into());
         }
     }
@@ -241,6 +264,16 @@ pub fn run_pipeline(
     library: &Path,
     run_id: &str,
 ) -> Result<Value, String> {
+    run_pipeline_with_contract(record, source_id, library, run_id, None)
+}
+
+pub(crate) fn run_pipeline_with_contract(
+    record: &Value,
+    source_id: &str,
+    library: &Path,
+    run_id: &str,
+    contract: Option<&Value>,
+) -> Result<Value, String> {
     if record
         .as_object()
         .is_none_or(|o| o.len() != 2 || !o.contains_key("dataset") || !o.contains_key("pipeline"))
@@ -249,11 +282,19 @@ pub fn run_pipeline(
     }
     let recipe: NativePipelineRecipe =
         serde_json::from_value(record["pipeline"].clone()).map_err(|e| e.to_string())?;
-    let dataset = nirs4all_io_crate::core::public_dataset::matrix_dataset_package(
+    let (dataset, _) = nirs4all_io_crate::core::public_dataset::masked_matrix_dataset_package(
         &record["dataset"],
         source_id,
     )?;
-    let request = native_pipeline_training_request(&dataset, source_id, &recipe, library)?;
+    let mut request = native_pipeline_training_request(&dataset, source_id, &recipe, library)?;
+    if let Some(contract) = contract {
+        request
+            .campaign
+            .metadata
+            .insert("native_multimodal_contract".into(), contract.clone());
+        request.request_fingerprint = request.compute_fingerprint().map_err(|e| e.to_string())?;
+        request.validate().map_err(|e| e.to_string())?;
+    }
     let provider = DatasetPackageMethodsProvider::for_product_pipeline(
         &dataset,
         source_id,
@@ -303,7 +344,7 @@ pub fn predict_pipeline(record: &Value, library: &Path, run_id: &str) -> Result<
         .output_bindings
         .first()
         .ok_or("missing pipeline output")?;
-    let composition = crate::native_methods_replay::compose_methods_matrix_predict(
+    let mut composition = crate::native_methods_replay::compose_methods_matrix_predict(
         &package,
         crate::MethodsArchiveMatrixPredictRequest {
             sample_ids,
@@ -320,6 +361,18 @@ pub fn predict_pipeline(record: &Value, library: &Path, run_id: &str) -> Result<
         true,
     )
     .map_err(|e| e.to_string())?;
+    if let Some(names) = package
+        .template
+        .campaign
+        .metadata
+        .get("native_pipeline_target_names")
+    {
+        let names: Vec<String> =
+            serde_json::from_value(names.clone()).map_err(|e| e.to_string())?;
+        for rows in composition.input.methods_inputs.values_mut() {
+            rows.target_names = names.clone();
+        }
+    }
     let replay =
         crate::native_methods_replay::replay_methods_predictor_package(&package, composition.input)
             .map_err(|e| e.to_string())?;

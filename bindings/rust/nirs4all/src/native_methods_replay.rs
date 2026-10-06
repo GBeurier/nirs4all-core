@@ -220,6 +220,7 @@ fn methods_dataset_from_json(
         .collect::<dag_ml_core::Result<Vec<_>>>()
         .map_err(|error| replay_error(format!("DAG-ML rejected {label}: {error}")))?;
     let dataset = MethodsPlsDataset {
+        y_validity_masks: None,
         sample_ids,
         x: matrix_from_rows(input.x, &format!("{label}.x"))?,
         y: None,
@@ -803,6 +804,7 @@ pub(crate) fn compose_methods_matrix_predict(
         ))
     })?;
     let dataset = MethodsPlsDataset {
+        y_validity_masks: None,
         sample_ids: sample_ids.clone(),
         x,
         y: None,
@@ -1574,6 +1576,7 @@ mod json_tests {
         };
         request.request_fingerprint = request.compute_fingerprint().unwrap();
         let mut dataset = MethodsPlsDataset {
+            y_validity_masks: None,
             sample_ids: vec![SampleId::new("sample:1").unwrap()],
             x: MethodsPlsMatrix {
                 values: vec![2.0],

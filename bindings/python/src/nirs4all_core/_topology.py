@@ -7,6 +7,8 @@ from typing import Any
 
 CORE_FACADE_EXPORTS: tuple[str, ...] = (
     "NativePipeline",
+    "NativeMultimodal",
+    "run_multimodal",
     "run_pipeline",
     "TuningResult",
     "load_tuning",

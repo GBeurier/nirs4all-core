@@ -25,6 +25,7 @@ mod durability;
 mod formats_io;
 pub mod generation;
 mod io_training;
+pub mod multimodal_workflow;
 mod n4m_roles;
 mod native_methods_replay;
 pub mod native_pipeline_contract;
