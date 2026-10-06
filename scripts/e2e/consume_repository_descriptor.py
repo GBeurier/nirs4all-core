@@ -528,13 +528,50 @@ console.log(JSON.stringify({
     return _execution_evidence("bindings/wasm", payload["actual"], {"node": payload.get("node")})
 
 
+def _preprocessing_contract(steps: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Compare the supported stateless operators' effective arguments.
+
+    R spells out SNV defaults; Python/WASM encode them as an empty list.
+    WASM also records an empty fitted state for stateless operations. Raw
+    metadata remains in the runtime evidence; only these known encodings are
+    translated here. Other operators retain their complete metadata.
+    """
+    contract = []
+    for step in steps:
+        kind = step.get("type")
+        if kind not in {"StandardNormalVariate", "SavitzkyGolay"}:
+            contract.append(step)
+            continue
+        if set(step) not in ({"type", "params"}, {"type", "params", "state"}):
+            raise AssertionError(f"Unexpected stateless preprocessing metadata: {step}")
+        if "state" in step and step["state"] != []:
+            raise AssertionError(f"Stateless preprocessing must have empty fitted state: {step}")
+        params = step["params"]
+        if kind == "StandardNormalVariate":
+            if params == []:
+                params = {"ddof": 0, "with_mean": True, "with_std": True}
+            elif not (
+                isinstance(params, dict)
+                and set(params) == {"ddof", "with_mean", "with_std"}
+                and type(params["ddof"]) is int
+                and params["ddof"] >= 0
+                and type(params["with_mean"]) is bool
+                and type(params["with_std"]) is bool
+            ):
+                raise AssertionError(f"Invalid SNV preprocessing metadata: {step}")
+        contract.append({"type": kind, "params": params})
+    return contract
+
+
 def _strict_prediction_comparison(left: dict[str, Any], right: dict[str, Any]) -> dict[str, Any]:
     split_match = {
         "kind": left["split"].get("kind") == right["split"].get("kind"),
         "train_indices": left["split"].get("trainIndices") == right["split"].get("trainIndices"),
         "test_indices": left["split"].get("testIndices") == right["split"].get("testIndices"),
     }
-    preprocessing_match = left.get("preprocessing") == right.get("preprocessing")
+    left_preprocessing = _preprocessing_contract(left["preprocessing"])
+    right_preprocessing = _preprocessing_contract(right["preprocessing"])
+    preprocessing_match = left_preprocessing == right_preprocessing
     selected_n_components_match = int(left["selected"]["n_components"]) == int(right["selected"]["n_components"])
     targets_abs_max = _max_abs_diff(left["targets"], right["targets"])
 
@@ -582,6 +619,7 @@ def _strict_prediction_comparison(left: dict[str, Any], right: dict[str, Any]) -
         "tolerance": EXECUTION_TOLERANCE,
         "split_match": split_match,
         "preprocessing_match": preprocessing_match,
+        "preprocessing_contract": {"left": left_preprocessing, "right": right_preprocessing},
         "selected_n_components_match": selected_n_components_match,
         "targets_abs_max": targets_abs_max,
         "prediction_abs_max": prediction_abs_max,

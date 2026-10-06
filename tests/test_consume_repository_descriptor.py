@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 import shutil
@@ -68,6 +69,67 @@ def _runtime(surface: str, predictions: list[float]) -> dict[str, object]:
 
 
 class RepositoryDescriptorConsumerTests(unittest.TestCase):
+    def test_stateless_preprocessing_host_encodings_preserve_raw_evidence(self) -> None:
+        python = _runtime("bindings/python", [1.25, 2.25])
+        python["preprocessing"] = [
+            {"type": "StandardNormalVariate", "params": []},
+            {"type": "SavitzkyGolay", "params": [11, 3, 0, 4, 0]},
+        ]
+        r = copy.deepcopy(python)
+        r["surface"] = "nirs4all-r"
+        r["preprocessing"][0]["params"] = {"ddof": 0, "with_mean": True, "with_std": True}
+        wasm = copy.deepcopy(python)
+        wasm["surface"] = "bindings/wasm"
+        for step in wasm["preprocessing"]:
+            step["state"] = []
+        before = copy.deepcopy([python, r, wasm])
+        for left, right in ((python, r), (python, wasm), (r, wasm)):
+            with self.subTest(surfaces=[left["surface"], right["surface"]]):
+                self.assertEqual(consumer._strict_prediction_comparison(left, right)["status"], "passed")
+        self.assertEqual([python, r, wasm], before)
+
+    def test_stateless_projection_rejects_changed_effective_preprocessing(self) -> None:
+        baseline = _runtime("bindings/python", [1.25, 2.25])
+        baseline["preprocessing"] = [
+            {"type": "StandardNormalVariate", "params": []},
+            {"type": "SavitzkyGolay", "params": [11, 3, 0, 4, 0]},
+        ]
+        for key, value in (("ddof", 1), ("with_mean", False), ("with_std", False)):
+            changed = copy.deepcopy(baseline)
+            params = {"ddof": 0, "with_mean": True, "with_std": True, key: value}
+            changed["preprocessing"][0]["params"] = params
+            with self.subTest(parameter=key):
+                self.assertEqual(consumer._strict_prediction_comparison(baseline, changed)["status"], "failed")
+        for index, value in enumerate((9, 2, 1, 0, 1)):
+            changed = copy.deepcopy(baseline)
+            changed["preprocessing"][1]["params"][index] = value
+            with self.subTest(savgol_parameter=index):
+                self.assertEqual(consumer._strict_prediction_comparison(baseline, changed)["status"], "failed")
+        changed = copy.deepcopy(baseline)
+        changed["preprocessing"].reverse()
+        self.assertEqual(consumer._strict_prediction_comparison(baseline, changed)["status"], "failed")
+
+    def test_stateless_projection_refuses_unknown_metadata_and_fitted_state(self) -> None:
+        for kind, params in (("StandardNormalVariate", []), ("SavitzkyGolay", [11, 3, 0, 4, 0])):
+            for extra in ({"state": [1]}, {"state": None}, {"foreign": []}):
+                with self.subTest(kind=kind, extra=extra):
+                    with self.assertRaises(AssertionError):
+                        consumer._preprocessing_contract([{"type": kind, "params": params, **extra}])
+        for params in ({}, {"ddof": 0, "with_mean": True},
+                       {"ddof": False, "with_mean": True, "with_std": True},
+                       {"ddof": 0, "with_mean": 1, "with_std": True},
+                       {"ddof": -1, "with_mean": True, "with_std": True}):
+            with self.subTest(params=params):
+                with self.assertRaises(AssertionError):
+                    consumer._preprocessing_contract([{"type": "StandardNormalVariate", "params": params}])
+
+    def test_other_preprocessing_retains_full_state_comparison(self) -> None:
+        left = _runtime("bindings/python", [1.25, 2.25])
+        left["preprocessing"] = [{"type": "MSC", "params": [], "state": [1, 2]}]
+        right = copy.deepcopy(left)
+        right["preprocessing"][0]["state"][0] = 2
+        self.assertEqual(consumer._strict_prediction_comparison(left, right)["status"], "failed")
+
     def test_find_rscript_honors_environment_override(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             configured = Path(tmp) / "r toolchain" / "Rscript"
