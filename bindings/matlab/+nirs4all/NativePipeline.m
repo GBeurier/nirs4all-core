@@ -23,7 +23,7 @@ classdef NativePipeline
             if isempty(options.methodsLibrary), options.methodsLibrary = getenv('N4M_LIB_PATH'); end
             if isa(dataset, 'nirs4all.PublicDataset'), dataset = dataset.toJSON();
             elseif ~ischar(dataset), dataset = jsonencode(dataset); end
-            record = ['{"dataset":' dataset ',"pipeline":' jsonencode(recipe) '}'];
+            record = ['{"dataset":' dataset ',"pipeline":' nirs4all.nativeRecipeJSON(recipe) '}'];
             [~, id] = fileparts(tempname());
             flags = struct('source_id', options.sourceId, 'methods_library', options.methodsLibrary, 'run_id', ['run:matlab:pipeline:' id]);
             [~, nativeJson, cli] = nirs4all.workflowCli(options.cli, 'pipeline-run', record, flags);
@@ -51,7 +51,17 @@ classdef NativePipeline
             nirs4all.workflowCli(self.coreCli, 'pipeline-export', self.nativeJson, struct('destination', path));
         end
         function model = retrain(self, dataset, varargin)
-            model = nirs4all.NativePipeline.fit(self.config.pipeline, dataset, 'sourceId', self.config.source_id, 'cli', self.coreCli, varargin{:});
+            p = inputParser;
+            addParameter(p, 'methodsLibrary', getenv('N4M_LIBRARY_PATH'));
+            parse(p, varargin{:}); options = p.Results;
+            if isempty(options.methodsLibrary), options.methodsLibrary = getenv('N4M_LIB_PATH'); end
+            if isa(dataset, 'nirs4all.PublicDataset'), dataset = dataset.toJSON();
+            elseif ~ischar(dataset), dataset = jsonencode(dataset); end
+            record = ['{"model":' self.nativeJson ',"dataset":' dataset '}'];
+            [~, id] = fileparts(tempname());
+            [~, nativeJson, cli] = nirs4all.workflowCli(self.coreCli, 'pipeline-retrain', record, ...
+                struct('methods_library', options.methodsLibrary, 'run_id', ['run:matlab:retrain:' id]));
+            model = nirs4all.NativePipeline(nativeJson, cli);
         end
     end
 end
