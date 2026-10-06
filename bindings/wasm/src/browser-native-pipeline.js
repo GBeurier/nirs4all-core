@@ -27,6 +27,13 @@ async function dependencies(options) {
   requireValue(typeof native.native_pipeline_fragments_json === 'function' && typeof deps.dag.native_estimator_descriptor_json === 'function', 'Native pipeline requires the matching Core/DAG browser cohort');
   return {...deps, native, Controller: adapter.N4mWasmEstimatorControllers};
 }
+// Match IO's CPU DatasetPackage storage at the host boundary. Methods still
+// receives/owns its native matrix arithmetic; this is a dtype conversion only.
+function matrixStorage(dense) {
+  if (dense.task_type === 'classification' && dense.y) requireValue(dense.y.flat().every(label => Number.isSafeInteger(label) && Math.fround(label) === label), 'Classification IDs must be exactly representable integers before storage conversion');
+  const f32 = value => { const number = Math.fround(value); requireValue(Number.isFinite(number), 'Native dataset value exceeds finite float32 storage'); return number; };
+  return {...dense, X:dense.X.map(row => row.map(f32)), y:dense.y?.map(row => row.map(f32)) ?? null};
+}
 function registration(deps, dense, sourceId, targetNames) {
   const positions = new Map(dense.sample_ids.map((id, i) => [id, i]));
   const select = ids => ids.map(id => { const index = positions.get(id); requireValue(index !== undefined, 'Unknown native task sample'); return index; });
@@ -68,7 +75,7 @@ function foldSet(deps, dense, options) {
 export async function runBrowserPipeline(value, options = {}) {
   const recipe = boundedRecipe(options.pipeline), sourceId = options.sourceId ?? 'spectra', seed = options.seed ?? 91;
   requireValue(Number.isSafeInteger(seed) && seed >= 0 && Number.isSafeInteger(options.folds ?? 2) && (options.folds ?? 2) >= 2, 'Safe nonnegative seed and at least two folds required');
-  const deps = await dependencies(options), ds = deps.io.dataset(value), record = ds.toJSON(), dense = ds.toMatrixRegression(sourceId), raw = record.dataset;
+  const deps = await dependencies(options), ds = deps.io.dataset(value), record = ds.toJSON(), dense = matrixStorage(ds.toMatrixRegression(sourceId)), raw = record.dataset;
   requireValue(!dense.independent_unit_ids && !dense.repetition_ids, 'This browser profile requires sample/group identity, without repetition or independent-unit overrides');
   requireValue(dense.y && dense.partitions.every(partition => partition === 'train'), 'Native training requires observed targets and train rows');
   const classification = recipe.steps.at(-1).role === 'classifier';
@@ -136,7 +143,7 @@ export async function loadBrowserPipeline(text, options = {}) {
 export async function predictBrowserPipeline(model, value, options = {}) {
   requireValue(models.has(model), 'Expected a BrowserNativePipeline');
   const deps = await dependencies(options), {fragments} = models.get(model), pkg = JSON.parse(fragments.package_json), config = JSON.parse(fragments.config_json);
-  const ds = deps.io.dataset(value), record = ds.toJSON(), dense = ds.toMatrixRegression(config.source_id), raw = record.dataset;
+  const ds = deps.io.dataset(value), record = ds.toJSON(), dense = matrixStorage(ds.toMatrixRegression(config.source_id)), raw = record.dataset;
   requireValue(dense.y === null && dense.partitions.every(partition => partition === 'predict'), 'Prediction requires target-free predict rows');
   const sourceSchema = deps.io.publicSourceSchema(record, config.source_id);
   if (pkg.template.campaign.metadata.raw_source_schema) requireValue(workflowHashes(deps.digest)(sourceSchema) === workflowHashes(deps.digest)(pkg.template.campaign.metadata.raw_source_schema), 'Prediction source schema differs from training');
