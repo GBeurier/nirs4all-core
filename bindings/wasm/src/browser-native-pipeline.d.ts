@@ -11,6 +11,12 @@ export interface BrowserNativeDatasetRecord {
     y: object | null;
     groups: object | null;
     partitions: object;
+    target_names?: string[];
+    task_type?: 'regression' | 'classification' | null;
+    source_alignment?: 'strict' | 'left';
+    target_mask?: object | null;
+    independent_unit_ids?: string[];
+    repetition_ids?: string[];
   };
   origin_ids: string[];
   fold_ids: (string | null)[];
