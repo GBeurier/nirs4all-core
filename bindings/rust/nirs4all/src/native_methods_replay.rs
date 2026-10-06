@@ -85,8 +85,8 @@ pub struct MethodsArchiveMatrixPredictJsonRequest {
     pub diagnostics: BTreeMap<String, serde_json::Value>,
 }
 
-struct MethodsArchiveMatrixPredictComposition {
-    input: MethodsArchivePredictRequest,
+pub(crate) struct MethodsArchiveMatrixPredictComposition {
+    pub(crate) input: MethodsArchivePredictRequest,
     sample_ids: Vec<SampleId>,
     target_names: Vec<String>,
     output_binding_id: String,
@@ -683,9 +683,17 @@ fn require_exactly_one_matrix_data_requirement(
     Ok(())
 }
 
-fn compose_methods_archive_matrix_predict(
+pub(crate) fn compose_methods_archive_matrix_predict(
     package: &PortablePredictorPackage,
     input: MethodsArchiveMatrixPredictRequest,
+) -> Result<MethodsArchiveMatrixPredictComposition, NativeMethodsReplayError> {
+    compose_methods_matrix_predict(package, input, false)
+}
+
+pub(crate) fn compose_methods_matrix_predict(
+    package: &PortablePredictorPackage,
+    input: MethodsArchiveMatrixPredictRequest,
+    allow_class_labels: bool,
 ) -> Result<MethodsArchiveMatrixPredictComposition, NativeMethodsReplayError> {
     package.validate().map_err(|error| {
         replay_error(format!("DAG-ML rejected Core Archive V2 package: {error}"))
@@ -696,7 +704,8 @@ fn compose_methods_archive_matrix_predict(
         ));
     };
     if binding.prediction_source != PredictionSource::FinalRefit
-        || binding.prediction_kind != PredictionKind::RegressionPoint
+        || (binding.prediction_kind != PredictionKind::RegressionPoint
+            && !(allow_class_labels && binding.prediction_kind == PredictionKind::ClassLabel))
     {
         return Err(replay_error(
             "Archive V2 matrix prediction requires one final-refit regression-point binding",
@@ -1396,7 +1405,7 @@ fn validate_methods_replay_inputs(
     Ok(())
 }
 
-fn replay_methods_predictor_package(
+pub(crate) fn replay_methods_predictor_package(
     package: &PortablePredictorPackage,
     input: MethodsArchivePredictRequest,
 ) -> Result<TrainingReplayOutcome, NativeMethodsReplayError> {

@@ -45,7 +45,7 @@ test('public raw C-native archive load and cold WASM prediction retain native AB
   await assert.rejects(predict(workflow, badColumns, options), /schema differs/);
   const badAxes = structuredClone(dataset); badAxes.dataset.sources[0].axes = ['sample', 'feature'];
   await assert.rejects(predict(workflow, badAxes, options));
-  await assert.rejects(load(archiveBytes, { ...options, preprocessing: 'msc' }), /Only snv_savgol/);
+  await assert.rejects(load(archiveBytes, { ...options, preprocessing: 'msc' }), /raw or snv_savgol/);
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'nirs4all-cold-public-'));
   try {
     const copiedArchive = path.join(directory, 'model.n4a'); fs.writeFileSync(copiedArchive, archiveBytes);

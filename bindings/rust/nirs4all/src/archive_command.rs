@@ -51,6 +51,10 @@ fn options(
             | "dataset-compatible-schemas"
             | "dataset-u07-sources"
             | "multimodal-replay-inputs"
+            | "pipeline-run"
+            | "pipeline-export"
+            | "pipeline-load"
+            | "pipeline-predict"
             | "workflow-run"
             | "workflow-predict"
             | "workflow-load"
@@ -107,6 +111,10 @@ fn options(
             "small-sample-policy",
             "output",
         ],
+        "pipeline-export" => &["input", "output", "destination"],
+        "pipeline-run" | "pipeline-load" | "pipeline-predict" => {
+            &["input", "output", "source-id", "methods-library", "run-id"]
+        }
         "workflow-run" => &[
             "input",
             "source-id",
@@ -639,6 +647,42 @@ fn execute(command: &str, values: &BTreeMap<String, OsString>) -> Result<()> {
                 .map_err(|error| format!("experiment validation refused: {error}"))?;
         return emit_json(values, &serde_json::to_value(experiment.native)?);
     }
+    if command.starts_with("pipeline-") {
+        let record: Value =
+            serde_json::from_str(&read_json_transport(Path::new(required(values, "input")?))?)?;
+        let result = match command {
+            "pipeline-run" => crate::pipeline_workflow::run_pipeline(
+                &record,
+                text_option(values, "source-id")?,
+                Path::new(required(values, "methods-library")?),
+                text_option(values, "run-id")?,
+            )?,
+            "pipeline-load" => {
+                crate::pipeline_workflow::validate_pipeline(&record)?;
+                record
+            }
+            "pipeline-export" => {
+                crate::pipeline_workflow::validate_pipeline(&record)?;
+                let path = Path::new(required(values, "destination")?);
+                let parent = path
+                    .parent()
+                    .filter(|p| !p.as_os_str().is_empty())
+                    .unwrap_or_else(|| Path::new("."));
+                let mut file = tempfile::NamedTempFile::new_in(parent)?;
+                serde_json::to_writer(file.as_file_mut(), &record)?;
+                file.as_file_mut().sync_all()?;
+                file.persist_noclobber(path)?;
+                json!({"path":path})
+            }
+            "pipeline-predict" => crate::pipeline_workflow::predict_pipeline(
+                &record,
+                Path::new(required(values, "methods-library")?),
+                text_option(values, "run-id")?,
+            )?,
+            _ => unreachable!(),
+        };
+        return emit_json(values, &result);
+    }
     if command == "workflow-run" {
         return workflow_run(values);
     }
@@ -885,12 +929,16 @@ fn workflow_run(values: &BTreeMap<String, OsString>) -> Result<()> {
         serde_json::from_str(&read_json_transport(Path::new(required(values, "input")?))?)?;
     let source_id = text_option(values, "source-id")?;
     let components: Vec<u32> = serde_json::from_str(text_option(values, "components")?)?;
-    if values
+    let preprocessing_name = values
         .get("preprocessing")
-        .is_some_and(|value| value != "snv_savgol")
-    {
-        return Err("workflow currently supports preprocessing=snv_savgol".into());
-    }
+        .map(|value| value.to_str().ok_or("preprocessing must be UTF-8"))
+        .transpose()?
+        .unwrap_or("snv_savgol");
+    let preprocessing = match preprocessing_name {
+        "raw" => DenseRegressionPreprocessing::Raw,
+        "snv_savgol" => DenseRegressionPreprocessing::SnvSavitzkyGolay,
+        _ => return Err("workflow preprocessing must be raw or snv_savgol".into()),
+    };
     let dataset =
         nirs4all_io_crate::core::public_dataset::dense_dataset_package(&record, source_id)
             .map_err(|error| format!("IO dataset validation refused: {error}"))?;
@@ -899,12 +947,13 @@ fn workflow_run(values: &BTreeMap<String, OsString>) -> Result<()> {
         dataset: &dataset,
         source_id,
         components: &components,
-        preprocessing: DenseRegressionPreprocessing::SnvSavitzkyGolay,
+        preprocessing,
         methods_library_path: &library,
         archive_path: &archive_stage,
         run_id: text_option(values, "run-id")?,
     })
     .map_err(|error| format!("native workflow refused: {error}"))?;
+    let config = json!({"source_id": source_id, "components": components, "preprocessing": preprocessing_name});
     let results = staged_results(
         &outcome.training,
         &dataset,
@@ -923,7 +972,7 @@ fn workflow_run(values: &BTreeMap<String, OsString>) -> Result<()> {
             "winner_variant_id": outcome.training.selected_variant_id, "training_outcome": outcome.training,
             "model_archive": destinations.archive, "archive_id": outcome.archive.archive_id(),
             "archive_sha256": outcome.archive.archive_sha256(), "native_results_dir": destinations.results,
-            "config": {"source_id": source_id, "components": components, "preprocessing": "snv_savgol"},
+            "config": config,
             "numeric_storage": "float32",
         }),
     )?;

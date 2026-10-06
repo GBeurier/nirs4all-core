@@ -36,6 +36,7 @@ from ._conformal import (
 )
 from ._dataset import Dataset, dataset
 from ._execution import PortableDataset, parse_execution_plan, run_portable_pipeline
+from ._native_pipeline import NativePipeline, run_pipeline
 from ._multimodal import MultimodalPredictor
 from ._multimodal_archive import predict_multimodal_archive
 from ._n4m_roles import (
@@ -85,6 +86,8 @@ methods = LazyUpstream("methods")
 __aggregate_import__ = __name__
 
 __all__ = [
+    "NativePipeline",
+    "run_pipeline",
     "CORE_FACADE_EXPORTS",
     "EXECUTION_ENGINE_EXPORTS",
     "N4M_ROLE_PREFIX",

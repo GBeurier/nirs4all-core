@@ -6,6 +6,8 @@ from copy import deepcopy
 from typing import Any
 
 CORE_FACADE_EXPORTS: tuple[str, ...] = (
+    "NativePipeline",
+    "run_pipeline",
     "TuningResult",
     "load_tuning",
     "robustness",

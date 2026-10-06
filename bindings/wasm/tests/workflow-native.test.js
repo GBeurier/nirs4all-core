@@ -77,7 +77,7 @@ test('native candidates select OOF, refit, export, fresh replay and retrain', { 
     const loaded = await load(JSON.parse(fs.readFileSync(filename)));
     const rawLoaded = await load(loaded.archive, options);
     assert.deepEqual(rawLoaded.config, loaded.config);
-    await assert.rejects(load(loaded.archive, { ...options, preprocessing: 'msc' }), /Only snv_savgol/);
+    await assert.rejects(load(loaded.archive, { ...options, preprocessing: 'msc' }), /raw or snv_savgol/);
     methods.RolePipeline.prototype.fit = () => { throw new Error('Prediction must never fit'); };
     let replay;
     try { replay = await predict(loaded, heldout, options); }

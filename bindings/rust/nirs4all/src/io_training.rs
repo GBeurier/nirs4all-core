@@ -69,7 +69,17 @@ impl DatasetPackageMethodsProvider {
     /// Select one source from a dense numeric package. Fusion, N-D tensors and
     /// named processing stacks remain fail-closed in the IO owner.
     pub fn new(package: &DatasetPackage, source_id: &str) -> Result<Self, String> {
-        if package.task_type != "regression" {
+        Self::for_product_pipeline(package, source_id, false)
+    }
+
+    pub(crate) fn for_product_pipeline(
+        package: &DatasetPackage,
+        source_id: &str,
+        classification: bool,
+    ) -> Result<Self, String> {
+        if package.task_type != "regression"
+            && !(classification && package.task_type == "classification")
+        {
             return Err(format!(
                 "Core Methods package training requires task_type=regression, got `{}`",
                 package.task_type
@@ -410,6 +420,14 @@ pub fn canonical_pls_training_request(
     provider: &DatasetPackageMethodsProvider,
     profile: CanonicalPlsProfile,
 ) -> Result<TrainingRequest, String> {
+    base_regression_training_request(provider, profile, false)
+}
+
+pub(crate) fn base_regression_training_request(
+    provider: &DatasetPackageMethodsProvider,
+    profile: CanonicalPlsProfile,
+    allow_origin_relations: bool,
+) -> Result<TrainingRequest, String> {
     let mut sample_ids = Vec::new();
     let mut seen = BTreeSet::new();
     for relation in &provider.relations.records {
@@ -421,7 +439,10 @@ pub fn canonical_pls_training_request(
         if partitions.len() != 1 || partitions[0] != "partition:train" {
             return Err("canonical PLS training requires only train partition rows".into());
         }
-        if relation.is_augmented || relation.excluded || relation.origin_sample_id.is_some() {
+        if relation.is_augmented
+            || relation.excluded
+            || (!allow_origin_relations && relation.origin_sample_id.is_some())
+        {
             return Err(
                 "canonical PLS requires unaugmented, included, origin-free samples".to_string(),
             );
@@ -936,7 +957,7 @@ pub struct DatasetPackageMethodsConformalArchiveV2Outcome {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn execute_dataset_package_methods_training(
+pub(crate) fn execute_dataset_package_methods_training(
     provider: &DatasetPackageMethodsProvider,
     training_request: &TrainingRequest,
     outcome_id: &str,
@@ -957,6 +978,8 @@ fn execute_dataset_package_methods_training(
     let runtime = configure_methods_runtime_for_source(methods_library_path)
         .map_err(|error| error.to_string())?;
     let mut controllers = RuntimeControllerRegistry::new();
+    dag_ml_core::register_methods_estimator_controllers(&mut controllers, runtime.clone())
+        .map_err(|error| error.to_string())?;
     controllers
         .register(Box::new(MethodsPlsController::new(runtime.clone())))
         .map_err(|error| error.to_string())?;

@@ -1,7 +1,7 @@
 export interface WorkflowOptions {
   sourceId?: string;
   components?: number[];
-  preprocessing?: 'snv_savgol';
+  preprocessing?: 'raw' | 'snv_savgol';
   folds?: number;
   seed?: number;
   runId?: string;

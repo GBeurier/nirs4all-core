@@ -16,7 +16,7 @@ if ~isnumeric(counts) || numel(counts)<2 || numel(counts)>32 || any(~isfinite(co
         any(counts<1 | counts~=floor(counts) | counts>2147483647) || numel(unique(counts))~=numel(counts)
     error('nirs4all:Components', 'components requires 2 to 32 distinct positive i32 integers');
 end
-if ~strcmp(options.preprocessing, 'snv_savgol'), error('nirs4all:Preprocessing', 'Only snv_savgol is supported'); end
+if ~any(strcmp(options.preprocessing, {'raw', 'snv_savgol'})), error('nirs4all:Preprocessing', 'preprocessing must be raw or snv_savgol'); end
 flags = struct('source_id', options.sourceId, 'components', jsonencode(counts(:).'), ...
     'preprocessing', options.preprocessing, 'methods_library', options.methodsLibrary, ...
     'archive', options.archive, 'run_id', options.runId, 'results_directory', [options.archive '.results']);
