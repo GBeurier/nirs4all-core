@@ -1,0 +1,13 @@
+{
+  "command": [
+    "/mnt/c/Temp/n4a-core045-20261008/tooling-posix/octave",
+    "--quiet",
+    "--eval",
+    "addpath('bindings/matlab/tests'); smoke; workflow_native; tuning_native; conformal_native; result_view; native_runtime"
+  ],
+  "direct_command_exit_code": 0,
+  "started_at": "2026-10-08T02:30:37.472416+00:00",
+  "finished_at": "2026-10-08T02:30:51.511200+00:00",
+  "seconds": 14.038784191012383,
+  "pid": 3414655
+}

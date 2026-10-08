@@ -1,0 +1,18 @@
+...................ssssssuuuuuuuu.....uuuu.uuuu....uuuuu....uuu.uuuuu..u [ 24%]
+uuuu.uuuuu...uuu.uuuu..uuuuu.....uuuu.uu.uuuuuu.uuuu.uuuu.uuuuuuuuuu.uuu [ 34%]
+u.uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu [ 35%]
+uuuuuuuuuuuuuuuu...uuuuuuu.uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu [ 37%]
+uuuuuuuuuuuuuuuuuuuuuuuuuuu..uu..uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu [ 39%]
+uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu..uu..uu.uu..uuuuuuu..uu. [ 44%]
+...uuu.uuuuuuuuuuuu.uu..uuuu.uuu..............uuuu.....uuuuuuuuuuuuuuuuu [ 60%]
+uuuuuuuuuuu.......uuuuuu.uuuuu.uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu.....uuuuu [ 68%]
+u.uuuuu...uuuuuuuuuuuuuuuuuuuu........uuuuuu.......uu................... [ 89%]
+..................                                                       [100%]
+=========================== short test summary info ============================
+SKIPPED [1] bindings/python/tests/test_archive_live.py:138: set NIRS4ALL_CORE_LIVE_ARCHIVE_V2 and NIRS4ALL_CORE_LIVE_METHODS_LIBRARY to run the native witness
+SKIPPED [1] bindings/python/tests/test_archive_live.py:161: set NIRS4ALL_CORE_LIVE_ARCHIVE_V2 and NIRS4ALL_CORE_LIVE_METHODS_LIBRARY to run the native witness
+SKIPPED [1] bindings/python/tests/test_archive_live.py:191: set NIRS4ALL_CORE_LIVE_CONFORMAL_ARCHIVE_V2 and NIRS4ALL_CORE_LIVE_METHODS_LIBRARY to run the conformal child witness
+SKIPPED [1] bindings/python/tests/test_archive_live.py:263: set NIRS4ALL_CORE_LIVE_CONFORMAL_ARCHIVE_V2 and NIRS4ALL_CORE_LIVE_METHODS_LIBRARY to run the conformal child witness
+SKIPPED [1] bindings/python/tests/test_archive_matrix_live.py:33: set NIRS4ALL_CORE_LIVE_ARCHIVE_V2 and NIRS4ALL_CORE_LIVE_METHODS_LIBRARY to run the closed matrix witness
+SKIPPED [1] bindings/python/tests/test_archive_matrix_live.py:61: set NIRS4ALL_CORE_LIVE_ARCHIVE_V2 and NIRS4ALL_CORE_LIVE_METHODS_LIBRARY to run the closed matrix witness
+170 passed, 6 skipped, 490 subtests passed in 32.63s

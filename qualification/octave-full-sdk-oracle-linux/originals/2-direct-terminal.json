@@ -1,0 +1,11 @@
+{
+  "command": [
+    "make",
+    "test-matlab-parity"
+  ],
+  "direct_command_exit_code": 0,
+  "started_at": "2026-10-08T02:13:15.423443+00:00",
+  "finished_at": "2026-10-08T02:13:28.286011+00:00",
+  "seconds": 12.862571889010724,
+  "pid": 3409262
+}

@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/home/delete/nirs4all/nirs4all/.venv/bin/python",
+    "-B",
+    "-m",
+    "unittest",
+    "bindings/python/tests/test_archive_matrix_live.py",
+    "-v"
+  ],
+  "direct_command_exit_code": 0,
+  "started_at": "2026-10-08T02:39:56.003979+00:00",
+  "finished_at": "2026-10-08T02:40:08.642875+00:00",
+  "seconds": 12.63889568502782,
+  "pid": 3416479
+}

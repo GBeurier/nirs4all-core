@@ -1,0 +1,665 @@
+
+> nirs4all@0.4.5 test:js
+> node --test tests/*.test.js
+
+TAP version 13
+# Subtest: Archive V2 native surface is a Rust/WASM validator
+ok 1 - Archive V2 native surface is a Rust/WASM validator
+  ---
+  duration_ms: 136.605939
+  type: 'test'
+  ...
+# Subtest: portable inventory keeps native-first corruption refusal
+ok 2 - portable inventory keeps native-first corruption refusal
+  ---
+  duration_ms: 0.460582
+  type: 'test'
+  ...
+# Subtest: portable writer refuses traversal and duplicate entries in native builder
+ok 3 - portable writer refuses traversal and duplicate entries in native builder
+  ---
+  duration_ms: 1.889008
+  type: 'test'
+  ...
+# Subtest: standalone descriptor inspection preserves Core-first refusal
+ok 4 - standalone descriptor inspection preserves Core-first refusal
+  ---
+  duration_ms: 0.221059
+  type: 'test'
+  ...
+# Subtest: invalid Archive V2 refuses before Methods is observed
+ok 5 - invalid Archive V2 refuses before Methods is observed
+  ---
+  duration_ms: 0.388963
+  type: 'test'
+  ...
+# Subtest: host matrix and identity contracts refuse before archive validation
+ok 6 - host matrix and identity contracts refuse before archive validation
+  ---
+  duration_ms: 0.229448
+  type: 'test'
+  ...
+# Subtest: runtime dependency injection cannot bypass Core or Methods authority
+ok 7 - runtime dependency injection cannot bypass Core or Methods authority
+  ---
+  duration_ms: 0.1555
+  type: 'test'
+  ...
+# Subtest: WASM role nodes retain one N4ME each; grouped multi-target replay cannot fit
+ok 8 - WASM role nodes retain one N4ME each; grouped multi-target replay cannot fit
+  ---
+  duration_ms: 1037.921323
+  type: 'test'
+  ...
+# Subtest: PLS-LDA classification uses native labels through CV/refit/replay
+ok 9 - PLS-LDA classification uses native labels through CV/refit/replay
+  ---
+  duration_ms: 341.377711
+  type: 'test'
+  ...
+# Subtest: native calibrate/replay/metrics/cold archive reload and frozen Gaussian audits
+ok 10 - native calibrate/replay/metrics/cold archive reload and frozen Gaussian audits
+  ---
+  duration_ms: 5264.519975
+  type: 'test'
+  ...
+# Subtest: shared C-native calibrated archive replays actual N4MM intervals and noise in WASM
+ok 11 - shared C-native calibrated archive replays actual N4MM intervals and noise in WASM
+  ---
+  duration_ms: 1297.733394
+  type: 'test'
+  ...
+# Subtest: uncalibrated C-native workflow audits observed and Gaussian points after cold load without FIT
+ok 12 - uncalibrated C-native workflow audits observed and Gaussian points after cold load without FIT
+  ---
+  duration_ms: 2673.228356
+  type: 'test'
+  ...
+# Subtest: public calibration joins nonlexical IDs and independently permuted truth natively
+ok 13 - public calibration joins nonlexical IDs and independently permuted truth natively
+  ---
+  duration_ms: 1506.479387
+  type: 'test'
+  ...
+# Subtest: browser calibrates a CPU N4MM archive by frozen DAG replay and exports CPU-readable calibration
+ok 14 - browser calibrates a CPU N4MM archive by frozen DAG replay and exports CPU-readable calibration
+  ---
+  duration_ms: 971.35856
+  type: 'test'
+  ...
+# Subtest: portable parsers share bounded positive and negative contract cases
+ok 15 - portable parsers share bounded positive and negative contract cases
+  ---
+  duration_ms: 7.819451
+  type: 'test'
+  ...
+# Subtest: portable execution plan recognizes the shared nirs4all fixture
+ok 16 - portable execution plan recognizes the shared nirs4all fixture
+  ---
+  duration_ms: 5.372933
+  type: 'test'
+  ...
+# Subtest: portable execution plan keeps nirs4all Savitzky-Golay defaults
+ok 17 - portable execution plan keeps nirs4all Savitzky-Golay defaults
+  ---
+  duration_ms: 0.14656
+  type: 'test'
+  ...
+# Subtest: portable execution plan preserves Savitzky-Golay mode and cval
+ok 18 - portable execution plan preserves Savitzky-Golay mode and cval
+  ---
+  duration_ms: 0.108805
+  type: 'test'
+  ...
+# Subtest: MSC recipe restores training state across JSON and never fits validation data
+ok 19 - MSC recipe restores training state across JSON and never fits validation data
+  ---
+  duration_ms: 1.351643
+  type: 'test'
+  ...
+# Subtest: MSC Python aliases use the Methods MSC token and reject unsupported parameters
+ok 20 - MSC Python aliases use the Methods MSC token and reject unsupported parameters
+  ---
+  duration_ms: 0.196559
+  type: 'test'
+  ...
+# Subtest: eight affine model aliases dispatch and replay through Methods
+ok 21 - eight affine model aliases dispatch and replay through Methods
+  ---
+  duration_ms: 1.785999
+  type: 'test'
+  ...
+# Subtest: affine model recipes reject unsupported or lossy parameters
+ok 22 - affine model recipes reject unsupported or lossy parameters
+  ---
+  duration_ms: 0.224608
+  type: 'test'
+  ...
+# Subtest: four fused and ensemble aliases use strict C defaults and replay after JSON
+ok 23 - four fused and ensemble aliases use strict C defaults and replay after JSON
+  ---
+  duration_ms: 0.808189
+  type: 'test'
+  ...
+# Subtest: fused and ensemble recipes reject invalid shape, seed, and model parameters
+ok 24 - fused and ensemble recipes reject invalid shape, seed, and model parameters
+  ---
+  duration_ms: 0.618997
+  type: 'test'
+  ...
+# Subtest: NPLS fits flattened training tensor and replays serialized model state
+ok 25 - NPLS fits flattened training tensor and replays serialized model state
+  ---
+  duration_ms: 0.365126
+  type: 'test'
+  ...
+# Subtest: NPLS rejects missing or lossy dimensions and mismatched fitted width
+ok 26 - NPLS rejects missing or lossy dimensions and mismatched fitted width
+  ---
+  duration_ms: 0.82558
+  type: 'test'
+  ...
+# Subtest: MBPLS preserves block boundaries through fit and JSON replay
+ok 27 - MBPLS preserves block boundaries through fit and JSON replay
+  ---
+  duration_ms: 7.426454
+  type: 'test'
+  ...
+# Subtest: MBPLS rejects invalid block lists and fitted width
+ok 28 - MBPLS rejects invalid block lists and fitted width
+  ---
+  duration_ms: 0.391735
+  type: 'test'
+  ...
+# Subtest: GroupSparsePLS preserves explicit group IDs through JSON/YAML and replay
+ok 29 - GroupSparsePLS preserves explicit group IDs through JSON/YAML and replay
+  ---
+  duration_ms: 1.115806
+  type: 'test'
+  ...
+# Subtest: GroupSparsePLS rejects implicit, malformed, or wrong-width groups
+ok 30 - GroupSparsePLS rejects implicit, malformed, or wrong-width groups
+  ---
+  duration_ms: 0.402602
+  type: 'test'
+  ...
+# Subtest: SPA learns only on training rows and replays sorted selected columns
+ok 31 - SPA learns only on training rows and replays sorted selected columns
+  ---
+  duration_ms: 1.401326
+  type: 'test'
+  ...
+# Subtest: SPA preserves native ranking while projecting ascending columns after JSON replay
+ok 32 - SPA preserves native ranking while projecting ascending columns after JSON replay
+  ---
+  duration_ms: 0.744085
+  type: 'test'
+  ...
+# Subtest: SPA recipes reject missing, unsupported, and out-of-range top_k
+ok 33 - SPA recipes reject missing, unsupported, and out-of-range top_k
+  ---
+  duration_ms: 0.675439
+  type: 'test'
+  ...
+# Subtest: generic Selector parses all native names and rejects lossy parameters
+ok 34 - generic Selector parses all native names and rejects lossy parameters
+  ---
+  duration_ms: 0.878914
+  type: 'test'
+  ...
+# Subtest: generic Selector fits on training rows, preserves rank, and replays sorted projection
+ok 35 - generic Selector fits on training rows, preserves rank, and replays sorted projection
+  ---
+  duration_ms: 0.533351
+  type: 'test'
+  ...
+# Subtest: generic Selector checks train rank, plan rows, and top_k before native calls
+ok 36 - generic Selector checks train rank, plan rows, and top_k before native calls
+  ---
+  duration_ms: 0.264536
+  type: 'test'
+  ...
+# Subtest: older stateless preprocessing remains replayable without fitted state
+ok 37 - older stateless preprocessing remains replayable without fitted state
+  ---
+  duration_ms: 0.139322
+  type: 'test'
+  ...
+# Subtest: portable execution plan rejects lossy operator parameter coercions
+ok 38 - portable execution plan rejects lossy operator parameter coercions
+  ---
+  duration_ms: 0.140729
+  type: 'test'
+  ...
+# Subtest: native X augmentation parses the closed 22-kind R contract
+ok 39 - native X augmentation parses the closed 22-kind R contract
+  ---
+  duration_ms: 0.678705
+  type: 'test'
+  ...
+# Subtest: native X augmentation fails closed on old Methods
+ok 40 - native X augmentation fails closed on old Methods
+  ---
+  duration_ms: 1.196204
+  type: 'test'
+  ...
+# Subtest: native X augmentation touches only split training X and never predict
+ok 41 - native X augmentation touches only split training X and never predict
+  ---
+  duration_ms: 67.369114
+  type: 'test'
+  ...
+# Subtest: native X augmentation matches Methods for all 22 kinds and frozen R oracles
+ok 42 - native X augmentation matches Methods for all 22 kinds and frozen R oracles
+  ---
+  duration_ms: 15.122179
+  type: 'test'
+  ...
+# Subtest: portable WASM execution delegates the shared pipeline to nirs4all-methods
+ok 43 - portable WASM execution delegates the shared pipeline to nirs4all-methods
+  ---
+  duration_ms: 13.582383
+  type: 'test'
+  ...
+# Subtest: public V1 WASM surface exports expected names
+ok 44 - public V1 WASM surface exports expected names
+  ---
+  duration_ms: 1.060452
+  type: 'test'
+  ...
+# Subtest: expected upstreams are registered
+ok 45 - expected upstreams are registered
+  ---
+  duration_ms: 0.1695
+  type: 'test'
+  ...
+# Subtest: upstream lookup returns metadata
+ok 46 - upstream lookup returns metadata
+  ---
+  duration_ms: 0.278511
+  type: 'test'
+  ...
+# Subtest: domain proxies expose keys
+ok 47 - domain proxies expose keys
+  ---
+  duration_ms: 0.103789
+  type: 'test'
+  ...
+# Subtest: capability manifest describes portable custom app host controllers
+ok 48 - capability manifest describes portable custom app host controllers
+  ---
+  duration_ms: 0.88197
+  type: 'test'
+  ...
+# Subtest: public upstream loaders map to the declared V1 upstreams
+ok 49 - public upstream loaders map to the declared V1 upstreams
+  ---
+  duration_ms: 0.082771
+  type: 'test'
+  ...
+# Subtest: local implementation registry delegates to the DAG-ML constructor
+ok 50 - local implementation registry delegates to the DAG-ML constructor
+  ---
+  duration_ms: 0.138002
+  type: 'test'
+  ...
+# Subtest: local implementation registry rejects an old DAG-ML module
+ok 51 - local implementation registry rejects an old DAG-ML module
+  ---
+  duration_ms: 0.625444
+  type: 'test'
+  ...
+# Subtest: local implementation registry rejects an old registry surface
+ok 52 - local implementation registry rejects an old registry surface
+  ---
+  duration_ms: 0.456046
+  type: 'test'
+  ...
+# Subtest: public upstream loaders report the correct missing upstream
+ok 53 - public upstream loaders report the correct missing upstream
+  ---
+  duration_ms: 153.57852
+  type: 'test'
+  ...
+# Subtest: upstream imports fail explicitly when optional wasm packages are absent
+ok 54 - upstream imports fail explicitly when optional wasm packages are absent
+  ---
+  duration_ms: 47.564353
+  type: 'test'
+  ...
+# Subtest: nirs4all JSON and YAML pipeline syntax normalize to the same portable definition
+ok 55 - nirs4all JSON and YAML pipeline syntax normalize to the same portable definition
+  ---
+  duration_ms: 28.368575
+  type: 'test'
+  ...
+# Subtest: R-shaped train augmentation normalizes from JSON and YAML without widening other runtimes
+ok 56 - R-shaped train augmentation normalizes from JSON and YAML without widening other runtimes
+  ---
+  duration_ms: 1.647942
+  type: 'test'
+  ...
+# Subtest: all shared parity fixtures keep JSON and YAML in lockstep
+ok 57 - all shared parity fixtures keep JSON and YAML in lockstep
+  ---
+  duration_ms: 97.820611
+  type: 'test'
+  ...
+# Subtest: steps alias and direct arrays match the nirs4all loader surface
+ok 58 - steps alias and direct arrays match the nirs4all loader surface
+  ---
+  duration_ms: 7.695923
+  type: 'test'
+  ...
+# Subtest: generic JS estimator follows native DAG-ML folds, phases and exact seed
+ok 59 - generic JS estimator follows native DAG-ML folds, phases and exact seed
+  ---
+  duration_ms: 53.719685
+  type: 'test'
+  ...
+# Subtest: async host controller awaits fit and predict without leaking validation rows
+ok 60 - async host controller awaits fit and predict without leaking validation rows
+  ---
+  duration_ms: 1.400458
+  type: 'test'
+  ...
+# Subtest: random forest regression is reproducible and its model reloads
+ok 61 - random forest regression is reproducible and its model reloads
+  ---
+  duration_ms: 369.075844
+  type: 'test'
+  ...
+# Subtest: random forest classification yields numeric class predictions
+ok 62 - random forest classification yields numeric class predictions
+  ---
+  duration_ms: 3.925236
+  type: 'test'
+  ...
+# Subtest: n4m controller preserves direct Methods WASM model predictions per DAG-ML fold
+ok 63 - n4m controller preserves direct Methods WASM model predictions per DAG-ML fold
+  ---
+  duration_ms: 52.536434
+  type: 'test'
+  ...
+# Subtest: rejects a FoldSet that does not match the dataset
+ok 64 - rejects a FoldSet that does not match the dataset
+  ---
+  duration_ms: 0.661692
+  type: 'test'
+  ...
+# Subtest: shared NodeResult helper leaves the seed for native DAG-ML injection
+ok 65 - shared NodeResult helper leaves the seed for native DAG-ML injection
+  ---
+  duration_ms: 0.295423
+  type: 'test'
+  ...
+# ============================
+# Hi, looks like you are running TensorFlow.js in Node.js. To speed things up dramatically, install our node backend, visit https://github.com/tensorflow/tfjs-node for more details. 
+# ============================
+# Subtest: ml.js exposes sklearn-style fit/predict and PCA transform without local numerics
+ok 66 - ml.js exposes sklearn-style fit/predict and PCA transform without local numerics
+  ---
+  duration_ms: 9619.632349
+  type: 'test'
+  ...
+# Subtest: ml.js random forest regression and classification survive JSON round trips
+ok 67 - ml.js random forest regression and classification survive JSON round trips
+  ---
+  duration_ms: 5.756731
+  type: 'test'
+  ...
+# Subtest: ml.js classifiers survive worker structuredClone before new-sample prediction
+ok 68 - ml.js classifiers survive worker structuredClone before new-sample prediction
+  ---
+  duration_ms: 2.126148
+  type: 'test'
+  ...
+# Subtest: ml.js tree controller uses native DAG-ML folds and serialized model
+ok 69 - ml.js tree controller uses native DAG-ML folds and serialized model
+  ---
+  duration_ms: 46.490878
+  type: 'test'
+  ...
+# Subtest: scikitjs loads with TensorFlow.js and preserves sync tree plus async linear model
+ok 70 - scikitjs loads with TensorFlow.js and preserves sync tree plus async linear model
+  ---
+  duration_ms: 28756.041672
+  type: 'test'
+  ...
+# Subtest: scikitjs StandardScaler follows TransformerMixin-style fit/transform and reload
+ok 71 - scikitjs StandardScaler follows TransformerMixin-style fit/transform and reload
+  ---
+  duration_ms: 5.667086
+  type: 'test'
+  ...
+# Subtest: scikitjs sync tree controller runs DAG-ML, while async classes are refused
+ok 72 - scikitjs sync tree controller runs DAG-ML, while async classes are refused
+  ---
+  duration_ms: 32.896911
+  type: 'test'
+  ...
+# Subtest: scikitjs async controller awaits fit, prediction, and model restoration
+ok 73 - scikitjs async controller awaits fit, prediction, and model restoration
+  ---
+  duration_ms: 680.430838
+  type: 'test'
+  ...
+# Subtest: n4m:<method id> tokens resolve through the Methods manifest
+ok 74 - n4m:<method id> tokens resolve through the Methods manifest
+  ---
+  duration_ms: 48.218347
+  type: 'test'
+  ...
+# Subtest: WASM replays envelopes written before the additive fields
+ok 75 - WASM replays envelopes written before the additive fields
+  ---
+  duration_ms: 21.023349
+  type: 'test'
+  ...
+# Subtest: JS-trained v8 envelopes round trip and match the Python fits
+ok 76 - JS-trained v8 envelopes round trip and match the Python fits
+  ---
+  duration_ms: 14.148371
+  type: 'test'
+  ...
+# Subtest: the Python-trained named envelope keeps column identity and training rows
+ok 77 - the Python-trained named envelope keeps column identity and training rows
+  ---
+  duration_ms: 5.040865
+  type: 'test'
+  ...
+# Subtest: WASM replays the Methods shared pipelines
+ok 78 - WASM replays the Methods shared pipelines
+  ---
+  duration_ms: 7.086373
+  type: 'test'
+  ...
+# Subtest: multi-target Y reaches supervised transformers (F06)
+ok 79 - multi-target Y reaches supervised transformers (F06)
+  ---
+  duration_ms: 6.777079
+  type: 'test'
+  ...
+# Subtest: invalid recipes are refused (F05)
+ok 80 - invalid recipes are refused (F05)
+  ---
+  duration_ms: 2.355373
+  type: 'test'
+  ...
+# Subtest: states that contradict the recipe are refused (F05)
+ok 81 - states that contradict the recipe are refused (F05)
+  ---
+  duration_ms: 4.12515
+  type: 'test'
+  ...
+# Subtest: permuted or missing columns are refused (F03)
+ok 82 - permuted or missing columns are refused (F03)
+  ---
+  duration_ms: 6.713717
+  type: 'test'
+  ...
+# Subtest: training rows need the export opt-in (F10)
+ok 83 - training rows need the export opt-in (F10)
+  ---
+  duration_ms: 2.954483
+  type: 'test'
+  ...
+# Subtest: tampered or foreign envelopes are refused
+ok 84 - tampered or foreign envelopes are refused
+  ---
+  duration_ms: 2.323938
+  type: 'test'
+  ...
+# Subtest: label tables that contradict the states are refused (R05)
+ok 85 - label tables that contradict the states are refused (R05)
+  ---
+  duration_ms: 10.890148
+  type: 'test'
+  ...
+# Subtest: envelope widths are positive JSON integers (R16)
+ok 86 - envelope widths are positive JSON integers (R16)
+  ---
+  duration_ms: 0.431036
+  type: 'test'
+  ...
+# Subtest: column names with NUL are refused before the native call
+ok 87 - column names with NUL are refused before the native call
+  ---
+  duration_ms: 2.113131
+  type: 'test'
+  ...
+# Subtest: ragged or contradictory X and Y are refused before flattening (R04, F02)
+ok 88 - ragged or contradictory X and Y are refused before flattening (R04, F02)
+  ---
+  duration_ms: 2.26812
+  type: 'test'
+  ...
+# Subtest: the exported recipe is the one the states attest (R14)
+ok 89 - the exported recipe is the one the states attest (R14)
+  ---
+  duration_ms: 2.601271
+  type: 'test'
+  ...
+# Subtest: portable WASM execution matches the full Python nirs4all oracle
+ok 90 - portable WASM execution matches the full Python nirs4all oracle
+  ---
+  duration_ms: 104.67963
+  type: 'test'
+  ...
+# Subtest: MBPLS WASM recipe matches independent R/Python held-out oracle
+ok 91 - MBPLS WASM recipe matches independent R/Python held-out oracle
+  ---
+  duration_ms: 2.399629
+  type: 'test'
+  ...
+# Subtest: GroupSparsePLS WASM recipe matches corrected Python n4m held-out oracle
+ok 92 - GroupSparsePLS WASM recipe matches corrected Python n4m held-out oracle
+  ---
+  duration_ms: 2.015677
+  type: 'test'
+  ...
+# Subtest: native experiment projection preserves candidate scopes and query isolation
+ok 93 - native experiment projection preserves candidate scopes and query isolation
+  ---
+  duration_ms: 261.446141
+  type: 'test'
+  ...
+# Subtest: rehashed forged prediction projection cannot claim native model closure
+ok 94 - rehashed forged prediction projection cannot claim native model closure
+  ---
+  duration_ms: 411.061291
+  type: 'test'
+  ...
+# Subtest: winner must be native and model-free validation never claims model closure
+ok 95 - winner must be native and model-free validation never claims model closure
+  ---
+  duration_ms: 4.991283
+  type: 'test'
+  ...
+# Subtest: exact member tampering is rejected before querying
+ok 96 - exact member tampering is rejected before querying
+  ---
+  duration_ms: 2.340791
+  type: 'test'
+  ...
+# Subtest: training projection uses signed original order and refuses caller permutations
+ok 97 - training projection uses signed original order and refuses caller permutations
+  ---
+  duration_ms: 156.48668
+  type: 'test'
+  ...
+# Subtest: WASM generator keeps constraints, shaped choices and native seeded identity
+ok 98 - WASM generator keeps constraints, shaped choices and native seeded identity
+  ---
+  duration_ms: 155.179408
+  type: 'test'
+  ...
+# Subtest: browser native HPO resumes without old fits and cold model replay never fits
+ok 99 - browser native HPO resumes without old fits and cold model replay never fits
+  ---
+  duration_ms: 2510.679921
+  type: 'test'
+  ...
+# Subtest: browser publishes exact Methods state package for cold CPU interoperability
+ok 100 - browser publishes exact Methods state package for cold CPU interoperability
+  ---
+  duration_ms: 89.23876
+  type: 'test'
+  ...
+# Subtest: failed tuning exports preserve destination availability and existing content
+ok 101 - failed tuning exports preserve destination availability and existing content
+  ---
+  duration_ms: 11.576398
+  type: 'test'
+  ...
+# Subtest: Node HPO retains completed trials, exports, reopens and predicts cold
+ok 102 - Node HPO retains completed trials, exports, reopens and predicts cold
+  ---
+  duration_ms: 1777.281527
+  type: 'test'
+  ...
+# Subtest: cross-host native u64 study loads fail explicitly beyond the JS exact seed range
+ok 103 - cross-host native u64 study loads fail explicitly beyond the JS exact seed range
+  ---
+  duration_ms: 274.202699
+  type: 'test'
+  ...
+# Subtest: public raw C-native archive load and cold WASM prediction retain native ABI schema
+ok 104 - public raw C-native archive load and cold WASM prediction retain native ABI schema
+  ---
+  duration_ms: 2446.426277
+  type: 'test'
+  ...
+# Subtest: native signed unsafe-seed archive is refused at public load
+ok 105 - native signed unsafe-seed archive is refused at public load
+  ---
+  duration_ms: 323.720964
+  type: 'test'
+  ...
+# Subtest: native candidates select OOF, refit, export, fresh replay and retrain
+ok 106 - native candidates select OOF, refit, export, fresh replay and retrain
+  ---
+  duration_ms: 2766.443661
+  type: 'test'
+  ...
+# Subtest: SDK SQLite/Parquet workspace snapshot queries native results and exports fit-free lifecycle
+ok 107 - SDK SQLite/Parquet workspace snapshot queries native results and exports fit-free lifecycle
+  ---
+  duration_ms: 448.671067
+  type: 'test'
+  ...
+# Subtest: workspace retains __proto__ member bytes and rejects unlisted journals
+ok 108 - workspace retains __proto__ member bytes and rejects unlisted journals
+  ---
+  duration_ms: 138.745287
+  type: 'test'
+  ...
+1..108
+# tests 108
+# suites 0
+# pass 108
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 39385.464753

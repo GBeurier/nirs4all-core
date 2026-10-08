@@ -1,0 +1,7 @@
+test_real_wheel_replays_multi_target_n4mm_with_valid_cross_link (test_archive_live.LiveArchiveV2ReplayTests.test_real_wheel_replays_multi_target_n4mm_with_valid_cross_link) ... ok
+test_tampered_n4mm_is_refused_before_replay (test_archive_live.LiveArchiveV2ReplayTests.test_tampered_n4mm_is_refused_before_replay) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.173s
+
+OK

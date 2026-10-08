@@ -1,0 +1,35 @@
+   Compiling serde v1.0.229
+   Compiling yaml_serde v0.10.7
+   Compiling serde_spanned v0.6.9
+   Compiling toml_datetime v0.6.11
+   Compiling toml_edit v0.22.27
+   Compiling dag-ml-core v0.3.41
+   Compiling toml v0.8.23
+   Compiling dag-ml-data-core v0.2.13
+   Compiling nirs4all-io-core v0.2.6
+   Compiling zip v2.4.2
+   Compiling nirs4all-io v0.2.6
+   Compiling calamine v0.36.1
+   Compiling dag-ml-data-provider v0.2.13
+   Compiling dag-ml-data v0.2.13
+   Compiling nirs4all-formats-core v0.2.11
+   Compiling serde_yaml v0.9.34+deprecated
+   Compiling nirs4all-formats v0.2.11
+   Compiling dag-ml v0.3.41
+   Compiling nirs4all-io-dagml v0.2.6
+   Compiling dag-ml-results v0.3.41
+   Compiling nirs4all v0.4.5 (/mnt/c/Temp/n4a-core045-20261008/worktree/bindings/rust/nirs4all)
+   Compiling nirs4all-core-wasm-native v0.4.5 (/mnt/c/Temp/n4a-core045-20261008/worktree/bindings/wasm-native)
+   Compiling pythonize v0.29.0
+   Compiling nirs4all-core-python-native v0.4.5 (/mnt/c/Temp/n4a-core045-20261008/worktree/bindings/python-native)
+    Finished `test` profile [unoptimized] target(s) in 58.28s
+     Running unittests src/lib.rs (/mnt/c/Temp/n4a-core045-20261008/target/debug/deps/nirs4all-233f3fb9b50bf323)
+     Running unittests src/bin/nirs4all-core-archive.rs (/mnt/c/Temp/n4a-core045-20261008/target/debug/deps/nirs4all_core_archive-10a8ed95654d85da)
+     Running tests/conformal.rs (/mnt/c/Temp/n4a-core045-20261008/target/debug/deps/conformal-76ec8d33c8fdc22d)
+     Running tests/formats_io.rs (/mnt/c/Temp/n4a-core045-20261008/target/debug/deps/formats_io-bf5a27cc85b29054)
+     Running tests/results.rs (/mnt/c/Temp/n4a-core045-20261008/target/debug/deps/results-4ccac8441a407dbc)
+     Running tests/workflow.rs (/mnt/c/Temp/n4a-core045-20261008/target/debug/deps/workflow-719213e36410ed8e)
+     Running unittests src/lib.rs (/mnt/c/Temp/n4a-core045-20261008/target/debug/deps/_native-2aab38e504fc21d8)
+     Running unittests src/lib.rs (/mnt/c/Temp/n4a-core045-20261008/target/debug/deps/nirs4all_core_wasm_native-d89c1954e2f0f162)
+   Doc-tests nirs4all
+   Doc-tests nirs4all_core_wasm_native

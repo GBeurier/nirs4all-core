@@ -1,0 +1,200 @@
+{
+  "id": "rust-python-oracle",
+  "host": "linux-wsl",
+  "command": [
+    "/home/delete/.cargo/bin/cargo",
+    "test",
+    "--locked",
+    "-p",
+    "nirs4all",
+    "rust_binding_execution_matches_full_python_nirs4all_oracle",
+    "--",
+    "--nocapture"
+  ],
+  "cwd": "/mnt/c/Temp/n4a-core045-20261008/worktree",
+  "environment": {
+    "CARGO_TARGET_DIR": "/mnt/c/Temp/n4a-core045-20261008/target",
+    "TMPDIR": "/dev/shm/n4a-core045-20261008-private-posix",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_BUILD_JOBS": "2",
+    "PYO3_PYTHON": "/home/delete/nirs4all/nirs4all/.venv/bin/python",
+    "N4M_LIBRARY_PATH": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+    "N4M_LIB_PATH": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+    "NIRS4ALL_METHODS_LIB": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+    "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "started_at": "2026-10-08T02:07:20.825724+00:00",
+  "finished_at": "2026-10-08T02:07:31.609528+00:00",
+  "exit_code": 0,
+  "input_fingerprints": {
+    "Cargo.lock": "5d5b611945bffe4363fe67c3adf7bfca16bcb357094a1bad499b90ee4bdbac02",
+    "Cargo.toml": "d3593455f0f5d3dd6d0c800b899890e486e0def9e4cbcdc8b2d9cbdb6a3b63cf",
+    "bindings/rust/nirs4all/Cargo.toml": "d173e3f6e1fac7b5fa875be9c79b6b47e75706333f83082109f99140947e7954",
+    "bindings/rust/nirs4all/LICENSES/AGPL-3.0-or-later.txt": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+    "bindings/rust/nirs4all/LICENSES/CECILL-2.1.txt": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5",
+    "bindings/rust/nirs4all/README.md": "7fc4b09a33f4c328efd7d223c7b967be86f362b5e078ff56dc66792d45b9224c",
+    "bindings/rust/nirs4all/build.rs": "c86b43d87bf6ec7da0bf04daa00018571fa58b8d7829da62bfc32ad5e8ce9600",
+    "bindings/rust/nirs4all/src/archive_command.rs": "f1fdcc73c6308079005eab62c157800a9b47dc5b3f81105c6f9fcf759e8a610a",
+    "bindings/rust/nirs4all/src/archive_v1.rs": "9f3e7c0eca2f69877e22c2732746651a11c53d9c3b168ce4ab8e3150551ae23d",
+    "bindings/rust/nirs4all/src/archive_v1_fixtures/PROVENANCE.md": "2a34a7e3d11998c55ff6f6fd101f71292480edbb23f01107d74b6b4162f589b3",
+    "bindings/rust/nirs4all/src/archive_v1_fixtures/archive_workspace_manifest.v1.schema.json": "91daa7209843ab9043aa62a50200ff43b0f85f4c4e61ad8f73aa67b65a0a98dc",
+    "bindings/rust/nirs4all/src/archive_v1_fixtures/negative/refusals.v1.json": "d6522da50d8debc87b5c824392d793fd8895e4822ebe80289199a246f502ded5",
+    "bindings/rust/nirs4all/src/archive_v1_fixtures/positive/portable_split_conformal.json": "79acef8a6bedee201c9e7be7a398bf7ec0ef6de2c75777824ec9ec0633b4c451",
+    "bindings/rust/nirs4all/src/archive_v1_fixtures/positive/workspace_n4d_host_sidecar.json": "6c3d678e955258a2f652c886d86358d4775dc98e9e85714166d88ad0e16b13ca",
+    "bindings/rust/nirs4all/src/archive_v2.rs": "135b986ae8df37ea779242e3e3d4c3b90835a78cc1803982fa7960ce98574b74",
+    "bindings/rust/nirs4all/src/archive_v3.rs": "5bec7229f88d38906ed3ad9fdf9a3c6baafd49dbd056df7399cce9872ba3aebb",
+    "bindings/rust/nirs4all/src/archive_view.rs": "f09a1001d12f3aa4f6af4f4e8c02fe584339cbaf0d6906a33ab5897aeb1b5088",
+    "bindings/rust/nirs4all/src/conformal.rs": "e16a5f3f2535119f3c645fc55ea09cd434031a086b3c83417557fa606f9db9fe",
+    "bindings/rust/nirs4all/src/conformal_json.rs": "003b20d77d90cd0d49cde5ff3cbafdb4883719840a3732208a73baebda967776",
+    "bindings/rust/nirs4all/src/durability.rs": "d4dc011a8268b7b9216f633d288c23a90808dc9a587a0997adfe8a18abca35be",
+    "bindings/rust/nirs4all/src/formats_io.rs": "d0ae25fcb33cfb401394d6eebeee8b27df6afdd1d641a8f0ba0b67d29295fdf3",
+    "bindings/rust/nirs4all/src/generation.rs": "24f55553af4de979ee0fd65763b9f422e58c86385e47590cd015161c5d011cde",
+    "bindings/rust/nirs4all/src/io_training.rs": "64012a3cd64df0ddaffea40ef6ee74c253a7e68c7987355f0dedd69325f4b03e",
+    "bindings/rust/nirs4all/src/lib.rs": "41577e090752dae5d0fad3479d21ce18d7f67491fe7e652d500d00d2d2373f55",
+    "bindings/rust/nirs4all/src/multimodal_workflow.rs": "6b97e5937ec2d4073055752d64e5ad630ecde2b07668a7dfeeb94b4ed6e7c91f",
+    "bindings/rust/nirs4all/src/n4m_roles.rs": "7a9f4484e6facbb52b0c685d62a3c5c3df0d96882481e9c3ecd17051a8856795",
+    "bindings/rust/nirs4all/src/native_methods_replay.rs": "f8c68f48ff7bdc5e9317fc800e6beb612c712c4e37b3051e3763691f4a554b2c",
+    "bindings/rust/nirs4all/src/native_pipeline_contract.rs": "ff8a2c2801672201b96690e636d886430818f718e3c693cd52ac3d3c41b856f8",
+    "bindings/rust/nirs4all/src/pipeline_workflow.rs": "6e66a0ecd801e79f0b0ab171ee855d0522275b5cb0e012634653d88ef3f6c414",
+    "bindings/rust/nirs4all/src/portable_session.rs": "376d94df8e588e0170bec51b1f63cacf7d2056ce75de191812daf82adc1f5196",
+    "bindings/rust/nirs4all/src/publication.rs": "3aaa956e0df6ad96df7522537dfe387b6b359a48f3787374739b3b14bfeef52b",
+    "bindings/rust/nirs4all/src/result_projection.rs": "4cb8446e0b1f1b84fee9508c0fe713f0e682ad58fcdc9830f9a1d08bb0ca71bb",
+    "bindings/rust/nirs4all/src/results.rs": "964e2103293b665a5f12e25f750784ec3fd4f3cbd2fbf40aa7a65ce468c51d58",
+    "bindings/rust/nirs4all/src/robustness.rs": "0c8e0fbb28801777843ffa06d08599b3329649ed38358f8169eafc7787bcda7b",
+    "bindings/rust/nirs4all/src/robustness_json.rs": "ba06e2710bad3ec27661ac3d43c76ff1afc6bc8b00a3d5c12aa4bae7f6042c1b",
+    "bindings/rust/nirs4all/src/test_fixture.rs": "68e3fd2f730da4adb7a705d2c55507ef4092e4b3aa840bba6e364bc66d052be4",
+    "bindings/rust/nirs4all/src/tuning.rs": "62100a3aa99195ae8d75463264d131464a52913b7ae0dfad221286e9ec42fa5d",
+    "bindings/rust/nirs4all/src/workflow.rs": "f3763bdeaf870181c2bd539b8abdf9c5f37922a51a68f1900f4fdaa1a0074369",
+    "bindings/rust/nirs4all/tests/conformal.rs": "d0455a663234a2668822017bd918c3f259d23c76d23591f9878e898fb8852981",
+    "bindings/rust/nirs4all/tests/formats_io.rs": "1c37464c08830e038b0dfbff28ad2c93a04f37025ec377cc8f131a8a2ebefe48",
+    "bindings/rust/nirs4all/tests/parity/expected/n4m_roles_v8_r_trained_oracle.json": "b89c840d4aba1afe1a7a7f7a0854bb9021eed5ef84b3a0019da6f6bb3e50dcec",
+    "bindings/rust/nirs4all/tests/parity/expected/portable_python_oracle.json": "fc008911607a3260218d98fee86ec38e4dd0e5994e91126f7403baff5bc7377c",
+    "bindings/rust/nirs4all/tests/parity/fixtures/execution_contract_cases.json": "56f5e25a5964acf9cbfdd3fc800af5416ed0d11ee74f9f26c7014c7f4e5610f8",
+    "bindings/rust/nirs4all/tests/parity/fixtures/n4m_role_pipeline_methods.json": "a00eddf51cf69dc68976dbe81e5d11f01251b36dce69f53c9d1bd261a30d75ab",
+    "bindings/rust/nirs4all/tests/parity/fixtures/n4m_roles_v8_python_named.json": "ffabc42d51e4c1f1e2457265c473e7e2745206630a23cba3a9db99629f47ca54",
+    "bindings/rust/nirs4all/tests/parity/fixtures/n4m_roles_v8_python_trained.json": "c5d8474b7df71c9a64acc8fb6ffce81fff20e7aeb2da374123879e758ad81e9d",
+    "bindings/rust/nirs4all/tests/parity/fixtures/n4m_roles_v8_r_trained.json": "76b1da755b5028f983fbdb1072b991a45d69806a93ef7022e5b9e2bb82e1027a",
+    "bindings/rust/nirs4all/tests/parity/fixtures/portable_kennard_stone_snv_pls.json": "987d829219af8582320c578d88067655b5d18e2bb9f04644284d29663bf435b4",
+    "bindings/rust/nirs4all/tests/parity/fixtures/portable_kennard_stone_snv_pls.yaml": "ae63e2b50c37b37a3f25c988cb72c331fa6dbb41668a53c543098ad63dae78fc",
+    "bindings/rust/nirs4all/tests/parity/fixtures/portable_methods_pipeline.json": "1046db746d355b58ab51a1341aaf282fe25a4b7f2641c5178d1a79357383175b",
+    "bindings/rust/nirs4all/tests/parity/fixtures/portable_methods_pipeline.yaml": "44c59c39a48fb153e5bd9e61267880999e2f938afb36bececf4fd7bb34636c08",
+    "bindings/rust/nirs4all/tests/parity/fixtures/portable_savgol_pls.json": "3839b3f7f70851482f2087cb5b2bae1c49830e4c5e122b39941bf116881531e1",
+    "bindings/rust/nirs4all/tests/parity/fixtures/portable_savgol_pls.yaml": "5e9d1aeab98b743d3f2ee8043f0450a08d53564bc9617a0c6e4364d50a60ca0f",
+    "bindings/rust/nirs4all/tests/parity/fixtures/portable_snv_pls.json": "78910e64c499911d660b19ac150e5be04ec88213e5de52fbb1fa3da04bdde37e",
+    "bindings/rust/nirs4all/tests/parity/fixtures/portable_snv_pls.yaml": "c6663811ae3b13741ef7c6fae8eb2baf6222b895a26f0834543623c6f419938c",
+    "bindings/rust/nirs4all/tests/results.rs": "943a851c82cfe91e40e724ada0e7b30b5d739fc8cd2a548bddadd31a1812834a",
+    "bindings/rust/nirs4all/tests/workflow.rs": "f36e533b07b0f5591d6e005c0cbc5d855f188123b04e9bbd58753273db6fe1eb",
+    "tests/parity/README.md": "3eaf53dc3e8cc2d46864ea0065f479a9159d41f41151b3818414578d8eff02f0",
+    "tests/parity/expected/n4m_roles_v8_r_trained_oracle.json": "b89c840d4aba1afe1a7a7f7a0854bb9021eed5ef84b3a0019da6f6bb3e50dcec",
+    "tests/parity/expected/portable_python_oracle.json": "fc008911607a3260218d98fee86ec38e4dd0e5994e91126f7403baff5bc7377c",
+    "tests/parity/fixtures/execution_contract_cases.json": "56f5e25a5964acf9cbfdd3fc800af5416ed0d11ee74f9f26c7014c7f4e5610f8",
+    "tests/parity/fixtures/n4m_role_pipeline_methods.json": "a00eddf51cf69dc68976dbe81e5d11f01251b36dce69f53c9d1bd261a30d75ab",
+    "tests/parity/fixtures/n4m_roles_v8_python_named.json": "ffabc42d51e4c1f1e2457265c473e7e2745206630a23cba3a9db99629f47ca54",
+    "tests/parity/fixtures/n4m_roles_v8_python_trained.json": "c5d8474b7df71c9a64acc8fb6ffce81fff20e7aeb2da374123879e758ad81e9d",
+    "tests/parity/fixtures/n4m_roles_v8_r_trained.json": "76b1da755b5028f983fbdb1072b991a45d69806a93ef7022e5b9e2bb82e1027a",
+    "tests/parity/fixtures/native_x_augmentation_cases.json": "43c6f5677184b590a0795c5b5f42377d672b527e5f1de6cdfd08e8f0eb42aec1",
+    "tests/parity/fixtures/portable_kennard_stone_snv_pls.json": "987d829219af8582320c578d88067655b5d18e2bb9f04644284d29663bf435b4",
+    "tests/parity/fixtures/portable_kennard_stone_snv_pls.yaml": "ae63e2b50c37b37a3f25c988cb72c331fa6dbb41668a53c543098ad63dae78fc",
+    "tests/parity/fixtures/portable_methods_pipeline.json": "1046db746d355b58ab51a1341aaf282fe25a4b7f2641c5178d1a79357383175b",
+    "tests/parity/fixtures/portable_methods_pipeline.yaml": "44c59c39a48fb153e5bd9e61267880999e2f938afb36bececf4fd7bb34636c08",
+    "tests/parity/fixtures/portable_savgol_pls.json": "3839b3f7f70851482f2087cb5b2bae1c49830e4c5e122b39941bf116881531e1",
+    "tests/parity/fixtures/portable_savgol_pls.yaml": "5e9d1aeab98b743d3f2ee8043f0450a08d53564bc9617a0c6e4364d50a60ca0f",
+    "tests/parity/fixtures/portable_snv_pls.json": "78910e64c499911d660b19ac150e5be04ec88213e5de52fbb1fa3da04bdde37e",
+    "tests/parity/fixtures/portable_snv_pls.yaml": "c6663811ae3b13741ef7c6fae8eb2baf6222b895a26f0834543623c6f419938c"
+  },
+  "log": {
+    "path": "qualification/rust-python-oracle-linux/originals/4-stdout.log",
+    "bytes": 757,
+    "sha256": "9d363aa2bf9cf61e84c92594fd7f41ecc7c71a1091574acce297544b6b121323"
+  },
+  "duration_seconds": 10.78380226099398,
+  "timing_basis": "actual_retained_independent_direct_terminal_wall_timestamps",
+  "input_evidence": {
+    "path": "qualification/rust-python-oracle-linux/inherited-inputs.json",
+    "bytes": 9897,
+    "sha256": "c2a85fc5d593dab229a750beb7e8c18cd0dc123864dfc66180528476fcb647fe"
+  },
+  "summary": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0
+  },
+  "skips": [],
+  "facts": {},
+  "provenance": {
+    "tools": {
+      "execution": "Direct commands and versions preserved in controlled runner/raw provenance"
+    },
+    "source_artifacts": [
+      {
+        "name": "core-build-source",
+        "version": "0.4.5",
+        "origin": "Reviewed source923/Cargo.lock and actual source-build execution logs; no historical binary hash invented",
+        "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/audit/core045-source-ci-pins-public-locks-v4/source/bindings/rust/nirs4all/Cargo.toml",
+        "sha256": "d173e3f6e1fac7b5fa875be9c79b6b47e75706333f83082109f99140947e7954",
+        "bytes": 2846,
+        "evidence": {
+          "path": "qualification/rust-python-oracle-linux/source_artifacts-0.json",
+          "bytes": 13319,
+          "sha256": "06e20025bc549fc964d82824d7aa03b9d1485cb35619be2fba6b987610f3bf5f"
+        }
+      }
+    ],
+    "dependency_origins": [
+      {
+        "name": "methods-native",
+        "version": "1.3.4",
+        "origin": "Authentic public134 wheel engine1.3.4 ABI2.17, real before/after capture",
+        "artifact_path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+        "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385",
+        "bytes": 5449304,
+        "evidence": {
+          "path": "qualification/rust-python-oracle-linux/dependency_origins-0.json",
+          "bytes": 13282,
+          "sha256": "a40d23b72a26c717381d5b8ebc77e1044f41cce14faf49a2ed357a5e7b279765"
+        }
+      }
+    ]
+  },
+  "raw_reports": {
+    "0-PRE.json": {
+      "path": "qualification/rust-python-oracle-linux/originals/0-PRE.json",
+      "bytes": 46581,
+      "sha256": "f9283e73b02c185e5587e76c5a41f5b81c3df2ce30d40549db1bc4e3a060b6a4"
+    },
+    "1-active.json": {
+      "path": "qualification/rust-python-oracle-linux/originals/1-active.json",
+      "bytes": 46651,
+      "sha256": "a118ea42d4f76fb15f6f27fa9926774032aff59faf96577365587f065202b0ae"
+    },
+    "2-direct-terminal.json": {
+      "path": "qualification/rust-python-oracle-linux/originals/2-direct-terminal.json",
+      "bytes": 396,
+      "sha256": "89092351685937fa0f41232bad7779e93377910f987fb8b67ff27577d26a7a24"
+    },
+    "3-raw-receipt.json": {
+      "path": "qualification/rust-python-oracle-linux/originals/3-raw-receipt.json",
+      "bytes": 92512,
+      "sha256": "844b60fe7aa8dcd4b3c8bf185249975a6274b8d3a56690d27e2bc37999b0681b"
+    },
+    "4-stdout.log": {
+      "path": "qualification/rust-python-oracle-linux/originals/4-stdout.log",
+      "bytes": 757,
+      "sha256": "9d363aa2bf9cf61e84c92594fd7f41ecc7c71a1091574acce297544b6b121323"
+    },
+    "5-stderr.log": {
+      "path": "qualification/rust-python-oracle-linux/originals/5-stderr.log",
+      "bytes": 766,
+      "sha256": "2ea780b99feb5210e79903b5510b099c4901f79508009eae7c6c8a943ceb673d"
+    },
+    "6-run_core045_local_commands.py": {
+      "path": "qualification/rust-python-oracle-linux/originals/6-run_core045_local_commands.py",
+      "bytes": 6303,
+      "sha256": "2a3880833deeb4120a5ad9914ab6d3655c9c2e5368d5211ede390a14260d4ea5"
+    }
+  }
+}

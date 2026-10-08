@@ -1,0 +1,7 @@
+    Finished `test` profile [unoptimized] target(s) in 2.35s
+     Running unittests src/lib.rs (/mnt/c/Temp/n4a-core045-20261008/target/debug/deps/nirs4all-d194f1579f74baec)
+     Running unittests src/bin/nirs4all-core-archive.rs (/mnt/c/Temp/n4a-core045-20261008/target/debug/deps/nirs4all_core_archive-730a9f2d897dcfa3)
+     Running tests/conformal.rs (/mnt/c/Temp/n4a-core045-20261008/target/debug/deps/conformal-202efc07f839e058)
+     Running tests/formats_io.rs (/mnt/c/Temp/n4a-core045-20261008/target/debug/deps/formats_io-32790e7eff0485c0)
+     Running tests/results.rs (/mnt/c/Temp/n4a-core045-20261008/target/debug/deps/results-3c694046636e141e)
+     Running tests/workflow.rs (/mnt/c/Temp/n4a-core045-20261008/target/debug/deps/workflow-b88eee7736f473ee)

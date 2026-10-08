@@ -1,0 +1,14 @@
+{
+  "command": [
+    "/mnt/c/Temp/n4a-core045-20261008/historical-python-executor/bin/python",
+    "-m",
+    "unittest",
+    "-v",
+    "test_archive_live.LiveArchiveV2ReplayTests"
+  ],
+  "direct_command_exit_code": 0,
+  "started_at": "2026-10-08T02:53:11.625948+00:00",
+  "finished_at": "2026-10-08T02:53:24.317582+00:00",
+  "seconds": 12.691629506007303,
+  "pid": 3418868
+}

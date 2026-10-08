@@ -1,0 +1,19 @@
+{
+  "started_at": "2026-10-08T03:50:53.047607+00:00",
+  "finished_at": "2026-10-08T03:51:06.987988+00:00",
+  "seconds": 13.93825614999514,
+  "run": 37723541512,
+  "source": "79dc40796a7ea8efba451806035d6336fee9b168",
+  "artifact_id": 11527291846,
+  "official_zip_sha256": "b2751c48c9ece30cde96903bf4f90c132b398a9fc3114fcc47d7495b77e6ab70",
+  "official_digest_verified": true,
+  "direct_exit_code": 0,
+  "files": [
+    {
+      "path": "/mnt/c/Temp/n4a-downstream041-20261008/core045-candidate79dc-artifacts-v1/core-windows-cli/nirs4all-core-archive.exe",
+      "bytes": 31822848,
+      "sha256": "5df1198f4c3b830674391f60f478515143a4c8aa74e869941fb27551cb1730f7"
+    }
+  ],
+  "scope": "Official candidate build artifacts only; not public/tag/final-scientific qualification"
+}

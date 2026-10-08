@@ -1,0 +1,44 @@
+{
+  "id": "rustc-tests",
+  "command": [
+    "/home/delete/.cargo/bin/rustc",
+    "--edition=2021",
+    "-C",
+    "debuginfo=0",
+    "-C",
+    "strip=debuginfo",
+    "--extern",
+    "nirs4all=/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libnirs4all-eb25aba5ce731694.rlib",
+    "--extern",
+    "tempfile=/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libtempfile-c17a4fb8bb52058e.rlib",
+    "-L",
+    "dependency=/mnt/c/Temp/n4a-core045-20261008/target/release/deps",
+    "-L",
+    "native=/mnt/c/Temp/n4a-core045-20261008/target/release/build/zstd-sys-e5d23fd6f3a2046f/out",
+    "--test",
+    "--crate-name",
+    "nirs4all_core_archive",
+    "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-proposal-v2/nirs4all-core-archive.rs",
+    "-o",
+    "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/cli-lifecycle-tests"
+  ],
+  "cwd": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2",
+  "start_utc": "2026-10-08T03:22:04.271605+00:00",
+  "end_utc": "2026-10-08T03:22:06.113909+00:00",
+  "duration_seconds": 1.8423069250420667,
+  "direct_exit": 0,
+  "expected_exit": 0,
+  "logs": {
+    "stdout": {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/rustc-tests.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "stderr": {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/rustc-tests.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  },
+  "temporary_roots_remaining": []
+}

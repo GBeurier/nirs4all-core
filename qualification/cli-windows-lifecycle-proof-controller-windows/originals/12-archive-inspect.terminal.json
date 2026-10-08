@@ -1,0 +1,19 @@
+{
+  "command": [
+    "C:\\Temp\\n4a-downstream041-20261008\\core045-candidate79dc-artifacts-v1\\core-windows-cli\\nirs4all-core-archive.exe",
+    "inspect",
+    "--archive",
+    "C:\\Temp\\n4a-core045-20261008\\fixtures\\historical-web-archive-v2\\multitarget-pls.n4a",
+    "--output",
+    "C:\\Temp\\n4a-core045-20261008\\audit\\cli-snapshot-lifecycle-windows-v1\\output\\inspect.json"
+  ],
+  "started_at": "2026-10-08T04:02:51.419378+00:00",
+  "ended_at": "2026-10-08T04:02:53.242694+00:00",
+  "elapsed_seconds": 1.823975299950689,
+  "direct_exit_code": 0,
+  "expected_exit_code": 0,
+  "observed_dll_snapshots": {},
+  "remaining_owned_tmp_entries": [],
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

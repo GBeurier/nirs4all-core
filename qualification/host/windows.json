@@ -1,0 +1,42 @@
+{
+  "observed_at": "2026-10-08T03:33:30.291457+00:00",
+  "started_at": "2026-10-08T03:33:30.061847+00:00",
+  "command": [
+    "/mnt/d/nirs4all-release-qualification-20261007/strict-b345054ef9584759a3c1121e3658056b/application/resources/backend/python-runtime/python/python.exe",
+    "-X",
+    "utf8",
+    "-B",
+    "-c",
+    "import ctypes,json,os,platform,sys,winreg\nclass M(ctypes.Structure):\n _fields_=[('dwLength',ctypes.c_ulong),('dwMemoryLoad',ctypes.c_ulong),('ullTotalPhys',ctypes.c_ulonglong),('ullAvailPhys',ctypes.c_ulonglong),('ullTotalPageFile',ctypes.c_ulonglong),('ullAvailPageFile',ctypes.c_ulonglong),('ullTotalVirtual',ctypes.c_ulonglong),('ullAvailVirtual',ctypes.c_ulonglong),('ullAvailExtendedVirtual',ctypes.c_ulonglong)]\nm=M();m.dwLength=ctypes.sizeof(m)\nassert ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(m))\nwith winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,r'HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0') as key:cpu=winreg.QueryValueEx(key,'ProcessorNameString')[0]\nprint(json.dumps(dict(hostname=platform.node(),platform=platform.platform(),win_version=list(sys.getwindowsversion()),arch=platform.machine(),logical_cpu_count=os.cpu_count(),processor_name=cpu,physical_memory_bytes=m.ullTotalPhys,python=platform.python_version(),python_executable=sys.executable),sort_keys=True))\n"
+  ],
+  "direct_exit": 0,
+  "observed_host": {
+    "arch": "AMD64",
+    "hostname": "U108-N257",
+    "logical_cpu_count": 24,
+    "physical_memory_bytes": 137242980352,
+    "platform": "Windows-10-10.0.26200-SP0",
+    "processor_name": "12th Gen Intel(R) Core(TM) i9-12900K",
+    "python": "3.11.13",
+    "python_executable": "D:\\nirs4all-release-qualification-20261007\\strict-b345054ef9584759a3c1121e3658056b\\application\\resources\\backend\\python-runtime\\python\\python.exe",
+    "win_version": [
+      10,
+      0,
+      26200,
+      2,
+      ""
+    ]
+  },
+  "scope": "Current real local Windows host observation only; not a retroactive observation during prior qualified runs.",
+  "python_sha256": "0219533834043ed981418139167ce06acefe8cf32dfe3d3bb95bf597bc436f6c",
+  "logs": {
+    "stdout.log": {
+      "sha256": "80cf0bfefb54c1f099e0c960924c2e424ac07ffcce322a276c04f77f12f00a7c",
+      "bytes": 444
+    },
+    "stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  }
+}

@@ -1,0 +1,6 @@
+test_python_binding_execution_matches_full_nirs4all_oracle (bindings.python.tests.test_execution_parity.ExecutionParityTests.test_python_binding_execution_matches_full_nirs4all_oracle) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 2.699s
+
+OK

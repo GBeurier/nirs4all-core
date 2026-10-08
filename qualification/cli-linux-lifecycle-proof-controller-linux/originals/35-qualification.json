@@ -1,0 +1,1234 @@
+{
+  "all_commands_expected_exit": true,
+  "input_fingerprints_before_after": {
+    "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-proposal-v2/nirs4all-core-archive.rs": {
+      "sha256": "f9a807ea5d2856a45aa18eb52816e119737513eb146db6637c97ea67daf8a074",
+      "bytes": 7814
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libnirs4all-eb25aba5ce731694.rlib": {
+      "sha256": "a90ab3b701f068c46c941877d8f574e569824727351c58ced217c7ab4608bdce",
+      "bytes": 17059668
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libtempfile-c17a4fb8bb52058e.rlib": {
+      "sha256": "4d4a9e3bea220a5a60df8a7c6f14f301650e1b63fbe21dbc1cd6b86261993f87",
+      "bytes": 439264
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/fixtures/historical-web-archive-v2/multitarget-pls.n4a": {
+      "sha256": "994252030ff80129d0431995bae53eb473082f05825b65714379262b72af13fa",
+      "bytes": 60023
+    },
+    "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0": {
+      "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385",
+      "bytes": 5449304
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/.fingerprint/nirs4all-eb25aba5ce731694/lib-nirs4all.json": {
+      "sha256": "cd06d7bd72223ee718394f3d422d863e9f05ddd5342b0f3ce8da3ebc83f31c56",
+      "bytes": 1543
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/.fingerprint/tempfile-c17a4fb8bb52058e/lib-tempfile.json": {
+      "sha256": "b446a0b2deaf5dc82f9b3619f23b58173400293896fdb324983d1cf5d45f590e",
+      "bytes": 649
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libadler2-b64f00779bc1d959.rlib": {
+      "sha256": "7e0b0cf6c94419186a5a8f7876153ad7b50cea4a17e28cfed8c3be9a6b776fd8",
+      "bytes": 23926
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libahash-600e6a1ae5fc4d69.rlib": {
+      "sha256": "ee265416ec93bef1add9843640eb4a705c12104fda3392e03da4d10ff13ba496",
+      "bytes": 155338
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libaho_corasick-cf9eedb32ff05c09.rlib": {
+      "sha256": "47bd2efcfcb6c17ffc1e142bfd78915be3d578e6e843765ef60307af14bd8dc3",
+      "bytes": 2880062
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/liballoc_no_stdlib-6cc652bc2f839f64.rlib": {
+      "sha256": "3ce068e2a3561f6c92171c5d84b174f3db709aa24b1a7114007ec6dbffdc32ab",
+      "bytes": 82952
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/liballoc_stdlib-f7ea3aa0be351515.rlib": {
+      "sha256": "379a2ef34a13c197d1270ec95d1abd38ce59fe71354ccb6d6dfa86ed8fcd883b",
+      "bytes": 37514
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libambient_authority-6416f82bb488c3f5.rlib": {
+      "sha256": "82737def853eeb499587ec31329eb9dba90c0e0240975f5cba68191adbc44502",
+      "bytes": 7092
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libanstream-e408a6f6907b832d.rlib": {
+      "sha256": "054b4d36ce9b442da5638cef6b3b1f3ac18d72a725474e7c913920a394b8adf7",
+      "bytes": 311260
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libanstyle-865d3f43c13ab2b2.rlib": {
+      "sha256": "55c886800b0c32c9fe922e3e1f561a64a722b48e66a79f09a6a06c0a87407144",
+      "bytes": 251406
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libanstyle_parse-a9459d2565cf683d.rlib": {
+      "sha256": "dc62bc9c5ee54a9c52ae0a3eeb711c07273343969118d08c8f93864c5fd32094",
+      "bytes": 190448
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libanstyle_query-fc8b3c69b0938db2.rlib": {
+      "sha256": "7b4ac2ec6cb956a6163c96efd4143b1babc3e54736a63471b9f77d27ec0cd44b",
+      "bytes": 21148
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libanyhow-15620ca5791a0a5e.rlib": {
+      "sha256": "74d30d82b201569f1067897a7b4a56584d24ae37eeb39ea1663ed74c9833d1f4",
+      "bytes": 568400
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libarrow_array-ec2588f1daddb052.rlib": {
+      "sha256": "8634b796d01e30a5f9ff680c03126628f2c93bc73f8234b2e87cb71cdababa4b",
+      "bytes": 8465216
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libarrow_buffer-28899332631439f6.rlib": {
+      "sha256": "7a5e0c4a2ae65aed209926a2f34dbb6b8e1838005d76e6ca7a2bf170bb177743",
+      "bytes": 1797826
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libarrow_data-da61531e5a18cc32.rlib": {
+      "sha256": "dc3f2161e93f21c9a5205eebd16b5fc501afef3f7138f91838381b52dbe6db5e",
+      "bytes": 1493788
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libarrow_ipc-b39ce38695ac49fd.rlib": {
+      "sha256": "2e05349f8e48d9a813bdb7d16fbeb8912b21396a53edd4016db76a0d90e943e0",
+      "bytes": 3412088
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libarrow_schema-e0f10ffba8b97711.rlib": {
+      "sha256": "13dddbc127b6e161e7ef18b7e3e58547c64584b42ca0fef0d9ffad495c856309",
+      "bytes": 1218756
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libarrow_select-5fe3b629b07f7865.rlib": {
+      "sha256": "6a69439e377ebd105aca155a73ab3dce7106313afe70c08d576c01c848e8df87",
+      "bytes": 9170386
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libatoi_simd-0086661bc77d1957.rlib": {
+      "sha256": "a8404222348ddb8b6fcc7d01bb91052c3c79c2af728a7bdc997d28bdfa932ad6",
+      "bytes": 267976
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libautocfg-10da6d93620eb418.rlib": {
+      "sha256": "8919c2ebdc113f0c8fb7e4996e6996a1e61e90e1bb0967dd0af3590c59416ac8",
+      "bytes": 602220
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libbase64-2d6897a75c432c52.rlib": {
+      "sha256": "820a5ca4300f69e5020485125e8003b355e772e4bbd0d4e6cf67cb56d3c4b8b2",
+      "bytes": 784446
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libbitflags-abd17e903f7b63df.rlib": {
+      "sha256": "1dd592aa83bae84cdc0edf155e07775210c6592b12ee119f47ad9d32d4079950",
+      "bytes": 263448
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libblock_buffer-caec67f2ccd87f8c.rlib": {
+      "sha256": "5095a701e5b75ab19073d04ba0f53045c779faf461592ee26118369ca27e2d0b",
+      "bytes": 122786
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libblock_buffer-ea0fc9977f484cf7.rlib": {
+      "sha256": "28bcafbe3c54dfda7054f4125abdd475b37eff627c2afad902f0e50b34c05f0f",
+      "bytes": 66050
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libbrotli-e65aec0ebea4c5b3.rlib": {
+      "sha256": "0d1090abe0d8fb4c5f8dc2e8854b3f471b443bc3dfae3fb41bb51e2b0d5f7ec1",
+      "bytes": 5069958
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libbrotli_decompressor-c4bb527386a25e46.rlib": {
+      "sha256": "92659b5992590e08b7f1f91f4bd56d8aa71bcac0d59fe2939b11be0e9f43fe71",
+      "bytes": 1448122
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libbumpalo-1c709da4ba53db5b.rlib": {
+      "sha256": "686d2fb0035a6aeadd02b0b995a7542af359c9c3844ab562cbad86f632118e14",
+      "bytes": 343102
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libbumpalo-3833785eec9a2a67.rlib": {
+      "sha256": "0e3f8d6041346ce78eb3233431c3378739e6b7cd3de798a7b9db2187e3e5376a",
+      "bytes": 310108
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libbyteorder-97a8f028d0ce5a85.rlib": {
+      "sha256": "9656b63ff9d68e34eff7262290f577a2984da975e03cc350e48b2fec0165cf96",
+      "bytes": 350406
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libbytes-b9ca9f0e1559a645.rlib": {
+      "sha256": "ab231d323ad56d4a9f2050dabda8ee40f03646d81230a89dd5fae5c2ff6c8b1d",
+      "bytes": 1164630
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libcalamine-9c18e4d2ea54d29f.rlib": {
+      "sha256": "b064d48951c4070c1be6a06c8b83abace51969dbc6b36107eec92a3d5c76b678",
+      "bytes": 3718030
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libcap_primitives-0cc6a67da9e5bac5.rlib": {
+      "sha256": "1908c0c7dbda9c1e758c8895a4c5457a31b464c7014e7795fd688b2f85c11cfa",
+      "bytes": 942722
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libcap_std-2712159980e8c1bc.rlib": {
+      "sha256": "73fa9c8f25f637b23500854ec14add40ef1c318b5dab89bff496fef4fa8a9376",
+      "bytes": 454530
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libcc-dcceb28fff047016.rlib": {
+      "sha256": "143d5e80dda43c2c06d3ea932002e50887cb1cd0b83585a8dfc455890e2f97d2",
+      "bytes": 3823562
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libcfb-410d6bd10e96b6dd.rlib": {
+      "sha256": "fc9475e0ed56d66a301020c1ea86d7df0baf83cf68417db358762b1922341e62",
+      "bytes": 1660380
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libcfg_if-ff9258b81730e029.rlib": {
+      "sha256": "a10bc43af2f3f6aedbb07ca02d744860941d22edc6ac6f9599409772d2f45584",
+      "bytes": 7350
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libchrono-0aea15bb23d3f899.rlib": {
+      "sha256": "7021ffbb4777006c7cec41c82268bc70a3a79027655f4995d59bf80dc02dadcd",
+      "bytes": 2730398
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libclap-004dafe8af092136.rlib": {
+      "sha256": "5b8523acd16fee30c171b9f4f8dcff3656de94786a5b92105442f0358a3759a6",
+      "bytes": 13770
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libclap_builder-9d92efbc07ad6907.rlib": {
+      "sha256": "ab2a04a8bdc03db4348f3ad2a2116757741acf4aaf32f4e242304cc7dc918a1d",
+      "bytes": 4015620
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libclap_lex-3074324c770ac95d.rlib": {
+      "sha256": "66995f022de38bb0d3c0b76a16efc912eb68fcee6b9ee1825720c9dbe19486c7",
+      "bytes": 109576
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libcodepage-d1b804432d6c0a66.rlib": {
+      "sha256": "d6598c2bd28508dc0ba6abb542377d7661af036bbd11940f90fd2366cb606daa",
+      "bytes": 28054
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libcolorchoice-7a01189a837280c3.rlib": {
+      "sha256": "477cc0586e7773f1e63b1b20114a09e47da7a21c82ff608ccf13d72e25e0389b",
+      "bytes": 16118
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libconst_oid-762ed25bd320954e.rlib": {
+      "sha256": "98b3a9d210bc3fa81756d274ef826bd7034ded02cf4832020ccc0a583cee956d",
+      "bytes": 213448
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libcore_detect-53b12bab6131ec9c.rlib": {
+      "sha256": "ef4edf5727e947795d4e5801ddcfcc6dda380d1f9398d0c98a787db8fee48af5",
+      "bytes": 358496
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libcpufeatures-11083d4c0c0edf6a.rlib": {
+      "sha256": "a168fda69ae1e887552e8608b3372d0f8dc79e929cf715f5ab4d325ed8dc199f",
+      "bytes": 45304
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libcpufeatures-8cf72b7cf2537222.rlib": {
+      "sha256": "5ffec48f86e117eeca2c2ed6fce6a87220ee1f93fc5ebd52e959f94a4a5e2fe4",
+      "bytes": 40816
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libcrc32fast-3e7fac89a7ca0d81.rlib": {
+      "sha256": "323e262e2ad4f59def0c0ff1f291a760a99f97f50f53002336a3372fcdf1e0e0",
+      "bytes": 89924
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libcrypto_common-3efdc5c9d37915d2.rlib": {
+      "sha256": "fddb403c7257e2fca99e249e93e261ecb66f0461644153ac60d3a6adcc139c4b",
+      "bytes": 33270
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libcrypto_common-da0252990a44d8ff.rlib": {
+      "sha256": "30137d7b2ba5ad7ace26af8662c4609be7966f1ed4ae16039cff570dd3e80406",
+      "bytes": 529156
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libcsv-633d3aebcab1d85d.rlib": {
+      "sha256": "fcd2edc6f9aec2857e4df1ad5287f08ef4a90c4faf1d2d57632f4f0796a9f762",
+      "bytes": 1087888
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libcsv_core-d0bd91f180fe36b9.rlib": {
+      "sha256": "9bb7c9adc937fc443a8435f06beae6963f257e9ee75750954178bd8f19cb5e4e",
+      "bytes": 194484
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libdag_ml-592963aac836ee03.rlib": {
+      "sha256": "77d96251bc6bcf32397cfc053828afac7479f8e6b9dbf55cc708feb30f422b68",
+      "bytes": 63694
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libdag_ml_core-bd74d50bae03e096.rlib": {
+      "sha256": "2b9ef64bbfd22f27a8d4dd2e21268be25903ed99a4ca595b1fa67dc0d750da21",
+      "bytes": 84328892
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libdag_ml_data-1021b76f95eada0d.rlib": {
+      "sha256": "9d19eed14a7d3461168923e0d9b301d8e27cf311a425731e19e633cbde983446",
+      "bytes": 18616
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libdag_ml_data_core-0aa66d23922598bd.rlib": {
+      "sha256": "d53c1b0074b4d71878c5c0f0e5d69eddd564a1f0a4e9dccc6c90728da1297897",
+      "bytes": 11719700
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libdag_ml_data_provider-5793beb0ef951db1.rlib": {
+      "sha256": "ae97799350da4274149b43070f31b914e737799c1ea1b27833754fb7c0334f1d",
+      "bytes": 2106170
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libdag_ml_results-e58150de260b8dfa.rlib": {
+      "sha256": "2be03a7111492379bbc9e09727b970ee70cb8932a30b27be6b4b7038d63adc6f",
+      "bytes": 2001890
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libdebug_unsafe-a7c3bc945b20ff89.rlib": {
+      "sha256": "dbb67995eedb7f4b6bbc96903c7dd86e2f04bc753b4af83b80528dc8cae15ce3",
+      "bytes": 7914
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libdigest-d4b3dbad8b6558a5.rlib": {
+      "sha256": "7f0a175d068d5d901a7c75c1bb80a16c19c8d92fd3f289d1dbc33a48dc25fc9b",
+      "bytes": 241700
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libdigest-e6ac2e0fbb37fb83.rlib": {
+      "sha256": "2b25afa84bddd77532df152a96897fadbbd7eeea59bf3ce85e1d2e7f950edf88",
+      "bytes": 196252
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libencoding_rs-f7d24822bc04d702.rlib": {
+      "sha256": "83c5c6f6d01fabe4211212644e3e39c40c345e5f2edb7f07c6f770d2dd7ee684",
+      "bytes": 1912390
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libequivalent-ff896c9c71a2a7c4.rlib": {
+      "sha256": "52bf60e82f7e97da29b9beca13af1b1c5c8bf294222b7d5317697bb67f9b401d",
+      "bytes": 9750
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libfast_float2-7c2f1091333136f1.rlib": {
+      "sha256": "9f9c99d7fde88b03b29cb2b65dd2402825dd900d5a7f8d6c8a84f442d8324e16",
+      "bytes": 300290
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libfastrand-1f36ae2ad328145c.rlib": {
+      "sha256": "ccdf19f624c7981078c9bab7dc6b95b3e85e462a1fa55542eb7bd5beaffa0423",
+      "bytes": 204698
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libfind_msvc_tools-d93487770c625e72.rlib": {
+      "sha256": "51337181e8ca6de693b7803ddca4a6977f193e850344660e1d41c4560b14a85d",
+      "bytes": 265946
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libflatbuffers-3c4989baedcbc569.rlib": {
+      "sha256": "21d5915da1084ceb74afdc301b8a33eee190aad390c16f2fdf202c9efedee67c",
+      "bytes": 605464
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libflate2-c0348a677291c373.rlib": {
+      "sha256": "28163bd8ebcfa1e81c0004f5bdffe161b1343e9df4e2c578fd8e8cdf6198d3bb",
+      "bytes": 746202
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libfnv-8cd984032b6636ea.rlib": {
+      "sha256": "fee1caa27840dc7da15fd7f938ef62893602bd2c2f2d925e5fe2a6968183f719",
+      "bytes": 14160
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libfs_set_times-c3caa7059ab9d7b1.rlib": {
+      "sha256": "319c70b757bdf33b58a391655318e8a1e13cc070d8724cf505184a4d5ca7d422",
+      "bytes": 28446
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libgeneric_array-4e42122fcc8c0fed.rlib": {
+      "sha256": "99f34416e0e3fde03f006458a3cd9300aed3c76716c51e0cb2c0e97c90e07487",
+      "bytes": 1005826
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libgetrandom-7343baacf3242284.rlib": {
+      "sha256": "b9df254b83e0a1416e21f063f5bb53eeb26816035f649115afd007d776876c08",
+      "bytes": 102100
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libgetrandom-f1cfde2203b1669d.rlib": {
+      "sha256": "ba11b187e9dcd31b08e219fb9ba3066d4f6e7310ba36ebf93bc76b897f915e07",
+      "bytes": 95082
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libglob-8c3fb832a162e5a6.rlib": {
+      "sha256": "c2a2f2d59abff6036b3bd5d6c1660a31bcc32baecee7bef3930510264720888e",
+      "bytes": 234244
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libhalf-747d256def4d0ed8.rlib": {
+      "sha256": "4b06a6de22e3ba1ba7254bc3667221ad72f7701aee7586c876394b4628c003d7",
+      "bytes": 903520
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libhashbrown-0791c5ff017e68da.rlib": {
+      "sha256": "f7d9e7a697771788b61ba3aac440ec8c486ca7062d1fa5e612ee613a042e5405",
+      "bytes": 1418542
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libhashbrown-bd747c1dc9ba8735.rlib": {
+      "sha256": "ca89f52ce5d47e023168aebb02629dfa0ff0a053ccbe69d59b6d7a287f045c5a",
+      "bytes": 1453498
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libheck-96447237a5b0d6f2.rlib": {
+      "sha256": "e3130cf2ce38ba031337fd8c04579d6b5cad648e24706420742e4597ab36f305",
+      "bytes": 289600
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libhybrid_array-0ceae5a7a35e4d85.rlib": {
+      "sha256": "10f0235461ac494c1917b66510275ecdc1df1b3baeef9ac153f8b613ab67b267",
+      "bytes": 1264504
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libiana_time_zone-2a1a09d4c94c0935.rlib": {
+      "sha256": "29b3386941bc6fc2c314a738270409906b895f498291a15d669872b4af94ff87",
+      "bytes": 65166
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libindexmap-817c0be7f0751ae5.rlib": {
+      "sha256": "eb055133acffbb8d12560b2d2060ff04798f6ef496a19f2b62eea67d1f28761e",
+      "bytes": 1806734
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libio_extras-6573a438faf186f0.rlib": {
+      "sha256": "a43ca28bdc43c7e695651d44ff49322e6271086af250fc869019d84933868f02",
+      "bytes": 143556
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libio_lifetimes-d9874c7c665d4434.rlib": {
+      "sha256": "5a03e25e602f7a9715f8282b9660a8d693e291b42fd871e62165388c0629d686",
+      "bytes": 70922
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libipnet-2ec6bb8ff9c717cc.rlib": {
+      "sha256": "bfe60da9b00390c04d844b3eeb49ea931a82248bfaf655997d57054c6945ea53",
+      "bytes": 493236
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libis_terminal_polyfill-fdd619843df83abd.rlib": {
+      "sha256": "18dcfee14a73ee03abc99e8538ab67ef9117e07ce3cbeb80f78ac4b96ae27dee",
+      "bytes": 11314
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libitoa-50a2ababbf499031.rlib": {
+      "sha256": "e6619ca09ffeda3c12f5dc349452a4d6ad5195effdbb07f6e4f118e364f006e0",
+      "bytes": 85280
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libjobserver-69ce092df37c6008.rlib": {
+      "sha256": "dbc1debf1c2044310f8e74b46da6247fd7194f2dabfb00f5cc1ff49e02f91908",
+      "bytes": 481786
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/liblibc-7ec648a22f7a4062.rlib": {
+      "sha256": "9f9ff2a5670774b7e80eb5ddf1aaf01930641b53105acacea43fc619c38b1de3",
+      "bytes": 4307652
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/liblibc-c112fec0408ec283.rlib": {
+      "sha256": "ef731dbb836169688d45972c8f3ff0ab2722d88f35d76003e1a817697215c14b",
+      "bytes": 4383518
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/liblibloading-4e80f0a2eb384857.rlib": {
+      "sha256": "a6d4b03e346183f4d29a39bc7c544bfdc51445a77382235a3d20f06d28715e40",
+      "bytes": 168598
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/liblibm-ae88d9a6c71388b0.rlib": {
+      "sha256": "0040625ecd4c2670fa307ccc200b0856b3eca592dc4d6b1388779a75c49582bf",
+      "bytes": 1695426
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/liblibyaml_rs-0e764f94d2248a13.rlib": {
+      "sha256": "068dfb51ebb46a6aa33bf13ac2e2d51d25d8537e090f7cd628ba07f880b9bf4b",
+      "bytes": 852538
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/liblinux_raw_sys-7129a0ea85db05ed.rlib": {
+      "sha256": "e73703b140350250247f423fb3f91daa68481ba8e0c14e74cdc96bd40ca149cd",
+      "bytes": 1432108
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/liblog-24c7925dd91e1e1e.rlib": {
+      "sha256": "12f330611b4d7fd54f5bfa143c340ecefc0c276822b80f2c30492924e69ef22f",
+      "bytes": 220838
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/liblz4_flex-50529b678527e9df.rlib": {
+      "sha256": "080f1f1c64ce93abe146fed06f7cc1d882cf6b35950881c9240c4958e0793696",
+      "bytes": 504680
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libmaybe_owned-9fd5c448ede9d03a.rlib": {
+      "sha256": "42027a962131ed67075f4640898ec339aaceb552853a5b14ce97e65f6e1dc134",
+      "bytes": 169600
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libmemchr-0f3277b4554d8999.rlib": {
+      "sha256": "cd7d3e04b26297c011fb87b3a5d2376ac1f9c2b4aa97ad60dc79829f81cef43d",
+      "bytes": 1438682
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libminiz_oxide-4f511939e94261f8.rlib": {
+      "sha256": "be240c01941dd485673932975999c4b3ea008b16dc0635a4d1588f7628390b3c",
+      "bytes": 550470
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libn4m-f76081985a7eb337.rlib": {
+      "sha256": "d6a362329e369e3b2db5e842a779f53df3f57e49470826a9b5a83c3f3d3f0e64",
+      "bytes": 1969562
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libnirs4all_formats-33bdd7ea38eb9a0a.rlib": {
+      "sha256": "60c3983536dc322671857b826b2901c3d2fea5ac717a495bd5d0d8a534e16bd9",
+      "bytes": 8368640
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libnirs4all_formats_core-79913c789df8624f.rlib": {
+      "sha256": "a5977928717446bf3c028579146e1e04dc5759ff443994db28aef465b2233c8b",
+      "bytes": 704326
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libnirs4all_io-de0cacca46f70a61.rlib": {
+      "sha256": "03b189829db42d62c23ed0a32998338809da82926f7728b351a99e6618d11cfe",
+      "bytes": 1852894
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libnirs4all_io_core-a62573e8c79a1c55.rlib": {
+      "sha256": "2057eea06d39110b234758859d4509794ad5fd02346104a9d563ec908d8b8bc9",
+      "bytes": 7133014
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libnirs4all_io_dagml-f2e0ccbea2fea827.rlib": {
+      "sha256": "17a322fe24ea90ad6a4b833dd94a45b04b885ff650a4655cd208d54f62f04983",
+      "bytes": 1411954
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libnum_bigint-7f620203ce681252.rlib": {
+      "sha256": "7cc080cd69e997f6954c3807e8c85086ce5b5a852eba4c224ac47727ef34419a",
+      "bytes": 3189814
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libnum_complex-e01072f35e74ab4a.rlib": {
+      "sha256": "bbf3314d4cb40dc2846f18e0ed79d6b00668b6f8ef410fda2ba32450bda0a6ab",
+      "bytes": 831324
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libnum_integer-6ce4fd2b6cd03fc3.rlib": {
+      "sha256": "cfae8d5f917cb2ffc79bcae8dda1020b452089e7b5729436e2676956b3412857",
+      "bytes": 365188
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libnum_traits-5bdbea270869d9f1.rlib": {
+      "sha256": "cc1154469c7eb3cd398d22729f7db639b7b048ab3e4632e08a68f2057ce95262",
+      "bytes": 1944248
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libonce_cell-d749050a1d9f133a.rlib": {
+      "sha256": "9b1394f3101eb5666db4f9edc9d4b222d4aa72ff0bd9c66d4ed1bca7f4b50d32",
+      "bytes": 242248
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libparquet-ac0c550fb626affc.rlib": {
+      "sha256": "e87bf2e2a6b32a2e5829bd7f5b07fc04addf94e270567dec9830da35621b8d43",
+      "bytes": 20603886
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libpin_project_lite-8987f09315f60b72.rlib": {
+      "sha256": "3a1c6c80dc573a4d9a9638d88f7ce1f42216eadfac36262b7b9f9748a5bd49ff",
+      "bytes": 95842
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libpkg_config-45f03b5f0fee3621.rlib": {
+      "sha256": "d526cbe589773cb1d05ea606798c440a457bc0d8ab12f055c65e73bf9168ff58",
+      "bytes": 855080
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libproc_macro2-92415d8054dbb8d2.rlib": {
+      "sha256": "5f8eadf230e2a04060f7a6df3e062782ea31bc9b4eef59febd73299a3e319792",
+      "bytes": 1133786
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libquick_xml-12db6758df063283.rlib": {
+      "sha256": "7ca406a0c1510c265d3dd753edce0893efb4a9d7792c46932fa21725be73dd40",
+      "bytes": 1759440
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libquick_xml-f3d1c5d0a14c63bb.rlib": {
+      "sha256": "ab71b7c819fee52301653fe62d96e3c091eee4ec932f9a0d263d0f89df1705c7",
+      "bytes": 1612490
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libquote-f7e095c154b41413.rlib": {
+      "sha256": "94d781f379832c20beae4a441373217e2d556e1954faf7ab9ac52e1cae16d44d",
+      "bytes": 478404
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libregex-04debf6cac734b41.rlib": {
+      "sha256": "0b7b2ce517f7d0fbe4149c068a0e43740474d9fc1ec028d9e06ff33f9d1c8a3d",
+      "bytes": 1075370
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libregex_automata-d396a02ef5de1f73.rlib": {
+      "sha256": "0877b9d3d3af70715a968baa1acdd9e305543574c598643e6bb3bba9544bbf91",
+      "bytes": 5734856
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libregex_syntax-2fe2b8f218c5e7da.rlib": {
+      "sha256": "1d22e3b5571f12072a7e508f93c39732f9cbdd242db435ed7a013c5ac3da445f",
+      "bytes": 7219756
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/librustc_version-0ebe8b05666e5e41.rlib": {
+      "sha256": "7abdba7793fb9e36df447efb7854131ecc7c53e06ecd0aae6a2de56193371982",
+      "bytes": 361702
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/librustix-591e867ae369ea5d.rlib": {
+      "sha256": "30a87ace62771e648a276678b4f2e913b3e3b5bb827eaa59bb8a74ce385eaad0",
+      "bytes": 8309952
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/librustix_linux_procfs-3dc7566818bf734c.rlib": {
+      "sha256": "621f91ae8af812f2575b35d97365a2ecea665c3392155ae4da085273cfeb9912",
+      "bytes": 86604
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libryu-036017824e84bd30.rlib": {
+      "sha256": "0608b90832f8275e0d8225e3356e717108eeab39ad6f8cc4ee771d90e429dc5b",
+      "bytes": 78580
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libsame_file-fc4c56501bb4b8f3.rlib": {
+      "sha256": "a710cf94d017622d511e1757154841eac91140e5a739cfcd22cfbfefbffd3f14",
+      "bytes": 47750
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libscopeguard-50d2e68a5c09cca9.rlib": {
+      "sha256": "96befb48a491a59f6596a4aa98349b01a04d2ebb193248d0c4121ff903aa0e13",
+      "bytes": 27862
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libsemver-15f0cbce512cb608.rlib": {
+      "sha256": "3f03d4e30c2c73551d0910481c38bfb8455feba82d71550a5ccaad8b9da1916b",
+      "bytes": 361314
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libserde-e66e25fdf942ed68.rlib": {
+      "sha256": "79b315b3e2ddf37d00c473cc558b3c726562fd3267d8d8551369c9ef7e4cd73e",
+      "bytes": 981038
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libserde_core-c6e7af951df16a72.rlib": {
+      "sha256": "641427cd170885f15a8e4d90b0b9cdb3bf285893c4c17a40ea913bc24aa6062f",
+      "bytes": 5385650
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libserde_ignored-f531fbc98687ea19.rlib": {
+      "sha256": "79bfb03f13d8a9d592e48ee14d4f75caedcb54bd91fe128cf639f39c13076797",
+      "bytes": 189956
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libserde_json-3c16a5186c08c309.rlib": {
+      "sha256": "cdfbff920d722e974d7d2b0818a2c3bd365a1c5eb36f854b712a65a09048d384",
+      "bytes": 2479156
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libserde_spanned-432b500f3f252c72.rlib": {
+      "sha256": "e42c5fb7511ba538d75cba563ebfcc43029cbcc8d0eb04dc3a28773a5dff6e04",
+      "bytes": 40314
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libserde_yaml-6d838555e14687f3.rlib": {
+      "sha256": "1f7998fc080167aa3ad7c906e99c34052363551b6fd944f4a7d539c0e715fe31",
+      "bytes": 2452032
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libsha2-813ce4e5f993199e.rlib": {
+      "sha256": "68bc46d7311adddb45f0ca481e448dbd16975020adcb6775d4bc18d02aeca079",
+      "bytes": 767500
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libsha2-bc7aa98c6c9ef77c.rlib": {
+      "sha256": "df294d5e24c52de8fca57ace43f5ec44199e402be8dfe27d68c0e5ff8278c5c0",
+      "bytes": 706936
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libshlex-62718baaa5448561.rlib": {
+      "sha256": "8b4a3796747a9ba8e24e616a2608c8ead9f2508ea12ef9d72cce761bb9579a16",
+      "bytes": 117612
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libsimd_adler32-914117ec84dce528.rlib": {
+      "sha256": "c2c94b5a4cba3824d69844370d464f45c54071f6336b8e06aa1d9746029a71e0",
+      "bytes": 791750
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libsimdutf8-f043ab59e5b073a2.rlib": {
+      "sha256": "efe18c702bb21d887f26aeee1184754398024856988d184baf25a3527819851a",
+      "bytes": 246132
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libsnap-bea6f70e1d22662a.rlib": {
+      "sha256": "f4f4e299a8bc12b56888ee1c89f60f45b784a984aa1ea71b2e85dcc6bb8d32cd",
+      "bytes": 395990
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libstrsim-4d3e2a6e3b7582fe.rlib": {
+      "sha256": "e4222975dfe2e612d0abf4bd40154fde5239fffa3eff325b74724fe9b6c8893f",
+      "bytes": 142596
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libsyn-2a5af8cd60ee3a79.rlib": {
+      "sha256": "dff490c2ee26f21019eb778c6d6edd150b0d40d256d56388454d7803a9c43d38",
+      "bytes": 11215540
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libsyn-2f8a655568544f19.rlib": {
+      "sha256": "fa87460bc25b4ee1f7dc2aaf835e873156c2de1c2c783222fadba5cc77574b59",
+      "bytes": 11168692
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libsyn-30620eb9012700d4.rlib": {
+      "sha256": "a1d8681912835f8f23d1639f732de694b6ddfaec8ba726524ac2dc4bb3f14f53",
+      "bytes": 8581794
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libsyn-855e0b2cf6c8c7a0.rlib": {
+      "sha256": "53278f74eaf36f6f3826d82365da6ca461e5a7c4725761396267a3d088d46214",
+      "bytes": 11653414
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libthiserror-1e5180b958edb685.rlib": {
+      "sha256": "7f4a0da861c6b333403ee7d40a70249c9f654e20caac088397a72a72a7967262",
+      "bytes": 33676
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libtinyvec-520b6781b0d88188.rlib": {
+      "sha256": "d0dfef61f48255507a7548c67fa559dee59c19f2ae61cea97666a49343bfa665",
+      "bytes": 930072
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libtoml-92f1b0d61bad28cc.rlib": {
+      "sha256": "0df196404f5be3b2806e960a095c76bb61b07d658e00382e9b1ce85a93ec8808",
+      "bytes": 1182662
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libtoml_datetime-ef757e2ca2bd9498.rlib": {
+      "sha256": "0a60d3dbc2f88f49b19d75d331164c7a5ac614049b05ff5b4da59e2e49ea41a2",
+      "bytes": 137434
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libtoml_edit-89828a152328c534.rlib": {
+      "sha256": "1a18f4ae4341a38579085377dd572f18b227b5e22f6db0e7b45af5d52bbfc28c",
+      "bytes": 2854716
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libtoml_write-45d6958416c3d421.rlib": {
+      "sha256": "807ae6f1c5bf37e6d8a0b5627fb70a4d72671e70675b0148a7f9e69ceb9ea35f",
+      "bytes": 201996
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libtracing-ff4d12b017759db3.rlib": {
+      "sha256": "99c47e03e876b4ef8e03712f167dbc1159d1b123515e2006b4b46237a8f4b149",
+      "bytes": 633504
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libtracing_core-41ac3465e1d164b9.rlib": {
+      "sha256": "c2a40653278c01b370ec9791a17be2e3ff5dd2f8f18b13c6c4709404060e50a3",
+      "bytes": 829994
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libtwox_hash-638ccb5a3f16d75b.rlib": {
+      "sha256": "898d7031abf92bf2344455fe4b8bd289b2c983d029c1f809b8496c58eac73316",
+      "bytes": 152300
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libtyped_path-08edb46774c5e548.rlib": {
+      "sha256": "88a6e183cc9634be079e47a009137c4daee5f9e6915253f72789134912511c40",
+      "bytes": 2533468
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libtypenum-5c9eb84f3aef9caf.rlib": {
+      "sha256": "8432061b125102073accabd55fecfbf89557a739c7c3741ab0562e43b073e553",
+      "bytes": 3671646
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libunicode_ident-6a545cc65e0fb5a2.rlib": {
+      "sha256": "99dbb33c5ee6871b51b3ec7f2a331fedcc0fc6b34c26bf93f4cb818d3cd915b6",
+      "bytes": 51764
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libunicode_normalization-86aaca80c5bf8a01.rlib": {
+      "sha256": "031c48bdc1958dc0447e1c1e11bf92e8085727f0eed5ae460f9d66a0247b9709",
+      "bytes": 1923364
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libunsafe_libyaml-d5b795b948d2dba8.rlib": {
+      "sha256": "e5df90b25de02cd555f3c32da5442b0d77c0abd41f12f92ba2084f4c1a581c39",
+      "bytes": 853898
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libutf8parse-6b2d7ee988a083c8.rlib": {
+      "sha256": "78f3ef03483e98c76ad29d8208c6e89080e5e888dca6a8b9c11eef987da9272e",
+      "bytes": 30852
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libuuid-947cfe5b95055594.rlib": {
+      "sha256": "1601c56c2eef75b371da34c952fa8247fb52bb184266de67cd9059a1a29e6281",
+      "bytes": 565642
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libversion_check-2684396f8ab600a7.rlib": {
+      "sha256": "671ea65f5d2695c799badc3c653702a76b5acb0d43bc54ff80e60fc1220dca42",
+      "bytes": 407704
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libwasm_bindgen_macro_support-06ea86830eaa925e.rlib": {
+      "sha256": "c9b6f8396e8432dc83e72802122a85c97c88246dca1290a9892c52e59f660ece",
+      "bytes": 11568770
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libwasm_bindgen_shared-98a73cbcb581d469.rlib": {
+      "sha256": "84bf9d514dfb62843e6c7a789dc6ae932cdfd9ebad0544f2db5bb7641d978fb9",
+      "bytes": 467914
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libweb_time-94daf01e49d173b2.rlib": {
+      "sha256": "ef0a5c59d47c67e0dfad00d4c25169c890b29675d336fdf0b4dc65876df1adcf",
+      "bytes": 12866
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libwinnow-30082686bc179c1c.rlib": {
+      "sha256": "c0973a21b0022913ad0cdf1ed0585bdcc9a5cb6cd9aca149516e152c3d49800e",
+      "bytes": 3929888
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libyaml_serde-2a3dfc947e8c5930.rlib": {
+      "sha256": "6b4106b37a866ac094ef6589ac95e6c4aa71ab720dd3e4b8dcc7935049720c5c",
+      "bytes": 2479372
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libzerocopy-a952855c59d0e357.rlib": {
+      "sha256": "1a9901d076d83f899bf6d1a4749030d36b01d06fc086aca4c9ce842acb7d73fe",
+      "bytes": 15647834
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libzip-2418040e64b0e453.rlib": {
+      "sha256": "d29aab71be4080e97063bd3e1be9e021a194bd2bf342cff0948d001fc339444a",
+      "bytes": 1964026
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libzip-5146065cf0e86da7.rlib": {
+      "sha256": "8400e13105be0ebd0a4f29da54c0c53f204a34878f36fe4dc949f34f982ef532",
+      "bytes": 1648442
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libzlib_rs-287ed4d78610554e.rlib": {
+      "sha256": "447ade52f820ce605819e6870e310c1611b0164878b29c45572199ded92d1154",
+      "bytes": 1261550
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libzmij-c5d7d5e05d14c67d.rlib": {
+      "sha256": "eba627afaa2572485e7eb714697aa5ec8ac797b33e8f3e8d11883118ba1f9cf7",
+      "bytes": 441382
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libzopfli-19c97cf609936b13.rlib": {
+      "sha256": "63af0622732476524b549e2a8ad83c91b6ecf87aa984bef715b3d5f64ab04864",
+      "bytes": 686336
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libzstd-495a933f7e3033b9.rlib": {
+      "sha256": "1f4869d405192e4bdaa6b53ea089c22f4901af3d0a93d11b7a930c0a35e4b669",
+      "bytes": 309336
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libzstd_safe-ef8c1f354a92b99b.rlib": {
+      "sha256": "ea83935faa25830c5aef62435093a47c397437847834cfb85d879811464c7a07",
+      "bytes": 210752
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libzstd_sys-a1a736f1a4fd3a31.rlib": {
+      "sha256": "ff16da6e7473fbcb4921076fc71e37ab437244e65ea9817dd510e6c47057400a",
+      "bytes": 1203742
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libclap_derive-dcf11549734b294d.so": {
+      "sha256": "43e15c9e1a00d6b535aac74b7c889233d6d6adc7d384ee71c351651cc81ccabc",
+      "bytes": 3887328
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libdisplaydoc-9cfa3a0fa3981912.so": {
+      "sha256": "e3110d99d0849703a189ce384f16c30b20b53902f1c1ceb6f5598a336b19c71e",
+      "bytes": 3305496
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libmultiversion_no_op-c84e1b6896c3ad7d.so": {
+      "sha256": "9cd69c3d31d27fbe73d50553e91f9496737783a00afea481d7c47e77c6eef3a6",
+      "bytes": 480432
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/librustversion-e94011c39df38bdd.so": {
+      "sha256": "d3b7f9db11f85cf42cc5f116925364d3f45ed5c7dfffb6c126ce92e42ded0e45",
+      "bytes": 765512
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libseq_macro-80e9c7f7f8305258.so": {
+      "sha256": "ba743c6a8cceaee27589f1585a50c8a3172eabd80293cb7b6e817f168ff0d9c2",
+      "bytes": 683264
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libserde_derive-3f14355bce522683.so": {
+      "sha256": "5ea51f9c63165174eeb7f83c345e8e2a911f217543a99bc865f14dc9720b634a",
+      "bytes": 4568376
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libserde_derive-7e572957379ee27a.so": {
+      "sha256": "a3b023875541bb34e5acb8b9ca21b17611ff48c811dbefac691a72d24dc6817c",
+      "bytes": 4566080
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libthiserror_impl-0c9e7f4ff361b219.so": {
+      "sha256": "be9330cffc4a82b8d7fe3b05cf98a12c7cc284363434358fda0c2a48dc0fc337",
+      "bytes": 3688632
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libthiserror_impl-69affaf11eb3d444.so": {
+      "sha256": "a612f1be95a12dad0d3748858523ccc21257a72c74fa6b7fdd8fc1e9ab8ca41e",
+      "bytes": 3704232
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libtracing_attributes-2c8739ef1a3d3652.so": {
+      "sha256": "8ce1cb2b3336782aa5ef26861f4e397fcad2495abb8ee6a687031ed3e551dac9",
+      "bytes": 3941056
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libtracing_attributes-89c9d23096254803.so": {
+      "sha256": "5e8fb157ec552dec93f30cdf1cc3d044819fae013874b189d80b2000950baac9",
+      "bytes": 3940968
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libwasm_bindgen_macro-79abb031fa5c3a80.so": {
+      "sha256": "88e9c95bc2be7e3a9132f45a070e29da2cc914943763f13f6eb6a084ea3d845e",
+      "bytes": 7742640
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libzerocopy_derive-d0f068ed269e04bf.so": {
+      "sha256": "9e15140f6cba16413ef9787a069f57f6a0f1692ec6a1ca91deeed17973fd2785",
+      "bytes": 4080168
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/target/release/build/zstd-sys-e5d23fd6f3a2046f/out/libzstd.a": {
+      "sha256": "7c724b7223e6c8dba9e5df906062a1a5ccb4a3751954cc4e7bb3b04872754e2f",
+      "bytes": 1036324
+    }
+  },
+  "steps": [
+    {
+      "id": "rustc-cli",
+      "command": [
+        "/home/delete/.cargo/bin/rustc",
+        "--edition=2021",
+        "-C",
+        "debuginfo=0",
+        "-C",
+        "strip=debuginfo",
+        "--extern",
+        "nirs4all=/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libnirs4all-eb25aba5ce731694.rlib",
+        "--extern",
+        "tempfile=/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libtempfile-c17a4fb8bb52058e.rlib",
+        "-L",
+        "dependency=/mnt/c/Temp/n4a-core045-20261008/target/release/deps",
+        "-L",
+        "native=/mnt/c/Temp/n4a-core045-20261008/target/release/build/zstd-sys-e5d23fd6f3a2046f/out",
+        "--crate-name",
+        "nirs4all_core_archive",
+        "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-proposal-v2/nirs4all-core-archive.rs",
+        "-o",
+        "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/nirs4all-core-archive"
+      ],
+      "cwd": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2",
+      "start_utc": "2026-10-08T03:22:01.827179+00:00",
+      "end_utc": "2026-10-08T03:22:04.228644+00:00",
+      "duration_seconds": 2.4014682529959828,
+      "direct_exit": 0,
+      "expected_exit": 0,
+      "logs": {
+        "stdout": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/rustc-cli.stdout.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "stderr": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/rustc-cli.stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      "temporary_roots_remaining": []
+    },
+    {
+      "id": "rustc-tests",
+      "command": [
+        "/home/delete/.cargo/bin/rustc",
+        "--edition=2021",
+        "-C",
+        "debuginfo=0",
+        "-C",
+        "strip=debuginfo",
+        "--extern",
+        "nirs4all=/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libnirs4all-eb25aba5ce731694.rlib",
+        "--extern",
+        "tempfile=/mnt/c/Temp/n4a-core045-20261008/target/release/deps/libtempfile-c17a4fb8bb52058e.rlib",
+        "-L",
+        "dependency=/mnt/c/Temp/n4a-core045-20261008/target/release/deps",
+        "-L",
+        "native=/mnt/c/Temp/n4a-core045-20261008/target/release/build/zstd-sys-e5d23fd6f3a2046f/out",
+        "--test",
+        "--crate-name",
+        "nirs4all_core_archive",
+        "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-proposal-v2/nirs4all-core-archive.rs",
+        "-o",
+        "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/cli-lifecycle-tests"
+      ],
+      "cwd": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2",
+      "start_utc": "2026-10-08T03:22:04.271605+00:00",
+      "end_utc": "2026-10-08T03:22:06.113909+00:00",
+      "duration_seconds": 1.8423069250420667,
+      "direct_exit": 0,
+      "expected_exit": 0,
+      "logs": {
+        "stdout": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/rustc-tests.stdout.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "stderr": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/rustc-tests.stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      "temporary_roots_remaining": []
+    },
+    {
+      "id": "unit-success_closes_owned_snapshot_tree",
+      "command": [
+        "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/cli-lifecycle-tests",
+        "--exact",
+        "tests::success_closes_owned_snapshot_tree",
+        "--nocapture"
+      ],
+      "cwd": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2",
+      "start_utc": "2026-10-08T03:22:06.141232+00:00",
+      "end_utc": "2026-10-08T03:22:06.175055+00:00",
+      "duration_seconds": 0.0338252279907465,
+      "direct_exit": 0,
+      "expected_exit": 0,
+      "logs": {
+        "stdout": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/unit-success_closes_owned_snapshot_tree.stdout.log",
+          "sha256": "74e15c3f33d9f729aa00ec777b9481b6381878008aa6eefd1f61e9ad13a5813b",
+          "bytes": 182
+        },
+        "stderr": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/unit-success_closes_owned_snapshot_tree.stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      "temporary_roots_remaining": []
+    },
+    {
+      "id": "unit-refusal_closes_owned_snapshot_tree_and_preserves_exit",
+      "command": [
+        "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/cli-lifecycle-tests",
+        "--exact",
+        "tests::refusal_closes_owned_snapshot_tree_and_preserves_exit",
+        "--nocapture"
+      ],
+      "cwd": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2",
+      "start_utc": "2026-10-08T03:22:06.234649+00:00",
+      "end_utc": "2026-10-08T03:22:06.289496+00:00",
+      "duration_seconds": 0.054818528005853295,
+      "direct_exit": 0,
+      "expected_exit": 0,
+      "logs": {
+        "stdout": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/unit-refusal_closes_owned_snapshot_tree_and_preserves_exit.stdout.log",
+          "sha256": "54dcdc542f8eaf77a41552741aaa023edfbf601dbdddd16a7e3a248b2c80bf7a",
+          "bytes": 201
+        },
+        "stderr": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/unit-refusal_closes_owned_snapshot_tree_and_preserves_exit.stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      "temporary_roots_remaining": []
+    },
+    {
+      "id": "original-help-refusal",
+      "command": [
+        "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/nirs4all-core-archive",
+        "--help"
+      ],
+      "cwd": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2",
+      "start_utc": "2026-10-08T03:22:06.357935+00:00",
+      "end_utc": "2026-10-08T03:22:06.381101+00:00",
+      "duration_seconds": 0.02316342300036922,
+      "direct_exit": 1,
+      "expected_exit": 1,
+      "logs": {
+        "stdout": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/original-help-refusal.stdout.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "stderr": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/original-help-refusal.stderr.log",
+          "sha256": "85fce53c6ea2c7d240b172019a679ad197a4236e064c0300c38c3909b75b3b38",
+          "bytes": 54
+        }
+      },
+      "temporary_roots_remaining": []
+    },
+    {
+      "id": "original-noargs-refusal",
+      "command": [
+        "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/nirs4all-core-archive"
+      ],
+      "cwd": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2",
+      "start_utc": "2026-10-08T03:22:06.493422+00:00",
+      "end_utc": "2026-10-08T03:22:06.521448+00:00",
+      "duration_seconds": 0.028019770979881287,
+      "direct_exit": 1,
+      "expected_exit": 1,
+      "logs": {
+        "stdout": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/original-noargs-refusal.stdout.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "stderr": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/original-noargs-refusal.stderr.log",
+          "sha256": "7e775fea079fd1832535d9870a25137f2d731105f473d51426f5f47366223782",
+          "bytes": 126
+        }
+      },
+      "temporary_roots_remaining": []
+    },
+    {
+      "id": "actual-archive-inspect",
+      "command": [
+        "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/nirs4all-core-archive",
+        "inspect",
+        "--archive",
+        "/mnt/c/Temp/n4a-core045-20261008/fixtures/historical-web-archive-v2/multitarget-pls.n4a",
+        "--output",
+        "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/archive-inspect.json"
+      ],
+      "cwd": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2",
+      "start_utc": "2026-10-08T03:22:06.604068+00:00",
+      "end_utc": "2026-10-08T03:22:06.642348+00:00",
+      "duration_seconds": 0.038283263973426074,
+      "direct_exit": 0,
+      "expected_exit": 0,
+      "logs": {
+        "stdout": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/actual-archive-inspect.stdout.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "stderr": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/actual-archive-inspect.stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      "temporary_roots_remaining": []
+    },
+    {
+      "id": "actual-native-archive-prediction",
+      "command": [
+        "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/nirs4all-core-archive",
+        "workflow-predict",
+        "--input",
+        "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/input.json",
+        "--archive",
+        "/mnt/c/Temp/n4a-core045-20261008/fixtures/historical-web-archive-v2/multitarget-pls.n4a",
+        "--methods-library",
+        "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+        "--methods-library-sha256",
+        "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385",
+        "--run-id",
+        "run:cli:lifecycle",
+        "--output",
+        "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/predict.json"
+      ],
+      "cwd": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2",
+      "start_utc": "2026-10-08T03:22:06.739687+00:00",
+      "end_utc": "2026-10-08T03:22:06.945234+00:00",
+      "duration_seconds": 0.20554985298076645,
+      "direct_exit": 0,
+      "expected_exit": 0,
+      "logs": {
+        "stdout": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/actual-native-archive-prediction.stdout.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "stderr": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/actual-native-archive-prediction.stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      "temporary_roots_remaining": []
+    },
+    {
+      "id": "actual-native-wrong-hash-refusal",
+      "command": [
+        "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/nirs4all-core-archive",
+        "workflow-predict",
+        "--input",
+        "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/input.json",
+        "--archive",
+        "/mnt/c/Temp/n4a-core045-20261008/fixtures/historical-web-archive-v2/multitarget-pls.n4a",
+        "--methods-library",
+        "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+        "--methods-library-sha256",
+        "0000000000000000000000000000000000000000000000000000000000000000",
+        "--run-id",
+        "run:cli:lifecycle",
+        "--output",
+        "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/refused.json"
+      ],
+      "cwd": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2",
+      "start_utc": "2026-10-08T03:22:07.069329+00:00",
+      "end_utc": "2026-10-08T03:22:07.158295+00:00",
+      "duration_seconds": 0.0889690219773911,
+      "direct_exit": 1,
+      "expected_exit": 1,
+      "logs": {
+        "stdout": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/actual-native-wrong-hash-refusal.stdout.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "stderr": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/actual-native-wrong-hash-refusal.stderr.log",
+          "sha256": "62da05e1965419f506fb349ad6d3af2ed3a129c26bc067a66a44e52abc1f861f",
+          "bytes": 200
+        }
+      },
+      "temporary_roots_remaining": []
+    }
+  ],
+  "artifacts": {
+    "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/nirs4all-core-archive": {
+      "sha256": "cc96bff31e8855cf60be2279a30f887cefd9880cdf88cee0e3dcbf12dca9c20f",
+      "bytes": 37979040
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/cli-lifecycle-tests": {
+      "sha256": "f2ef97f72975fb69d6b1a4c6034068648615f7ac6ff1a81edd196c9e9bd1641b",
+      "bytes": 1198992
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/predict.json": {
+      "sha256": "2277da477a1ac5d9ae0518d6faa7f76f648081223dd7fa80cdd869e593892193",
+      "bytes": 4600
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/archive-inspect.json": {
+      "sha256": "70e31f14004d409bb46c8b8cf6ac2563806ba7ba74b2d41f5f99a5ce3429b084",
+      "bytes": 11877
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/input.json": {
+      "sha256": "967d833bdb3e394658cce81a74014148b7e053b038fb7b641b1d7b9284513754",
+      "bytes": 140
+    }
+  },
+  "source_product_modified": false,
+  "native_core_or_wasm_rebuilt": false,
+  "real_prediction_observation": {
+    "schema_version": 3,
+    "outcome_id": "outcome:run:cli:lifecycle",
+    "run_id": "run:cli:lifecycle",
+    "source_training_outcome": {
+      "outcome_id": "outcome:nirs4all.raw_fit",
+      "outcome_fingerprint": "cb6a51b825bf5de858d8b190591f77e806d866b23dd6b27ee93b2aabbdee5363",
+      "training_request_fingerprint": "56f7c7b7af9eda2dcfc563d597ceaf6af726972a6fe456f82d09aab6ef7a0e44",
+      "effective_plan_fingerprint": "4ccf98c3010f49581a87770009411f38be51454b893a5feafb89da03c14eff81",
+      "execution_bundle_id": "bundle:nirs4all.raw_fit",
+      "execution_bundle_fingerprint": "bb6ded24707d8b2334887d8b17eee518d8e79eb1777e75197c42f147e843fec7",
+      "output_binding_fingerprints": [
+        "d861072cc5c498c899e4c66e7456162c4a6338b5d7a7984cb7827290b91ad806"
+      ],
+      "training_influence_fingerprint": "9c151fce483f2e7012b75f5f59bac95cafedca33c998b4cf953320c6bf203d27",
+      "data_identities_fingerprint": "14db9f1ce57a442efbcb8a119a8afd05a63d1fcaf4e033731a513b735ff935fa"
+    },
+    "replay_request_id": "predict:run:cli:lifecycle",
+    "replay_request_fingerprint": "9f61d28a9c9b6a19089767bde4bc5a5811aed5d85bef3f3fc4568958eb2fb012",
+    "input_data_identities": [
+      {
+        "requirement_key": "model:compat.0.x",
+        "schema_fingerprint": "586ba874ec4162fdd067871bbd6c8d88bbe953fe767aaa2c22b7d44b2041786c",
+        "plan_fingerprint": "ac163c63eacccc63c7c193dd5924748b349388332dfbbd4ad8b21ab8eb5a217f",
+        "relation_fingerprint": "48ea410af427b19f81a5fe64177933d77e402c33a9cf9486fa7e97523e6e7642",
+        "data_content_fingerprint": "d407049c515ad5e3329b433a2a698dd3d4f2f55fde95c12534f6c676b4871470",
+        "target_content_fingerprint": null,
+        "identity_fingerprint": "6204a4fb5779cfd088d7096366212627b24e2bd28627924b32c3dc85fa5dab0c"
+      }
+    ],
+    "bundle_id": "bundle:nirs4all.raw_fit",
+    "plan_id": "plan:nirs4all.raw_fit",
+    "phase": "PREDICT",
+    "result_count": 1,
+    "lineage_record_count": 1,
+    "prediction_block_count": 1,
+    "observation_prediction_block_count": 0,
+    "aggregated_prediction_block_count": 0,
+    "explanation_block_count": 0,
+    "controller_count": 1,
+    "prediction_cache_store": false,
+    "outputs": [
+      {
+        "schema_version": 2,
+        "binding": {
+          "schema_version": 1,
+          "binding_id": "output:prediction",
+          "node_id": "model:compat.0",
+          "port_name": "oof",
+          "prediction_level": "sample",
+          "unit_level": "physical_sample",
+          "prediction_kind": "regression_point",
+          "prediction_source": "final_refit",
+          "refit_strategy": "refit_one",
+          "aggregation_fingerprint": "c61fa6071ed0f78e811f31e3f76b090a9b7e7950ca53483c50ccd0fbe8b0105d",
+          "target_names": [
+            "protein",
+            "moisture"
+          ],
+          "target_units": [
+            null,
+            null
+          ],
+          "class_labels": [
+            [],
+            []
+          ],
+          "output_order": "target_order",
+          "target_space": "raw",
+          "binding_fingerprint": "d861072cc5c498c899e4c66e7456162c4a6338b5d7a7984cb7827290b91ad806"
+        },
+        "predictions": [
+          {
+            "prediction_id": "methods-pls:model:compat.0:PREDICT:full",
+            "producer_node": "model:compat.0",
+            "producer_port": "oof",
+            "partition": "final",
+            "fold_id": null,
+            "sample_ids": [
+              "predict.0",
+              "predict.1"
+            ],
+            "values": [
+              [
+                1.6363636363636365,
+                13.272727272727273
+              ],
+              [
+                2.4999999999999996,
+                15.0
+              ]
+            ],
+            "target_names": [
+              "protein",
+              "moisture"
+            ]
+          }
+        ],
+        "observation_predictions": [],
+        "aggregated_predictions": []
+      }
+    ],
+    "explanations": [],
+    "lineage": [
+      {
+        "record_id": "lineage:methods-pls:model:compat.0:PREDICT:variant:base:full",
+        "run_id": "run:cli:lifecycle",
+        "node_id": "model:compat.0",
+        "phase": "PREDICT",
+        "controller_id": "controller:methods.pls",
+        "controller_version": "n4m-abi-2.2",
+        "variant_id": "variant:base",
+        "fold_id": null,
+        "branch_path": [],
+        "input_lineage": [],
+        "artifact_refs": [],
+        "params_fingerprint": "163f8cd8d69e58e7870b4dc7031e53ae847cf8874a6dbcb0a3ff7a75e7093d7c",
+        "data_model_shape_fingerprint": null,
+        "aggregation_policy_fingerprint": null,
+        "seed": 17873118187436987775,
+        "unsafe_flags": [],
+        "metrics": {}
+      }
+    ],
+    "warnings": [],
+    "diagnostics": {},
+    "outcome_fingerprint": "0220ff080a73f415e3302f3f89d9cb4c52d645ce875290f46baf4b25927e2b11"
+  },
+  "numeric_assertion_status": "pending explicit shape extraction against original golden; no success claim until checked",
+  "scope": "Linux prototypeCLI lifecycle/transport checks; direct host bindings unchanged, no full scientific replay",
+  "storage_bytes": 39253645
+}

@@ -1,0 +1,253 @@
+{
+  "artifact": {
+    "name": "methods-native",
+    "version": "1.3.4",
+    "origin": "Actual publicMethods134 immutable DLL/SO in original numerical lifecycle commands",
+    "artifact_path": "D:\\nirs4all-release-qualification-20261007\\strict-b345054ef9584759a3c1121e3658056b\\application\\resources\\backend\\python-runtime\\python\\Lib\\site-packages\\n4m\\lib\\n4m.dll",
+    "sha256": "daf98de3fe85b8c7ab9ce432f7e74a6a61f74f8ac3045ec0d8c5a2060ca912c9",
+    "bytes": 3863552
+  },
+  "run_identity": {
+    "id": "cli-windows-lifecycle-proof-controller",
+    "host": "windows",
+    "command": [
+      "/mnt/d/nirs4all-release-qualification-20261007/strict-b345054ef9584759a3c1121e3658056b/application/resources/backend/python-runtime/python/python.exe",
+      "-X",
+      "utf8",
+      "-B",
+      "C:/Temp/n4a-core045-20261008/audit/verify_core045_cli_proofs_v1.py",
+      "--os-family",
+      "windows",
+      "--evidence-root",
+      "C:/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-windows-v1",
+      "--source-root",
+      "C:/Temp/n4a-core045-20261008/worktree"
+    ],
+    "cwd": "/mnt/c/Temp/n4a-core045-20261008/worktree",
+    "environment": {
+      "CARGO_TARGET_DIR": "/mnt/c/Temp/n4a-core045-20261008/target",
+      "TMPDIR": "/dev/shm/n4a-core045-20261008-private-posix",
+      "CARGO_INCREMENTAL": "0",
+      "CARGO_PROFILE_DEV_DEBUG": "0",
+      "CARGO_PROFILE_TEST_DEBUG": "0",
+      "CARGO_BUILD_JOBS": "2",
+      "PYO3_PYTHON": "/home/delete/nirs4all/nirs4all/.venv/bin/python",
+      "N4M_LIBRARY_PATH": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+      "N4M_LIB_PATH": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+      "NIRS4ALL_METHODS_LIB": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+      "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1"
+    },
+    "started_at": "2026-10-08T04:10:38.167154+00:00",
+    "finished_at": "2026-10-08T04:10:53.734363+00:00",
+    "exit_code": 0,
+    "input_fingerprints": {
+      "Cargo.lock": "5d5b611945bffe4363fe67c3adf7bfca16bcb357094a1bad499b90ee4bdbac02",
+      "Cargo.toml": "d3593455f0f5d3dd6d0c800b899890e486e0def9e4cbcdc8b2d9cbdb6a3b63cf",
+      "bindings/rust/nirs4all/Cargo.toml": "d173e3f6e1fac7b5fa875be9c79b6b47e75706333f83082109f99140947e7954",
+      "bindings/rust/nirs4all/src/archive_command.rs": "f1fdcc73c6308079005eab62c157800a9b47dc5b3f81105c6f9fcf759e8a610a",
+      "bindings/rust/nirs4all/src/archive_v1.rs": "9f3e7c0eca2f69877e22c2732746651a11c53d9c3b168ce4ab8e3150551ae23d",
+      "bindings/rust/nirs4all/src/archive_v1_fixtures/PROVENANCE.md": "2a34a7e3d11998c55ff6f6fd101f71292480edbb23f01107d74b6b4162f589b3",
+      "bindings/rust/nirs4all/src/archive_v1_fixtures/archive_workspace_manifest.v1.schema.json": "91daa7209843ab9043aa62a50200ff43b0f85f4c4e61ad8f73aa67b65a0a98dc",
+      "bindings/rust/nirs4all/src/archive_v1_fixtures/negative/refusals.v1.json": "d6522da50d8debc87b5c824392d793fd8895e4822ebe80289199a246f502ded5",
+      "bindings/rust/nirs4all/src/archive_v1_fixtures/positive/portable_split_conformal.json": "79acef8a6bedee201c9e7be7a398bf7ec0ef6de2c75777824ec9ec0633b4c451",
+      "bindings/rust/nirs4all/src/archive_v1_fixtures/positive/workspace_n4d_host_sidecar.json": "6c3d678e955258a2f652c886d86358d4775dc98e9e85714166d88ad0e16b13ca",
+      "bindings/rust/nirs4all/src/archive_v2.rs": "135b986ae8df37ea779242e3e3d4c3b90835a78cc1803982fa7960ce98574b74",
+      "bindings/rust/nirs4all/src/archive_v3.rs": "5bec7229f88d38906ed3ad9fdf9a3c6baafd49dbd056df7399cce9872ba3aebb",
+      "bindings/rust/nirs4all/src/archive_view.rs": "f09a1001d12f3aa4f6af4f4e8c02fe584339cbaf0d6906a33ab5897aeb1b5088",
+      "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs": "f9a807ea5d2856a45aa18eb52816e119737513eb146db6637c97ea67daf8a074",
+      "bindings/rust/nirs4all/src/conformal.rs": "e16a5f3f2535119f3c645fc55ea09cd434031a086b3c83417557fa606f9db9fe",
+      "bindings/rust/nirs4all/src/conformal_json.rs": "003b20d77d90cd0d49cde5ff3cbafdb4883719840a3732208a73baebda967776",
+      "bindings/rust/nirs4all/src/durability.rs": "d4dc011a8268b7b9216f633d288c23a90808dc9a587a0997adfe8a18abca35be",
+      "bindings/rust/nirs4all/src/formats_io.rs": "d0ae25fcb33cfb401394d6eebeee8b27df6afdd1d641a8f0ba0b67d29295fdf3",
+      "bindings/rust/nirs4all/src/generation.rs": "24f55553af4de979ee0fd65763b9f422e58c86385e47590cd015161c5d011cde",
+      "bindings/rust/nirs4all/src/io_training.rs": "64012a3cd64df0ddaffea40ef6ee74c253a7e68c7987355f0dedd69325f4b03e",
+      "bindings/rust/nirs4all/src/lib.rs": "41577e090752dae5d0fad3479d21ce18d7f67491fe7e652d500d00d2d2373f55",
+      "bindings/rust/nirs4all/src/multimodal_workflow.rs": "6b97e5937ec2d4073055752d64e5ad630ecde2b07668a7dfeeb94b4ed6e7c91f",
+      "bindings/rust/nirs4all/src/n4m_roles.rs": "7a9f4484e6facbb52b0c685d62a3c5c3df0d96882481e9c3ecd17051a8856795",
+      "bindings/rust/nirs4all/src/native_methods_replay.rs": "f8c68f48ff7bdc5e9317fc800e6beb612c712c4e37b3051e3763691f4a554b2c",
+      "bindings/rust/nirs4all/src/native_pipeline_contract.rs": "ff8a2c2801672201b96690e636d886430818f718e3c693cd52ac3d3c41b856f8",
+      "bindings/rust/nirs4all/src/pipeline_workflow.rs": "6e66a0ecd801e79f0b0ab171ee855d0522275b5cb0e012634653d88ef3f6c414",
+      "bindings/rust/nirs4all/src/portable_session.rs": "376d94df8e588e0170bec51b1f63cacf7d2056ce75de191812daf82adc1f5196",
+      "bindings/rust/nirs4all/src/publication.rs": "3aaa956e0df6ad96df7522537dfe387b6b359a48f3787374739b3b14bfeef52b",
+      "bindings/rust/nirs4all/src/result_projection.rs": "4cb8446e0b1f1b84fee9508c0fe713f0e682ad58fcdc9830f9a1d08bb0ca71bb",
+      "bindings/rust/nirs4all/src/results.rs": "964e2103293b665a5f12e25f750784ec3fd4f3cbd2fbf40aa7a65ce468c51d58",
+      "bindings/rust/nirs4all/src/robustness.rs": "0c8e0fbb28801777843ffa06d08599b3329649ed38358f8169eafc7787bcda7b",
+      "bindings/rust/nirs4all/src/robustness_json.rs": "ba06e2710bad3ec27661ac3d43c76ff1afc6bc8b00a3d5c12aa4bae7f6042c1b",
+      "bindings/rust/nirs4all/src/test_fixture.rs": "68e3fd2f730da4adb7a705d2c55507ef4092e4b3aa840bba6e364bc66d052be4",
+      "bindings/rust/nirs4all/src/tuning.rs": "62100a3aa99195ae8d75463264d131464a52913b7ae0dfad221286e9ec42fa5d",
+      "bindings/rust/nirs4all/src/workflow.rs": "f3763bdeaf870181c2bd539b8abdf9c5f37922a51a68f1900f4fdaa1a0074369"
+    }
+  },
+  "source_sha": "cfe38a8d6b1d401a771483cf21f26f10251821b7",
+  "log_sha256": "367a740b43d8e0b452ba2ac198e21141b68daf84038e8f677caeacf67e52c2b6",
+  "observation_basis": "Original retained PRE and POST/source-map evidence; normalized now, no retrospective binary measurement",
+  "retained_originals": {
+    "0-PRE.json": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/0-PRE.json",
+      "bytes": 52831,
+      "sha256": "78045d3deecd7cbb4a379d1ee2e3aa0ed5d4e3b7778a29df852807210c9bb789"
+    },
+    "1-active.json": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/1-active.json",
+      "bytes": 52901,
+      "sha256": "bf689cdbd7e417de0c635c1b6d0e39e8d0dcff5926e4a6266662aa853373d97b"
+    },
+    "2-direct-terminal.json": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/2-direct-terminal.json",
+      "bytes": 673,
+      "sha256": "3f46b672240fbe65b9f5020a555fafe52562fd1122bb963c0e432355c281f008"
+    },
+    "3-raw-receipt.json": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/3-raw-receipt.json",
+      "bytes": 104954,
+      "sha256": "416c31f335934d8f1a70853ad9da40ee23cf0dd4bbe0e037b7be03ba911433d1"
+    },
+    "4-stdout.log": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/4-stdout.log",
+      "bytes": 4480,
+      "sha256": "367a740b43d8e0b452ba2ac198e21141b68daf84038e8f677caeacf67e52c2b6"
+    },
+    "5-stderr.log": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/5-stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "6-PRE.json": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/6-PRE.json",
+      "bytes": 66177,
+      "sha256": "f13c4a753e9dd022436fe2384b509d9ccb891eecc1a9cf89e677c104a6ce712e"
+    },
+    "7-after-load-output-refusal.stderr.log": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/7-after-load-output-refusal.stderr.log",
+      "bytes": 51,
+      "sha256": "6076328236ffe23f2848da436d582712a1613cc7e776e576c49a51efcc942615"
+    },
+    "8-after-load-output-refusal.stdout.log": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/8-after-load-output-refusal.stdout.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "9-after-load-output-refusal.terminal.json": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/9-after-load-output-refusal.terminal.json",
+      "bytes": 1638,
+      "sha256": "43fba1866758d3751551eb79ff02754fe92ba8a1c88a5b058678d661374e307a"
+    },
+    "10-archive-inspect.stderr.log": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/10-archive-inspect.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "11-archive-inspect.stdout.log": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/11-archive-inspect.stdout.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "12-archive-inspect.terminal.json": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/12-archive-inspect.terminal.json",
+      "bytes": 847,
+      "sha256": "e1ff5cf0b62e2db9a1fe3eabc61410a2a29a3054bace164cdafc05091aad8ba3"
+    },
+    "13-input.json": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/13-input.json",
+      "bytes": 140,
+      "sha256": "967d833bdb3e394658cce81a74014148b7e053b038fb7b641b1d7b9284513754"
+    },
+    "14-junction-root-refusal.stderr.log": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/14-junction-root-refusal.stderr.log",
+      "bytes": 69,
+      "sha256": "12a05dadc99c1e6ff955c4f04fb59228c7259507b2e4078c533ecaabb1b84272"
+    },
+    "15-junction-root-refusal.stdout.log": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/15-junction-root-refusal.stdout.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "16-junction-root-refusal.terminal.json": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/16-junction-root-refusal.terminal.json",
+      "bytes": 857,
+      "sha256": "a583291d2b1d256e150637b5b09b2ada63dfb36e6ab1c9819633bbfcf2dbfd8c"
+    },
+    "17-junction.stderr.log": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/17-junction.stderr.log",
+      "bytes": 227,
+      "sha256": "5e6a9876ab7a3003af181abb91c685551585e924ab009598c5975aa4cb7d8f77"
+    },
+    "18-junction.stdout.log": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/18-junction.stdout.log",
+      "bytes": 219,
+      "sha256": "aab5b0285a870ff91a09f6d83a3b094c5b7ae427b5baa6966e6a4fd15504a182"
+    },
+    "19-junction.terminal.json": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/19-junction.terminal.json",
+      "bytes": 434,
+      "sha256": "5de39366a33d0813b41747cb328d6fefae25187bd4e6f361c07d9c3a4f7b4ccd"
+    },
+    "20-native-prediction.stderr.log": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/20-native-prediction.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "21-native-prediction.stdout.log": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/21-native-prediction.stdout.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "22-native-prediction.terminal.json": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/22-native-prediction.terminal.json",
+      "bytes": 1633,
+      "sha256": "f6b362fc2924f17df98ed5f59c5db0cd8dd78d1cef1aa2eff723bf3aaa64932d"
+    },
+    "23-qualification-completed.json": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/23-qualification-completed.json",
+      "bytes": 139399,
+      "sha256": "daaf9798e43109f8edf9c1fd5cefd8727d0a652400475aaf5a16db310f7d8ad6"
+    },
+    "24-wrong-hash-refusal.stderr.log": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/24-wrong-hash-refusal.stderr.log",
+      "bytes": 200,
+      "sha256": "71f95a436dce9efc176589dd218537fe8e3193afb3df0cc798419a0214a9ac28"
+    },
+    "25-wrong-hash-refusal.stdout.log": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/25-wrong-hash-refusal.stdout.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "26-wrong-hash-refusal.terminal.json": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/26-wrong-hash-refusal.terminal.json",
+      "bytes": 1330,
+      "sha256": "2d77f391d5b0f78444627e07815192118830532d507091a6791af73830a2abfa"
+    },
+    "27-freeze.json": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/27-freeze.json",
+      "bytes": 94696,
+      "sha256": "43a9f629f257edeb401bf3ac5180780d4be35dc0d7bef871e736cc24361d06f1"
+    },
+    "28-run_core045_local_commands_v5_cli_controllers.py": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/28-run_core045_local_commands_v5_cli_controllers.py",
+      "bytes": 7611,
+      "sha256": "0120d86aa8e91c06e078c14130a279b331793ca7d973a75b94f6239c9bfd61e9"
+    },
+    "29-verify_core045_cli_proofs_v1.py": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/29-verify_core045_cli_proofs_v1.py",
+      "bytes": 7927,
+      "sha256": "c63aafb5948de3f71d0c16c85a81cd6bb737245811b72a5c1626d7a7a3bd1cfe"
+    },
+    "30-windows_cli_lifecycle_v1.py": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/30-windows_cli_lifecycle_v1.py",
+      "bytes": 8959,
+      "sha256": "3066c112b09dedd92c07ad831120b774c2ea51f56b86c7bdfb95671947f2a19a"
+    },
+    "31-PRE.json": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/31-PRE.json",
+      "bytes": 1082,
+      "sha256": "9ac0ad8569f6f273250cbd4874123fc79c50382ec6e084d1f5136dbddd955ed4"
+    },
+    "32-qualification.json": {
+      "path": "qualification/cli-windows-lifecycle-proof-controller-windows/originals/32-qualification.json",
+      "bytes": 775,
+      "sha256": "a50ad2816ea26216cbf6762042c9eddc49be28c434ac2e097092cfb4a51cff6f"
+    }
+  }
+}

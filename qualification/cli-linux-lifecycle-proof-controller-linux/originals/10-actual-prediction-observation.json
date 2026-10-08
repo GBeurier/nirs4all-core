@@ -1,0 +1,128 @@
+{
+  "schema_version": 3,
+  "outcome_id": "outcome:run:cli:lifecycle",
+  "run_id": "run:cli:lifecycle",
+  "source_training_outcome": {
+    "outcome_id": "outcome:nirs4all.raw_fit",
+    "outcome_fingerprint": "cb6a51b825bf5de858d8b190591f77e806d866b23dd6b27ee93b2aabbdee5363",
+    "training_request_fingerprint": "56f7c7b7af9eda2dcfc563d597ceaf6af726972a6fe456f82d09aab6ef7a0e44",
+    "effective_plan_fingerprint": "4ccf98c3010f49581a87770009411f38be51454b893a5feafb89da03c14eff81",
+    "execution_bundle_id": "bundle:nirs4all.raw_fit",
+    "execution_bundle_fingerprint": "bb6ded24707d8b2334887d8b17eee518d8e79eb1777e75197c42f147e843fec7",
+    "output_binding_fingerprints": [
+      "d861072cc5c498c899e4c66e7456162c4a6338b5d7a7984cb7827290b91ad806"
+    ],
+    "training_influence_fingerprint": "9c151fce483f2e7012b75f5f59bac95cafedca33c998b4cf953320c6bf203d27",
+    "data_identities_fingerprint": "14db9f1ce57a442efbcb8a119a8afd05a63d1fcaf4e033731a513b735ff935fa"
+  },
+  "replay_request_id": "predict:run:cli:lifecycle",
+  "replay_request_fingerprint": "9f61d28a9c9b6a19089767bde4bc5a5811aed5d85bef3f3fc4568958eb2fb012",
+  "input_data_identities": [
+    {
+      "requirement_key": "model:compat.0.x",
+      "schema_fingerprint": "586ba874ec4162fdd067871bbd6c8d88bbe953fe767aaa2c22b7d44b2041786c",
+      "plan_fingerprint": "ac163c63eacccc63c7c193dd5924748b349388332dfbbd4ad8b21ab8eb5a217f",
+      "relation_fingerprint": "48ea410af427b19f81a5fe64177933d77e402c33a9cf9486fa7e97523e6e7642",
+      "data_content_fingerprint": "d407049c515ad5e3329b433a2a698dd3d4f2f55fde95c12534f6c676b4871470",
+      "target_content_fingerprint": null,
+      "identity_fingerprint": "6204a4fb5779cfd088d7096366212627b24e2bd28627924b32c3dc85fa5dab0c"
+    }
+  ],
+  "bundle_id": "bundle:nirs4all.raw_fit",
+  "plan_id": "plan:nirs4all.raw_fit",
+  "phase": "PREDICT",
+  "result_count": 1,
+  "lineage_record_count": 1,
+  "prediction_block_count": 1,
+  "observation_prediction_block_count": 0,
+  "aggregated_prediction_block_count": 0,
+  "explanation_block_count": 0,
+  "controller_count": 1,
+  "prediction_cache_store": false,
+  "outputs": [
+    {
+      "schema_version": 2,
+      "binding": {
+        "schema_version": 1,
+        "binding_id": "output:prediction",
+        "node_id": "model:compat.0",
+        "port_name": "oof",
+        "prediction_level": "sample",
+        "unit_level": "physical_sample",
+        "prediction_kind": "regression_point",
+        "prediction_source": "final_refit",
+        "refit_strategy": "refit_one",
+        "aggregation_fingerprint": "c61fa6071ed0f78e811f31e3f76b090a9b7e7950ca53483c50ccd0fbe8b0105d",
+        "target_names": [
+          "protein",
+          "moisture"
+        ],
+        "target_units": [
+          null,
+          null
+        ],
+        "class_labels": [
+          [],
+          []
+        ],
+        "output_order": "target_order",
+        "target_space": "raw",
+        "binding_fingerprint": "d861072cc5c498c899e4c66e7456162c4a6338b5d7a7984cb7827290b91ad806"
+      },
+      "predictions": [
+        {
+          "prediction_id": "methods-pls:model:compat.0:PREDICT:full",
+          "producer_node": "model:compat.0",
+          "producer_port": "oof",
+          "partition": "final",
+          "fold_id": null,
+          "sample_ids": [
+            "predict.0",
+            "predict.1"
+          ],
+          "values": [
+            [
+              1.6363636363636365,
+              13.272727272727273
+            ],
+            [
+              2.4999999999999996,
+              15.0
+            ]
+          ],
+          "target_names": [
+            "protein",
+            "moisture"
+          ]
+        }
+      ],
+      "observation_predictions": [],
+      "aggregated_predictions": []
+    }
+  ],
+  "explanations": [],
+  "lineage": [
+    {
+      "record_id": "lineage:methods-pls:model:compat.0:PREDICT:variant:base:full",
+      "run_id": "run:cli:lifecycle",
+      "node_id": "model:compat.0",
+      "phase": "PREDICT",
+      "controller_id": "controller:methods.pls",
+      "controller_version": "n4m-abi-2.2",
+      "variant_id": "variant:base",
+      "fold_id": null,
+      "branch_path": [],
+      "input_lineage": [],
+      "artifact_refs": [],
+      "params_fingerprint": "163f8cd8d69e58e7870b4dc7031e53ae847cf8874a6dbcb0a3ff7a75e7093d7c",
+      "data_model_shape_fingerprint": null,
+      "aggregation_policy_fingerprint": null,
+      "seed": 17873118187436987775,
+      "unsafe_flags": [],
+      "metrics": {}
+    }
+  ],
+  "warnings": [],
+  "diagnostics": {},
+  "outcome_fingerprint": "0220ff080a73f415e3302f3f89d9cb4c52d645ce875290f46baf4b25927e2b11"
+}

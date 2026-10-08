@@ -1,0 +1,28 @@
+{
+  "id": "unit-success_closes_owned_snapshot_tree",
+  "command": [
+    "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/cli-lifecycle-tests",
+    "--exact",
+    "tests::success_closes_owned_snapshot_tree",
+    "--nocapture"
+  ],
+  "cwd": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2",
+  "start_utc": "2026-10-08T03:22:06.141232+00:00",
+  "end_utc": "2026-10-08T03:22:06.175055+00:00",
+  "duration_seconds": 0.0338252279907465,
+  "direct_exit": 0,
+  "expected_exit": 0,
+  "logs": {
+    "stdout": {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/unit-success_closes_owned_snapshot_tree.stdout.log",
+      "sha256": "74e15c3f33d9f729aa00ec777b9481b6381878008aa6eefd1f61e9ad13a5813b",
+      "bytes": 182
+    },
+    "stderr": {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/unit-success_closes_owned_snapshot_tree.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  },
+  "temporary_roots_remaining": []
+}
