@@ -1,0 +1,198 @@
+
+running 133 tests
+test archive_v1::tests::archive_v1_refuses_oversized_files_before_loading_and_bounds_manifest ... ok
+test archive_command::tests::archive_identity_requires_exact_lowercase_raw_sha ... ok
+test archive_command::tests::invalid_archive_is_refused_before_any_worker_or_output ... ok
+test archive_command::tests::strict_transport_options_do_not_accept_fit_or_arbitrary_passthrough ... ok
+test archive_command::tests::training_destinations_refuse_collisions_before_any_fit ... ok
+test archive_command::tests::raced_results_publication_rolls_back_only_own_archive ... ok
+test archive_command::tests::failed_emit_preserves_foreign_insertions_and_replacements_after_publication ... ok
+test archive_v1::tests::archive_v1_physical_preflight_counts_manifest_and_rejects_metadata_only_attacks ... ok
+test archive_v1::tests::archive_v1_public_loader_refuses_escaped_duplicate_manifest_keys ... ok
+test archive_v1::tests::archive_v1_uses_the_same_canonical_path_rule_for_writer_and_reader ... ok
+test archive_v1::tests::archive_v1_writer_budgets_payloads_before_manifest_or_clone_work ... ok
+test archive_v1::tests::archive_v1_closed_manifest_reports_malformed_payloads_as_format_before_capability_refusal ... ok
+test archive_v1::tests::archive_v1_zip_integer_readers_and_offsets_fail_closed_on_overflow ... ok
+test archive_v1::tests::archive_v1_public_reader_refuses_50k_nested_manifest_without_stack_growth ... ok
+test archive_v1::tests::archive_v1_dispatches_future_schema_before_opening_a_bad_payload ... ok
+test archive_v1::tests::archive_v1_requires_exact_dagml_reference_fields_and_closed_six_member_inventory ... ok
+test archive_v1::tests::archive_v1_publication_never_replaces_a_target_created_by_another_writer ... ok
+test archive_v1::tests::archive_v1_refuses_unsupported_payload_declarations_and_semantic_divergence ... ok
+test archive_v1::tests::archive_v1_validates_closed_optional_payload_links_before_capability_refusal ... ok
+test archive_v1::tests::archive_v1_atomically_round_trips_and_refuses_predict_without_executor ... ok
+test archive_v1::tests::archive_v1_refuses_same_length_mutation_during_load ... ok
+test archive_v1::tests::archive_v1_refuses_tampered_payload_and_invalid_request_before_write ... ok
+test archive_v1::tests::archive_v1_refuses_manifest_mutation_after_the_cached_manifest_read ... ok
+test archive_v1::tests::archive_v1_refuses_append_after_payloads_are_read ... ok
+test archive_v2::tests::classifier_storage_refuses_duplicates_and_incomplete_member_closure ... ok
+test archive_v1::tests::archive_v1_publishes_a_relative_target_without_cleanup_error ... ok
+test archive_v2::tests::classifier_storage_refuses_cross_family_and_unknown_declarations ... ok
+test archive_v1::tests::archive_v1_workspace_namespace_is_closed_before_capability_refusal ... ok
+test archive_v1::tests::archive_v1_refuses_inconsistent_local_zip_headers ... ok
+test archive_v2::tests::classifier_storage_refuses_unknown_profile_before_payload_reads ... ok
+test archive_v1::tests::archive_v1_loads_conformal_metadata_for_a_host_view_and_still_refuses_execution ... ok
+test archive_v2::tests::classifier_storage_coexists_with_both_historical_regression_families ... ok
+test archive_v2::tests::archive_v2_storage_fixture_is_semantically_refused_before_methods_runtime ... ok
+test archive_v2::tests::direct_v2_reader_refuses_invalid_manifest_before_corrupt_payload_crc ... ok
+test archive_v2::tests::dispatch_refuses_future_manifest_before_corrupt_payload_is_loaded ... ok
+test archive_v2::tests::direct_and_generic_readers_refuse_duplicate_manifest_keys_before_payload_io ... ok
+test archive_v1::tests::archive_v1_public_reader_uses_exact_dagml_workspace_path_and_live_name_rules ... ok
+test archive_v2::tests::multimodal_storage_identity_is_unique_across_methods_families ... ok
+test archive_v2::tests::classifier_storage_roundtrip_preserves_both_exact_opaque_families ... ok
+test archive_v2::tests::multimodal_storage_coexists_with_historical_role_family ... ok
+test archive_v1::tests::archive_v1_writer_bounds_manifest_serialization_before_zip_construction ... ok
+test archive_v2::tests::multimodal_storage_requires_complete_member_closure_and_a_predictor ... ok
+test archive_v2::tests::multimodal_storage_refuses_unknown_family_before_payload_reads ... ok
+test archive_v2::tests::multimodal_storage_refuses_unregistered_or_inconsistent_declarations ... ok
+test archive_v2::tests::role_pipeline_storage_requires_payload_closure_and_a_predictor ... ok
+test archive_v2::tests::multimodal_storage_roundtrip_preserves_exact_complete_payload ... ok
+test archive_v2::tests::readers_refuse_inventory_size_metadata_before_payload_crc ... ok
+test archive_v2::tests::role_pipeline_storage_refuses_unknown_family_and_duplicate_identity ... ok
+test archive_v2::tests::v2_atomic_writer_never_replaces_an_existing_archive ... ok
+test archive_v2::tests::role_pipeline_storage_roundtrip_preserves_all_five_exact_payloads ... ok
+test archive_v2::tests::v2_pipeline_format_requires_methods_abi_2_5 ... ok
+test archive_v2::tests::v2_refuses_host_and_mixed_package_before_write ... ok
+test archive_v2::tests::v2_refuses_non_integer_abi_minimum ... ok
+test archive_v2::tests::v2_closes_optional_refs_and_exact_schema_grammars ... ok
+test archive_v2::tests::manifest_serializer_refuses_before_unbounded_output_allocation ... ok
+test archive_v2::tests::v2_refuses_semantic_mismatch_unreferenced_payload_and_invalid_resume ... ok
+test archive_v2::tests::v2_dual_reads_historical_abi_minor_and_projects_new_minimum ... ok
+test archive_v2::tests::v2_refuses_tampered_member ... ok
+test archive_v2::tests::v2_zip_preflight_refuses_central_local_name_divergence ... ok
+test archive_v3::tests::v3_accepts_explicit_abi_minor_and_refuses_invalid_values ... ok
+test archive_v3::tests::v3_host_view_preserves_explicit_methods_abi_minor_floor ... ok
+test archive_v3::tests::v3_host_view_projects_native_refs_and_inventory_without_result_semantics ... ok
+test archive_v2::tests::v2_round_trips_exact_opaque_package_bytes_and_dual_dispatches ... ok
+test archive_v3::tests::v3_host_view_refuses_malformed_inventory_instead_of_inventing_an_entry ... ok
+test archive_v3::tests::v3_n4mm_pipeline_format_requires_the_declared_abi_floor ... ok
+test archive_v3::tests::v3_refuses_mixed_family_and_host_before_write ... ok
+test archive_v3::tests::v3_native_families_reject_cross_family_identity_and_abi_smuggling ... ok
+test archive_v3::tests::v3_refuses_tampered_opaque_member ... ok
+test archive_view::tests::preserves_an_explicit_absent_calibration_reference ... ok
+test archive_v3::tests::v3_round_trips_opaque_refit_package_and_dispatches ... ok
+test archive_view::tests::projects_identity_bound_conformal_and_replay_references_without_execution ... ok
+test archive_v3::tests::v3_native_families_round_trip_exact_bytes_and_optional_host_views ... ok
+test archive_v3::tests::v3_storage_fixture_is_semantically_refused_before_methods_runtime ... ok
+test archive_view::tests::refuses_malformed_persisted_reference_instead_of_inventing_a_view ... ok
+test durability::tests::directory_metadata_can_be_flushed_after_publication ... ok
+test generation::tests::constrained_shaped_random_choices_keep_native_identities ... ok
+test archive_v1::tests::archive_v1_public_reader_uses_full_frozen_dagml_fixture_corpus ... ok
+test native_methods_replay::json_tests::archive_methods_abi_minimum_is_checked_before_native_import ... ok
+test native_methods_replay::json_tests::configured_methods_identity_binds_path_and_sha ... ok
+test native_methods_replay::json_tests::configured_methods_identity_normalizes_two_aliases_of_the_snapshot ... ok
+test native_methods_replay::json_tests::conformal_presentation_v2_archive_identity_is_exact ... ok
+test native_methods_replay::json_tests::json_replay_validates_archive_before_host_contracts ... ok
+test native_methods_replay::json_tests::live_historical_archive_derives_native_predictor_descriptor ... ignored, requires NIRS4ALL_CORE_LIVE_ARCHIVE_V2 and NIRS4ALL_CORE_LIVE_METHODS_LIBRARY
+test native_methods_replay::json_tests::matrix_product_contract_requires_one_external_requirement ... ok
+test native_methods_replay::json_tests::methods_identity_rejects_a_parent_directory_alias ... ok
+test native_methods_replay::json_tests::methods_input_refuses_unknown_fields ... ok
+test native_methods_replay::json_tests::native_estimator_and_role_pipeline_require_their_real_abi_floor ... ok
+test native_methods_replay::json_tests::matrix_json_input_refuses_injectable_controller_fields ... ok
+test native_methods_replay::json_tests::methods_input_refuses_ragged_matrix ... ok
+test native_methods_replay::json_tests::real_multitarget_archive_matrix_product_contract ... ignored, requires N4A_RT_PRED_ARCHIVE_V2, N4A_RT_PRED_METHODS_LIBRARY and N4A_RT_PRED_METHODS_SHA256
+test native_methods_replay::json_tests::windows_verbatim_path_compatibility_is_prefix_only ... ok
+test portable_session::tests::atomic_create_publishes_once_and_never_replaces ... ok
+test native_methods_replay::json_tests::predict_contract_refuses_targets_and_refit_without_a_native_library ... ok
+test native_pipeline_contract::tests::closure_binds_retrain_recipe_to_execution_not_matching_metadata ... ok
+test publication::tests::exclusive_reservation_preserves_existing_empty_destination ... ok
+test publication::tests::failed_publish_preserves_files_added_to_the_reservation ... ok
+test publication::tests::verified_directory_becomes_visible_at_a_new_destination ... ok
+test tests::execution_plan_rejects_lossy_operator_parameter_coercions ... ok
+test tests::all_shared_parity_fixtures_keep_json_and_yaml_in_lockstep ... ok
+test tests::exposes_expected_upstream_keys ... ok
+test tests::exposes_custom_host_capability_manifest ... ok
+test tests::json_and_yaml_pipeline_fixtures_use_same_nirs4all_syntax ... ok
+test tests::matrix_view_refuses_dimension_overflow_before_native_handle_creation ... ok
+test tests::matrix_view_rejects_invalid_input_before_any_native_handle_is_created ... ok
+test tests::portable_execution_contract_cases_are_shared_and_bounded ... ok
+test tests::resolves_upstream_by_key ... ok
+test tests::savgol_default_polyorder_matches_full_python_nirs4all ... ok
+test tests::savgol_mode_and_cval_are_preserved ... ok
+test tests::rust_binding_execution_matches_full_python_nirs4all_oracle ... ok
+test tests::steps_alias_and_direct_arrays_match_nirs4all_loader_surface ... ok
+test tests::rust_local_implementation_registry_facade_delegates_to_dag_ml ... ok
+test io_training::tests::canonical_training_refuses_nontrain_and_missing_partition_authority ... ok
+test n4m_roles::tests::envelope_widths_are_positive_json_integers ... ok
+test n4m_roles::tests::shapes_that_contradict_the_declared_dimensions_are_refused ... ok
+test n4m_roles::tests::invalid_recipes_are_refused ... ok
+test n4m_roles::tests::r_trained_v8_envelope_replays_and_refits_in_rust ... ok
+test n4m_roles::tests::multi_target_y_reaches_supervised_transformers ... ok
+test n4m_roles::tests::python_trained_named_envelope_keeps_column_identity_and_training_rows ... ok
+test n4m_roles::tests::training_rows_need_the_export_opt_in ... ok
+test n4m_roles::tests::n4m_tokens_resolve_through_the_manifest ... ok
+test n4m_roles::tests::permuted_or_missing_columns_are_refused ... ok
+test n4m_roles::tests::column_names_with_nul_are_refused ... ok
+test n4m_roles::tests::tampered_or_foreign_envelopes_are_refused ... ok
+test n4m_roles::tests::states_that_contradict_the_recipe_are_refused ... ok
+test n4m_roles::tests::methods_shared_pipelines_replay ... ok
+test n4m_roles::tests::label_tables_that_contradict_the_states_are_refused ... ok
+test n4m_roles::tests::envelopes_written_before_the_additive_fields_replay_and_refit ... ok
+test tuning::tests::public_hpo_request_retains_signed_io_authority_and_native_search_identity ... ok
+test portable_session::tests::native_v1_session_keeps_external_preprocessing_compatibility ... ok
+test portable_session::tests::native_v2_run_save_load_and_predict_round_trip ... ok
+test portable_session::tests::native_v2_session_refuses_contract_contradiction_and_tamper ... ok
+test io_training::tests::numeric_package_provider_trains_archives_and_fresh_predicts ... ok
+test io_training::tests::numeric_packages_train_calibrate_archive_and_present_multi_target ... ok
+
+test result: ok. 131 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 2.30s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 1 test
+test native_frozen_archive_calibrates_replays_intervals_and_gaussian_audits ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.58s
+
+
+running 3 tests
+test unsupported_format_refuses_without_fallback ... ok
+test real_delimited_format_reaches_io_package_and_core_provider ... ok
+test real_spectrum_file_trains_archive_reloads_and_fresh_predicts ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.89s
+
+
+running 3 tests
+test native_experiment_cold_queries_and_copy_preserve_result ... ok
+test native_model_closure_rejects_another_training_fingerprint ... ok
+test model_closure_rejects_rewritten_native_prediction_arrays_and_identities ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.36s
+
+
+running 2 tests
+test archive_destination_guard_refuses_collisions_and_missing_parents ... ok
+test native_candidates_select_oof_refit_and_relocated_archive_replays ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.28s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 5 tests
+test durability::tests::directory_metadata_can_be_flushed_after_publication ... ok
+test tests::bounded_manifest_accepts_only_the_single_n4mm_projection ... ok
+test tests::bounded_manifest_refuses_every_unconsumed_payload_class ... ok
+test public_native_pipeline::tests::closure_binds_retrain_recipe_to_execution_not_matching_metadata ... ok
+test public_generation::generation::tests::constrained_shaped_random_choices_keep_native_identities ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 1 test
+test bindings/rust/nirs4all/src/archive_v1.rs - archive_v1::ArchiveReference (line 84) - compile fail ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.12s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

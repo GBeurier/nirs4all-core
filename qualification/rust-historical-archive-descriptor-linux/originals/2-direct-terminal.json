@@ -1,0 +1,19 @@
+{
+  "command": [
+    "/home/delete/.cargo/bin/cargo",
+    "test",
+    "--locked",
+    "-p",
+    "nirs4all",
+    "native_methods_replay::json_tests::live_historical_archive_derives_native_predictor_descriptor",
+    "--",
+    "--exact",
+    "--ignored",
+    "--nocapture"
+  ],
+  "direct_command_exit_code": 0,
+  "started_at": "2026-10-08T02:42:44.150160+00:00",
+  "finished_at": "2026-10-08T02:42:58.009164+00:00",
+  "seconds": 13.85900771903107,
+  "pid": 3417222
+}

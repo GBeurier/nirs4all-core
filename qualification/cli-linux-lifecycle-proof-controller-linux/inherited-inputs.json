@@ -1,0 +1,50 @@
+{
+  "mode": "inherited",
+  "input_fingerprints": {
+    "Cargo.lock": "5d5b611945bffe4363fe67c3adf7bfca16bcb357094a1bad499b90ee4bdbac02",
+    "Cargo.toml": "d3593455f0f5d3dd6d0c800b899890e486e0def9e4cbcdc8b2d9cbdb6a3b63cf",
+    "bindings/rust/nirs4all/Cargo.toml": "d173e3f6e1fac7b5fa875be9c79b6b47e75706333f83082109f99140947e7954",
+    "bindings/rust/nirs4all/src/archive_command.rs": "f1fdcc73c6308079005eab62c157800a9b47dc5b3f81105c6f9fcf759e8a610a",
+    "bindings/rust/nirs4all/src/archive_v1.rs": "9f3e7c0eca2f69877e22c2732746651a11c53d9c3b168ce4ab8e3150551ae23d",
+    "bindings/rust/nirs4all/src/archive_v1_fixtures/PROVENANCE.md": "2a34a7e3d11998c55ff6f6fd101f71292480edbb23f01107d74b6b4162f589b3",
+    "bindings/rust/nirs4all/src/archive_v1_fixtures/archive_workspace_manifest.v1.schema.json": "91daa7209843ab9043aa62a50200ff43b0f85f4c4e61ad8f73aa67b65a0a98dc",
+    "bindings/rust/nirs4all/src/archive_v1_fixtures/negative/refusals.v1.json": "d6522da50d8debc87b5c824392d793fd8895e4822ebe80289199a246f502ded5",
+    "bindings/rust/nirs4all/src/archive_v1_fixtures/positive/portable_split_conformal.json": "79acef8a6bedee201c9e7be7a398bf7ec0ef6de2c75777824ec9ec0633b4c451",
+    "bindings/rust/nirs4all/src/archive_v1_fixtures/positive/workspace_n4d_host_sidecar.json": "6c3d678e955258a2f652c886d86358d4775dc98e9e85714166d88ad0e16b13ca",
+    "bindings/rust/nirs4all/src/archive_v2.rs": "135b986ae8df37ea779242e3e3d4c3b90835a78cc1803982fa7960ce98574b74",
+    "bindings/rust/nirs4all/src/archive_v3.rs": "5bec7229f88d38906ed3ad9fdf9a3c6baafd49dbd056df7399cce9872ba3aebb",
+    "bindings/rust/nirs4all/src/archive_view.rs": "f09a1001d12f3aa4f6af4f4e8c02fe584339cbaf0d6906a33ab5897aeb1b5088",
+    "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs": "f9a807ea5d2856a45aa18eb52816e119737513eb146db6637c97ea67daf8a074",
+    "bindings/rust/nirs4all/src/conformal.rs": "e16a5f3f2535119f3c645fc55ea09cd434031a086b3c83417557fa606f9db9fe",
+    "bindings/rust/nirs4all/src/conformal_json.rs": "003b20d77d90cd0d49cde5ff3cbafdb4883719840a3732208a73baebda967776",
+    "bindings/rust/nirs4all/src/durability.rs": "d4dc011a8268b7b9216f633d288c23a90808dc9a587a0997adfe8a18abca35be",
+    "bindings/rust/nirs4all/src/formats_io.rs": "d0ae25fcb33cfb401394d6eebeee8b27df6afdd1d641a8f0ba0b67d29295fdf3",
+    "bindings/rust/nirs4all/src/generation.rs": "24f55553af4de979ee0fd65763b9f422e58c86385e47590cd015161c5d011cde",
+    "bindings/rust/nirs4all/src/io_training.rs": "64012a3cd64df0ddaffea40ef6ee74c253a7e68c7987355f0dedd69325f4b03e",
+    "bindings/rust/nirs4all/src/lib.rs": "41577e090752dae5d0fad3479d21ce18d7f67491fe7e652d500d00d2d2373f55",
+    "bindings/rust/nirs4all/src/multimodal_workflow.rs": "6b97e5937ec2d4073055752d64e5ad630ecde2b07668a7dfeeb94b4ed6e7c91f",
+    "bindings/rust/nirs4all/src/n4m_roles.rs": "7a9f4484e6facbb52b0c685d62a3c5c3df0d96882481e9c3ecd17051a8856795",
+    "bindings/rust/nirs4all/src/native_methods_replay.rs": "f8c68f48ff7bdc5e9317fc800e6beb612c712c4e37b3051e3763691f4a554b2c",
+    "bindings/rust/nirs4all/src/native_pipeline_contract.rs": "ff8a2c2801672201b96690e636d886430818f718e3c693cd52ac3d3c41b856f8",
+    "bindings/rust/nirs4all/src/pipeline_workflow.rs": "6e66a0ecd801e79f0b0ab171ee855d0522275b5cb0e012634653d88ef3f6c414",
+    "bindings/rust/nirs4all/src/portable_session.rs": "376d94df8e588e0170bec51b1f63cacf7d2056ce75de191812daf82adc1f5196",
+    "bindings/rust/nirs4all/src/publication.rs": "3aaa956e0df6ad96df7522537dfe387b6b359a48f3787374739b3b14bfeef52b",
+    "bindings/rust/nirs4all/src/result_projection.rs": "4cb8446e0b1f1b84fee9508c0fe713f0e682ad58fcdc9830f9a1d08bb0ca71bb",
+    "bindings/rust/nirs4all/src/results.rs": "964e2103293b665a5f12e25f750784ec3fd4f3cbd2fbf40aa7a65ce468c51d58",
+    "bindings/rust/nirs4all/src/robustness.rs": "0c8e0fbb28801777843ffa06d08599b3329649ed38358f8169eafc7787bcda7b",
+    "bindings/rust/nirs4all/src/robustness_json.rs": "ba06e2710bad3ec27661ac3d43c76ff1afc6bc8b00a3d5c12aa4bae7f6042c1b",
+    "bindings/rust/nirs4all/src/test_fixture.rs": "68e3fd2f730da4adb7a705d2c55507ef4092e4b3aa840bba6e364bc66d052be4",
+    "bindings/rust/nirs4all/src/tuning.rs": "62100a3aa99195ae8d75463264d131464a52913b7ae0dfad221286e9ec42fa5d",
+    "bindings/rust/nirs4all/src/workflow.rs": "f3763bdeaf870181c2bd539b8abdf9c5f37922a51a68f1900f4fdaa1a0074369"
+  },
+  "historical_manifest": {
+    "path": "qualification/cli-linux-lifecycle-proof-controller-linux/historical-manifest.json",
+    "bytes": 11239,
+    "sha256": "8a83ebe945d00d48b1cc1c46264bbd9bc4237d9e97199f97ab9a5e799438865f"
+  },
+  "continuity_report": {
+    "path": "qualification/cli-linux-lifecycle-proof-controller-linux/continuity.json",
+    "bytes": 4855,
+    "sha256": "fa1154cd1c785dcddadc76c3b94800c14cf78c09d2030b98755bd4a77dcc455a"
+  }
+}

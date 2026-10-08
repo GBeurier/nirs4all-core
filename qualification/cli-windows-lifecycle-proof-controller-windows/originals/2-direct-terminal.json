@@ -1,0 +1,20 @@
+{
+  "command": [
+    "/mnt/d/nirs4all-release-qualification-20261007/strict-b345054ef9584759a3c1121e3658056b/application/resources/backend/python-runtime/python/python.exe",
+    "-X",
+    "utf8",
+    "-B",
+    "C:/Temp/n4a-core045-20261008/audit/verify_core045_cli_proofs_v1.py",
+    "--os-family",
+    "windows",
+    "--evidence-root",
+    "C:/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-windows-v1",
+    "--source-root",
+    "C:/Temp/n4a-core045-20261008/worktree"
+  ],
+  "direct_command_exit_code": 0,
+  "started_at": "2026-10-08T04:10:38.167154+00:00",
+  "finished_at": "2026-10-08T04:10:53.734363+00:00",
+  "seconds": 15.567151561030187,
+  "pid": 3431600
+}

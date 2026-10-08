@@ -1,0 +1,14 @@
+{
+  "command": [
+    "cmd.exe",
+    "/d",
+    "/c",
+    "mklink",
+    "/J",
+    "C:\\Temp\\n4a-core045-20261008\\audit\\cli-snapshot-lifecycle-windows-v1\\nirs4all-core-archive-junction",
+    "C:\\Temp\\n4a-core045-20261008\\audit\\cli-snapshot-lifecycle-windows-v1\\outside-owned-target"
+  ],
+  "started_at": "2026-10-08T04:02:58.625833+00:00",
+  "ended_at": "2026-10-08T04:02:58.692174+00:00",
+  "direct_exit_code": 0
+}

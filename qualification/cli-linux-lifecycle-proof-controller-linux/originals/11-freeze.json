@@ -1,0 +1,225 @@
+{
+  "schema": "nirs4all.core.cli-lifecycle-prototype-linux.v1",
+  "source_proposal": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-proposal-v2/nirs4all-core-archive.rs",
+  "source_sha256": "f9a807ea5d2856a45aa18eb52816e119737513eb146db6637c97ea67daf8a074",
+  "source_worktree_informational_head": "adb71815926f05b1ab43a96179f91ead5243ebbd",
+  "compiled_native_core_reused_unchanged": true,
+  "compiled_native_core_not_rebuilt": true,
+  "all_commands_and_numeric_checks_pass": true,
+  "own_roots_after_terminal": 0,
+  "unit_tests_passed": 2,
+  "actual_native_prediction_cells_exact": 4,
+  "proofs": [
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/actual-archive-inspect.terminal.json",
+      "sha256": "11a849de6ed50c618f225f138acef7b91c5b3cdb0cb345021eb847fc0af9e36f",
+      "bytes": 1234
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/actual-native-archive-prediction.terminal.json",
+      "sha256": "a9a54310fe4686afbef50cc6a3bdbffbf75c4e9100fec1ece5fccd2094179df9",
+      "bytes": 1659
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/actual-native-wrong-hash-refusal.terminal.json",
+      "sha256": "cccabfd1e43ee5e714495fd68bb4e0c3305444fedc13394ee7bd17b32a0f0864",
+      "bytes": 1660
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/actual-prediction-observation.json",
+      "sha256": "cdf43c6f58ef9b23b8e5a76fe2ff297bf1be99233fc0e7f68cbe003f60dcaf15",
+      "bytes": 4601
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/input.json",
+      "sha256": "967d833bdb3e394658cce81a74014148b7e053b038fb7b641b1d7b9284513754",
+      "bytes": 140
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/original-help-refusal.terminal.json",
+      "sha256": "1c452310205f857556e23b630a803def76a914cd809c4b82df7fc94802f5a592",
+      "bytes": 996
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/original-noargs-refusal.terminal.json",
+      "sha256": "8cfc9f50ffd92cdbe90025e223f28ea4075a0742533181ef9afe3fef08519ed3",
+      "bytes": 990
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/original-witness-README.md",
+      "sha256": "6415474568bf74e210450618aeb38ea1bcbb7dc98b8349927d3348a0270877ef",
+      "bytes": 674
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/PRE.json",
+      "sha256": "f00c4c228220c8bcaceb2257d0f17dd41cd247118716e81637baf5ea8863c963",
+      "bytes": 41449
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/qualification-completed.json",
+      "sha256": "4d7cd8154d868ef385ba54c2b091ed56e6b010754b6aa969ede308433986294e",
+      "bytes": 61388
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/qualification.json",
+      "sha256": "126952ce095a8a9a56a01cdeab5bb6272956b456153f78ca1df3bcbc58020ae6",
+      "bytes": 60560
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/rustc-cli.terminal.json",
+      "sha256": "2aa306b415a9d7db5187e637109fb5c991e637eb72d94d4a876feda96e9b707b",
+      "bytes": 1657
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/rustc-tests.terminal.json",
+      "sha256": "440c1760e812433d46deb9ab8d7a9f95a00bb5af6e14b87221cccdc3526daa35",
+      "bytes": 1675
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/unit-refusal_closes_owned_snapshot_tree_and_preserves_exit.terminal.json",
+      "sha256": "cff50314a143aaf20c19057d36bf2b734ec688de87ac2405e74a99383fd5458c",
+      "bytes": 1195
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/unit-success_closes_owned_snapshot_tree.terminal.json",
+      "sha256": "bed6a76ec285e156fd939b6485fc124a471cbfbb621546e1603416e1f713793a",
+      "bytes": 1117
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/actual-archive-inspect.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/actual-archive-inspect.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/actual-native-archive-prediction.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/actual-native-archive-prediction.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/actual-native-wrong-hash-refusal.stderr.log",
+      "sha256": "62da05e1965419f506fb349ad6d3af2ed3a129c26bc067a66a44e52abc1f861f",
+      "bytes": 200
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/actual-native-wrong-hash-refusal.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/original-help-refusal.stderr.log",
+      "sha256": "85fce53c6ea2c7d240b172019a679ad197a4236e064c0300c38c3909b75b3b38",
+      "bytes": 54
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/original-help-refusal.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/original-noargs-refusal.stderr.log",
+      "sha256": "7e775fea079fd1832535d9870a25137f2d731105f473d51426f5f47366223782",
+      "bytes": 126
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/original-noargs-refusal.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/rustc-cli.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/rustc-cli.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/rustc-tests.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/rustc-tests.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/unit-refusal_closes_owned_snapshot_tree_and_preserves_exit.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/unit-refusal_closes_owned_snapshot_tree_and_preserves_exit.stdout.log",
+      "sha256": "54dcdc542f8eaf77a41552741aaa023edfbf601dbdddd16a7e3a248b2c80bf7a",
+      "bytes": 201
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/unit-success_closes_owned_snapshot_tree.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/unit-success_closes_owned_snapshot_tree.stdout.log",
+      "sha256": "74e15c3f33d9f729aa00ec777b9481b6381878008aa6eefd1f61e9ad13a5813b",
+      "bytes": 182
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/validate_cli_lifecycle_v2.py",
+      "sha256": "59a8709d0a15a52189393b871a3daafaf93bc44d27b5a3a31000ef25caa4f9ae",
+      "bytes": 5937
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/complete_cli_lifecycle_v2.py",
+      "sha256": "5d073e8f37cfa042cdcef2508bfddf1991cbd940f9564f0b95550571ff7e8192",
+      "bytes": 4301
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-proposal-v2/nirs4all-core-archive.rs",
+      "sha256": "f9a807ea5d2856a45aa18eb52816e119737513eb146db6637c97ea67daf8a074",
+      "bytes": 7814
+    },
+    {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-proposal-v2/proposal.json",
+      "sha256": "4d2182cca4d7649229b493d81a4d01789190011319a21f99c5625b8148793e56",
+      "bytes": 963
+    }
+  ],
+  "artifacts": {
+    "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/nirs4all-core-archive": {
+      "sha256": "cc96bff31e8855cf60be2279a30f887cefd9880cdf88cee0e3dcbf12dca9c20f",
+      "bytes": 37979040
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/cli-lifecycle-tests": {
+      "sha256": "f2ef97f72975fb69d6b1a4c6034068648615f7ac6ff1a81edd196c9e9bd1641b",
+      "bytes": 1198992
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/predict.json": {
+      "sha256": "2277da477a1ac5d9ae0518d6faa7f76f648081223dd7fa80cdd869e593892193",
+      "bytes": 4600
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/archive-inspect.json": {
+      "sha256": "70e31f14004d409bb46c8b8cf6ac2563806ba7ba74b2d41f5f99a5ce3429b084",
+      "bytes": 11877
+    },
+    "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/input.json": {
+      "sha256": "967d833bdb3e394658cce81a74014148b7e053b038fb7b641b1d7b9284513754",
+      "bytes": 140
+    }
+  },
+  "product_source_modified": false,
+  "requires_Sol_review_before_integration": true,
+  "Windows_and_direct_host_binding_scope": "not qualified/fixed by this Linux CLI prototype",
+  "forced_supervisor_kill": "can leave owned temp directory, same limitation as ordinary TempDir; no global sweeper proposed"
+}

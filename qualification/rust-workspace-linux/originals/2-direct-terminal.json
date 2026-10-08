@@ -1,0 +1,13 @@
+{
+  "command": [
+    "/home/delete/.cargo/bin/cargo",
+    "test",
+    "--locked",
+    "--workspace"
+  ],
+  "direct_command_exit_code": 0,
+  "started_at": "2026-10-08T02:00:37.943911+00:00",
+  "finished_at": "2026-10-08T02:02:14.274542+00:00",
+  "seconds": 96.3306373829837,
+  "pid": 3400992
+}

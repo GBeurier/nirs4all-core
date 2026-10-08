@@ -1,0 +1,19 @@
+{
+  "command": [
+    "/home/delete/.cargo/bin/cargo",
+    "test",
+    "--locked",
+    "-p",
+    "nirs4all",
+    "native_methods_replay::json_tests::real_multitarget_archive_matrix_product_contract",
+    "--",
+    "--exact",
+    "--ignored",
+    "--nocapture"
+  ],
+  "direct_command_exit_code": 0,
+  "started_at": "2026-10-08T02:42:46.409361+00:00",
+  "finished_at": "2026-10-08T02:43:00.955594+00:00",
+  "seconds": 14.546231395972427,
+  "pid": 3417308
+}

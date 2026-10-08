@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/mnt/d/nirs4all-release-qualification-20261007/strict-b345054ef9584759a3c1121e3658056b/application/resources/backend/python-runtime/python/python.exe",
+    "-X",
+    "utf8",
+    "-B",
+    "-c",
+    "import sys,runpy,os;n4a_dll_dir=r\"D:/nirs4all-release-qualification-20261007/strict-b345054ef9584759a3c1121e3658056b/application/resources/backend/python-runtime/python/Lib/site-packages/nirs4all_methods.libs\";n4a_dll_cookie=os.add_dll_directory(n4a_dll_dir);os.environ[\"PATH\"]=n4a_dll_dir+os.pathsep+os.environ.get(\"PATH\",\"\");sys.path.insert(0,'C:\\\\Temp\\\\n4a-core045-20261008\\\\windows-pytest-site');sys.argv=['C:\\\\Temp\\\\n4a-core045-20261008\\\\audit\\\\core045_windows_driver_v2.py', '--config', 'C:\\\\Temp\\\\n4a-core045-20261008\\\\audit\\\\core045-windows-config-v3.json', '--gate', 'identity'];runpy.run_path(sys.argv[0],run_name=\"__main__\")"
+  ],
+  "direct_command_exit_code": 0,
+  "started_at": "2026-10-08T02:29:09.146517+00:00",
+  "finished_at": "2026-10-08T02:29:09.661820+00:00",
+  "seconds": 0.5153318570228294,
+  "pid": 3414269
+}

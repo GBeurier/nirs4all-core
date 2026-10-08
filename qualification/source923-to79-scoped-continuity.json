@@ -1,0 +1,54 @@
+{
+  "status": "Actual source-map continuity, no scientific re-execution",
+  "source_library_build_commit": "923ffb2aa2d20f40d6bbe7d7fd72b85b65cb90cb",
+  "source_library_tree": "a2851ad31bb4e164dc26194d4acf8634db92dc98",
+  "current_source_commit": "79dc40796a7ea8efba451806035d6336fee9b168",
+  "current_source_tree": "cfe38a8d6b1d401a771483cf21f26f10251821b7",
+  "sources_compared": 387,
+  "unchanged_sources": 385,
+  "changed_sources": {
+    "bindings/python/tests/test_archive.py": {
+      "before": {
+        "mode": "100644",
+        "bytes": 17996,
+        "sha256": "c2635ffa82f621837bfdf41f4de0c0e87fce59c0b0021f8063a1de4792a8ce31",
+        "blob": "f9ef3a88379e8e9c8f1d33ea3a86d23dacc32cac"
+      },
+      "after": {
+        "mode": "100644",
+        "bytes": 18186,
+        "sha256": "845eb34353cdb3c32fb89eced752d088527a3fe9a065979451d00e738365b252",
+        "blob": "92f1c1d3f268121fdc8f29590f54c288536d68d1"
+      }
+    },
+    "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs": {
+      "before": {
+        "mode": "100644",
+        "bytes": 388,
+        "sha256": "4bcbb6e0ea2edf66f667dd5820b51c3573a51e8599044f89503e846c2d261cad",
+        "blob": "9fa0cca5feac220f59c75f8a83b4b79827bdf3b2"
+      },
+      "after": {
+        "mode": "100644",
+        "bytes": 7814,
+        "sha256": "f9a807ea5d2856a45aa18eb52816e119737513eb146db6637c97ea67daf8a074",
+        "blob": "20e94e73ef95372cb72c1f7e4dd02f7dd4568776"
+      }
+    }
+  },
+  "old_source_freeze": {
+    "path": "/mnt/c/Temp/n4a-core045-20261008/audit/core045-source-ci-pins-public-locks-v4/freeze.json",
+    "sha256": "695bbfce700c394bb9f7780afb4cb70506ee30a3ae43d27b06a9d126360158d4",
+    "bytes": 95080
+  },
+  "new_source_freeze": {
+    "path": "/mnt/c/Temp/n4a-core045-20261008/audit/core045-cli-lifecycle-source-v6/freeze.json",
+    "sha256": "43a9f629f257edeb401bf3ac5180780d4be35dc0d7bef871e736cc24361d06f1",
+    "bytes": 94696
+  },
+  "coverage": {
+    "portable_test_file": "Original19 numeric/assertion cases passed Linux lazy+preloaded and Windows lazy+preloaded; full Windows169 passed on adb test-only Source",
+    "cli_entrypoint": "Actual Linux9 and Windows5 bounded lifecycle commands, authentic golden4cells/refusals/cleanup; scoped libraries, native bindings and WASM unchanged from923",
+    "kernel_replay": "No full scientific rerun required; every inherited gate explicitly compares its real input Source map and retains original complete PRE"
+  }
+}

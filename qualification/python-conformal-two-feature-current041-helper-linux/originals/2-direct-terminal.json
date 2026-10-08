@@ -1,0 +1,14 @@
+{
+  "command": [
+    "/mnt/c/Temp/n4a-core045-20261008/current041-conformal-python-executor/bin/python",
+    "-m",
+    "unittest",
+    "-v",
+    "test_archive_live.LiveArchiveV2ConformalReplayTests"
+  ],
+  "direct_command_exit_code": 0,
+  "started_at": "2026-10-08T02:55:41.727226+00:00",
+  "finished_at": "2026-10-08T02:55:58.978374+00:00",
+  "seconds": 17.251151008997113,
+  "pid": 3419461
+}

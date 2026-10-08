@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/home/delete/nirs4all/nirs4all/.venv/bin/python",
+    "-B",
+    "-m",
+    "unittest",
+    "bindings/python/tests/test_execution_parity.py",
+    "-v"
+  ],
+  "direct_command_exit_code": 0,
+  "started_at": "2026-10-08T02:15:38.087438+00:00",
+  "finished_at": "2026-10-08T02:15:51.987185+00:00",
+  "seconds": 13.89974472601898,
+  "pid": 3411152
+}

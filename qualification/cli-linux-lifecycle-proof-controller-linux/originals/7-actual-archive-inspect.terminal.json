@@ -1,0 +1,30 @@
+{
+  "id": "actual-archive-inspect",
+  "command": [
+    "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/nirs4all-core-archive",
+    "inspect",
+    "--archive",
+    "/mnt/c/Temp/n4a-core045-20261008/fixtures/historical-web-archive-v2/multitarget-pls.n4a",
+    "--output",
+    "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/archive-inspect.json"
+  ],
+  "cwd": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2",
+  "start_utc": "2026-10-08T03:22:06.604068+00:00",
+  "end_utc": "2026-10-08T03:22:06.642348+00:00",
+  "duration_seconds": 0.038283263973426074,
+  "direct_exit": 0,
+  "expected_exit": 0,
+  "logs": {
+    "stdout": {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/actual-archive-inspect.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "stderr": {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/actual-archive-inspect.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  },
+  "temporary_roots_remaining": []
+}

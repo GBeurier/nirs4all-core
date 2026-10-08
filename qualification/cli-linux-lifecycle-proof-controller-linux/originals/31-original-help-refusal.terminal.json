@@ -1,0 +1,26 @@
+{
+  "id": "original-help-refusal",
+  "command": [
+    "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/nirs4all-core-archive",
+    "--help"
+  ],
+  "cwd": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2",
+  "start_utc": "2026-10-08T03:22:06.357935+00:00",
+  "end_utc": "2026-10-08T03:22:06.381101+00:00",
+  "duration_seconds": 0.02316342300036922,
+  "direct_exit": 1,
+  "expected_exit": 1,
+  "logs": {
+    "stdout": {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/original-help-refusal.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "stderr": {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/original-help-refusal.stderr.log",
+      "sha256": "85fce53c6ea2c7d240b172019a679ad197a4236e064c0300c38c3909b75b3b38",
+      "bytes": 54
+    }
+  },
+  "temporary_roots_remaining": []
+}

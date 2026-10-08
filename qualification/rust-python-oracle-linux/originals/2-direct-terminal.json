@@ -1,0 +1,17 @@
+{
+  "command": [
+    "/home/delete/.cargo/bin/cargo",
+    "test",
+    "--locked",
+    "-p",
+    "nirs4all",
+    "rust_binding_execution_matches_full_python_nirs4all_oracle",
+    "--",
+    "--nocapture"
+  ],
+  "direct_command_exit_code": 0,
+  "started_at": "2026-10-08T02:07:20.825724+00:00",
+  "finished_at": "2026-10-08T02:07:31.609528+00:00",
+  "seconds": 10.78380226099398,
+  "pid": 3403065
+}

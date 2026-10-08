@@ -1,0 +1,25 @@
+{
+  "id": "original-noargs-refusal",
+  "command": [
+    "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/nirs4all-core-archive"
+  ],
+  "cwd": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2",
+  "start_utc": "2026-10-08T03:22:06.493422+00:00",
+  "end_utc": "2026-10-08T03:22:06.521448+00:00",
+  "duration_seconds": 0.028019770979881287,
+  "direct_exit": 1,
+  "expected_exit": 1,
+  "logs": {
+    "stdout": {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/original-noargs-refusal.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "stderr": {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/original-noargs-refusal.stderr.log",
+      "sha256": "7e775fea079fd1832535d9870a25137f2d731105f473d51426f5f47366223782",
+      "bytes": 126
+    }
+  },
+  "temporary_roots_remaining": []
+}

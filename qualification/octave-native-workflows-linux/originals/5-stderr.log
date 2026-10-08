@@ -1,0 +1,49 @@
+warning: function /mnt/c/Temp/n4a-core045-20261008/worktree/bindings/matlab/+nirs4all/load.m shadows a built-in function
+warning: called from
+    smoke at line 1 column 1
+
+warning: function /mnt/c/Temp/n4a-core045-20261008/worktree/bindings/matlab/+nirs4all/load.m shadows a built-in function
+warning: called from
+    smoke at line 1 column 1
+
+warning: function /mnt/c/Temp/n4a-core045-20261008/worktree/bindings/matlab/+nirs4all/load.m shadows a built-in function
+warning: called from
+    workflow_native at line 2 column 53
+
+warning: function /mnt/c/Temp/n4a-core045-20261008/worktree/bindings/matlab/+nirs4all/load.m shadows a built-in function
+warning: called from
+    conformal_native at line 4 column 53
+
+warning: function /mnt/c/Temp/n4a-core045-20261008/worktree/bindings/matlab/+nirs4all/load.m shadows a built-in function
+warning: called from
+    result_view at line 3 column 1
+
+warning: function /mnt/c/Temp/n4a-core045-20261008/worktree/bindings/matlab/+nirs4all/load.m shadows a built-in function
+warning: called from
+    native_runtime at line 2 column 53
+
+warning: function /mnt/c/Temp/n4a-core045-20261008/worktree/bindings/matlab/+nirs4all/load.m shadows a built-in function
+warning: called from
+    native_runtime at line 3 column 1
+
+warning: function /mnt/c/Temp/n4a-core045-20261008/worktree/bindings/matlab/+nirs4all/load.m shadows a built-in function
+warning: called from
+    native_runtime at line 10 column 1
+
+warning: load_path: bindings/matlab/tests: No such file or directory
+warning: called from
+    native_runtime at line 10 column 1
+
+warning: load-path: update failed for 'bindings/matlab/tests', removing from path
+warning: called from
+    native_runtime at line 10 column 1
+
+warning: function /mnt/c/Temp/n4a-core045-20261008/worktree/bindings/matlab/+nirs4all/load.m shadows a built-in function
+warning: called from
+    native_runtime at line 13 column 1
+
+warning: function /mnt/c/Temp/n4a-core045-20261008/worktree/bindings/matlab/+nirs4all/load.m shadows a built-in function
+warning: called from
+    @<anonymous> at line 9 column 34
+    native_runtime at line 13 column 24
+

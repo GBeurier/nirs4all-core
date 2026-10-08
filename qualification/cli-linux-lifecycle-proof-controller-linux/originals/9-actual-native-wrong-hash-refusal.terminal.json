@@ -1,0 +1,38 @@
+{
+  "id": "actual-native-wrong-hash-refusal",
+  "command": [
+    "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/nirs4all-core-archive",
+    "workflow-predict",
+    "--input",
+    "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/input.json",
+    "--archive",
+    "/mnt/c/Temp/n4a-core045-20261008/fixtures/historical-web-archive-v2/multitarget-pls.n4a",
+    "--methods-library",
+    "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+    "--methods-library-sha256",
+    "0000000000000000000000000000000000000000000000000000000000000000",
+    "--run-id",
+    "run:cli:lifecycle",
+    "--output",
+    "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/refused.json"
+  ],
+  "cwd": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2",
+  "start_utc": "2026-10-08T03:22:07.069329+00:00",
+  "end_utc": "2026-10-08T03:22:07.158295+00:00",
+  "duration_seconds": 0.0889690219773911,
+  "direct_exit": 1,
+  "expected_exit": 1,
+  "logs": {
+    "stdout": {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/actual-native-wrong-hash-refusal.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "stderr": {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/actual-native-wrong-hash-refusal.stderr.log",
+      "sha256": "62da05e1965419f506fb349ad6d3af2ed3a129c26bc067a66a44e52abc1f861f",
+      "bytes": 200
+    }
+  },
+  "temporary_roots_remaining": []
+}

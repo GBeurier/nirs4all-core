@@ -1,0 +1,13 @@
+{
+  "command": [
+    "/home/delete/nirs4all/nirs4all/.venv/bin/python",
+    "-B",
+    "/mnt/c/Temp/n4a-core045-20261008/audit/qualify_archive_portable_linux.py",
+    "--preload"
+  ],
+  "direct_command_exit_code": 0,
+  "started_at": "2026-10-08T03:04:01.613141+00:00",
+  "finished_at": "2026-10-08T03:04:14.179261+00:00",
+  "seconds": 12.566118640999775,
+  "pid": 3420805
+}

@@ -1,0 +1,2 @@
+{"core_origin": "/mnt/c/Temp/n4a-core045-20261008/python-site/nirs4all_core/__init__.py", "archive_origin": "/mnt/c/Temp/n4a-core045-20261008/python-site/nirs4all_core/_archive.py", "native_path": "/mnt/c/Temp/n4a-core045-20261008/python-site/nirs4all_core/_native.abi3.so", "native_sha256": "5c951bd3fd53f605ad8046ab2692e1ef1cfd660d6c140f197c59c6f45e4eeeb7", "native_preloaded": true, "core": "0.4.5", "dag": "0.3.41"}
+ORIGINAL_NATIVE_CACHES_RESTORED=true

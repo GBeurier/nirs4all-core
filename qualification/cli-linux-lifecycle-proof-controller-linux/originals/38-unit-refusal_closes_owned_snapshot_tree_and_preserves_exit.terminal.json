@@ -1,0 +1,28 @@
+{
+  "id": "unit-refusal_closes_owned_snapshot_tree_and_preserves_exit",
+  "command": [
+    "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/cli-lifecycle-tests",
+    "--exact",
+    "tests::refusal_closes_owned_snapshot_tree_and_preserves_exit",
+    "--nocapture"
+  ],
+  "cwd": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2",
+  "start_utc": "2026-10-08T03:22:06.234649+00:00",
+  "end_utc": "2026-10-08T03:22:06.289496+00:00",
+  "duration_seconds": 0.054818528005853295,
+  "direct_exit": 0,
+  "expected_exit": 0,
+  "logs": {
+    "stdout": {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/unit-refusal_closes_owned_snapshot_tree_and_preserves_exit.stdout.log",
+      "sha256": "54dcdc542f8eaf77a41552741aaa023edfbf601dbdddd16a7e3a248b2c80bf7a",
+      "bytes": 201
+    },
+    "stderr": {
+      "path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/logs/unit-refusal_closes_owned_snapshot_tree_and_preserves_exit.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  },
+  "temporary_roots_remaining": []
+}

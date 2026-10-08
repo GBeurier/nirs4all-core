@@ -1,0 +1,295 @@
+{
+  "id": "python-complete-suite-io026-posix1g",
+  "host": "linux-wsl",
+  "command": [
+    "/home/delete/nirs4all/nirs4all/.venv/bin/python",
+    "-B",
+    "-m",
+    "pytest",
+    "--capture=sys",
+    "-q",
+    "-rs",
+    "bindings/python/tests",
+    "--basetemp",
+    "/dev/shm/n4a-core045-20261008-private-posix/pytest-full-io026-1g",
+    "--junitxml",
+    "/mnt/c/Temp/n4a-core045-20261008/local-python-full-io026-1g-junit.xml"
+  ],
+  "cwd": "/mnt/c/Temp/n4a-core045-20261008/worktree",
+  "environment": {
+    "CARGO_TARGET_DIR": "/mnt/c/Temp/n4a-core045-20261008/target",
+    "TMPDIR": "/dev/shm/n4a-core045-20261008-private-posix",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_BUILD_JOBS": "2",
+    "PYO3_PYTHON": "/home/delete/nirs4all/nirs4all/.venv/bin/python",
+    "N4M_LIBRARY_PATH": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+    "N4M_LIB_PATH": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+    "NIRS4ALL_METHODS_LIB": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+    "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "PYTHONPATH": "/mnt/c/Temp/n4a-core045-20261008/python-site",
+    "NIRS4ALL_CORE_CLI": "/mnt/c/Temp/n4a-core045-20261008/target/release/nirs4all-core-archive",
+    "NIRS4ALL_TUNING_DATASET": "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/train.json",
+    "NIRS4ALL_BLOCK5_FIXTURE": "/dev/shm/n4a-core045-20261008-private-posix/native-workflow",
+    "NIRS4ALL_EXPERIMENT_FIXTURE": "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/experiment",
+    "NIRS4ALL_MODEL_FIXTURE": "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/shared-model.n4a",
+    "NIRS4ALL_NATIVE_RESULTS_FIXTURE": "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/results",
+    "NIRS4ALL_BROWSER_TUNING_FIXTURE": "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/browser-tuning.json",
+    "NIRS4ALL_WORKSPACE_OUTPUT": "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/workspace-io026-1g",
+    "NIRS4ALL_CORE_LIVE_TMPDIR": "/dev/shm/n4a-core045-20261008-private-posix"
+  },
+  "started_at": "2026-10-08T02:27:46.888035+00:00",
+  "finished_at": "2026-10-08T02:28:32.430400+00:00",
+  "exit_code": 0,
+  "input_fingerprints": {
+    "Cargo.lock": "5d5b611945bffe4363fe67c3adf7bfca16bcb357094a1bad499b90ee4bdbac02",
+    "Cargo.toml": "d3593455f0f5d3dd6d0c800b899890e486e0def9e4cbcdc8b2d9cbdb6a3b63cf",
+    "bindings/python-native/Cargo.toml": "0de44293de2dfe853f2e816168375441a6fa96e7eae8ef19a52c2a28ab296185",
+    "bindings/python-native/src/lib.rs": "118816df96bcbccaeb8d8e6a6f63e7fb61e34fe60cfacdc70aa47cf318699b08",
+    "bindings/python/src/n4a/__init__.py": "a277a71c13fd9bde30dbb7e53b973ffe09c502bd99b080e1446de3c3bc90ad52",
+    "bindings/python/src/n4a/py.typed": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+    "bindings/python/src/nirs4all_core/__init__.py": "5003ce72edd434c03678698ce3bc88eba2585451473a0f50fb99a82416d44365",
+    "bindings/python/src/nirs4all_core/_archive.py": "31d3329e46d41657ef2c5f63ce41793bcd8367843edfb5997323c5bf0d56d01d",
+    "bindings/python/src/nirs4all_core/_browser_tuning.py": "344152393b279fd2a4199cd119b44714b99f7b953f8062f36930ee5628a8ef86",
+    "bindings/python/src/nirs4all_core/_capabilities.py": "6c75574ae93e81ac61c9573961878e8ac95edfe5196de1228833be2b2f3769a4",
+    "bindings/python/src/nirs4all_core/_conformal.py": "67ee67a4bf397acf9ad47df54abb4e7758db1f18e2ea18f1fc72e72e7d40cb58",
+    "bindings/python/src/nirs4all_core/_dataset.py": "f3b3afa8b2da70dd40d00c45c2b7eeaf3e239c412c9aedc88552a99857491d80",
+    "bindings/python/src/nirs4all_core/_execution.py": "df473948e5273563692260eb82af4a407f8244367b91b570e218c5eebe2dd11f",
+    "bindings/python/src/nirs4all_core/_multimodal.py": "5bf76510c260daeb07eedb057546d889888b48b5c9f1a0bee0cd0c9b7562f1ac",
+    "bindings/python/src/nirs4all_core/_multimodal_archive.py": "df759469151dc197980bf5e341bf02060b2f3825319f4eb6716f98d3c31cd514",
+    "bindings/python/src/nirs4all_core/_n4m_roles.py": "74e4df9dac3974d0b520a1087bfa1aa3d73e4645dfe139d0039696d5866d232a",
+    "bindings/python/src/nirs4all_core/_native_multimodal.py": "2f4705f27e16e76d76b15c0102b6fc914d7bb606570e89c5f5275b49811fa144",
+    "bindings/python/src/nirs4all_core/_native_pipeline.py": "8ddc88df3aeb53344456a76816adb0e724902e202c61fee7570be5b38cc39048",
+    "bindings/python/src/nirs4all_core/_pipeline.py": "b63a7732a30e3adc4d80a6d3372029d4f642a04b88d26284a63c359285f11d2d",
+    "bindings/python/src/nirs4all_core/_results.py": "f563436531c1b91eb347b13436f3301f3f6e0bb2a7de9bc1bb7f508c44d8c117",
+    "bindings/python/src/nirs4all_core/_robustness.py": "f82508fd2bf5dc1a373a524baaface32f64d9a7bec48d291e85da60607dfae39",
+    "bindings/python/src/nirs4all_core/_topology.py": "c323b81ccb88f52e8a2d219e0512eca78ed9a9efc40b00e1bcabd7ad850486e7",
+    "bindings/python/src/nirs4all_core/_tuning.py": "fe20654b037b2592ca4f77f78efbd6305bfa13954a86b54e63b83ecdd8270b27",
+    "bindings/python/src/nirs4all_core/_upstreams.py": "ff4823f634987846e5bbf5a3ef0622125323cae052b46b9c39db08031b92ab4a",
+    "bindings/python/src/nirs4all_core/_workflow.py": "6f9d0785107c9c617d32000451f5b939ce6f14ff335a58f8d0f2e382f00c267b",
+    "bindings/python/src/nirs4all_core/_workspace.py": "e90bc5d5cdd6359b8a180af198253d701a05f8b0e8a425100ed0627da8ef75cd",
+    "bindings/python/src/nirs4all_core/py.typed": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+    "bindings/python/src/nirs4all_core/workspace_cli.py": "a7725e62444ce838adbc4f5e45b0b6fa0d0785557f6f03f799c067c7c2253995",
+    "bindings/python/tests/qualification/check_multimodal_content.py": "77443f52d0c4d61fdebdde974dde85ebc86b7bd57f20212daa8558c6bea65e2f",
+    "bindings/python/tests/qualification/check_multimodal_oracle.py": "03b921945821863d5129d5764f2049e24769563e3134fb334592d31574e2907a",
+    "bindings/python/tests/qualification/make_multimodal_fixture.py": "edc4d311d9ebab2f7c25ba9e127e0b72c607ff91e085bb02ae815d668032712c",
+    "bindings/python/tests/qualification/replay_multimodal_archive.py": "3049339b61e809295695bf1e4267f2b33c39adeec126545ede175017410eae73",
+    "bindings/python/tests/test_archive_live.py": "f68a0a034893599e12d969a8747cc8c4c5f398869fbe025f9cbb225ea1b0532f",
+    "bindings/python/tests/test_archive_matrix_live.py": "2baa588a77bbe83801bda453b332789cdea47039514cc457eaf5d91dc673d4ef",
+    "bindings/python/tests/test_capability_matrix.py": "3272509355bd3e7e097eb4c1e46d5a4572685da9ea8dd44cb45eaa7f632a316e",
+    "bindings/python/tests/test_conformal_native.py": "48dc961b32c9e5654ba1490bc10311adc469aeddb0e2ed214654977e4f773380",
+    "bindings/python/tests/test_cross_language_surface.py": "955ba95c9cd4dd925d3fb936c92a9cd3ada7ba38fa92bc02619f47cc397c2f03",
+    "bindings/python/tests/test_execution_parity.py": "fba39ed8abe0e831a74e3d53c293e46b6d7dbc54f99994fc91ac8a4db4abdc24",
+    "bindings/python/tests/test_facade.py": "424f0b0b3307a567ff99301f64949cc6ecc8215b85748dc53b6c86204b20d6c9",
+    "bindings/python/tests/test_matlab_package.py": "79c8da2d3cb8534ff45fdaebde0c2113abb250df8c4d7e0587ccc19828fcbab5",
+    "bindings/python/tests/test_n4m_roles.py": "baadb30ab4d289faa41cd639b9dc34eaeb70adb204a364517459bb846ae9af9c",
+    "bindings/python/tests/test_native_multimodal.py": "5a67db77d11c0db5798b07aaa0aba0eb23ba9af6354f6e1cd1ea8a2252a6b6ff",
+    "bindings/python/tests/test_native_pipeline.py": "77bbb5ba2d9641615cc5bb9ad0e9ac93876a7ee74e71fcae6576b0c68410d29e",
+    "bindings/python/tests/test_pipeline_contract.py": "ddc17e9c3214749565c23f45613014df3e5de24fd58872dcb341b3ca63b5efa7",
+    "bindings/python/tests/test_public_multimodal.py": "153a6c6f6e5d6efa4a7d89b431e934a7a3b7067627fa6c18cb17a740c4fd4707",
+    "bindings/python/tests/test_release_topology.py": "4e8992145e9e426919f7af13f817750a587dabef5a021197d733026b6b82b3d5",
+    "bindings/python/tests/test_results.py": "18eff4d1c84e7df6c98b79f040b0e304c8ab019d69ce168d3ebfd666ef6f6460",
+    "bindings/python/tests/test_tuning.py": "4239a688b5e8894c46d9945fcbec937813c3557799d888a8ab7b60c6fea4e7d6",
+    "bindings/python/tests/test_update_regressions.py": "123e5b481640aaa493be0b0feb2ad26748a0ecf5b027d9ef4e60191d72cc61b1",
+    "bindings/python/tests/test_upstreams.py": "35a3ea09a6c9480f3a9e2df85f4c26540b6299c62de8c5ef1a74df9f21e30cc8",
+    "bindings/python/tests/test_wheel_checker.py": "fd22b65cae468214c48d3fc7cbf70eb988caae13a5917d01c02b6694250cb67f",
+    "bindings/python/tests/test_workflow_native.py": "61690378a9b8f11c8de2eae67d73c4bf1c1d0f0038d2b7eb80a5a95ee81ea44d",
+    "bindings/python/tests/test_workspace_bridge.py": "cd176349d59389a3a541a9c611e9ae257ce37c979f061e0ddffe74799081e9ad",
+    "bindings/python/tests/test_workspace_cli.py": "aae5603ebdfa8073e7b6f4ac1a5566e114727391beb550bf8259a28a1e300342",
+    "bindings/rust/nirs4all/src/archive_command.rs": "f1fdcc73c6308079005eab62c157800a9b47dc5b3f81105c6f9fcf759e8a610a",
+    "bindings/rust/nirs4all/src/archive_v1.rs": "9f3e7c0eca2f69877e22c2732746651a11c53d9c3b168ce4ab8e3150551ae23d",
+    "bindings/rust/nirs4all/src/archive_v1_fixtures/PROVENANCE.md": "2a34a7e3d11998c55ff6f6fd101f71292480edbb23f01107d74b6b4162f589b3",
+    "bindings/rust/nirs4all/src/archive_v1_fixtures/archive_workspace_manifest.v1.schema.json": "91daa7209843ab9043aa62a50200ff43b0f85f4c4e61ad8f73aa67b65a0a98dc",
+    "bindings/rust/nirs4all/src/archive_v1_fixtures/negative/refusals.v1.json": "d6522da50d8debc87b5c824392d793fd8895e4822ebe80289199a246f502ded5",
+    "bindings/rust/nirs4all/src/archive_v1_fixtures/positive/portable_split_conformal.json": "79acef8a6bedee201c9e7be7a398bf7ec0ef6de2c75777824ec9ec0633b4c451",
+    "bindings/rust/nirs4all/src/archive_v1_fixtures/positive/workspace_n4d_host_sidecar.json": "6c3d678e955258a2f652c886d86358d4775dc98e9e85714166d88ad0e16b13ca",
+    "bindings/rust/nirs4all/src/archive_v2.rs": "135b986ae8df37ea779242e3e3d4c3b90835a78cc1803982fa7960ce98574b74",
+    "bindings/rust/nirs4all/src/archive_v3.rs": "5bec7229f88d38906ed3ad9fdf9a3c6baafd49dbd056df7399cce9872ba3aebb",
+    "bindings/rust/nirs4all/src/archive_view.rs": "f09a1001d12f3aa4f6af4f4e8c02fe584339cbaf0d6906a33ab5897aeb1b5088",
+    "bindings/rust/nirs4all/src/conformal.rs": "e16a5f3f2535119f3c645fc55ea09cd434031a086b3c83417557fa606f9db9fe",
+    "bindings/rust/nirs4all/src/conformal_json.rs": "003b20d77d90cd0d49cde5ff3cbafdb4883719840a3732208a73baebda967776",
+    "bindings/rust/nirs4all/src/durability.rs": "d4dc011a8268b7b9216f633d288c23a90808dc9a587a0997adfe8a18abca35be",
+    "bindings/rust/nirs4all/src/formats_io.rs": "d0ae25fcb33cfb401394d6eebeee8b27df6afdd1d641a8f0ba0b67d29295fdf3",
+    "bindings/rust/nirs4all/src/generation.rs": "24f55553af4de979ee0fd65763b9f422e58c86385e47590cd015161c5d011cde",
+    "bindings/rust/nirs4all/src/io_training.rs": "64012a3cd64df0ddaffea40ef6ee74c253a7e68c7987355f0dedd69325f4b03e",
+    "bindings/rust/nirs4all/src/lib.rs": "41577e090752dae5d0fad3479d21ce18d7f67491fe7e652d500d00d2d2373f55",
+    "bindings/rust/nirs4all/src/multimodal_workflow.rs": "6b97e5937ec2d4073055752d64e5ad630ecde2b07668a7dfeeb94b4ed6e7c91f",
+    "bindings/rust/nirs4all/src/n4m_roles.rs": "7a9f4484e6facbb52b0c685d62a3c5c3df0d96882481e9c3ecd17051a8856795",
+    "bindings/rust/nirs4all/src/native_methods_replay.rs": "f8c68f48ff7bdc5e9317fc800e6beb612c712c4e37b3051e3763691f4a554b2c",
+    "bindings/rust/nirs4all/src/native_pipeline_contract.rs": "ff8a2c2801672201b96690e636d886430818f718e3c693cd52ac3d3c41b856f8",
+    "bindings/rust/nirs4all/src/pipeline_workflow.rs": "6e66a0ecd801e79f0b0ab171ee855d0522275b5cb0e012634653d88ef3f6c414",
+    "bindings/rust/nirs4all/src/portable_session.rs": "376d94df8e588e0170bec51b1f63cacf7d2056ce75de191812daf82adc1f5196",
+    "bindings/rust/nirs4all/src/publication.rs": "3aaa956e0df6ad96df7522537dfe387b6b359a48f3787374739b3b14bfeef52b",
+    "bindings/rust/nirs4all/src/result_projection.rs": "4cb8446e0b1f1b84fee9508c0fe713f0e682ad58fcdc9830f9a1d08bb0ca71bb",
+    "bindings/rust/nirs4all/src/results.rs": "964e2103293b665a5f12e25f750784ec3fd4f3cbd2fbf40aa7a65ce468c51d58",
+    "bindings/rust/nirs4all/src/robustness.rs": "0c8e0fbb28801777843ffa06d08599b3329649ed38358f8169eafc7787bcda7b",
+    "bindings/rust/nirs4all/src/robustness_json.rs": "ba06e2710bad3ec27661ac3d43c76ff1afc6bc8b00a3d5c12aa4bae7f6042c1b",
+    "bindings/rust/nirs4all/src/test_fixture.rs": "68e3fd2f730da4adb7a705d2c55507ef4092e4b3aa840bba6e364bc66d052be4",
+    "bindings/rust/nirs4all/src/tuning.rs": "62100a3aa99195ae8d75463264d131464a52913b7ae0dfad221286e9ec42fa5d",
+    "bindings/rust/nirs4all/src/workflow.rs": "f3763bdeaf870181c2bd539b8abdf9c5f37922a51a68f1900f4fdaa1a0074369",
+    "scripts/parity/generate_n4m_roles_v8_named.py": "c1bc3e6241c598e757ae1629306b89fac4c119889655ef66b90863cdeec4c43c",
+    "scripts/parity/generate_native_workflow_fixtures.py": "a9d3b8e5f74f47e832fcb479df1bb06747333d67e8e854ba8bb1d53887c5ba77",
+    "scripts/parity/generate_python_oracle.py": "aea5b17c8c8bd5e665f6dbabbe2eaee23e183ed1372c639fb8fb978d918da1a2",
+    "tests/parity/README.md": "3eaf53dc3e8cc2d46864ea0065f479a9159d41f41151b3818414578d8eff02f0",
+    "tests/parity/expected/n4m_roles_v8_r_trained_oracle.json": "b89c840d4aba1afe1a7a7f7a0854bb9021eed5ef84b3a0019da6f6bb3e50dcec",
+    "tests/parity/expected/portable_python_oracle.json": "fc008911607a3260218d98fee86ec38e4dd0e5994e91126f7403baff5bc7377c",
+    "tests/parity/fixtures/execution_contract_cases.json": "56f5e25a5964acf9cbfdd3fc800af5416ed0d11ee74f9f26c7014c7f4e5610f8",
+    "tests/parity/fixtures/n4m_role_pipeline_methods.json": "a00eddf51cf69dc68976dbe81e5d11f01251b36dce69f53c9d1bd261a30d75ab",
+    "tests/parity/fixtures/n4m_roles_v8_python_named.json": "ffabc42d51e4c1f1e2457265c473e7e2745206630a23cba3a9db99629f47ca54",
+    "tests/parity/fixtures/n4m_roles_v8_python_trained.json": "c5d8474b7df71c9a64acc8fb6ffce81fff20e7aeb2da374123879e758ad81e9d",
+    "tests/parity/fixtures/n4m_roles_v8_r_trained.json": "76b1da755b5028f983fbdb1072b991a45d69806a93ef7022e5b9e2bb82e1027a",
+    "tests/parity/fixtures/native_x_augmentation_cases.json": "43c6f5677184b590a0795c5b5f42377d672b527e5f1de6cdfd08e8f0eb42aec1",
+    "tests/parity/fixtures/portable_kennard_stone_snv_pls.json": "987d829219af8582320c578d88067655b5d18e2bb9f04644284d29663bf435b4",
+    "tests/parity/fixtures/portable_kennard_stone_snv_pls.yaml": "ae63e2b50c37b37a3f25c988cb72c331fa6dbb41668a53c543098ad63dae78fc",
+    "tests/parity/fixtures/portable_methods_pipeline.json": "1046db746d355b58ab51a1341aaf282fe25a4b7f2641c5178d1a79357383175b",
+    "tests/parity/fixtures/portable_methods_pipeline.yaml": "44c59c39a48fb153e5bd9e61267880999e2f938afb36bececf4fd7bb34636c08",
+    "tests/parity/fixtures/portable_savgol_pls.json": "3839b3f7f70851482f2087cb5b2bae1c49830e4c5e122b39941bf116881531e1",
+    "tests/parity/fixtures/portable_savgol_pls.yaml": "5e9d1aeab98b743d3f2ee8043f0450a08d53564bc9617a0c6e4364d50a60ca0f",
+    "tests/parity/fixtures/portable_snv_pls.json": "78910e64c499911d660b19ac150e5be04ec88213e5de52fbb1fa3da04bdde37e",
+    "tests/parity/fixtures/portable_snv_pls.yaml": "c6663811ae3b13741ef7c6fae8eb2baf6222b895a26f0834543623c6f419938c"
+  },
+  "log": {
+    "path": "qualification/python-complete-suite-io026-posix1g-linux/originals/4-stdout.log",
+    "bytes": 1952,
+    "sha256": "4ef6019f41a63764b91f3e61dd1af8d5ea52b916ea238988b474901fedbe1a26"
+  },
+  "duration_seconds": 45.54236582998419,
+  "timing_basis": "actual_retained_independent_direct_terminal_wall_timestamps",
+  "input_evidence": {
+    "path": "qualification/python-complete-suite-io026-posix1g-linux/original-scoped-capture.json",
+    "bytes": 75279,
+    "sha256": "30b0cf6c6cde575f3f35796e6b9b4893ce8d00e5dee7952d5cdd9dc372909504"
+  },
+  "summary": {
+    "passed": 170,
+    "failed": 0,
+    "skipped": 6
+  },
+  "skips": [
+    "tests.test_archive_live.LiveArchiveV2ReplayTests.test_real_wheel_replays_multi_target_n4mm_with_valid_cross_link",
+    "tests.test_archive_live.LiveArchiveV2ReplayTests.test_tampered_n4mm_is_refused_before_replay",
+    "tests.test_archive_live.LiveArchiveV2ConformalReplayTests.test_archive_replays_in_isolated_child_to_closed_presentation",
+    "tests.test_archive_live.LiveArchiveV2ConformalReplayTests.test_archive_tamper_precedes_library_configuration",
+    "tests.test_archive_matrix_live.LiveArchiveV2MatrixPredictionTests.test_attested_libn4m_replays_exact_multi_target_values",
+    "tests.test_archive_matrix_live.LiveArchiveV2MatrixPredictionTests.test_wrong_methods_sha256_is_refused"
+  ],
+  "facts": {
+    "subtests_passed": 490
+  },
+  "provenance": {
+    "tools": {
+      "execution": "Direct commands and versions preserved in controlled runner/raw provenance"
+    },
+    "source_artifacts": [
+      {
+        "name": "core-nirs4all-core-archive",
+        "version": "0.4.5",
+        "origin": "Genuine Source923 candidate artifact captured before/after the original run",
+        "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/target/release/nirs4all-core-archive",
+        "sha256": "49c6bfa346b6db9d8984b7c487611e626485bd845e44cc55943f9bda60d89786",
+        "bytes": 37842360,
+        "evidence": {
+          "path": "qualification/python-complete-suite-io026-posix1g-linux/source_artifacts-0.json",
+          "bytes": 18106,
+          "sha256": "e03addd75471aa95e63cf03794e730bc003793f2d06db03731129a34bee6436e"
+        }
+      },
+      {
+        "name": "core-_native.abi3.so",
+        "version": "0.4.5",
+        "origin": "Genuine Source923 candidate artifact captured before/after the original run",
+        "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/python-site/nirs4all_core/_native.abi3.so",
+        "sha256": "5c951bd3fd53f605ad8046ab2692e1ef1cfd660d6c140f197c59c6f45e4eeeb7",
+        "bytes": 40305872,
+        "evidence": {
+          "path": "qualification/python-complete-suite-io026-posix1g-linux/source_artifacts-1.json",
+          "bytes": 18105,
+          "sha256": "859b01b3c9836e066baf21c625f63872c923b0ccb3248ed6f62608965dca1970"
+        }
+      }
+    ],
+    "dependency_origins": [
+      {
+        "name": "dag-native",
+        "version": "0.3.41",
+        "origin": "Authentic public wheel isolated extraction captured before/after",
+        "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/python-site/dag_ml/_dag_ml.abi3.so",
+        "sha256": "b70ab301a91826f114995ee8681b8293e1df9e0eb05cbf07ef1d00cff9e12a60",
+        "bytes": 41309632,
+        "evidence": {
+          "path": "qualification/python-complete-suite-io026-posix1g-linux/dependency_origins-0.json",
+          "bytes": 18078,
+          "sha256": "2abf7c5994f25fe73bcc27f315195cb7099a3e30f29e03fb62a4b2abe1614e05"
+        }
+      },
+      {
+        "name": "io-native",
+        "version": "0.2.6",
+        "origin": "Actual public IO026 isolated extraction captured before/after",
+        "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/python-site/nirs4all_io/_native.abi3.so",
+        "sha256": "528a2c50ab9e2084d92e418311f141722ec72459fc3f71db90b260be3ff939a7",
+        "bytes": 13379312,
+        "evidence": {
+          "path": "qualification/python-complete-suite-io026-posix1g-linux/dependency_origins-1.json",
+          "bytes": 18078,
+          "sha256": "2a49104282a4fd215dc3f7e142d3aeee8a44bf293c3e689b6d179c4eb684446d"
+        }
+      },
+      {
+        "name": "methods-native",
+        "version": "1.3.4",
+        "origin": "Authentic public134 wheel engine1.3.4 ABI2.17, real before/after capture",
+        "artifact_path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+        "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385",
+        "bytes": 5449304,
+        "evidence": {
+          "path": "qualification/python-complete-suite-io026-posix1g-linux/dependency_origins-2.json",
+          "bytes": 18134,
+          "sha256": "ef7136218aaac626b5bf286ec7310f53393ae80fbd9e13c14b478a2fbdd178ea"
+        }
+      }
+    ]
+  },
+  "raw_reports": {
+    "0-PRE.json": {
+      "path": "qualification/python-complete-suite-io026-posix1g-linux/originals/0-PRE.json",
+      "bytes": 52345,
+      "sha256": "5d2b09808326979c4a4bc7fd06d0314320c91435632ac503a0ea58e02e7ce9ad"
+    },
+    "1-active.json": {
+      "path": "qualification/python-complete-suite-io026-posix1g-linux/originals/1-active.json",
+      "bytes": 52415,
+      "sha256": "abede554d69d7a232a5f43a25d0ad86eb2e9335198437d1dd5b494c41ae3d7ea"
+    },
+    "2-direct-terminal.json": {
+      "path": "qualification/python-complete-suite-io026-posix1g-linux/originals/2-direct-terminal.json",
+      "bytes": 555,
+      "sha256": "b7ac4cf34af89d58b5203bd4b929ea4d3fc78e76ba1921c1b60292835d6ea0c3"
+    },
+    "3-raw-receipt.json": {
+      "path": "qualification/python-complete-suite-io026-posix1g-linux/originals/3-raw-receipt.json",
+      "bytes": 102969,
+      "sha256": "034651bb553404fd85893d578ca5ecbb6c94302539a2bba0e87081461f3eafd5"
+    },
+    "4-stdout.log": {
+      "path": "qualification/python-complete-suite-io026-posix1g-linux/originals/4-stdout.log",
+      "bytes": 1952,
+      "sha256": "4ef6019f41a63764b91f3e61dd1af8d5ea52b916ea238988b474901fedbe1a26"
+    },
+    "5-stderr.log": {
+      "path": "qualification/python-complete-suite-io026-posix1g-linux/originals/5-stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "6-run_core045_local_commands_v4_posix1g.py": {
+      "path": "qualification/python-complete-suite-io026-posix1g-linux/originals/6-run_core045_local_commands_v4_posix1g.py",
+      "bytes": 7471,
+      "sha256": "135701c5e11bbe7763ea0c46a34c1a8eff8f46cdf63f0e9089eb4b2796deeefa"
+    }
+  },
+  "normalization_not_new_execution": true,
+  "binary_build_source_commit": "923ffb2aa2d20f40d6bbe7d7fd72b85b65cb90cb"
+}

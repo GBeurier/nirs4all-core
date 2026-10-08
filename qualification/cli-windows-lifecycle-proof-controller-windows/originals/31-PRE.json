@@ -1,0 +1,26 @@
+{
+  "started_at": "2026-10-08T03:50:53.047607+00:00",
+  "source": "79dc40796a7ea8efba451806035d6336fee9b168",
+  "run": 37723541512,
+  "artifact": {
+    "id": 11527291846,
+    "node_id": "MDg6QXJ0aWZhY3QxMTUyNzI5MTg0Ng==",
+    "name": "core-windows-cli",
+    "size_in_bytes": 10529275,
+    "url": "https://api.github.com/repos/GBeurier/nirs4all-core/actions/artifacts/11527291846",
+    "archive_download_url": "https://api.github.com/repos/GBeurier/nirs4all-core/actions/artifacts/11527291846/zip",
+    "expired": false,
+    "digest": "sha256:b2751c48c9ece30cde96903bf4f90c132b398a9fc3114fcc47d7495b77e6ab70",
+    "created_at": "2026-10-08T03:46:22Z",
+    "updated_at": "2026-10-08T03:46:22Z",
+    "expires_at": "2027-01-06T03:36:38Z",
+    "workflow_run": {
+      "id": 37723541512,
+      "repository_id": 1287173465,
+      "head_repository_id": 1287173465,
+      "head_branch": "chore/dag041-public-cohort",
+      "head_sha": "79dc40796a7ea8efba451806035d6336fee9b168"
+    }
+  },
+  "scope": "Official candidate build artifacts only; not public/tag/final-scientific qualification"
+}

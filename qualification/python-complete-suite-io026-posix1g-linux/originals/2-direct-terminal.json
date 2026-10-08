@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/home/delete/nirs4all/nirs4all/.venv/bin/python",
+    "-B",
+    "-m",
+    "pytest",
+    "--capture=sys",
+    "-q",
+    "-rs",
+    "bindings/python/tests",
+    "--basetemp",
+    "/dev/shm/n4a-core045-20261008-private-posix/pytest-full-io026-1g",
+    "--junitxml",
+    "/mnt/c/Temp/n4a-core045-20261008/local-python-full-io026-1g-junit.xml"
+  ],
+  "direct_command_exit_code": 0,
+  "started_at": "2026-10-08T02:27:46.888035+00:00",
+  "finished_at": "2026-10-08T02:28:32.430400+00:00",
+  "seconds": 45.54236582998419,
+  "pid": 3413857
+}

@@ -1,0 +1,14 @@
+{
+  "command": [
+    "/home/delete/.nvm/versions/node/v22.21.1/bin/npm",
+    "run",
+    "test:js",
+    "--prefix",
+    "bindings/wasm"
+  ],
+  "direct_command_exit_code": 0,
+  "started_at": "2026-10-08T02:52:12.588819+00:00",
+  "finished_at": "2026-10-08T02:52:57.649059+00:00",
+  "seconds": 45.060242950043175,
+  "pid": 3418544
+}

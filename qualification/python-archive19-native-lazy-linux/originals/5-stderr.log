@@ -1,0 +1,24 @@
+test_conformal_presentation_missing_native_entry_point_fails_closed (<run_path>.ArchiveFacadeTests.test_conformal_presentation_missing_native_entry_point_fails_closed) ... ok
+test_conformal_presentation_uses_distinct_native_entry_point (<run_path>.ArchiveFacadeTests.test_conformal_presentation_uses_distinct_native_entry_point) ... ok
+test_conformal_presentation_v2_uses_native_projection (<run_path>.ArchiveFacadeTests.test_conformal_presentation_v2_uses_native_projection) ... ok
+test_missing_native_bridge_fails_closed (<run_path>.ArchiveFacadeTests.test_missing_native_bridge_fails_closed) ... ok
+test_replay_missing_native_entry_point_fails_closed (<run_path>.ArchiveFacadeTests.test_replay_missing_native_entry_point_fails_closed) ... ok
+test_replay_refuses_non_finite_host_json_before_native_call (<run_path>.ArchiveFacadeTests.test_replay_refuses_non_finite_host_json_before_native_call) ... ok
+test_returns_exact_native_package_bytes (<run_path>.ArchiveFacadeTests.test_returns_exact_native_package_bytes) ... ok
+test_returns_exact_native_refit_package_v3_bytes (<run_path>.ArchiveFacadeTests.test_returns_exact_native_refit_package_v3_bytes) ... ok
+test_returns_native_v3_host_view_without_python_archive_logic (<run_path>.ArchiveFacadeTests.test_returns_native_v3_host_view_without_python_archive_logic) ... ok
+test_v2_matrix_prediction_delegates_one_closed_native_contract (<run_path>.ArchiveFacadeTests.test_v2_matrix_prediction_delegates_one_closed_native_contract) ... ok
+test_v2_matrix_prediction_refuses_non_finite_x_before_native_call (<run_path>.ArchiveFacadeTests.test_v2_matrix_prediction_refuses_non_finite_x_before_native_call) ... ok
+test_v2_native_predictor_inspection_returns_only_native_descriptor_json (<run_path>.ArchiveFacadeTests.test_v2_native_predictor_inspection_returns_only_native_descriptor_json) ... ok
+test_v2_replay_forwards_strict_json_without_callbacks (<run_path>.ArchiveFacadeTests.test_v2_replay_forwards_strict_json_without_callbacks) ... ok
+test_v3_replay_uses_distinct_native_entry_point (<run_path>.ArchiveFacadeTests.test_v3_replay_uses_distinct_native_entry_point) ... ok
+test_v3_view_missing_native_bridge_fails_closed (<run_path>.ArchiveFacadeTests.test_v3_view_missing_native_bridge_fails_closed) ... ok
+test_v3_writer_forwards_opaque_dagml_members_without_zip_logic (<run_path>.ArchiveFacadeTests.test_v3_writer_forwards_opaque_dagml_members_without_zip_logic) ... ok
+test_v3_writer_rejects_non_bytes_before_native_call (<run_path>.ArchiveFacadeTests.test_v3_writer_rejects_non_bytes_before_native_call) ... ok
+test_writer_forwards_opaque_dagml_members_without_zip_logic (<run_path>.ArchiveFacadeTests.test_writer_forwards_opaque_dagml_members_without_zip_logic) ... ok
+test_writer_rejects_non_bytes_before_native_call (<run_path>.ArchiveFacadeTests.test_writer_rejects_non_bytes_before_native_call) ... ok
+
+----------------------------------------------------------------------
+Ran 19 tests in 0.012s
+
+OK

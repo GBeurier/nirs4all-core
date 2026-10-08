@@ -1,0 +1,14 @@
+{
+  "id": "linux-wsl",
+  "os_family": "linux",
+  "os": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+  "arch": "x86_64",
+  "hostname": "U108-N257",
+  "cpu_count": 24,
+  "ram_bytes": 67326586880,
+  "tools": {
+    "python": "3.11.15"
+  },
+  "observation_basis": "Current host metadata, not retrospectively asserted run metadata",
+  "observed_at": "2026-10-08T04:19:05.169516+00:00"
+}

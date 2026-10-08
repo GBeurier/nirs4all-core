@@ -1,0 +1,34 @@
+{
+  "command": [
+    "C:\\Temp\\n4a-downstream041-20261008\\core045-candidate79dc-artifacts-v1\\core-windows-cli\\nirs4all-core-archive.exe",
+    "workflow-predict",
+    "--input",
+    "C:\\Temp\\n4a-core045-20261008\\audit\\cli-snapshot-lifecycle-windows-v1\\input.json",
+    "--archive",
+    "C:\\Temp\\n4a-core045-20261008\\fixtures\\historical-web-archive-v2\\multitarget-pls.n4a",
+    "--methods-library",
+    "D:\\nirs4all-release-qualification-20261007\\strict-b345054ef9584759a3c1121e3658056b\\application\\resources\\backend\\python-runtime\\python\\Lib\\site-packages\\n4m\\lib\\n4m.dll",
+    "--methods-library-sha256",
+    "daf98de3fe85b8c7ab9ce432f7e74a6a61f74f8ac3045ec0d8c5a2060ca912c9",
+    "--run-id",
+    "run:cli:lifecycle",
+    "--output",
+    "C:\\Temp\\n4a-core045-20261008\\audit\\cli-snapshot-lifecycle-windows-v1\\output\\refuse-directory"
+  ],
+  "started_at": "2026-10-08T04:02:56.775503+00:00",
+  "ended_at": "2026-10-08T04:02:58.620830+00:00",
+  "elapsed_seconds": 1.8460809999378398,
+  "direct_exit_code": 1,
+  "expected_exit_code": 1,
+  "observed_dll_snapshots": {
+    "C:\\Temp\\n4a-core045-20261008\\audit\\cli-snapshot-lifecycle-windows-v1\\tmp\\nirs4all-core-archive-U3t9BD\\nirs4all-core-libn4m-mUgwID\\n4m.dll": {
+      "bytes": 3863552,
+      "file_attributes": 33,
+      "readonly": true,
+      "observed_at": "2026-10-08T04:02:58.183350+00:00"
+    }
+  },
+  "remaining_owned_tmp_entries": [],
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "6076328236ffe23f2848da436d582712a1613cc7e776e576c49a51efcc942615"
+}
