@@ -47,14 +47,20 @@ permissions:
   id-token: write   # npm provenance (OIDC)
 
 jobs:
-  strict-wasm-parity:
-    name: Strict WASM parity / Python oracle
+  local-qualification:
+    name: Verify local parity before publication
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.0
         with:
           fetch-depth: 0
-
+      - uses: actions/setup-python@v6.3.0
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v6.4.0
+        with:
+          node-version: "22"
+          package-manager-cache: false
       - name: Guard manual npm publication
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish }}
         run: |
@@ -71,78 +77,12 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/setup-python@v6.3.0
-        with:
-          python-version: "3.11"
-      - uses: actions/setup-node@v6.4.0
-        with:
-          node-version: "22"
-          package-manager-cache: false
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
-      - name: Install wasm-pack
-        uses: jetli/wasm-pack-action@0d096b08b4e5a7de8c28de67e11e945404e9eefa # v0.4.0
-        with:
-          version: "v0.15.0"
-
-      - name: Read pinned nirs4all-methods ref
-        id: methods-pin
-        shell: python
-        run: |
-          import os
-          from pathlib import Path
-          import tomllib
-
-          upstreams = tomllib.loads(Path("compat/upstreams.toml").read_text())["upstream"]
-          methods = [item for item in upstreams if item.get("key") == "methods"]
-          if len(methods) != 1:
-              raise SystemExit("compat/upstreams.toml must contain exactly one methods upstream")
-          ref = methods[0].get("ref")
-          if not isinstance(ref, str) or not ref.strip():
-              raise SystemExit("compat/upstreams.toml methods upstream must define a non-empty ref")
-          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
-              output.write(f"ref={ref.strip()}\n")
-
-      - uses: actions/checkout@v7.0.0
-        with:
-          repository: GBeurier/nirs4all-methods
-          path: nirs4all-methods
-          ref: ${{ steps.methods-pin.outputs.ref }}
-
-      - name: Install Emscripten SDK
-        run: |
-          git clone --depth 1 https://github.com/emscripten-core/emsdk.git "$RUNNER_TEMP/emsdk"
-          "$RUNNER_TEMP/emsdk/emsdk" install latest
-          "$RUNNER_TEMP/emsdk/emsdk" activate latest
-          source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
-          {
-            echo "EMSDK=$EMSDK"
-            echo "EMSDK_NODE=$EMSDK_NODE"
-          } >> "$GITHUB_ENV"
-          {
-            echo "$EMSDK"
-            echo "$EMSDK/upstream/emscripten"
-          } >> "$GITHUB_PATH"
-
-      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends cmake ninja-build
-      - run: npm ci --prefix bindings/wasm
-      - run: cmake --preset emscripten
-        working-directory: nirs4all-methods
-      - run: cmake --build --preset emscripten --target n4m_wasm --parallel
-        working-directory: nirs4all-methods
-      - run: npm ci
-        working-directory: nirs4all-methods/bindings/js
-      - run: npm run build && npm run stage:wasm
-        working-directory: nirs4all-methods/bindings/js
-      - name: Run strict WASM parity against the Python oracle
-        run: |
-          NIRS4ALL_METHODS_JS_DIST="$GITHUB_WORKSPACE/nirs4all-methods/bindings/js/dist" \
-          NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 \
-          npm test --prefix bindings/wasm
+      - name: Verify source-bound local qualification
+        if: ${{ (github.event_name == 'push' && !contains(github.ref_name, '-')) || (github.event_name == 'workflow_dispatch' && inputs.publish) }}
+        run: python scripts/verify_local_qualification.py --project core --receipt compat/local-qualification.json --root .
 
   build-and-publish:
-    needs: strict-wasm-parity
+    needs: local-qualification
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.0
@@ -160,10 +100,10 @@ jobs:
         with:
           version: "v0.15.0"
 
-      - name: Install + test the package
+      - name: Install and typecheck the package
         run: |
           npm ci --prefix bindings/wasm
-          npm test --prefix bindings/wasm
+          npm run typecheck --prefix bindings/wasm
 
       - name: Inject npm provenance into package.json
         working-directory: bindings/wasm
@@ -182,6 +122,9 @@ jobs:
       - name: npm pack --dry-run (confirm src + d.ts ship)
         working-directory: bindings/wasm
         run: npm pack --dry-run
+
+      - name: Smoke the built WASM facade
+        run: node --input-type=module -e "import * as core from './bindings/wasm/src/index.js'; if (typeof core.runBrowserPipeline !== 'function') throw new Error('missing public browser workflow');"
 
       - name: Validate tag matches package.json version
         if: startsWith(github.ref, 'refs/tags/v')

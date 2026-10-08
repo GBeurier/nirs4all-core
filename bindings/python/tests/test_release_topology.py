@@ -479,6 +479,12 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             "v2_round_trips_exact_opaque_package_bytes_and_dual_dispatches",
             runs,
         )
+        self.assertIn("cargo build --locked --release -p nirs4all --bin nirs4all-core-archive", runs)
+        artifacts = [step["with"] for step in job["steps"] if str(step.get("uses", "")).startswith("actions/upload-artifact@")]
+        self.assertIn(
+            {"name": "core-windows-cli", "path": "target/release/nirs4all-core-archive.exe", "if-no-files-found": "error"},
+            artifacts,
+        )
 
     def test_python_release_workflow_uses_current_repo_trusted_publisher_tuple(self) -> None:
         workflow = _load_workflow_yaml("release-python.yml")
@@ -497,62 +503,36 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertIn("GITHUB_WORKFLOW_REF", preflight["run"])
         self.assertIn("environment=pypi", preflight["run"])
 
-    def test_public_wasm_and_matlab_releases_require_strict_parity(self) -> None:
-        methods = _load_compat_upstreams()["methods"]
-        self.assertEqual(methods["repo"], "GBeurier/nirs4all-methods")
-        self.assertRegex(str(methods["ref"]), r"^[0-9a-f]{40}$")
-
-        expected_ref = "${{ steps.methods-pin.outputs.ref }}"
-        npm_workflow = _load_workflow_yaml("release-npm.yml")
-        npm_jobs = npm_workflow["jobs"]
-        npm_job = npm_jobs["strict-wasm-parity"]
-        self.assertEqual(npm_jobs["build-and-publish"]["needs"], "strict-wasm-parity")
-        npm_pin = _step_by_id(npm_job, "methods-pin")
-        self.assertEqual(npm_pin["shell"], "python")
-        self.assertIn("compat/upstreams.toml", npm_pin["run"])
-        self.assertIn('item.get("key") == "methods"', npm_pin["run"])
-        npm_checkout = _checkout_step(npm_job, methods["repo"])
-        self.assertEqual(npm_checkout["with"]["path"], "nirs4all-methods")
-        self.assertEqual(npm_checkout["with"]["ref"], expected_ref)
-        npm_runs = _job_run_text(npm_job)
-        self.assertIn("cmake --preset emscripten", npm_runs)
-        self.assertIn("NIRS4ALL_METHODS_JS_DIST=", npm_runs)
-        self.assertIn("NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1", npm_runs)
-        self.assertIn("npm test --prefix bindings/wasm", npm_runs)
+    def test_public_releases_require_source_bound_local_parity(self) -> None:
+        verifier = "python scripts/verify_local_qualification.py --project core --receipt compat/local-qualification.json --root ."
+        expected_jobs = {
+            "release-npm.yml": ("local-qualification", "build-and-publish"),
+            "release-matlab.yml": ("local-qualification", "matlab-package"),
+            "release-crates.yml": ("publish-crates", None),
+            "release-python.yml": ("publish-pypi", None),
+            "release-source.yml": ("source-release", None),
+        }
+        for name, (guard_job, dependent_job) in expected_jobs.items():
+            with self.subTest(workflow=name):
+                workflow = _load_workflow_yaml(name)
+                guard = _step_by_name(workflow["jobs"][guard_job], "Verify source-bound local qualification")
+                self.assertEqual(guard["run"], verifier)
+                if dependent_job:
+                    self.assertEqual(workflow["jobs"][dependent_job]["needs"], guard_job)
+                self.assertNotIn("continue-on-error", _load_workflow(name))
+                self.assertNotIn("npm test --prefix bindings/wasm", _load_workflow(name))
+                self.assertNotIn("make test-matlab-parity", _load_workflow(name))
+        ci = _load_workflow_yaml("ci.yml")
+        self.assertNotIn("strict-parity", ci["jobs"])
+        self.assertNotIn("cargo test --workspace", _job_run_text(ci["jobs"]["rust"]))
+        self.assertNotIn("npm test --prefix bindings/wasm", _job_run_text(ci["jobs"]["npm"]))
         makefile = (ROOT / "Makefile").read_text()
-        self.assertIn("check-wasm-methods-artifact:", makefile)
-        self.assertIn("test-wasm-parity-strict: check-wasm-methods-artifact", makefile)
-        self.assertIn("index.js n4m.js n4m.wasm", makefile)
-
-        matlab_workflow = _load_workflow_yaml("release-matlab.yml")
-        matlab_jobs = matlab_workflow["jobs"]
-        matlab_job = matlab_jobs["strict-matlab-parity"]
-        self.assertEqual(matlab_jobs["matlab-package"]["needs"], "strict-matlab-parity")
-        matlab_pin = _step_by_id(matlab_job, "methods-pin")
-        self.assertEqual(matlab_pin["shell"], "python")
-        self.assertIn("compat/upstreams.toml", matlab_pin["run"])
-        self.assertIn('item.get("key") == "methods"', matlab_pin["run"])
-        matlab_checkout = _checkout_step(matlab_job, methods["repo"])
-        self.assertEqual(matlab_checkout["with"]["path"], "nirs4all-methods")
-        self.assertEqual(matlab_checkout["with"]["ref"], expected_ref)
-        matlab_runs = _job_run_text(matlab_job)
-        self.assertIn("cmake --preset dev-release", matlab_runs)
-        self.assertIn("cmake --build --preset dev-release --target n4m_c", matlab_runs)
-        self.assertIn('octave --quiet --eval "cd bindings/matlab; build_mex"', matlab_runs)
-        self.assertIn("make test-matlab-parity", matlab_runs)
-        matlab_parity_step = _step_by_name(
-            matlab_job,
-            "Run strict MATLAB/Octave parity against the Python oracle",
-        )
-        self.assertEqual(
-            matlab_parity_step["env"]["NIRS4ALL_CORE_REQUIRE_METHODS_PARITY"],
-            "1",
-        )
-        self.assertEqual(
-            matlab_parity_step["env"]["NIRS4ALL_METHODS_MATLAB_PATH"],
-            "${{ github.workspace }}/nirs4all-methods/bindings/matlab",
-        )
-        self.assertNotIn("continue-on-error", _load_workflow("release-matlab.yml"))
+        for target in ("test-rust-parity:", "test-python-parity:", "test-wasm-parity-strict:", "test-matlab-parity:", "test-cross-language-e2e:"):
+            self.assertIn(target, makefile)
+        # Dry-run builds are permitted before the resulting Windows artifacts
+        # can be exercised locally; only publication consumes the receipt.
+        self.assertIn("inputs.publish", _step_by_name(_load_workflow_yaml("release-npm.yml")["jobs"]["local-qualification"], "Verify source-bound local qualification")["if"])
+        self.assertIn("github.event_name == 'push'", _step_by_name(_load_workflow_yaml("release-matlab.yml")["jobs"]["local-qualification"], "Verify source-bound local qualification")["if"])
 
     def test_wasm_package_locks_typechecked_optional_peers(self) -> None:
         package = _load_wasm_package()
@@ -592,7 +572,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         # Methods is floored at the release carrying native ragged summaries (ABI 2.17).
         pinned_peers = {
             "@nirs4all/methods": "^1.3.4",
-            "dag-ml-wasm": ">=0.3.39",
+            "dag-ml-wasm": ">=0.3.41",
             "dag-ml-data-wasm": ">=0.2.13",
             "@nirs4all/formats-wasm": ">=0.2.11",
             "@nirs4all/io-wasm": ">=0.2.6",
@@ -608,7 +588,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             self.assertTrue(package["peerDependenciesMeta"][peer]["optional"])
             self.assertTrue(root_lock["peerDependenciesMeta"][peer]["optional"])
             self.assertEqual(package["devDependencies"][peer], version)
-        self.assertEqual(package["devDependencies"]["dag-ml-wasm"], "^0.3.39")
+        self.assertEqual(package["devDependencies"]["dag-ml-wasm"], "^0.3.41")
 
         typescript = lock["packages"]["node_modules/typescript"]
         self.assertEqual(typescript["version"], package["devDependencies"]["typescript"])
@@ -657,13 +637,13 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             any(dependency.startswith("nirs4all-datasets") for dependency in all_extra)
         )
         self.assertEqual(extras["datasets"], ["nirs4all-datasets>=0.3.5"])
-        self.assertEqual(extras["dag-ml"], ["dag-ml>=0.3.39,<0.4"])
+        self.assertEqual(extras["dag-ml"], ["dag-ml>=0.3.41,<0.4"])
         self.assertIn("nirs4all-methods>=1.3.4,<2", extras["methods"])
         self.assertIn("pls4all>=1.3.4,<2", extras["methods"])
         self.assertIn("scikit-learn>=1.3", extras["methods"])
         self.assertIn("nirs4all-formats>=0.2.11", all_extra)
         self.assertIn("nirs4all-io>=0.2.6", all_extra)
-        self.assertIn("dag-ml>=0.3.39,<0.4", all_extra)
+        self.assertIn("dag-ml>=0.3.41,<0.4", all_extra)
         self.assertIn("nirs4all-methods>=1.3.4,<2", all_extra)
         self.assertIn("pls4all>=1.3.4,<2", all_extra)
         self.assertNotIn("nirs4all-methods>=1.0.5", extras["methods"])
