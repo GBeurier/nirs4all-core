@@ -96,9 +96,8 @@ jobs:
           echo "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1" >> "${GITHUB_ENV}"
           echo "LD_LIBRARY_PATH=$(dirname "${library}")" >> "${GITHUB_ENV}"
       - run: cargo fmt --all --check
-      - run: cargo clippy --workspace --all-targets -- -D warnings
-      - run: cargo test --workspace
-      - run: cargo package -p nirs4all
+      - run: cargo build --locked --workspace
+      - run: cargo package --locked -p nirs4all
       - uses: actions/upload-artifact@v7.0.1
         with:
           name: rust-crate
@@ -113,9 +112,16 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: Exercise the Windows directory flush and both atomic writers
         run: |
-          cargo test -p nirs4all durability::tests::directory_metadata_can_be_flushed_after_publication
-          cargo test -p nirs4all archive_v1_publishes_a_relative_target_without_cleanup_error
-          cargo test -p nirs4all v2_round_trips_exact_opaque_package_bytes_and_dual_dispatches
+          cargo test --locked -p nirs4all durability::tests::directory_metadata_can_be_flushed_after_publication
+          cargo test --locked -p nirs4all archive_v1_publishes_a_relative_target_without_cleanup_error
+          cargo test --locked -p nirs4all v2_round_trips_exact_opaque_package_bytes_and_dual_dispatches
+      - name: Build the Windows workflow CLI for local qualification
+        run: cargo build --locked --release -p nirs4all --bin nirs4all-core-archive
+      - uses: actions/upload-artifact@v7.0.1
+        with:
+          name: core-windows-cli
+          path: target/release/nirs4all-core-archive.exe
+          if-no-files-found: error
 
   python:
     needs: repair-guard
@@ -129,10 +135,13 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: python -m pip install build twine pyyaml numpy pytest scikit-learn
-      - run: PYTHONPATH=bindings/python/src python -m pytest -q bindings/python/tests
-      - run: make test-e2e-entrypoints PYTHON=python
       - run: python -m build bindings/python --outdir dist/python
       - run: python -m twine check dist/python/*
+      - name: Smoke the installed wheel
+        run: |
+          python scripts/check_python_wheel.py dist/python/*.whl
+          python -m pip install --force-reinstall dist/python/*.whl
+          python -c "import n4a, nirs4all_core; assert n4a.__aggregate_import__ == 'nirs4all_core'; assert n4a.__version__ == nirs4all_core.__version__; assert hasattr(nirs4all_core, 'predict_methods_archive_v2_matrix')"
       - uses: actions/upload-artifact@v7.0.1
         with:
           name: python-${{ matrix.python-version }}
@@ -155,107 +164,14 @@ jobs:
         with:
           version: "v0.15.0"
       - run: npm ci --prefix bindings/wasm
-      - run: npm test --prefix bindings/wasm
+      - run: npm run typecheck --prefix bindings/wasm
       - run: mkdir -p dist/npm && npm pack ./bindings/wasm --pack-destination dist/npm
+      - name: Smoke the built WASM facade
+        run: node --input-type=module -e "import * as core from './bindings/wasm/src/index.js'; if (typeof core.runBrowserPipeline !== 'function') throw new Error('missing public browser workflow');"
       - uses: actions/upload-artifact@v7.0.1
         with:
           name: npm-wasm
           path: dist/npm/*
-
-  strict-parity:
-    needs: repair-guard
-    runs-on: ubuntu-latest
-    env:
-      R_LIBS_USER: /tmp/nirs4all-core-r-library
-    steps:
-      - uses: actions/checkout@v7.0.0
-      - name: Read pinned nirs4all-methods ref
-        id: methods-pin
-        shell: python
-        run: |
-          import os
-          from pathlib import Path
-          import tomllib
-
-          upstreams = tomllib.loads(Path("compat/upstreams.toml").read_text())["upstream"]
-          methods = [item for item in upstreams if item.get("key") == "methods"]
-          if len(methods) != 1:
-              raise SystemExit("compat/upstreams.toml must contain exactly one methods upstream")
-          ref = methods[0].get("ref")
-          if not isinstance(ref, str) or not ref.strip():
-              raise SystemExit("compat/upstreams.toml methods upstream must define a non-empty ref")
-          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
-              output.write(f"ref={ref.strip()}\n")
-      - uses: actions/checkout@v7.0.0
-        with:
-          repository: GBeurier/nirs4all-methods
-          ref: ${{ inputs.methods_ref || steps.methods-pin.outputs.ref }}
-          path: nirs4all-methods
-      - uses: actions/setup-python@v6.3.0
-        with:
-          python-version: "3.12"
-      - uses: actions/setup-node@v6.4.0
-        with:
-          node-version: "22"
-          package-manager-cache: false
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
-      - name: Install wasm-pack
-        uses: jetli/wasm-pack-action@0d096b08b4e5a7de8c28de67e11e945404e9eefa # v0.4.0
-        with:
-          version: "v0.15.0"
-      - name: Install Emscripten SDK
-        run: |
-          git clone --depth 1 https://github.com/emscripten-core/emsdk.git "$RUNNER_TEMP/emsdk"
-          "$RUNNER_TEMP/emsdk/emsdk" install latest
-          "$RUNNER_TEMP/emsdk/emsdk" activate latest
-          source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
-          {
-            echo "EMSDK=$EMSDK"
-            echo "EMSDK_NODE=$EMSDK_NODE"
-          } >> "$GITHUB_ENV"
-          {
-            echo "$EMSDK"
-            echo "$EMSDK/upstream/emscripten"
-          } >> "$GITHUB_PATH"
-      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gcc-12 g++-12 ninja-build cmake octave octave-dev
-      - run: python -m pip install numpy scikit-learn pyyaml
-      - run: npm ci --prefix bindings/wasm
-      - run: cmake --preset emscripten
-        working-directory: nirs4all-methods
-      - run: cmake --build --preset emscripten --target n4m_wasm --parallel
-        working-directory: nirs4all-methods
-      - run: npm ci
-        working-directory: nirs4all-methods/bindings/js
-      - run: npm run build && npm run stage:wasm
-        working-directory: nirs4all-methods/bindings/js
-      - run: NIRS4ALL_METHODS_JS_DIST="$GITHUB_WORKSPACE/nirs4all-methods/bindings/js/dist" NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 npm test --prefix bindings/wasm
-      - run: cmake --preset dev-release
-        working-directory: nirs4all-methods
-      - run: cmake --build --preset dev-release --target n4m_c --parallel
-        working-directory: nirs4all-methods
-      - run: octave --quiet --eval "cd bindings/matlab; build_mex"
-        working-directory: nirs4all-methods
-        env:
-          N4M_INCLUDE_DIR: ${{ github.workspace }}/nirs4all-methods/cpp/include
-          N4M_GENERATED_DIR: ${{ github.workspace }}/nirs4all-methods/build/dev-release/generated
-          N4M_LIB_DIR: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
-          LD_LIBRARY_PATH: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
-      - run: make test-rust-parity
-        env:
-          NIRS4ALL_METHODS_LIB: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src/libn4m.so
-          LD_LIBRARY_PATH: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
-      - run: |
-          PYTHONPATH="bindings/python/src:$GITHUB_WORKSPACE/nirs4all-methods/bindings/python/src" \
-          N4M_LIB_PATH="$GITHUB_WORKSPACE/nirs4all-methods/build/dev-release/cpp/src/libn4m.so" \
-          NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 \
-          python -m unittest bindings/python/tests/test_execution_parity.py -v
-      - run: make test-matlab-parity
-        env:
-          LD_LIBRARY_PATH: ${{ github.workspace }}/nirs4all-methods/build/dev-release/cpp/src
-          NIRS4ALL_METHODS_MATLAB_PATH: ${{ github.workspace }}/nirs4all-methods/bindings/matlab
-          OCTAVE_PATH: ${{ github.workspace }}/nirs4all-methods/bindings/matlab
 
   matlab-octave:
     needs: repair-guard

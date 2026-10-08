@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.5
+
+- Compile the Rust, Python-native and WASM-native aggregate with DAG-ML 0.3.41,
+  including its production fix for redundant immutable metric validation.
+- Require DAG-ML 0.3.41 in the optional Python and JavaScript host integrations.
+- Run complete parity and end-to-end qualification locally on Linux/WSL and
+  Windows; require source-bound evidence before release packaging and publication.
+  GitHub remains responsible for portable builds, package smokes and provenance.
+
 ## 0.4.4
 
 - Add generic native estimator pipelines and native multimodal campaigns with
