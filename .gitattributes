@@ -1,0 +1,7 @@
+# Keep content-addressed fixtures and source fingerprints identical across hosts.
+*.json text eol=lf
+*.sh text eol=lf
+*.py text eol=lf
+*.toml text eol=lf
+*.rs text eol=lf
+qualification/** -text -eol
