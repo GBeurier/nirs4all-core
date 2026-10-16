@@ -1810,7 +1810,7 @@ mod json_tests {
         assert_eq!(
             ensure_same_configured_methods_library(&configured, &matching)
                 .expect("same process identity remains usable"),
-            snapshot
+            snapshot.canonicalize().expect("canonical snapshot fixture")
         );
 
         let changed_sha = AttestedMethodsLibrary {
