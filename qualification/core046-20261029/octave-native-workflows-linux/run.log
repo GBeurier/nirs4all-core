@@ -1,0 +1,56 @@
+nirs4all MATLAB/Octave smoke passed
+OCTAVE_WORKFLOW_NATIVE_PASS variants=2 oof_rows=12 refit=1 relocated_predict=1 retrain=1
+OCTAVE_NATIVE_TUNING_RESUME_COLD_PREDICT_OK
+native MATLAB/Octave conformal and seeded robustness cross-language gate passed
+Native Octave result view: PASS
+OCTAVE_NATIVE_RUNTIME_PASS stored_cli resume export relocated_predict dataset_cli
+
+warning: function /home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/matlab/+nirs4all/load.m shadows a built-in function
+warning: called from
+    smoke at line 1 column 1
+
+warning: function /home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/matlab/+nirs4all/load.m shadows a built-in function
+warning: called from
+    smoke at line 1 column 1
+
+warning: function /home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/matlab/+nirs4all/load.m shadows a built-in function
+warning: called from
+    workflow_native at line 2 column 53
+
+warning: function /home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/matlab/+nirs4all/load.m shadows a built-in function
+warning: called from
+    conformal_native at line 4 column 53
+
+warning: function /home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/matlab/+nirs4all/load.m shadows a built-in function
+warning: called from
+    result_view at line 3 column 1
+
+warning: function /home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/matlab/+nirs4all/load.m shadows a built-in function
+warning: called from
+    native_runtime at line 2 column 53
+
+warning: function /home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/matlab/+nirs4all/load.m shadows a built-in function
+warning: called from
+    native_runtime at line 3 column 1
+
+warning: function /home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/matlab/+nirs4all/load.m shadows a built-in function
+warning: called from
+    native_runtime at line 10 column 1
+
+warning: load_path: bindings/matlab/tests: No such file or directory
+warning: called from
+    native_runtime at line 10 column 1
+
+warning: load-path: update failed for 'bindings/matlab/tests', removing from path
+warning: called from
+    native_runtime at line 10 column 1
+
+warning: function /home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/matlab/+nirs4all/load.m shadows a built-in function
+warning: called from
+    native_runtime at line 13 column 1
+
+warning: function /home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/matlab/+nirs4all/load.m shadows a built-in function
+warning: called from
+    @<anonymous> at line 9 column 34
+    native_runtime at line 13 column 24
+

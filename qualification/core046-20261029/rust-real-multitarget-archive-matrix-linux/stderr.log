@@ -1,0 +1,7 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running unittests src/lib.rs (/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/target/debug/deps/nirs4all-2bf776d87be5c8de)
+     Running unittests src/bin/nirs4all-core-archive.rs (/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/target/debug/deps/nirs4all_core_archive-2037209bdd8a3a69)
+     Running tests/conformal.rs (/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/target/debug/deps/conformal-0da594e5f2d31add)
+     Running tests/formats_io.rs (/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/target/debug/deps/formats_io-ede23c6069cf65d9)
+     Running tests/results.rs (/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/target/debug/deps/results-02bb6ca6d3baff26)
+     Running tests/workflow.rs (/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/target/debug/deps/workflow-ef6574d3293666ba)

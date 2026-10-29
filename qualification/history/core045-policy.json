@@ -1,0 +1,2745 @@
+{
+  "schema": "nirs4all.local-qualification.v1",
+  "project": "core",
+  "proposal_incomplete_not_for_publication": false,
+  "gates": [
+    {
+      "id": "rust-workspace",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "cargo",
+          "test",
+          "--locked",
+          "--workspace"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/.cargo/bin/cargo"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/rust/nirs4all/",
+        "tests/parity/"
+      ],
+      "minimum_passed": 146,
+      "allowed_skips": [
+        "native_methods_replay::json_tests::live_historical_archive_derives_native_predictor_descriptor",
+        "native_methods_replay::json_tests::real_multitarget_archive_matrix_product_contract"
+      ],
+      "requires_provenance": true,
+      "facts": [],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "raw_authority": {
+        "original_receipt": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/rust-workspace/raw-receipt.json",
+          "bytes": 92285,
+          "sha256": "ad3758419c37d9e55ff7c6cdd18e1d995c43e4a46ebb49b3bab1f5efc67cf0cd"
+        },
+        "PRE": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/rust-workspace/PRE.json",
+          "bytes": 46470,
+          "sha256": "ed2820b4c663187c90bd4d6b8f835d68ce369bae98886da114cd74b21dec28bd"
+        },
+        "direct_terminal": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/rust-workspace/direct-terminal.json",
+          "bytes": 293,
+          "sha256": "1f4f734a4c862c169fa5e4a5e271a90cad05f605b20ed745874f09f4f39c3a28"
+        },
+        "logs": {
+          "stdout.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/rust-workspace/stdout.log",
+            "bytes": 14574,
+            "sha256": "4ee1920f2489f1c5f5b677bf50c8d7c248e9d838a816017034b1d2eb1cebc8ea"
+          },
+          "stderr.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/rust-workspace/stderr.log",
+            "bytes": 2105,
+            "sha256": "8953bfca4e4de8f6d13aa911dcc8027187b2bc3afc46acc86613ecc542b43606"
+          }
+        },
+        "source_tree": "a2851ad31bb4e164dc26194d4acf8634db92dc98",
+        "source_binary_commit": "923ffb2",
+        "runner": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/run_core045_local_commands.py",
+          "bytes": 6303,
+          "sha256": "2a3880833deeb4120a5ad9914ab6d3655c9c2e5368d5211ede390a14260d4ea5"
+        }
+      },
+      "native_before_after_evidence": {
+        "path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+        "bytes": 5449304,
+        "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385"
+      },
+      "actual_external_before_after_evidence": {},
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-build-source",
+            "version": "0.4.5",
+            "origin": "Reviewed source923/Cargo.lock and actual source-build execution logs; no historical binary hash invented",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/audit/core045-source-ci-pins-public-locks-v4/source/bindings/rust/nirs4all/Cargo.toml",
+            "sha256": "d173e3f6e1fac7b5fa875be9c79b6b47e75706333f83082109f99140947e7954",
+            "bytes": 2846
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "methods-native",
+            "version": "1.3.4",
+            "origin": "Authentic public134 wheel engine1.3.4 ABI2.17, real before/after capture",
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+            "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385",
+            "bytes": 5449304
+          }
+        ]
+      }
+    },
+    {
+      "id": "rust-python-oracle",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "cargo",
+          "test",
+          "--locked",
+          "-p",
+          "nirs4all",
+          "rust_binding_execution_matches_full_python_nirs4all_oracle",
+          "--",
+          "--nocapture"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/.cargo/bin/cargo"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/rust/nirs4all/",
+        "tests/parity/"
+      ],
+      "minimum_passed": 1,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "raw_authority": {
+        "original_receipt": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/rust-python-oracle/raw-receipt.json",
+          "bytes": 92512,
+          "sha256": "844b60fe7aa8dcd4b3c8bf185249975a6274b8d3a56690d27e2bc37999b0681b"
+        },
+        "PRE": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/rust-python-oracle/PRE.json",
+          "bytes": 46581,
+          "sha256": "f9283e73b02c185e5587e76c5a41f5b81c3df2ce30d40549db1bc4e3a060b6a4"
+        },
+        "direct_terminal": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/rust-python-oracle/direct-terminal.json",
+          "bytes": 396,
+          "sha256": "89092351685937fa0f41232bad7779e93377910f987fb8b67ff27577d26a7a24"
+        },
+        "logs": {
+          "stdout.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/rust-python-oracle/stdout.log",
+            "bytes": 757,
+            "sha256": "9d363aa2bf9cf61e84c92594fd7f41ecc7c71a1091574acce297544b6b121323"
+          },
+          "stderr.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/rust-python-oracle/stderr.log",
+            "bytes": 766,
+            "sha256": "2ea780b99feb5210e79903b5510b099c4901f79508009eae7c6c8a943ceb673d"
+          }
+        },
+        "source_tree": "a2851ad31bb4e164dc26194d4acf8634db92dc98",
+        "source_binary_commit": "923ffb2",
+        "runner": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/run_core045_local_commands.py",
+          "bytes": 6303,
+          "sha256": "2a3880833deeb4120a5ad9914ab6d3655c9c2e5368d5211ede390a14260d4ea5"
+        }
+      },
+      "native_before_after_evidence": {
+        "path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+        "bytes": 5449304,
+        "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385"
+      },
+      "actual_external_before_after_evidence": {},
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-build-source",
+            "version": "0.4.5",
+            "origin": "Reviewed source923/Cargo.lock and actual source-build execution logs; no historical binary hash invented",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/audit/core045-source-ci-pins-public-locks-v4/source/bindings/rust/nirs4all/Cargo.toml",
+            "sha256": "d173e3f6e1fac7b5fa875be9c79b6b47e75706333f83082109f99140947e7954",
+            "bytes": 2846
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "methods-native",
+            "version": "1.3.4",
+            "origin": "Authentic public134 wheel engine1.3.4 ABI2.17, real before/after capture",
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+            "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385",
+            "bytes": 5449304
+          }
+        ]
+      }
+    },
+    {
+      "id": "rust-historical-archive-descriptor",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "cargo",
+          "test",
+          "--locked",
+          "-p",
+          "nirs4all",
+          "native_methods_replay::json_tests::live_historical_archive_derives_native_predictor_descriptor",
+          "--",
+          "--exact",
+          "--ignored",
+          "--nocapture"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/.cargo/bin/cargo"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/rust/nirs4all/",
+        "tests/parity/"
+      ],
+      "minimum_passed": 1,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "raw_authority": {
+        "original_receipt": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/rust-historical-archive-descriptor/raw-receipt.json",
+          "bytes": 94330,
+          "sha256": "7b9d6339e795546fd6db7c4e02c4709821a9f4839c7daa74f5f93513ec376df9"
+        },
+        "PRE": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/rust-historical-archive-descriptor/PRE.json",
+          "bytes": 47854,
+          "sha256": "5ad101bca617777a0ae73a98b0193f509c68e6f0ab0b643a2b894f2c945bbfde"
+        },
+        "direct_terminal": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/rust-historical-archive-descriptor/direct-terminal.json",
+          "bytes": 464,
+          "sha256": "29b37e20947372b175b5670bb89e468146f43341e364d02837d85a7938614dea"
+        },
+        "logs": {
+          "stdout.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/rust-historical-archive-descriptor/stdout.log",
+            "bytes": 786,
+            "sha256": "4cc178b9a9cc70089c636b8b7d4076f9c87eb850cd4d80c00e39f37aa392171e"
+          },
+          "stderr.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/rust-historical-archive-descriptor/stderr.log",
+            "bytes": 766,
+            "sha256": "0c860c4706c3f06f8819579a9d253ca6ca2cd67434a3f33869dc17fae3ce9d0a"
+          }
+        },
+        "source_tree": "a2851ad31bb4e164dc26194d4acf8634db92dc98",
+        "source_binary_commit": "923ffb2",
+        "runner": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/run_core045_local_commands_v4_posix1g.py",
+          "bytes": 7471,
+          "sha256": "135701c5e11bbe7763ea0c46a34c1a8eff8f46cdf63f0e9089eb4b2796deeefa"
+        }
+      },
+      "native_before_after_evidence": {
+        "path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+        "bytes": 5449304,
+        "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385"
+      },
+      "actual_external_before_after_evidence": {
+        "/mnt/c/Temp/n4a-core045-20261008/fixtures/historical-web-archive-v2/multitarget-pls.n4a": {
+          "sha256": "994252030ff80129d0431995bae53eb473082f05825b65714379262b72af13fa",
+          "bytes": 60023
+        },
+        "/mnt/c/Temp/n4a-core045-20261008/fixtures/historical-web-archive-v2/README.md": {
+          "sha256": "58876dbaebe2a7df48c5094dd44edd0b6c68dadb5d8e210a1a914e9e5ef32a89",
+          "bytes": 1619
+        }
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-build-source",
+            "version": "0.4.5",
+            "origin": "Reviewed source923/Cargo.lock and actual source-build execution logs; no historical binary hash invented",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/audit/core045-source-ci-pins-public-locks-v4/source/bindings/rust/nirs4all/Cargo.toml",
+            "sha256": "d173e3f6e1fac7b5fa875be9c79b6b47e75706333f83082109f99140947e7954",
+            "bytes": 2846
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "methods-native",
+            "version": "1.3.4",
+            "origin": "Authentic public134 wheel engine1.3.4 ABI2.17, real before/after capture",
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+            "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385",
+            "bytes": 5449304
+          }
+        ]
+      }
+    },
+    {
+      "id": "rust-real-multitarget-archive-matrix",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "cargo",
+          "test",
+          "--locked",
+          "-p",
+          "nirs4all",
+          "native_methods_replay::json_tests::real_multitarget_archive_matrix_product_contract",
+          "--",
+          "--exact",
+          "--ignored",
+          "--nocapture"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/.cargo/bin/cargo"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/rust/nirs4all/",
+        "tests/parity/"
+      ],
+      "minimum_passed": 1,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "raw_authority": {
+        "original_receipt": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/rust-real-multitarget-archive-matrix/raw-receipt.json",
+          "bytes": 94315,
+          "sha256": "84259bf7b3ba3fbc73fbec6fd25b4fda07c58ce45e126eacf0151a0e93fc8573"
+        },
+        "PRE": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/rust-real-multitarget-archive-matrix/PRE.json",
+          "bytes": 47845,
+          "sha256": "3e807550b4fb4c7bd6c59e039297d63f1eeafe10b85f44071dea6149be9ff2f0"
+        },
+        "direct_terminal": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/rust-real-multitarget-archive-matrix/direct-terminal.json",
+          "bytes": 454,
+          "sha256": "ec38c5940ad4ced3c01fcef39b1a9ea44a0f3e04cdc3496e3b00770c7b886126"
+        },
+        "logs": {
+          "stdout.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/rust-real-multitarget-archive-matrix/stdout.log",
+            "bytes": 775,
+            "sha256": "d49616ed6dae2e995613d8902ed3f46f96e420997e1e53926573b19af0f7c446"
+          },
+          "stderr.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/rust-real-multitarget-archive-matrix/stderr.log",
+            "bytes": 820,
+            "sha256": "bf279fe29b0742cfc851828a567fc2e9d7c9e7b8e7cd0149c27b044a57ec44e7"
+          }
+        },
+        "source_tree": "a2851ad31bb4e164dc26194d4acf8634db92dc98",
+        "source_binary_commit": "923ffb2",
+        "runner": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/run_core045_local_commands_v4_posix1g.py",
+          "bytes": 7471,
+          "sha256": "135701c5e11bbe7763ea0c46a34c1a8eff8f46cdf63f0e9089eb4b2796deeefa"
+        }
+      },
+      "native_before_after_evidence": {
+        "path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+        "bytes": 5449304,
+        "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385"
+      },
+      "actual_external_before_after_evidence": {
+        "/mnt/c/Temp/n4a-core045-20261008/fixtures/historical-web-archive-v2/multitarget-pls.n4a": {
+          "sha256": "994252030ff80129d0431995bae53eb473082f05825b65714379262b72af13fa",
+          "bytes": 60023
+        },
+        "/mnt/c/Temp/n4a-core045-20261008/fixtures/historical-web-archive-v2/README.md": {
+          "sha256": "58876dbaebe2a7df48c5094dd44edd0b6c68dadb5d8e210a1a914e9e5ef32a89",
+          "bytes": 1619
+        }
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-build-source",
+            "version": "0.4.5",
+            "origin": "Reviewed source923/Cargo.lock and actual source-build execution logs; no historical binary hash invented",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/audit/core045-source-ci-pins-public-locks-v4/source/bindings/rust/nirs4all/Cargo.toml",
+            "sha256": "d173e3f6e1fac7b5fa875be9c79b6b47e75706333f83082109f99140947e7954",
+            "bytes": 2846
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "methods-native",
+            "version": "1.3.4",
+            "origin": "Authentic public134 wheel engine1.3.4 ABI2.17, real before/after capture",
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+            "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385",
+            "bytes": 5449304
+          }
+        ]
+      }
+    },
+    {
+      "id": "python-full-sdk-oracle",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "python",
+          "-B",
+          "-m",
+          "unittest",
+          "bindings/python/tests/test_execution_parity.py",
+          "-v"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/nirs4all/nirs4all/.venv/bin/python"
+        ]
+      },
+      "input_paths": [
+        "bindings/python/src/",
+        "bindings/python-native/",
+        "bindings/rust/nirs4all/src/",
+        "Cargo.toml",
+        "Cargo.lock",
+        "tests/parity/",
+        "scripts/parity/",
+        "bindings/python/tests/test_execution_parity.py"
+      ],
+      "minimum_passed": 1,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "raw_authority": {
+        "original_receipt": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-full-sdk-oracle/raw-receipt.json",
+          "bytes": 93456,
+          "sha256": "7790c8397626fe164ba42a8ddc2132dedab873e995b51a6626f68bba68bfc941"
+        },
+        "PRE": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-full-sdk-oracle/PRE.json",
+          "bytes": 47130,
+          "sha256": "27c6adf555b3dfa83f58f4c643e95c7e662a9c1e17e25595d7234ef71b9d5e10"
+        },
+        "direct_terminal": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-full-sdk-oracle/direct-terminal.json",
+          "bytes": 365,
+          "sha256": "8fc2ec28704b6aa3e1f0b0c17b1358bdd961ee6e707de127f3af710da7bc15b9"
+        },
+        "logs": {
+          "stdout.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-full-sdk-oracle/stdout.log",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stderr.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-full-sdk-oracle/stderr.log",
+            "bytes": 289,
+            "sha256": "920a83ce9ea04e2f395829bd5b2136264a3f8d8a201071222c7f3d7c86cef0bf"
+          }
+        },
+        "source_tree": "a2851ad31bb4e164dc26194d4acf8634db92dc98",
+        "source_binary_commit": "923ffb2",
+        "runner": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/run_core045_local_commands_v3.py",
+          "bytes": 7433,
+          "sha256": "d4ce06307df09cd6d375a2b2fb05271cbe136d5f3af6086cdb967edf3c6a9ab9"
+        }
+      },
+      "native_before_after_evidence": {
+        "path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+        "bytes": 5449304,
+        "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385"
+      },
+      "actual_external_before_after_evidence": {
+        "/mnt/c/Temp/n4a-core045-20261008/python-site/nirs4all_core/_native.abi3.so": {
+          "sha256": "5c951bd3fd53f605ad8046ab2692e1ef1cfd660d6c140f197c59c6f45e4eeeb7",
+          "bytes": 40305872
+        },
+        "/mnt/c/Temp/n4a-core045-20261008/python-site/dag_ml/_dag_ml.abi3.so": {
+          "sha256": "b70ab301a91826f114995ee8681b8293e1df9e0eb05cbf07ef1d00cff9e12a60",
+          "bytes": 41309632
+        }
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-_native.abi3.so",
+            "version": "0.4.5",
+            "origin": "Genuine Source923 candidate artifact captured before/after the original run",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/python-site/nirs4all_core/_native.abi3.so",
+            "sha256": "5c951bd3fd53f605ad8046ab2692e1ef1cfd660d6c140f197c59c6f45e4eeeb7",
+            "bytes": 40305872
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "dag-native",
+            "version": "0.3.41",
+            "origin": "Authentic public wheel isolated extraction captured before/after",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/python-site/dag_ml/_dag_ml.abi3.so",
+            "sha256": "b70ab301a91826f114995ee8681b8293e1df9e0eb05cbf07ef1d00cff9e12a60",
+            "bytes": 41309632
+          },
+          {
+            "name": "methods-native",
+            "version": "1.3.4",
+            "origin": "Authentic public134 wheel engine1.3.4 ABI2.17, real before/after capture",
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+            "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385",
+            "bytes": 5449304
+          }
+        ]
+      }
+    },
+    {
+      "id": "octave-full-sdk-oracle",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "make",
+          "test-matlab-parity"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "make"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/matlab/",
+        "bindings/rust/nirs4all/src/",
+        "tests/parity/",
+        "scripts/parity/"
+      ],
+      "minimum_passed": 1,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "oracle_assertions_source",
+          "op": "eq",
+          "value": "bindings/matlab/tests/parity.m"
+        }
+      ],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "raw_authority": {
+        "original_receipt": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/octave-full-sdk-oracle/raw-receipt.json",
+          "bytes": 94337,
+          "sha256": "07056cfa823a28d0129f5cb65fe1b66fab4e7e349edfd630f1c21235aae2e537"
+        },
+        "PRE": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/octave-full-sdk-oracle/PRE.json",
+          "bytes": 47631,
+          "sha256": "09a12a2a9e970d981ada052518765b58e938a361daed56bb5bb00d54009003ad"
+        },
+        "direct_terminal": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/octave-full-sdk-oracle/direct-terminal.json",
+          "bytes": 249,
+          "sha256": "2c259ea3c2364bf1c92aa1e8e87b6a9b0011bbaaf4e30ea8acd1a3a11eaeca02"
+        },
+        "logs": {
+          "stdout.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/octave-full-sdk-oracle/stdout.log",
+            "bytes": 479,
+            "sha256": "d56f94a2965597f1c319da6477d934b1d252049e61da0986ba3df37611683b77"
+          },
+          "stderr.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/octave-full-sdk-oracle/stderr.log",
+            "bytes": 520,
+            "sha256": "ec333e0fecb245458b3eb46f28a693e4b16860b3f2e2a265ddaebb95cf0fa1b4"
+          }
+        },
+        "source_tree": "a2851ad31bb4e164dc26194d4acf8634db92dc98",
+        "source_binary_commit": "923ffb2",
+        "runner": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/run_core045_local_commands_v3.py",
+          "bytes": 7433,
+          "sha256": "d4ce06307df09cd6d375a2b2fb05271cbe136d5f3af6086cdb967edf3c6a9ab9"
+        }
+      },
+      "native_before_after_evidence": {
+        "path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+        "bytes": 5449304,
+        "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385"
+      },
+      "actual_external_before_after_evidence": {
+        "/mnt/c/Temp/n4a-core045-20261008/upstreams/methods134-source/bindings/matlab/+n4m/n4m_preprocess_mex.mex": {
+          "sha256": "26dd396ade9a19fae12406a095de4bb44634c77ca49414b8bcf5b415ac325c16",
+          "bytes": 16376
+        },
+        "/mnt/c/Temp/n4a-core045-20261008/upstreams/methods134-source/bindings/matlab/+n4m/n4m_split_mex.mex": {
+          "sha256": "2e3960c0848e4fe82e1d6c2d4d614139e089bf48280fe82cef84621cdbc09d02",
+          "bytes": 16320
+        },
+        "/mnt/c/Temp/n4a-core045-20261008/upstreams/methods134-source/bindings/matlab/+n4m/n4m_pls_fit_mex.mex": {
+          "sha256": "a7b16cd6667a3adea4da5dfb4680b5baf3aa8138b209c51fe05b6f9fac054e21",
+          "bytes": 15944
+        },
+        "/mnt/c/Temp/n4a-core045-20261008/upstreams/methods134-source/bindings/matlab/+n4m/n4m_version_mex.mex": {
+          "sha256": "47fc674bcd65342042c9e571f33ae39f0aa8cbd4d3f4ff803874d08f58703e69",
+          "bytes": 15464
+        }
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-build-source",
+            "version": "0.4.5",
+            "origin": "Reviewed source923/Cargo.lock and actual source-build execution logs; no historical binary hash invented",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/audit/core045-source-ci-pins-public-locks-v4/source/bindings/rust/nirs4all/Cargo.toml",
+            "sha256": "d173e3f6e1fac7b5fa875be9c79b6b47e75706333f83082109f99140947e7954",
+            "bytes": 2846
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "n4m_preprocess_mex.mex",
+            "version": "1.3.4",
+            "origin": "Genuine MEX compiled from immutable public Methods19432db source/CD1B library",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/upstreams/methods134-source/bindings/matlab/+n4m/n4m_preprocess_mex.mex",
+            "sha256": "26dd396ade9a19fae12406a095de4bb44634c77ca49414b8bcf5b415ac325c16",
+            "bytes": 16376
+          },
+          {
+            "name": "n4m_split_mex.mex",
+            "version": "1.3.4",
+            "origin": "Genuine MEX compiled from immutable public Methods19432db source/CD1B library",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/upstreams/methods134-source/bindings/matlab/+n4m/n4m_split_mex.mex",
+            "sha256": "2e3960c0848e4fe82e1d6c2d4d614139e089bf48280fe82cef84621cdbc09d02",
+            "bytes": 16320
+          },
+          {
+            "name": "n4m_pls_fit_mex.mex",
+            "version": "1.3.4",
+            "origin": "Genuine MEX compiled from immutable public Methods19432db source/CD1B library",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/upstreams/methods134-source/bindings/matlab/+n4m/n4m_pls_fit_mex.mex",
+            "sha256": "a7b16cd6667a3adea4da5dfb4680b5baf3aa8138b209c51fe05b6f9fac054e21",
+            "bytes": 15944
+          },
+          {
+            "name": "n4m_version_mex.mex",
+            "version": "1.3.4",
+            "origin": "Genuine MEX compiled from immutable public Methods19432db source/CD1B library",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/upstreams/methods134-source/bindings/matlab/+n4m/n4m_version_mex.mex",
+            "sha256": "47fc674bcd65342042c9e571f33ae39f0aa8cbd4d3f4ff803874d08f58703e69",
+            "bytes": 15464
+          },
+          {
+            "name": "methods-native",
+            "version": "1.3.4",
+            "origin": "Authentic public134 wheel engine1.3.4 ABI2.17, real before/after capture",
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+            "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385",
+            "bytes": 5449304
+          }
+        ]
+      }
+    },
+    {
+      "id": "octave-native-workflows",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "octave",
+          "--quiet",
+          "--eval",
+          "addpath('bindings/matlab/tests'); smoke; workflow_native; tuning_native; conformal_native; result_view; native_runtime"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/mnt/c/Temp/n4a-core045-20261008/tooling-posix/octave"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/matlab/",
+        "bindings/rust/nirs4all/src/",
+        "tests/parity/",
+        "scripts/parity/"
+      ],
+      "minimum_passed": 6,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "suite_markers",
+          "op": "eq",
+          "value": [
+            "nirs4all MATLAB/Octave smoke passed",
+            "OCTAVE_WORKFLOW_NATIVE_PASS",
+            "OCTAVE_NATIVE_TUNING_RESUME_COLD_PREDICT_OK",
+            "native MATLAB/Octave conformal and seeded robustness cross-language gate passed",
+            "Native Octave result view: PASS",
+            "OCTAVE_NATIVE_RUNTIME_PASS"
+          ]
+        }
+      ],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "raw_authority": {
+        "original_receipt": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/octave-native-workflows/raw-receipt.json",
+          "bytes": 98930,
+          "sha256": "dff9aac939e1ef8057bcbd1c6afe7dabd5c92f9b320db776c20f1a7db738978e"
+        },
+        "PRE": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/octave-native-workflows/PRE.json",
+          "bytes": 50094,
+          "sha256": "896aa920db0dad0f7d6c88e7430ce4ecf0ebab0b4b11a4d354cc4a496e92be8f"
+        },
+        "direct_terminal": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/octave-native-workflows/direct-terminal.json",
+          "bytes": 427,
+          "sha256": "ca84cc085543ead2e8a9f3dd8f6dc96aa22ec3f60031ada35a323b3672d9ea3d"
+        },
+        "logs": {
+          "stdout.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/octave-native-workflows/stdout.log",
+            "bytes": 363,
+            "sha256": "f1c5a66851b02851a77190c5ab7b2307dde5f22b7776ac5bc5c1a6fa1121689b"
+          },
+          "stderr.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/octave-native-workflows/stderr.log",
+            "bytes": 2109,
+            "sha256": "15c94bbfe841581d9d9bae5c688e905a1e0f1359ee138dca9f71e0d5175730c3"
+          }
+        },
+        "source_tree": "a2851ad31bb4e164dc26194d4acf8634db92dc98",
+        "source_binary_commit": "923ffb2",
+        "runner": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/run_core045_local_commands_v4_posix1g.py",
+          "bytes": 7471,
+          "sha256": "135701c5e11bbe7763ea0c46a34c1a8eff8f46cdf63f0e9089eb4b2796deeefa"
+        }
+      },
+      "native_before_after_evidence": {
+        "path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+        "bytes": 5449304,
+        "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385"
+      },
+      "actual_external_before_after_evidence": {
+        "/mnt/c/Temp/n4a-core045-20261008/target/release/nirs4all-core-archive": {
+          "sha256": "49c6bfa346b6db9d8984b7c487611e626485bd845e44cc55943f9bda60d89786",
+          "bytes": 37842360
+        },
+        "/mnt/c/Temp/n4a-core045-20261008/tooling-posix/octave": {
+          "sha256": "9a8f47015cac69fb319c80786bcf90beb4181d2ec124a531dd42bca7c9e988c9",
+          "bytes": 51865
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/experiment/experiment.json": {
+          "sha256": "970062e89e22225a9231b41f56b8b65314963c0d0243403ee403570aabfe8aaa",
+          "bytes": 588
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/experiment/model.n4a": {
+          "sha256": "3953c446cf341a40abae92c6c234b57a9e00e6f919534a4c6433139e64cff26f",
+          "bytes": 88168
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/experiment/result_view.json": {
+          "sha256": "7e5343a932fdba4b55f891032bc713a826723a5b122070b72161a951871087e7",
+          "bytes": 10669
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/experiment/results/predictions.parquet": {
+          "sha256": "5f04fe979573a59da80fb014628ac06633953ae2d31623785e4a6c07d0da1626",
+          "bytes": 8987
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/experiment/results/score_set.json": {
+          "sha256": "fbcb4c8c5962aee0474a878f766fc0c57b55671c02fa93fd7193af8a3ae8fd61",
+          "bytes": 5138
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/experiment/results/manifest.json": {
+          "sha256": "208d61ec94deb244778f1c203996029d48da28d3297b35f54a4eb974bbf542e1",
+          "bytes": 381
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/results/manifest.json": {
+          "sha256": "208d61ec94deb244778f1c203996029d48da28d3297b35f54a4eb974bbf542e1",
+          "bytes": 381
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/results/predictions.parquet": {
+          "sha256": "5f04fe979573a59da80fb014628ac06633953ae2d31623785e4a6c07d0da1626",
+          "bytes": 8987
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/results/score_set.json": {
+          "sha256": "fbcb4c8c5962aee0474a878f766fc0c57b55671c02fa93fd7193af8a3ae8fd61",
+          "bytes": 5138
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/train.json": {
+          "sha256": "39410da2b6c9ca6c1e1efbc32cf92365e33fa3b1d41b9f7521bfa094faa9d361",
+          "bytes": 2899
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/dataset-calibration.json": {
+          "sha256": "f88952140d133347cdca4ac8a5bd5f815d46e9660a7fd386fbfd58cdbc551eda",
+          "bytes": 3043
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/independent.json": {
+          "sha256": "0795e1f3081acbe679b1584fa3550073412962e40fa4ea08f21899bc6c0fc246",
+          "bytes": 2085
+        }
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-nirs4all-core-archive",
+            "version": "0.4.5",
+            "origin": "Genuine Source923 candidate artifact captured before/after the original run",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/target/release/nirs4all-core-archive",
+            "sha256": "49c6bfa346b6db9d8984b7c487611e626485bd845e44cc55943f9bda60d89786",
+            "bytes": 37842360
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "methods-native",
+            "version": "1.3.4",
+            "origin": "Authentic public134 wheel engine1.3.4 ABI2.17, real before/after capture",
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+            "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385",
+            "bytes": 5449304
+          }
+        ]
+      }
+    },
+    {
+      "id": "python-complete-suite-io026-posix1g",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "python",
+          "-B",
+          "-m",
+          "pytest",
+          "--capture=sys",
+          "-q",
+          "-rs",
+          "bindings/python/tests",
+          "--basetemp",
+          "/dev/shm/n4a-core045-20261008-private-posix/pytest-full-io026-1g",
+          "--junitxml",
+          "/mnt/c/Temp/n4a-core045-20261008/local-python-full-io026-1g-junit.xml"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/nirs4all/nirs4all/.venv/bin/python"
+        ]
+      },
+      "input_paths": [
+        "bindings/python/src/",
+        "bindings/python/tests/",
+        "bindings/python-native/",
+        "bindings/rust/nirs4all/src/",
+        "Cargo.toml",
+        "Cargo.lock",
+        "tests/parity/",
+        "scripts/parity/"
+      ],
+      "minimum_passed": 170,
+      "allowed_skips": [
+        "tests.test_archive_live.LiveArchiveV2ReplayTests.test_real_wheel_replays_multi_target_n4mm_with_valid_cross_link",
+        "tests.test_archive_live.LiveArchiveV2ReplayTests.test_tampered_n4mm_is_refused_before_replay",
+        "tests.test_archive_live.LiveArchiveV2ConformalReplayTests.test_archive_replays_in_isolated_child_to_closed_presentation",
+        "tests.test_archive_live.LiveArchiveV2ConformalReplayTests.test_archive_tamper_precedes_library_configuration",
+        "tests.test_archive_matrix_live.LiveArchiveV2MatrixPredictionTests.test_attested_libn4m_replays_exact_multi_target_values",
+        "tests.test_archive_matrix_live.LiveArchiveV2MatrixPredictionTests.test_wrong_methods_sha256_is_refused"
+      ],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "subtests_passed",
+          "op": "eq",
+          "value": 490
+        }
+      ],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "raw_authority": {
+        "original_receipt": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-complete-suite-io026-posix1g/raw-receipt.json",
+          "bytes": 102969,
+          "sha256": "034651bb553404fd85893d578ca5ecbb6c94302539a2bba0e87081461f3eafd5"
+        },
+        "PRE": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-complete-suite-io026-posix1g/PRE.json",
+          "bytes": 52345,
+          "sha256": "5d2b09808326979c4a4bc7fd06d0314320c91435632ac503a0ea58e02e7ce9ad"
+        },
+        "direct_terminal": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-complete-suite-io026-posix1g/direct-terminal.json",
+          "bytes": 555,
+          "sha256": "b7ac4cf34af89d58b5203bd4b929ea4d3fc78e76ba1921c1b60292835d6ea0c3"
+        },
+        "logs": {
+          "stdout.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-complete-suite-io026-posix1g/stdout.log",
+            "bytes": 1952,
+            "sha256": "4ef6019f41a63764b91f3e61dd1af8d5ea52b916ea238988b474901fedbe1a26"
+          },
+          "stderr.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-complete-suite-io026-posix1g/stderr.log",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "source_tree": "a2851ad31bb4e164dc26194d4acf8634db92dc98",
+        "source_binary_commit": "923ffb2",
+        "runner": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/run_core045_local_commands_v4_posix1g.py",
+          "bytes": 7471,
+          "sha256": "135701c5e11bbe7763ea0c46a34c1a8eff8f46cdf63f0e9089eb4b2796deeefa"
+        }
+      },
+      "input_exclusions": [
+        "bindings/python/tests/test_archive.py",
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs",
+        "bindings/python/tests/test_archive.py"
+      ],
+      "reviewed_test_delta": {
+        "original_file_sha256": "c2635ffa82f621837bfdf41f4de0c0e87fce59c0b0021f8063a1de4792a8ce31",
+        "new_candidate_sha256": "845eb34353cdb3c32fb89eced752d088527a3fe9a065979451d00e738365b252",
+        "required_supplemental_gates": [
+          "python-archive19-native-lazy",
+          "python-archive19-native-preloaded"
+        ],
+        "reason": "Only path spelling and native mock cache restoration changed; original scientific/runtime inputs and original full test evidence retained. Supplemental19cold/hot gates are mandatory."
+      },
+      "native_before_after_evidence": {
+        "path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+        "bytes": 5449304,
+        "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385"
+      },
+      "actual_external_before_after_evidence": {
+        "/mnt/c/Temp/n4a-core045-20261008/target/release/nirs4all-core-archive": {
+          "sha256": "49c6bfa346b6db9d8984b7c487611e626485bd845e44cc55943f9bda60d89786",
+          "bytes": 37842360
+        },
+        "/mnt/c/Temp/n4a-core045-20261008/python-site/nirs4all_core/_native.abi3.so": {
+          "sha256": "5c951bd3fd53f605ad8046ab2692e1ef1cfd660d6c140f197c59c6f45e4eeeb7",
+          "bytes": 40305872
+        },
+        "/mnt/c/Temp/n4a-core045-20261008/python-site/dag_ml/_dag_ml.abi3.so": {
+          "sha256": "b70ab301a91826f114995ee8681b8293e1df9e0eb05cbf07ef1d00cff9e12a60",
+          "bytes": 41309632
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/browser-tuning.json": {
+          "sha256": "9127649e5a657f82d9a7bb86db37233e1b37258e6da833ab6bddf67ab71ed629",
+          "bytes": 71469
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/shared-robustness.json": {
+          "sha256": "a9bc8d28b0f3b9108430e85ded908d35378d021b93b25c76f3d7b1e12fba85ec",
+          "bytes": 7360
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/shared-prediction.json": {
+          "sha256": "c9f0a058c364185f0468487bd9a646056f85c3669949ce1a6110b4b0e72fa152",
+          "bytes": 4453
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/independent.json": {
+          "sha256": "0795e1f3081acbe679b1584fa3550073412962e40fa4ea08f21899bc6c0fc246",
+          "bytes": 2085
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/dataset-predict.json": {
+          "sha256": "bd4d11b168cb9f6aa0a929e66c4784610551aceaa9e795acc9e9a67e9757acfa",
+          "bytes": 2822
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/dataset-calibration.json": {
+          "sha256": "f88952140d133347cdca4ac8a5bd5f815d46e9660a7fd386fbfd58cdbc551eda",
+          "bytes": 3043
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/train.json": {
+          "sha256": "39410da2b6c9ca6c1e1efbc32cf92365e33fa3b1d41b9f7521bfa094faa9d361",
+          "bytes": 2899
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/shared-calibrated.n4a": {
+          "sha256": "04f3e366a410ad31b9a6b7f63924393f27a430c92fa0ad1a1ba4abfbdec09839",
+          "bytes": 100454
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/shared-model.n4a": {
+          "sha256": "3953c446cf341a40abae92c6c234b57a9e00e6f919534a4c6433139e64cff26f",
+          "bytes": 88168
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/experiment/experiment.json": {
+          "sha256": "970062e89e22225a9231b41f56b8b65314963c0d0243403ee403570aabfe8aaa",
+          "bytes": 588
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/experiment/model.n4a": {
+          "sha256": "3953c446cf341a40abae92c6c234b57a9e00e6f919534a4c6433139e64cff26f",
+          "bytes": 88168
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/experiment/result_view.json": {
+          "sha256": "7e5343a932fdba4b55f891032bc713a826723a5b122070b72161a951871087e7",
+          "bytes": 10669
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/experiment/results/predictions.parquet": {
+          "sha256": "5f04fe979573a59da80fb014628ac06633953ae2d31623785e4a6c07d0da1626",
+          "bytes": 8987
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/experiment/results/score_set.json": {
+          "sha256": "fbcb4c8c5962aee0474a878f766fc0c57b55671c02fa93fd7193af8a3ae8fd61",
+          "bytes": 5138
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/experiment/results/manifest.json": {
+          "sha256": "208d61ec94deb244778f1c203996029d48da28d3297b35f54a4eb974bbf542e1",
+          "bytes": 381
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/results/manifest.json": {
+          "sha256": "208d61ec94deb244778f1c203996029d48da28d3297b35f54a4eb974bbf542e1",
+          "bytes": 381
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/results/predictions.parquet": {
+          "sha256": "5f04fe979573a59da80fb014628ac06633953ae2d31623785e4a6c07d0da1626",
+          "bytes": 8987
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/results/score_set.json": {
+          "sha256": "fbcb4c8c5962aee0474a878f766fc0c57b55671c02fa93fd7193af8a3ae8fd61",
+          "bytes": 5138
+        },
+        "/mnt/c/Temp/n4a-core045-20261008/python-site/nirs4all_io/_native.abi3.so": {
+          "sha256": "528a2c50ab9e2084d92e418311f141722ec72459fc3f71db90b260be3ff939a7",
+          "bytes": 13379312
+        }
+      },
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-nirs4all-core-archive",
+            "version": "0.4.5",
+            "origin": "Genuine Source923 candidate artifact captured before/after the original run",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/target/release/nirs4all-core-archive",
+            "sha256": "49c6bfa346b6db9d8984b7c487611e626485bd845e44cc55943f9bda60d89786",
+            "bytes": 37842360
+          },
+          {
+            "name": "core-_native.abi3.so",
+            "version": "0.4.5",
+            "origin": "Genuine Source923 candidate artifact captured before/after the original run",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/python-site/nirs4all_core/_native.abi3.so",
+            "sha256": "5c951bd3fd53f605ad8046ab2692e1ef1cfd660d6c140f197c59c6f45e4eeeb7",
+            "bytes": 40305872
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "dag-native",
+            "version": "0.3.41",
+            "origin": "Authentic public wheel isolated extraction captured before/after",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/python-site/dag_ml/_dag_ml.abi3.so",
+            "sha256": "b70ab301a91826f114995ee8681b8293e1df9e0eb05cbf07ef1d00cff9e12a60",
+            "bytes": 41309632
+          },
+          {
+            "name": "io-native",
+            "version": "0.2.6",
+            "origin": "Actual public IO026 isolated extraction captured before/after",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/python-site/nirs4all_io/_native.abi3.so",
+            "sha256": "528a2c50ab9e2084d92e418311f141722ec72459fc3f71db90b260be3ff939a7",
+            "bytes": 13379312
+          },
+          {
+            "name": "methods-native",
+            "version": "1.3.4",
+            "origin": "Authentic public134 wheel engine1.3.4 ABI2.17, real before/after capture",
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+            "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385",
+            "bytes": 5449304
+          }
+        ]
+      }
+    },
+    {
+      "id": "python-closed-matrix-historical-fixture",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "python",
+          "-B",
+          "-m",
+          "unittest",
+          "bindings/python/tests/test_archive_matrix_live.py",
+          "-v"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/nirs4all/nirs4all/.venv/bin/python"
+        ]
+      },
+      "input_paths": [
+        "bindings/python/src/",
+        "bindings/python-native/",
+        "bindings/rust/nirs4all/src/",
+        "Cargo.toml",
+        "Cargo.lock",
+        "tests/parity/",
+        "scripts/parity/",
+        "bindings/python/tests/test_archive_matrix_live.py"
+      ],
+      "minimum_passed": 2,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "raw_authority": {
+        "original_receipt": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-closed-matrix-historical-fixture/raw-receipt.json",
+          "bytes": 94211,
+          "sha256": "459d538c91c8dc940167959155b0ebaf6ac1d2a136d55de7a8ebd498069dd9f6"
+        },
+        "PRE": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-closed-matrix-historical-fixture/PRE.json",
+          "bytes": 47830,
+          "sha256": "36a1c4d38b8829442aaa4d0de8beaa241b691c21829dba761a4990d05d78d0a0"
+        },
+        "direct_terminal": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-closed-matrix-historical-fixture/direct-terminal.json",
+          "bytes": 368,
+          "sha256": "959c18352d601b2a329bc90e2f60c20e021226158f77cceeddd3dd6cb1e10bd4"
+        },
+        "logs": {
+          "stdout.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-closed-matrix-historical-fixture/stdout.log",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stderr.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-closed-matrix-historical-fixture/stderr.log",
+            "bytes": 464,
+            "sha256": "9f6f08fd5ddc763198ef0a44ec111486c559be3c85f68861f8e79eb8e26c4af0"
+          }
+        },
+        "source_tree": "a2851ad31bb4e164dc26194d4acf8634db92dc98",
+        "source_binary_commit": "923ffb2",
+        "runner": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/run_core045_local_commands_v4_posix1g.py",
+          "bytes": 7471,
+          "sha256": "135701c5e11bbe7763ea0c46a34c1a8eff8f46cdf63f0e9089eb4b2796deeefa"
+        }
+      },
+      "native_before_after_evidence": {
+        "path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+        "bytes": 5449304,
+        "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385"
+      },
+      "actual_external_before_after_evidence": {
+        "/mnt/c/Temp/n4a-core045-20261008/fixtures/historical-web-archive-v2/multitarget-pls.n4a": {
+          "sha256": "994252030ff80129d0431995bae53eb473082f05825b65714379262b72af13fa",
+          "bytes": 60023
+        },
+        "/mnt/c/Temp/n4a-core045-20261008/python-site/nirs4all_core/_native.abi3.so": {
+          "sha256": "5c951bd3fd53f605ad8046ab2692e1ef1cfd660d6c140f197c59c6f45e4eeeb7",
+          "bytes": 40305872
+        }
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-_native.abi3.so",
+            "version": "0.4.5",
+            "origin": "Genuine Source923 candidate artifact captured before/after the original run",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/python-site/nirs4all_core/_native.abi3.so",
+            "sha256": "5c951bd3fd53f605ad8046ab2692e1ef1cfd660d6c140f197c59c6f45e4eeeb7",
+            "bytes": 40305872
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "methods-native",
+            "version": "1.3.4",
+            "origin": "Authentic public134 wheel engine1.3.4 ABI2.17, real before/after capture",
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+            "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385",
+            "bytes": 5449304
+          }
+        ]
+      }
+    },
+    {
+      "id": "python-legacy023-replay-real-fixture",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "python",
+          "-m",
+          "unittest",
+          "-v",
+          "test_archive_live.LiveArchiveV2ReplayTests"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/mnt/c/Temp/n4a-core045-20261008/historical-python-executor/bin/python"
+        ]
+      },
+      "input_paths": [
+        "bindings/python/src/",
+        "bindings/python-native/",
+        "bindings/rust/nirs4all/src/",
+        "Cargo.toml",
+        "Cargo.lock",
+        "tests/parity/",
+        "scripts/parity/",
+        "bindings/python/tests/test_archive_live.py"
+      ],
+      "minimum_passed": 2,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "raw_authority": {
+        "original_receipt": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-legacy023-replay-real-fixture/raw-receipt.json",
+          "bytes": 94971,
+          "sha256": "bb4f424cd8b4e3c3e9eea18ff5ced6a91f53c332d046436d30fac8ab9b813f7e"
+        },
+        "PRE": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-legacy023-replay-real-fixture/PRE.json",
+          "bytes": 48074,
+          "sha256": "a7f39e0fba3345695e4b85b9ad5e25bc2ddfa93cca664a972dd2c9bd424705b0"
+        },
+        "direct_terminal": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-legacy023-replay-real-fixture/direct-terminal.json",
+          "bytes": 375,
+          "sha256": "ed67bc84f0b3347be2bc552cb37dc7303030e551c647a26c7f0266df48da54f0"
+        },
+        "logs": {
+          "stdout.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-legacy023-replay-real-fixture/stdout.log",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stderr.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-legacy023-replay-real-fixture/stderr.log",
+            "bytes": 418,
+            "sha256": "765e8979814f6b56c6db4e8bfdcf94ad0f6b5eeee2c995964b40401dfadf910c"
+          }
+        },
+        "source_tree": "a2851ad31bb4e164dc26194d4acf8634db92dc98",
+        "source_binary_commit": "923ffb2",
+        "runner": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/run_core045_local_commands_v4_posix1g.py",
+          "bytes": 7471,
+          "sha256": "135701c5e11bbe7763ea0c46a34c1a8eff8f46cdf63f0e9089eb4b2796deeefa"
+        }
+      },
+      "native_before_after_evidence": {
+        "path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+        "bytes": 5449304,
+        "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385"
+      },
+      "actual_external_before_after_evidence": {
+        "/mnt/c/Temp/n4a-core045-20261008/fixtures/historical-web-archive-v2/multitarget-pls.n4a": {
+          "sha256": "994252030ff80129d0431995bae53eb473082f05825b65714379262b72af13fa",
+          "bytes": 60023
+        },
+        "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0": {
+          "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385",
+          "bytes": 5449304
+        },
+        "/mnt/c/Temp/n4a-core045-20261008/historical-python-executor/lib/python3.11/site-packages/nirs4all_core/_native.abi3.so": {
+          "sha256": "5c951bd3fd53f605ad8046ab2692e1ef1cfd660d6c140f197c59c6f45e4eeeb7",
+          "bytes": 40305872
+        },
+        "/mnt/c/Temp/n4a-core045-20261008/historical-python-executor/lib/python3.11/site-packages/dag_ml/_dag_ml.abi3.so": {
+          "sha256": "7d67fac964a6cf53addfd3826229842b764003952f2ee0c9573913df8d0cec19",
+          "bytes": 34385584
+        }
+      },
+      "compatibility_profile": "Historical publicDAG023 helper contract, nativeCore045 compiledDAG041; not current minimum dependency profile.",
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-_native.abi3.so",
+            "version": "0.4.5",
+            "origin": "Genuine Source923 candidate artifact captured before/after the original run",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/historical-python-executor/lib/python3.11/site-packages/nirs4all_core/_native.abi3.so",
+            "sha256": "5c951bd3fd53f605ad8046ab2692e1ef1cfd660d6c140f197c59c6f45e4eeeb7",
+            "bytes": 40305872
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "dag-native",
+            "version": "0.3.23",
+            "origin": "Authentic public wheel isolated extraction captured before/after",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/historical-python-executor/lib/python3.11/site-packages/dag_ml/_dag_ml.abi3.so",
+            "sha256": "7d67fac964a6cf53addfd3826229842b764003952f2ee0c9573913df8d0cec19",
+            "bytes": 34385584
+          },
+          {
+            "name": "methods-native",
+            "version": "1.3.4",
+            "origin": "Authentic public134 wheel engine1.3.4 ABI2.17, real before/after capture",
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+            "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385",
+            "bytes": 5449304
+          }
+        ]
+      }
+    },
+    {
+      "id": "python-conformal-two-feature-current041-helper",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "python",
+          "-m",
+          "unittest",
+          "-v",
+          "test_archive_live.LiveArchiveV2ConformalReplayTests"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/mnt/c/Temp/n4a-core045-20261008/current041-conformal-python-executor/bin/python"
+        ]
+      },
+      "input_paths": [
+        "bindings/python/src/",
+        "bindings/python-native/",
+        "bindings/rust/nirs4all/src/",
+        "Cargo.toml",
+        "Cargo.lock",
+        "tests/parity/",
+        "scripts/parity/",
+        "bindings/python/tests/test_archive_live.py"
+      ],
+      "minimum_passed": 2,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "raw_authority": {
+        "original_receipt": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-conformal-two-feature-current041-helper/raw-receipt.json",
+          "bytes": 95095,
+          "sha256": "aff3665773169d8caa6604d593bcf3fcd203d975d0619b77e1c9295973cfe3d0"
+        },
+        "PRE": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-conformal-two-feature-current041-helper/PRE.json",
+          "bytes": 48137,
+          "sha256": "c31422803e9391042d2fba8ba9a54f9d06267c7226ad8e421e8ea5b058ce5861"
+        },
+        "direct_terminal": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-conformal-two-feature-current041-helper/direct-terminal.json",
+          "bytes": 394,
+          "sha256": "85c842f156e2034e05ff45955ad17d256bbdd72f8e6301135ab7d9eadde6f67c"
+        },
+        "logs": {
+          "stdout.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-conformal-two-feature-current041-helper/stdout.log",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stderr.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-conformal-two-feature-current041-helper/stderr.log",
+            "bytes": 512,
+            "sha256": "8723ba8bed87d8b761470ced3f9681bb6da8e6fffd1470776517fdf4e5853562"
+          }
+        },
+        "source_tree": "a2851ad31bb4e164dc26194d4acf8634db92dc98",
+        "source_binary_commit": "923ffb2",
+        "runner": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/run_core045_local_commands_v4_posix1g.py",
+          "bytes": 7471,
+          "sha256": "135701c5e11bbe7763ea0c46a34c1a8eff8f46cdf63f0e9089eb4b2796deeefa"
+        }
+      },
+      "native_before_after_evidence": {
+        "path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+        "bytes": 5449304,
+        "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385"
+      },
+      "actual_external_before_after_evidence": {
+        "/mnt/c/Temp/n4a-core045-20261008/fixtures/two-feature-conformal-current041/calibrated.n4a": {
+          "sha256": "0d08f2a21d9cccea2ba0216295c691b14b6b70b06b3f63192b4d49e9d9bd2e24",
+          "bytes": 94567
+        },
+        "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0": {
+          "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385",
+          "bytes": 5449304
+        },
+        "/mnt/c/Temp/n4a-core045-20261008/current041-conformal-python-executor/lib/python3.11/site-packages/nirs4all_core/_native.abi3.so": {
+          "sha256": "5c951bd3fd53f605ad8046ab2692e1ef1cfd660d6c140f197c59c6f45e4eeeb7",
+          "bytes": 40305872
+        },
+        "/mnt/c/Temp/n4a-core045-20261008/current041-conformal-python-executor/lib/python3.11/site-packages/dag_ml/_dag_ml.abi3.so": {
+          "sha256": "b70ab301a91826f114995ee8681b8293e1df9e0eb05cbf07ef1d00cff9e12a60",
+          "bytes": 41309632
+        }
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-_native.abi3.so",
+            "version": "0.4.5",
+            "origin": "Genuine Source923 candidate artifact captured before/after the original run",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/current041-conformal-python-executor/lib/python3.11/site-packages/nirs4all_core/_native.abi3.so",
+            "sha256": "5c951bd3fd53f605ad8046ab2692e1ef1cfd660d6c140f197c59c6f45e4eeeb7",
+            "bytes": 40305872
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "dag-native",
+            "version": "0.3.41",
+            "origin": "Authentic public wheel isolated extraction captured before/after",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/current041-conformal-python-executor/lib/python3.11/site-packages/dag_ml/_dag_ml.abi3.so",
+            "sha256": "b70ab301a91826f114995ee8681b8293e1df9e0eb05cbf07ef1d00cff9e12a60",
+            "bytes": 41309632
+          },
+          {
+            "name": "methods-native",
+            "version": "1.3.4",
+            "origin": "Authentic public134 wheel engine1.3.4 ABI2.17, real before/after capture",
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+            "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385",
+            "bytes": 5449304
+          }
+        ]
+      }
+    },
+    {
+      "id": "wasm-complete-js-current-fixtures",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "npm",
+          "run",
+          "test:js",
+          "--prefix",
+          "bindings/wasm"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/.nvm/versions/node/v22.21.1/bin/npm"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/wasm/src/",
+        "bindings/wasm/tests/",
+        "bindings/wasm/package.json",
+        "bindings/wasm/package-lock.json",
+        "bindings/wasm/tsconfig.typecheck.json",
+        "bindings/wasm-native/",
+        "bindings/rust/nirs4all/src/",
+        "tests/parity/"
+      ],
+      "minimum_passed": 108,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "tap_tests",
+          "op": "eq",
+          "value": 108
+        },
+        {
+          "field": "cancelled",
+          "op": "eq",
+          "value": 0
+        }
+      ],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "raw_authority": {
+        "original_receipt": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/wasm-complete-js-current-fixtures/raw-receipt.json",
+          "bytes": 107572,
+          "sha256": "359946749c4a5b777a9b232f845386fe5b0a6ee24789e065cd54e46bc1b31c2e"
+        },
+        "PRE": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/wasm-complete-js-current-fixtures/PRE.json",
+          "bytes": 55205,
+          "sha256": "4a9225b0e8152b0b783c34ab72ead492ab2d237244d9107667d9b315f730a494"
+        },
+        "direct_terminal": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/wasm-complete-js-current-fixtures/direct-terminal.json",
+          "bytes": 330,
+          "sha256": "0163b26b4b2cce5f7fcda5d42f4fad02931b24141fde9a37321a30079919565f"
+        },
+        "logs": {
+          "stdout.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/wasm-complete-js-current-fixtures/stdout.log",
+            "bytes": 22471,
+            "sha256": "1d5732518b0278f063c365f435fddbcb302e4da5543d7bb2963fda0e0b717f3a"
+          },
+          "stderr.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/wasm-complete-js-current-fixtures/stderr.log",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "source_tree": "a2851ad31bb4e164dc26194d4acf8634db92dc98",
+        "source_binary_commit": "923ffb2",
+        "runner": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/run_core045_local_commands_v4_posix1g.py",
+          "bytes": 7471,
+          "sha256": "135701c5e11bbe7763ea0c46a34c1a8eff8f46cdf63f0e9089eb4b2796deeefa"
+        }
+      },
+      "native_before_after_evidence": {
+        "path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+        "bytes": 5449304,
+        "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385"
+      },
+      "actual_external_before_after_evidence": {
+        "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-npm/package/dist/index.js": {
+          "sha256": "26c7d18175e9212734c68af8a4364aa6e0c94c4348cf55b1f344c53c456b368e",
+          "bytes": 2718
+        },
+        "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-npm/package/dist/n4m.js": {
+          "sha256": "0f7f56ad8b67ca7d78bc9ef1d9bac986d3dd99e1038a6a5ad2a6943396ebe6fd",
+          "bytes": 191970
+        },
+        "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-npm/package/dist/n4m.wasm": {
+          "sha256": "06c263ddb072dc852220ae2100df8b750172406cc07d1fcf3221267f19dfd94c",
+          "bytes": 2826694
+        },
+        "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/archive/io-0.2.6/columns-followup/public/npm-exact/package/public-dataset.mjs": {
+          "sha256": "4932c790129295a92ef6317d0d4958057c1c7bc4882f3b077f6bb4c1abb281b9",
+          "bytes": 31122
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/train.json": {
+          "sha256": "39410da2b6c9ca6c1e1efbc32cf92365e33fa3b1d41b9f7521bfa094faa9d361",
+          "bytes": 2899
+        },
+        "/mnt/c/Temp/n4a-core045-20261008/worktree/bindings/wasm/node_modules/dag-ml-wasm/dag_ml_wasm_bg.wasm": {
+          "sha256": "4cbdd0671aaf3f51b67f4d7e9161c34fc1effbaee4bc789a8751aef266917620",
+          "bytes": 10650598
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/experiment/experiment.json": {
+          "sha256": "970062e89e22225a9231b41f56b8b65314963c0d0243403ee403570aabfe8aaa",
+          "bytes": 588
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/experiment/model.n4a": {
+          "sha256": "3953c446cf341a40abae92c6c234b57a9e00e6f919534a4c6433139e64cff26f",
+          "bytes": 88168
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/experiment/result_view.json": {
+          "sha256": "7e5343a932fdba4b55f891032bc713a826723a5b122070b72161a951871087e7",
+          "bytes": 10669
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/experiment/results/predictions.parquet": {
+          "sha256": "5f04fe979573a59da80fb014628ac06633953ae2d31623785e4a6c07d0da1626",
+          "bytes": 8987
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/experiment/results/score_set.json": {
+          "sha256": "fbcb4c8c5962aee0474a878f766fc0c57b55671c02fa93fd7193af8a3ae8fd61",
+          "bytes": 5138
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/experiment/results/manifest.json": {
+          "sha256": "208d61ec94deb244778f1c203996029d48da28d3297b35f54a4eb974bbf542e1",
+          "bytes": 381
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/workspace/store.sqlite": {
+          "sha256": "bc88aa316d7026cd90e50c0c8fdb942ccac420452d2660c6b4f0faea483cdc09",
+          "bytes": 204800
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/workspace/workspace.json": {
+          "sha256": "6da2798121dc9f7b10017f1eb07a74c03a0e6ac45a60cabfc86b0a1d7671c2c1",
+          "bytes": 1419
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/workspace/experiments/4522f1d9de5fdd671156aa2f764a08bedc1892b06083f47093c40c711779e48e/experiment.json": {
+          "sha256": "970062e89e22225a9231b41f56b8b65314963c0d0243403ee403570aabfe8aaa",
+          "bytes": 588
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/workspace/experiments/4522f1d9de5fdd671156aa2f764a08bedc1892b06083f47093c40c711779e48e/model.n4a": {
+          "sha256": "3953c446cf341a40abae92c6c234b57a9e00e6f919534a4c6433139e64cff26f",
+          "bytes": 88168
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/workspace/experiments/4522f1d9de5fdd671156aa2f764a08bedc1892b06083f47093c40c711779e48e/result_view.json": {
+          "sha256": "7e5343a932fdba4b55f891032bc713a826723a5b122070b72161a951871087e7",
+          "bytes": 10669
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/workspace/experiments/4522f1d9de5fdd671156aa2f764a08bedc1892b06083f47093c40c711779e48e/results/predictions.parquet": {
+          "sha256": "5f04fe979573a59da80fb014628ac06633953ae2d31623785e4a6c07d0da1626",
+          "bytes": 8987
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/workspace/experiments/4522f1d9de5fdd671156aa2f764a08bedc1892b06083f47093c40c711779e48e/results/score_set.json": {
+          "sha256": "fbcb4c8c5962aee0474a878f766fc0c57b55671c02fa93fd7193af8a3ae8fd61",
+          "bytes": 5138
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/workspace/experiments/4522f1d9de5fdd671156aa2f764a08bedc1892b06083f47093c40c711779e48e/results/manifest.json": {
+          "sha256": "208d61ec94deb244778f1c203996029d48da28d3297b35f54a4eb974bbf542e1",
+          "bytes": 381
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/workspace/arrays/workflow-fixture.parquet": {
+          "sha256": "407f154f17ca089d81d3c0c9fa9b9f54916c729f3617df09accc1189130b9021",
+          "bytes": 8979
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/shared-model.n4a": {
+          "sha256": "3953c446cf341a40abae92c6c234b57a9e00e6f919534a4c6433139e64cff26f",
+          "bytes": 88168
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/unsafe-workflow-u64.n4a": {
+          "sha256": "a22c9e17ec967155614a9aa47ba36485412bd3a65dd1bd1542afd58b24ecdab7",
+          "bytes": 88283
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/dataset-predict.json": {
+          "sha256": "bd4d11b168cb9f6aa0a929e66c4784610551aceaa9e795acc9e9a67e9757acfa",
+          "bytes": 2822
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/independent.json": {
+          "sha256": "0795e1f3081acbe679b1584fa3550073412962e40fa4ea08f21899bc6c0fc246",
+          "bytes": 2085
+        },
+        "/mnt/c/Temp/n4a-core045-20261008/worktree/bindings/wasm/node_modules/dag-ml-wasm/n4m_estimator_controller.mjs": {
+          "sha256": "2c40a06f2a62324f292139b454a677282c6661da4c551de7bab6dcfef335e8d8",
+          "bytes": 18968
+        },
+        "/mnt/c/Temp/n4a-core045-20261008/worktree/bindings/wasm/native/nirs4all_core_wasm_native_bg.wasm": {
+          "sha256": "bd1c705e0adf20ec65daf641dc46dccbe346d38b3a900a1878c87c35511a6c3c",
+          "bytes": 6406512
+        },
+        "/dev/shm/n4a-core045-20261008-private-posix/native-workflow/shared-uncalibrated-robustness.json": {
+          "sha256": "484f4acf5cc355274eb89e331e2d201f4d3c5e37e379c98903ffed7d2e98982c",
+          "bytes": 3895
+        }
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-nirs4all_core_wasm_native_bg.wasm",
+            "version": "0.4.5",
+            "origin": "Genuine Source923 candidate artifact captured before/after the original run",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/worktree/bindings/wasm/native/nirs4all_core_wasm_native_bg.wasm",
+            "sha256": "bd1c705e0adf20ec65daf641dc46dccbe346d38b3a900a1878c87c35511a6c3c",
+            "bytes": 6406512
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "methods-wasm",
+            "version": "1.3.4",
+            "origin": "Actual public npm134 artifact captured before/after",
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-npm/package/dist/n4m.wasm",
+            "sha256": "06c263ddb072dc852220ae2100df8b750172406cc07d1fcf3221267f19dfd94c",
+            "bytes": 2826694
+          },
+          {
+            "name": "dag-wasm",
+            "version": "0.3.41",
+            "origin": "Actual public npm041 artifact captured before/after",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/worktree/bindings/wasm/node_modules/dag-ml-wasm/dag_ml_wasm_bg.wasm",
+            "sha256": "4cbdd0671aaf3f51b67f4d7e9161c34fc1effbaee4bc789a8751aef266917620",
+            "bytes": 10650598
+          }
+        ]
+      }
+    },
+    {
+      "id": "wasm-typecheck",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "npm",
+          "run",
+          "typecheck",
+          "--prefix",
+          "bindings/wasm"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/.nvm/versions/node/v22.21.1/bin/npm"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/wasm/src/",
+        "bindings/wasm/tests/",
+        "bindings/wasm/package.json",
+        "bindings/wasm/package-lock.json",
+        "bindings/wasm/tsconfig.typecheck.json",
+        "bindings/wasm-native/",
+        "bindings/rust/nirs4all/src/",
+        "tests/parity/"
+      ],
+      "minimum_passed": 1,
+      "allowed_skips": [],
+      "requires_provenance": false,
+      "facts": [
+        {
+          "field": "check",
+          "op": "eq",
+          "value": "tsc --project tsconfig.typecheck.json"
+        }
+      ],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "raw_authority": {
+        "original_receipt": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/wasm-typecheck/raw-receipt.json",
+          "bytes": 92512,
+          "sha256": "b9e1081babfee898f4f1072c6323220742468fc154aa5c1bf7af459c17890357"
+        },
+        "PRE": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/wasm-typecheck/PRE.json",
+          "bytes": 46630,
+          "sha256": "1ea06fc95db759f186ced7d7520567274679c62b5afa53bf19d083327316e136"
+        },
+        "direct_terminal": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/wasm-typecheck/direct-terminal.json",
+          "bytes": 332,
+          "sha256": "22586f6dacd9c96f7fc4a9ea855d318788dc9d6128112cf5a9f477b194418f53"
+        },
+        "logs": {
+          "stdout.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/wasm-typecheck/stdout.log",
+            "bytes": 69,
+            "sha256": "d377e6192ae41bd48d59cadd54d47a3fbd4775404c7a8d8bb1d87f72e5f54ae8"
+          },
+          "stderr.log": {
+            "path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/wasm-typecheck/stderr.log",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "source_tree": "a2851ad31bb4e164dc26194d4acf8634db92dc98",
+        "source_binary_commit": "923ffb2",
+        "runner": {
+          "path": "/mnt/c/Temp/n4a-core045-20261008/audit/run_core045_local_commands_v4_posix1g.py",
+          "bytes": 7471,
+          "sha256": "135701c5e11bbe7763ea0c46a34c1a8eff8f46cdf63f0e9089eb4b2796deeefa"
+        }
+      },
+      "native_before_after_evidence": {
+        "path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+        "bytes": 5449304,
+        "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385"
+      },
+      "actual_external_before_after_evidence": {},
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ]
+    },
+    {
+      "id": "python-archive19-native-lazy",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "python",
+          "-B",
+          "/mnt/c/Temp/n4a-core045-20261008/audit/qualify_archive_portable_linux.py"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/nirs4all/nirs4all/.venv/bin/python"
+        ]
+      },
+      "input_paths": [
+        "bindings/python/src/",
+        "bindings/python/tests/test_archive.py"
+      ],
+      "minimum_passed": 19,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "native_caches_restored",
+          "op": "eq",
+          "value": true
+        }
+      ],
+      "actual_external_before_after_evidence": {
+        "/mnt/c/Temp/n4a-core045-20261008/audit/qualify_archive_portable_linux.py": {
+          "sha256": "46ad96413e9bbd2c092dfe7cf7f6c9caef421efbc9e819f5eb05f8744104ba35",
+          "bytes": 2018
+        },
+        "/mnt/c/Temp/n4a-core045-20261008/audit/archive-mock-cache-fix-v2/test_archive.py": {
+          "sha256": "845eb34353cdb3c32fb89eced752d088527a3fe9a065979451d00e738365b252",
+          "bytes": 18186
+        },
+        "/mnt/c/Temp/n4a-core045-20261008/python-site/nirs4all_core/_native.abi3.so": {
+          "sha256": "5c951bd3fd53f605ad8046ab2692e1ef1cfd660d6c140f197c59c6f45e4eeeb7",
+          "bytes": 40305872
+        },
+        "/mnt/c/Temp/n4a-core045-20261008/python-site/nirs4all_core/_archive.py": {
+          "sha256": "31d3329e46d41657ef2c5f63ce41793bcd8367843edfb5997323c5bf0d56d01d",
+          "bytes": 16986
+        }
+      },
+      "mapped_test_input": {
+        "observed_before_path": "/mnt/c/Temp/n4a-core045-20261008/audit/archive-mock-cache-fix-v2/test_archive.py",
+        "target_source_path": "bindings/python/tests/test_archive.py",
+        "sha256": "845eb34353cdb3c32fb89eced752d088527a3fe9a065979451d00e738365b252"
+      },
+      "raw_authority": {
+        "receipt_sha256": "d5dd665dc02d7e1575381178cf6702af3f3f1aa70639231fe555ae7cb773fdfa",
+        "original_path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-archive19-native-lazy/raw-receipt.json"
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-_native.abi3.so",
+            "version": "0.4.5",
+            "origin": "Genuine Source923 candidate artifact captured before/after the original run",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/python-site/nirs4all_core/_native.abi3.so",
+            "sha256": "5c951bd3fd53f605ad8046ab2692e1ef1cfd660d6c140f197c59c6f45e4eeeb7",
+            "bytes": 40305872
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "methods-native",
+            "version": "1.3.4",
+            "origin": "Authentic public134 wheel engine1.3.4 ABI2.17, real before/after capture",
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+            "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385",
+            "bytes": 5449304
+          }
+        ]
+      }
+    },
+    {
+      "id": "python-archive19-native-preloaded",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "python",
+          "-B",
+          "/mnt/c/Temp/n4a-core045-20261008/audit/qualify_archive_portable_linux.py",
+          "--preload"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/nirs4all/nirs4all/.venv/bin/python"
+        ]
+      },
+      "input_paths": [
+        "bindings/python/src/",
+        "bindings/python/tests/test_archive.py"
+      ],
+      "minimum_passed": 19,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "native_caches_restored",
+          "op": "eq",
+          "value": true
+        }
+      ],
+      "actual_external_before_after_evidence": {
+        "/mnt/c/Temp/n4a-core045-20261008/audit/qualify_archive_portable_linux.py": {
+          "sha256": "46ad96413e9bbd2c092dfe7cf7f6c9caef421efbc9e819f5eb05f8744104ba35",
+          "bytes": 2018
+        },
+        "/mnt/c/Temp/n4a-core045-20261008/audit/archive-mock-cache-fix-v2/test_archive.py": {
+          "sha256": "845eb34353cdb3c32fb89eced752d088527a3fe9a065979451d00e738365b252",
+          "bytes": 18186
+        },
+        "/mnt/c/Temp/n4a-core045-20261008/python-site/nirs4all_core/_native.abi3.so": {
+          "sha256": "5c951bd3fd53f605ad8046ab2692e1ef1cfd660d6c140f197c59c6f45e4eeeb7",
+          "bytes": 40305872
+        },
+        "/mnt/c/Temp/n4a-core045-20261008/python-site/nirs4all_core/_archive.py": {
+          "sha256": "31d3329e46d41657ef2c5f63ce41793bcd8367843edfb5997323c5bf0d56d01d",
+          "bytes": 16986
+        }
+      },
+      "mapped_test_input": {
+        "observed_before_path": "/mnt/c/Temp/n4a-core045-20261008/audit/archive-mock-cache-fix-v2/test_archive.py",
+        "target_source_path": "bindings/python/tests/test_archive.py",
+        "sha256": "845eb34353cdb3c32fb89eced752d088527a3fe9a065979451d00e738365b252"
+      },
+      "raw_authority": {
+        "receipt_sha256": "bb74dc68bcb50cd4af9bef84898a7b4ce4c5f3b612c392da81e52dbd33f8dc63",
+        "original_path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/python-archive19-native-preloaded/raw-receipt.json"
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-_native.abi3.so",
+            "version": "0.4.5",
+            "origin": "Genuine Source923 candidate artifact captured before/after the original run",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/python-site/nirs4all_core/_native.abi3.so",
+            "sha256": "5c951bd3fd53f605ad8046ab2692e1ef1cfd660d6c140f197c59c6f45e4eeeb7",
+            "bytes": 40305872
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "methods-native",
+            "version": "1.3.4",
+            "origin": "Authentic public134 wheel engine1.3.4 ABI2.17, real before/after capture",
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+            "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385",
+            "bytes": 5449304
+          }
+        ]
+      }
+    },
+    {
+      "id": "windows-identity",
+      "hosts": [
+        "windows"
+      ],
+      "commands": {
+        "windows": [
+          "python",
+          "-X",
+          "utf8",
+          "-B",
+          "-c",
+          "import sys,runpy,os;n4a_dll_dir=r\"D:/nirs4all-release-qualification-20261007/strict-b345054ef9584759a3c1121e3658056b/application/resources/backend/python-runtime/python/Lib/site-packages/nirs4all_methods.libs\";n4a_dll_cookie=os.add_dll_directory(n4a_dll_dir);os.environ[\"PATH\"]=n4a_dll_dir+os.pathsep+os.environ.get(\"PATH\",\"\");sys.path.insert(0,'C:\\\\Temp\\\\n4a-core045-20261008\\\\windows-pytest-site');sys.argv=['C:\\\\Temp\\\\n4a-core045-20261008\\\\audit\\\\core045_windows_driver_v2.py', '--config', 'C:\\\\Temp\\\\n4a-core045-20261008\\\\audit\\\\core045-windows-config-v3.json', '--gate', 'identity'];runpy.run_path(sys.argv[0],run_name=\"__main__\")"
+        ]
+      },
+      "executable_paths": {
+        "windows": [
+          "/mnt/d/nirs4all-release-qualification-20261007/strict-b345054ef9584759a3c1121e3658056b/application/resources/backend/python-runtime/python/python.exe"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/python/src/",
+        "bindings/python-native/",
+        "bindings/rust/nirs4all/src/",
+        "tests/parity/"
+      ],
+      "minimum_passed": 1,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "core_version",
+          "op": "eq",
+          "value": "0.4.5"
+        },
+        {
+          "field": "dag_version",
+          "op": "eq",
+          "value": "0.3.41"
+        },
+        {
+          "field": "methods_engine",
+          "op": "eq",
+          "value": "1.3.4+abi.2.17.0"
+        }
+      ],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "raw_authority": {
+        "path": "/mnt/c/Temp/n4a-core045-20261008/local-windows-raw/v3-dll-context/identity/raw-receipt.json",
+        "sha256": "bf9915e080d3d6b39bf20c6f0c5e78218336502ab4925ad2f01a1266ceaa11ef"
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-wheel",
+            "version": "0.4.5",
+            "origin": "GHA37716060036:artifact11524242336",
+            "sha256": "49e17765a8c66e5b3f101991a195e5447e290d22c45f53a124adbd8e46ef9fbd",
+            "bytes": 10759261,
+            "artifact_path": "C:\\Temp\\n4a-downstream041-20261008\\core045-candidate923-artifacts-v1\\python-wheel-windows-latest\\nirs4all_core-0.4.5-cp311-abi3-win_amd64.whl"
+          },
+          {
+            "name": "core-native",
+            "version": "0.4.5",
+            "origin": "exact-candidate-wheel-extraction",
+            "sha256": "8bbe2998a6432bc7e929baacaeb1247f89fa21829331feeb55a5df21c69ba69b",
+            "bytes": 32053760,
+            "artifact_path": "C:\\Temp\\n4a-core045-20261008\\windows-site\\nirs4all_core\\_native.pyd"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "dag-native",
+            "version": "0.3.41",
+            "origin": "actual-final-tag6f-public-wheel-extraction",
+            "sha256": "8e6d2d7f337f5391ac56eab30fcf9142652b574013a74c094e08001e7ca48941",
+            "bytes": 34428928,
+            "artifact_path": "D:\\nirs4all-release-qualification-20261007\\dag041-final6f-win-v1\\site\\dag_ml\\_dag_ml.pyd"
+          },
+          {
+            "name": "methods-native",
+            "version": "1.3.4",
+            "origin": "actual-Methods134-packaged-public-runtime",
+            "sha256": "daf98de3fe85b8c7ab9ce432f7e74a6a61f74f8ac3045ec0d8c5a2060ca912c9",
+            "bytes": 3863552,
+            "artifact_path": "D:\\nirs4all-release-qualification-20261007\\strict-b345054ef9584759a3c1121e3658056b\\application\\resources\\backend\\python-runtime\\python\\Lib\\site-packages\\n4m\\lib\\n4m.dll"
+          },
+          {
+            "name": "io-wheel",
+            "version": "0.2.6",
+            "origin": "actual-public-PyPI-registry-wheel",
+            "sha256": "121b35e7c4abd48b5ba060008658dfadbd5ce1670d3ee3612677900e9a1a2aae",
+            "bytes": 3188570,
+            "artifact_path": "C:\\Temp\\n4a-core045-20261008\\upstreams\\io026-public\\nirs4all_io-0.2.6-cp311-abi3-win_amd64.whl"
+          }
+        ]
+      }
+    },
+    {
+      "id": "windows-generate-fixtures",
+      "hosts": [
+        "windows"
+      ],
+      "commands": {
+        "windows": [
+          "python",
+          "-X",
+          "utf8",
+          "-B",
+          "-c",
+          "import sys,runpy,os;n4a_dll_dir=r\"D:/nirs4all-release-qualification-20261007/strict-b345054ef9584759a3c1121e3658056b/application/resources/backend/python-runtime/python/Lib/site-packages/nirs4all_methods.libs\";n4a_dll_cookie=os.add_dll_directory(n4a_dll_dir);os.environ[\"PATH\"]=n4a_dll_dir+os.pathsep+os.environ.get(\"PATH\",\"\");sys.path.insert(0,'C:\\\\Temp\\\\n4a-core045-20261008\\\\windows-pytest-site');sys.argv=['C:\\\\Temp\\\\n4a-core045-20261008\\\\audit\\\\core045_windows_driver_v2.py', '--config', 'C:\\\\Temp\\\\n4a-core045-20261008\\\\audit\\\\core045-windows-config-v3.json', '--gate', 'generate-fixtures'];runpy.run_path(sys.argv[0],run_name=\"__main__\")"
+        ]
+      },
+      "executable_paths": {
+        "windows": [
+          "/mnt/d/nirs4all-release-qualification-20261007/strict-b345054ef9584759a3c1121e3658056b/application/resources/backend/python-runtime/python/python.exe"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/python/src/",
+        "bindings/python-native/",
+        "bindings/rust/nirs4all/src/",
+        "tests/parity/"
+      ],
+      "minimum_passed": 1,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "core_version",
+          "op": "eq",
+          "value": "0.4.5"
+        },
+        {
+          "field": "dag_version",
+          "op": "eq",
+          "value": "0.3.41"
+        },
+        {
+          "field": "methods_engine",
+          "op": "eq",
+          "value": "1.3.4+abi.2.17.0"
+        }
+      ],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "raw_authority": {
+        "path": "/mnt/c/Temp/n4a-core045-20261008/local-windows-raw/v3-dll-context/generate-fixtures/raw-receipt.json",
+        "sha256": "ea919c39a4927b20016f839f3a2ca1a2230748485f37dc1c1fec99e6549de92a"
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-wheel",
+            "version": "0.4.5",
+            "origin": "GHA37716060036:artifact11524242336",
+            "sha256": "49e17765a8c66e5b3f101991a195e5447e290d22c45f53a124adbd8e46ef9fbd",
+            "bytes": 10759261,
+            "artifact_path": "C:\\Temp\\n4a-downstream041-20261008\\core045-candidate923-artifacts-v1\\python-wheel-windows-latest\\nirs4all_core-0.4.5-cp311-abi3-win_amd64.whl"
+          },
+          {
+            "name": "core-native",
+            "version": "0.4.5",
+            "origin": "exact-candidate-wheel-extraction",
+            "sha256": "8bbe2998a6432bc7e929baacaeb1247f89fa21829331feeb55a5df21c69ba69b",
+            "bytes": 32053760,
+            "artifact_path": "C:\\Temp\\n4a-core045-20261008\\windows-site\\nirs4all_core\\_native.pyd"
+          },
+          {
+            "name": "core-cli",
+            "version": "0.4.5",
+            "origin": "GHA37716060083:artifact11523784164",
+            "sha256": "26ca4d9b8afdbb62ff13ee26d0dcabd6e55c22d1912f4430692f7239fb1e6be6",
+            "bytes": 31802880,
+            "artifact_path": "C:\\Temp\\n4a-downstream041-20261008\\core045-candidate923-artifacts-v1\\core-windows-cli\\nirs4all-core-archive.exe"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "dag-native",
+            "version": "0.3.41",
+            "origin": "actual-final-tag6f-public-wheel-extraction",
+            "sha256": "8e6d2d7f337f5391ac56eab30fcf9142652b574013a74c094e08001e7ca48941",
+            "bytes": 34428928,
+            "artifact_path": "D:\\nirs4all-release-qualification-20261007\\dag041-final6f-win-v1\\site\\dag_ml\\_dag_ml.pyd"
+          },
+          {
+            "name": "methods-native",
+            "version": "1.3.4",
+            "origin": "actual-Methods134-packaged-public-runtime",
+            "sha256": "daf98de3fe85b8c7ab9ce432f7e74a6a61f74f8ac3045ec0d8c5a2060ca912c9",
+            "bytes": 3863552,
+            "artifact_path": "D:\\nirs4all-release-qualification-20261007\\strict-b345054ef9584759a3c1121e3658056b\\application\\resources\\backend\\python-runtime\\python\\Lib\\site-packages\\n4m\\lib\\n4m.dll"
+          },
+          {
+            "name": "io-wheel",
+            "version": "0.2.6",
+            "origin": "actual-public-PyPI-registry-wheel",
+            "sha256": "121b35e7c4abd48b5ba060008658dfadbd5ce1670d3ee3612677900e9a1a2aae",
+            "bytes": 3188570,
+            "artifact_path": "C:\\Temp\\n4a-core045-20261008\\upstreams\\io026-public\\nirs4all_io-0.2.6-cp311-abi3-win_amd64.whl"
+          }
+        ]
+      }
+    },
+    {
+      "id": "windows-python-oracle",
+      "hosts": [
+        "windows"
+      ],
+      "commands": {
+        "windows": [
+          "python",
+          "-X",
+          "utf8",
+          "-B",
+          "-c",
+          "import sys,runpy,os;n4a_dll_dir=r\"D:/nirs4all-release-qualification-20261007/strict-b345054ef9584759a3c1121e3658056b/application/resources/backend/python-runtime/python/Lib/site-packages/nirs4all_methods.libs\";n4a_dll_cookie=os.add_dll_directory(n4a_dll_dir);os.environ[\"PATH\"]=n4a_dll_dir+os.pathsep+os.environ.get(\"PATH\",\"\");sys.path.insert(0,'C:\\\\Temp\\\\n4a-core045-20261008\\\\windows-pytest-site');sys.argv=['C:\\\\Temp\\\\n4a-core045-20261008\\\\audit\\\\core045_windows_driver_v2.py', '--config', 'C:\\\\Temp\\\\n4a-core045-20261008\\\\audit\\\\core045-windows-config-v3.json', '--gate', 'python-oracle'];runpy.run_path(sys.argv[0],run_name=\"__main__\")"
+        ]
+      },
+      "executable_paths": {
+        "windows": [
+          "/mnt/d/nirs4all-release-qualification-20261007/strict-b345054ef9584759a3c1121e3658056b/application/resources/backend/python-runtime/python/python.exe"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/python/src/",
+        "bindings/python-native/",
+        "bindings/rust/nirs4all/src/",
+        "tests/parity/",
+        "bindings/python/tests/test_execution_parity.py"
+      ],
+      "minimum_passed": 1,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "core_version",
+          "op": "eq",
+          "value": "0.4.5"
+        },
+        {
+          "field": "dag_version",
+          "op": "eq",
+          "value": "0.3.41"
+        },
+        {
+          "field": "methods_engine",
+          "op": "eq",
+          "value": "1.3.4+abi.2.17.0"
+        }
+      ],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "raw_authority": {
+        "path": "/mnt/c/Temp/n4a-core045-20261008/local-windows-raw/v3-dll-context/python-oracle/raw-receipt.json",
+        "sha256": "1a52be511ac61e399632f714a68fd2f836b981d5185a6583cb46cfd34c06ba04"
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-wheel",
+            "version": "0.4.5",
+            "origin": "GHA37716060036:artifact11524242336",
+            "sha256": "49e17765a8c66e5b3f101991a195e5447e290d22c45f53a124adbd8e46ef9fbd",
+            "bytes": 10759261,
+            "artifact_path": "C:\\Temp\\n4a-downstream041-20261008\\core045-candidate923-artifacts-v1\\python-wheel-windows-latest\\nirs4all_core-0.4.5-cp311-abi3-win_amd64.whl"
+          },
+          {
+            "name": "core-native",
+            "version": "0.4.5",
+            "origin": "exact-candidate-wheel-extraction",
+            "sha256": "8bbe2998a6432bc7e929baacaeb1247f89fa21829331feeb55a5df21c69ba69b",
+            "bytes": 32053760,
+            "artifact_path": "C:\\Temp\\n4a-core045-20261008\\windows-site\\nirs4all_core\\_native.pyd"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "dag-native",
+            "version": "0.3.41",
+            "origin": "actual-final-tag6f-public-wheel-extraction",
+            "sha256": "8e6d2d7f337f5391ac56eab30fcf9142652b574013a74c094e08001e7ca48941",
+            "bytes": 34428928,
+            "artifact_path": "D:\\nirs4all-release-qualification-20261007\\dag041-final6f-win-v1\\site\\dag_ml\\_dag_ml.pyd"
+          },
+          {
+            "name": "methods-native",
+            "version": "1.3.4",
+            "origin": "actual-Methods134-packaged-public-runtime",
+            "sha256": "daf98de3fe85b8c7ab9ce432f7e74a6a61f74f8ac3045ec0d8c5a2060ca912c9",
+            "bytes": 3863552,
+            "artifact_path": "D:\\nirs4all-release-qualification-20261007\\strict-b345054ef9584759a3c1121e3658056b\\application\\resources\\backend\\python-runtime\\python\\Lib\\site-packages\\n4m\\lib\\n4m.dll"
+          },
+          {
+            "name": "io-wheel",
+            "version": "0.2.6",
+            "origin": "actual-public-PyPI-registry-wheel",
+            "sha256": "121b35e7c4abd48b5ba060008658dfadbd5ce1670d3ee3612677900e9a1a2aae",
+            "bytes": 3188570,
+            "artifact_path": "C:\\Temp\\n4a-core045-20261008\\upstreams\\io026-public\\nirs4all_io-0.2.6-cp311-abi3-win_amd64.whl"
+          }
+        ]
+      }
+    },
+    {
+      "id": "windows-python-complete",
+      "hosts": [
+        "windows"
+      ],
+      "commands": {
+        "windows": [
+          "python",
+          "-X",
+          "utf8",
+          "-B",
+          "-c",
+          "import sys,runpy,os;n4a_dll_dir=r\"D:/nirs4all-release-qualification-20261007/strict-b345054ef9584759a3c1121e3658056b/application/resources/backend/python-runtime/python/Lib/site-packages/nirs4all_methods.libs\";n4a_dll_cookie=os.add_dll_directory(n4a_dll_dir);os.environ[\"PATH\"]=n4a_dll_dir+os.pathsep+os.environ.get(\"PATH\",\"\");sys.path.insert(0,'C:\\\\Temp\\\\n4a-core045-20261008\\\\windows-pytest-site');sys.argv=['C:\\\\Temp\\\\n4a-core045-20261008\\\\audit\\\\core045_windows_driver_v3.py', '--config', 'C:\\\\Temp\\\\n4a-core045-20261008\\\\audit\\\\core045-windows-config-v4.json', '--gate', 'python-complete'];runpy.run_path(sys.argv[0],run_name=\"__main__\")"
+        ]
+      },
+      "executable_paths": {
+        "windows": [
+          "/mnt/d/nirs4all-release-qualification-20261007/strict-b345054ef9584759a3c1121e3658056b/application/resources/backend/python-runtime/python/python.exe"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/python/src/",
+        "bindings/python-native/",
+        "bindings/rust/nirs4all/src/",
+        "tests/parity/",
+        "bindings/python/tests/"
+      ],
+      "minimum_passed": 169,
+      "allowed_skips": [
+        "tests.test_archive_live.LiveArchiveV2ReplayTests.test_real_wheel_replays_multi_target_n4mm_with_valid_cross_link",
+        "tests.test_archive_live.LiveArchiveV2ReplayTests.test_tampered_n4mm_is_refused_before_replay",
+        "tests.test_archive_live.LiveArchiveV2ConformalReplayTests.test_archive_replays_in_isolated_child_to_closed_presentation",
+        "tests.test_archive_live.LiveArchiveV2ConformalReplayTests.test_archive_tamper_precedes_library_configuration",
+        "tests.test_archive_matrix_live.LiveArchiveV2MatrixPredictionTests.test_attested_libn4m_replays_exact_multi_target_values",
+        "tests.test_archive_matrix_live.LiveArchiveV2MatrixPredictionTests.test_wrong_methods_sha256_is_refused",
+        "tests.test_matlab_package.MatlabPackageTest.test_rebuild_is_reproducible_and_drops_stale_members"
+      ],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "core_version",
+          "op": "eq",
+          "value": "0.4.5"
+        },
+        {
+          "field": "dag_version",
+          "op": "eq",
+          "value": "0.3.41"
+        },
+        {
+          "field": "methods_engine",
+          "op": "eq",
+          "value": "1.3.4+abi.2.17.0"
+        },
+        {
+          "field": "subtests_passed",
+          "op": "eq",
+          "value": 490
+        }
+      ],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "raw_authority": {
+        "path": "/mnt/c/Temp/n4a-core045-20261008/local-windows-raw/v5-test-only-reviewed/python-complete/raw-receipt.json",
+        "sha256": "8e0ee6e3e2811b2d714c8f9eed4295f5b40a65c7626f8f311571c5b071ccac42"
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-wheel",
+            "version": "0.4.5",
+            "origin": "GHA37716060036:artifact11524242336",
+            "sha256": "49e17765a8c66e5b3f101991a195e5447e290d22c45f53a124adbd8e46ef9fbd",
+            "bytes": 10759261,
+            "artifact_path": "C:\\Temp\\n4a-downstream041-20261008\\core045-candidate923-artifacts-v1\\python-wheel-windows-latest\\nirs4all_core-0.4.5-cp311-abi3-win_amd64.whl"
+          },
+          {
+            "name": "core-native",
+            "version": "0.4.5",
+            "origin": "exact-candidate-wheel-extraction",
+            "sha256": "8bbe2998a6432bc7e929baacaeb1247f89fa21829331feeb55a5df21c69ba69b",
+            "bytes": 32053760,
+            "artifact_path": "C:\\Temp\\n4a-core045-20261008\\windows-site\\nirs4all_core\\_native.pyd"
+          },
+          {
+            "name": "core-cli",
+            "version": "0.4.5",
+            "origin": "GHA37716060083:artifact11523784164",
+            "sha256": "26ca4d9b8afdbb62ff13ee26d0dcabd6e55c22d1912f4430692f7239fb1e6be6",
+            "bytes": 31802880,
+            "artifact_path": "C:\\Temp\\n4a-downstream041-20261008\\core045-candidate923-artifacts-v1\\core-windows-cli\\nirs4all-core-archive.exe"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "dag-native",
+            "version": "0.3.41",
+            "origin": "actual-final-tag6f-public-wheel-extraction",
+            "sha256": "8e6d2d7f337f5391ac56eab30fcf9142652b574013a74c094e08001e7ca48941",
+            "bytes": 34428928,
+            "artifact_path": "D:\\nirs4all-release-qualification-20261007\\dag041-final6f-win-v1\\site\\dag_ml\\_dag_ml.pyd"
+          },
+          {
+            "name": "methods-native",
+            "version": "1.3.4",
+            "origin": "actual-Methods134-packaged-public-runtime",
+            "sha256": "daf98de3fe85b8c7ab9ce432f7e74a6a61f74f8ac3045ec0d8c5a2060ca912c9",
+            "bytes": 3863552,
+            "artifact_path": "D:\\nirs4all-release-qualification-20261007\\strict-b345054ef9584759a3c1121e3658056b\\application\\resources\\backend\\python-runtime\\python\\Lib\\site-packages\\n4m\\lib\\n4m.dll"
+          },
+          {
+            "name": "io-wheel",
+            "version": "0.2.6",
+            "origin": "actual-public-PyPI-registry-wheel",
+            "sha256": "121b35e7c4abd48b5ba060008658dfadbd5ce1670d3ee3612677900e9a1a2aae",
+            "bytes": 3188570,
+            "artifact_path": "C:\\Temp\\n4a-core045-20261008\\upstreams\\io026-public\\nirs4all_io-0.2.6-cp311-abi3-win_amd64.whl"
+          }
+        ]
+      }
+    },
+    {
+      "id": "windows-python-matrix",
+      "hosts": [
+        "windows"
+      ],
+      "commands": {
+        "windows": [
+          "python",
+          "-X",
+          "utf8",
+          "-B",
+          "-c",
+          "import sys,runpy,os;n4a_dll_dir=r\"D:/nirs4all-release-qualification-20261007/strict-b345054ef9584759a3c1121e3658056b/application/resources/backend/python-runtime/python/Lib/site-packages/nirs4all_methods.libs\";n4a_dll_cookie=os.add_dll_directory(n4a_dll_dir);os.environ[\"PATH\"]=n4a_dll_dir+os.pathsep+os.environ.get(\"PATH\",\"\");sys.path.insert(0,'C:\\\\Temp\\\\n4a-core045-20261008\\\\windows-pytest-site');sys.argv=['C:\\\\Temp\\\\n4a-core045-20261008\\\\audit\\\\core045_windows_driver_v4.py', '--config', 'C:\\\\Temp\\\\n4a-core045-20261008\\\\audit\\\\core045-windows-matrix-config-v1.json', '--gate', 'python-matrix'];runpy.run_path(sys.argv[0],run_name=\"__main__\")"
+        ]
+      },
+      "executable_paths": {
+        "windows": [
+          "/mnt/d/nirs4all-release-qualification-20261007/strict-b345054ef9584759a3c1121e3658056b/application/resources/backend/python-runtime/python/python.exe"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/python/src/",
+        "bindings/python-native/",
+        "bindings/rust/nirs4all/src/",
+        "tests/parity/",
+        "bindings/python/tests/test_archive_matrix_live.py"
+      ],
+      "minimum_passed": 2,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "core_version",
+          "op": "eq",
+          "value": "0.4.5"
+        },
+        {
+          "field": "dag_version",
+          "op": "eq",
+          "value": "0.3.41"
+        },
+        {
+          "field": "methods_engine",
+          "op": "eq",
+          "value": "1.3.4+abi.2.17.0"
+        }
+      ],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "raw_authority": {
+        "path": "/mnt/c/Temp/n4a-core045-20261008/local-windows-raw/v5-authentic-historical-matrix/python-matrix/raw-receipt.json",
+        "sha256": "e8238eadc4229ff48d625e16b151ef955f41561dc15d5b60682512b21fb6499f"
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-wheel",
+            "version": "0.4.5",
+            "origin": "GHA37716060036:artifact11524242336",
+            "sha256": "49e17765a8c66e5b3f101991a195e5447e290d22c45f53a124adbd8e46ef9fbd",
+            "bytes": 10759261,
+            "artifact_path": "C:\\Temp\\n4a-downstream041-20261008\\core045-candidate923-artifacts-v1\\python-wheel-windows-latest\\nirs4all_core-0.4.5-cp311-abi3-win_amd64.whl"
+          },
+          {
+            "name": "core-native",
+            "version": "0.4.5",
+            "origin": "exact-candidate-wheel-extraction",
+            "sha256": "8bbe2998a6432bc7e929baacaeb1247f89fa21829331feeb55a5df21c69ba69b",
+            "bytes": 32053760,
+            "artifact_path": "C:\\Temp\\n4a-core045-20261008\\windows-site\\nirs4all_core\\_native.pyd"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "dag-native",
+            "version": "0.3.41",
+            "origin": "actual-final-tag6f-public-wheel-extraction",
+            "sha256": "8e6d2d7f337f5391ac56eab30fcf9142652b574013a74c094e08001e7ca48941",
+            "bytes": 34428928,
+            "artifact_path": "D:\\nirs4all-release-qualification-20261007\\dag041-final6f-win-v1\\site\\dag_ml\\_dag_ml.pyd"
+          },
+          {
+            "name": "methods-native",
+            "version": "1.3.4",
+            "origin": "actual-Methods134-packaged-public-runtime",
+            "sha256": "daf98de3fe85b8c7ab9ce432f7e74a6a61f74f8ac3045ec0d8c5a2060ca912c9",
+            "bytes": 3863552,
+            "artifact_path": "D:\\nirs4all-release-qualification-20261007\\strict-b345054ef9584759a3c1121e3658056b\\application\\resources\\backend\\python-runtime\\python\\Lib\\site-packages\\n4m\\lib\\n4m.dll"
+          },
+          {
+            "name": "io-wheel",
+            "version": "0.2.6",
+            "origin": "actual-public-PyPI-registry-wheel",
+            "sha256": "121b35e7c4abd48b5ba060008658dfadbd5ce1670d3ee3612677900e9a1a2aae",
+            "bytes": 3188570,
+            "artifact_path": "C:\\Temp\\n4a-core045-20261008\\upstreams\\io026-public\\nirs4all_io-0.2.6-cp311-abi3-win_amd64.whl"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cli-linux-lifecycle-proof-controller",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "python",
+          "-B",
+          "/mnt/c/Temp/n4a-core045-20261008/audit/verify_core045_cli_proofs_v1.py",
+          "--os-family",
+          "linux",
+          "--evidence-root",
+          "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2",
+          "--source-root",
+          "{root}"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/nirs4all/nirs4all/.venv/bin/python"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/rust/nirs4all/src/",
+        "bindings/rust/nirs4all/Cargo.toml"
+      ],
+      "minimum_passed": 1,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "measured_original_commands",
+          "op": "eq",
+          "value": 9
+        },
+        {
+          "field": "expected_refusals",
+          "op": "eq",
+          "value": 3
+        },
+        {
+          "field": "owned_roots_after_each_terminal",
+          "op": "eq",
+          "value": 0
+        },
+        {
+          "field": "prediction_cells_exact",
+          "op": "eq",
+          "value": 4
+        }
+      ],
+      "required_environment": {
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1"
+      },
+      "raw_authority": {
+        "receipt_sha256": "883fcef54062e59fb96353e15dc9b2dbd97aa072136111c2b259e80fca57e7f9",
+        "original_path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/cli-linux-lifecycle-proof-controller/raw-receipt.json"
+      },
+      "original_negative_commands_have_expected_exit_one": true,
+      "input_exclusions": [],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-cli-lifecycle",
+            "version": "0.4.5",
+            "origin": "Real standalone CLI compiled from exact f9 source and unchanged923 rlibs",
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-linux-v2/output/nirs4all-core-archive",
+            "sha256": "cc96bff31e8855cf60be2279a30f887cefd9880cdf88cee0e3dcbf12dca9c20f",
+            "bytes": 37979040
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "methods-native",
+            "version": "1.3.4",
+            "origin": "Actual publicMethods134 immutable DLL/SO in original numerical lifecycle commands",
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-06-debt-extension/workflow/public-methods-134-full/n4m/lib/libn4m.so.2.17.0",
+            "sha256": "cd1b370691c599b6fed66d3e389cd99a9ded565de3ab58ac2a6dd744d1cf0385",
+            "bytes": 5449304
+          }
+        ]
+      }
+    },
+    {
+      "id": "cli-windows-lifecycle-proof-controller",
+      "hosts": [
+        "windows"
+      ],
+      "commands": {
+        "windows": [
+          "python",
+          "-X",
+          "utf8",
+          "-B",
+          "C:/Temp/n4a-core045-20261008/audit/verify_core045_cli_proofs_v1.py",
+          "--os-family",
+          "windows",
+          "--evidence-root",
+          "C:/Temp/n4a-core045-20261008/audit/cli-snapshot-lifecycle-windows-v1",
+          "--source-root",
+          "C:/Temp/n4a-core045-20261008/worktree"
+        ]
+      },
+      "executable_paths": {
+        "windows": [
+          "/mnt/d/nirs4all-release-qualification-20261007/strict-b345054ef9584759a3c1121e3658056b/application/resources/backend/python-runtime/python/python.exe"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/rust/nirs4all/src/",
+        "bindings/rust/nirs4all/Cargo.toml"
+      ],
+      "minimum_passed": 1,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "measured_original_commands",
+          "op": "eq",
+          "value": 5
+        },
+        {
+          "field": "expected_refusals",
+          "op": "eq",
+          "value": 3
+        },
+        {
+          "field": "owned_roots_after_each_terminal",
+          "op": "eq",
+          "value": 0
+        },
+        {
+          "field": "prediction_cells_exact",
+          "op": "eq",
+          "value": 4
+        }
+      ],
+      "required_environment": {
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1"
+      },
+      "raw_authority": {
+        "receipt_sha256": "416c31f335934d8f1a70853ad9da40ee23cf0dd4bbe0e037b7be03ba911433d1",
+        "original_path": "/mnt/c/Temp/n4a-core045-20261008/local-raw-v2/cli-windows-lifecycle-proof-controller/raw-receipt.json"
+      },
+      "original_negative_commands_have_expected_exit_one": true,
+      "input_exclusions": [],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-cli-lifecycle",
+            "version": "0.4.5",
+            "origin": "Windows GHA source79 exact build artifact",
+            "artifact_path": "C:\\Temp\\n4a-downstream041-20261008\\core045-candidate79dc-artifacts-v1\\core-windows-cli\\nirs4all-core-archive.exe",
+            "sha256": "5df1198f4c3b830674391f60f478515143a4c8aa74e869941fb27551cb1730f7",
+            "bytes": 31822848
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "methods-native",
+            "version": "1.3.4",
+            "origin": "Actual publicMethods134 immutable DLL/SO in original numerical lifecycle commands",
+            "artifact_path": "D:\\nirs4all-release-qualification-20261007\\strict-b345054ef9584759a3c1121e3658056b\\application\\resources\\backend\\python-runtime\\python\\Lib\\site-packages\\n4m\\lib\\n4m.dll",
+            "sha256": "daf98de3fe85b8c7ab9ce432f7e74a6a61f74f8ac3045ec0d8c5a2060ca912c9",
+            "bytes": 3863552
+          }
+        ]
+      }
+    }
+  ],
+  "coverage_note": "Full Python6skip IDs are accepted only with all3 mandatory independent witnesses; Rust2ignored IDs accepted only with both exact native historical tests. Linux WASM108 reusable cross-OS; no WindowsfullJS rerun per user/Root instruction.",
+  "source_basis": "Immutable source79/cfe CLI+test-only union; scientific libraries built from923 unchanged",
+  "qualification_limits": [
+    "CLI owned snapshot cleanup is qualified after normal parent termination, successful prediction and controlled refusal; forced supervisor kill may leave its owned temporary directory.",
+    "Direct in-process Rust/Python/R binding snapshot lifetime is unchanged; the CLI parent-worker lifecycle fix does not claim to alter those static snapshots.",
+    "Exact Linux6 and Windows7 skip IDs are retained; historic archive witnesses are exercised separately, and the Windows ZIP packaging-tool skip is covered by the actual Linux packaging test."
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "id": "cargo-build-lifecycle-tests",
+  "command": [
+    "/home/delete/.cargo/bin/cargo",
+    "test",
+    "--locked",
+    "--release",
+    "-p",
+    "nirs4all",
+    "--bin",
+    "nirs4all-core-archive",
+    "--no-run",
+    "--message-format=json"
+  ],
+  "cwd": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-source",
+  "start_utc": "2026-10-29T16:59:35.570356+00:00",
+  "end_utc": "2026-10-29T16:59:36.185909+00:00",
+  "duration_seconds": 0.6155631679866929,
+  "direct_exit": 0,
+  "expected_exit": 0,
+  "remaining_owned_roots": [],
+  "observed_dll_snapshots": {},
+  "logs": {
+    "stdout": {
+      "path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux/logs/cargo-build-lifecycle-tests.stdout.log",
+      "sha256": "6fda1103e8738053ce263b6a2f29b36245bf0569713fe5b64106b4c6024e0fdf",
+      "bytes": 198727
+    },
+    "stderr": {
+      "path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux/logs/cargo-build-lifecycle-tests.stderr.log",
+      "sha256": "e6aeae93799d5988f00cfe1925720f77cdfb92125467c7e2a0c457eec9107aae",
+      "bytes": 206
+    }
+  }
+}

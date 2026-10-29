@@ -1,0 +1,268 @@
+{
+  "schema_version": 1,
+  "archive": {
+    "archive_id": "archive:cb6a51b825bf5de858d8b190591f77e806d866b23dd6b27ee93b2aabbdee5363",
+    "schema_version": 2,
+    "profile": "nirs4all.archive_workspace.v2",
+    "archive_sha256": "994252030ff80129d0431995bae53eb473082f05825b65714379262b72af13fa",
+    "replay": {
+      "portable_predictor_package": {
+        "owner": "dag-ml",
+        "schema_id": "https://github.com/GBeurier/dag-ml/schemas/portable_predictor_package.v2.schema.json",
+        "schema_version": 2,
+        "member_path": "dagml/portable_predictor_package.json",
+        "raw_sha256": "453948e9ba42c54ac17f72380248b2a7da684b22395d0bf553e3dcc2525793de",
+        "semantic_fingerprint": "52c3c669d5e4cb528819ab734c65e0dc379bff0153621bea726a7dc533f8073a",
+        "semantic_profile": "dagml_tcv1",
+        "producer_port_required": true
+      },
+      "graph": {
+        "owner": "dag-ml",
+        "schema_id": "https://github.com/GBeurier/dag-ml/schemas/graph_spec.v1.schema.json",
+        "schema_version": 1,
+        "member_path": "dagml/graph.json",
+        "raw_sha256": "afcdf86854597e87c922e049d072f37145a4ae8f461303585a8c1c81d76bcaaa",
+        "semantic_fingerprint": "afcdf86854597e87c922e049d072f37145a4ae8f461303585a8c1c81d76bcaaa",
+        "semantic_profile": "dagml_historical_serde_json_v1",
+        "producer_port_required": null
+      },
+      "execution_bundle": {
+        "owner": "dag-ml",
+        "schema_id": "https://github.com/GBeurier/dag-ml/schemas/execution_bundle.v2.schema.json",
+        "schema_version": 2,
+        "member_path": "dagml/execution_bundle.json",
+        "raw_sha256": "81ac94d812edc1e59732b6f2b7a90d62e21793224f920782ad8b3dc4bf336656",
+        "semantic_fingerprint": "bb6ded24707d8b2334887d8b17eee518d8e79eb1777e75197c42f147e843fec7",
+        "semantic_profile": "dagml_tcv1",
+        "producer_port_required": true
+      },
+      "training_outcome": {
+        "owner": "dag-ml",
+        "schema_id": "https://github.com/GBeurier/dag-ml/schemas/training_outcome.v2.schema.json",
+        "schema_version": 2,
+        "member_path": "dagml/training_outcome.json",
+        "raw_sha256": "cc714e4d3f06d05d4396e20499210e2c8f913296393013e6760c5a207eefeb6e",
+        "semantic_fingerprint": "cb6a51b825bf5de858d8b190591f77e806d866b23dd6b27ee93b2aabbdee5363",
+        "semantic_profile": "dagml_tcv1",
+        "producer_port_required": true
+      },
+      "prediction_cache_payload_set": {
+        "owner": "dag-ml",
+        "schema_id": "https://github.com/GBeurier/dag-ml/schemas/prediction_cache_payload_set.v2.schema.json",
+        "schema_version": 2,
+        "member_path": "dagml/prediction_cache_payload_set.json",
+        "raw_sha256": "555b750773bd6b81e411b9b0931714a37006fc8e3cf054ebb1e5b6d0ad01f90d",
+        "semantic_fingerprint": "555b750773bd6b81e411b9b0931714a37006fc8e3cf054ebb1e5b6d0ad01f90d",
+        "semantic_profile": "dagml_historical_serde_json_v1",
+        "producer_port_required": true
+      },
+      "score_set": {
+        "owner": "dag-ml",
+        "schema_id": "https://github.com/GBeurier/dag-ml/schemas/score_set.v2.schema.json",
+        "schema_version": 2,
+        "member_path": "dagml/score_set.json",
+        "raw_sha256": "1e047ef11fcd373a20b6d7ba8a5712de2bfb496a7ebca90ea4b4d34e3edf5057",
+        "semantic_fingerprint": "1e047ef11fcd373a20b6d7ba8a5712de2bfb496a7ebca90ea4b4d34e3edf5057",
+        "semantic_profile": "dagml_historical_serde_json_v1",
+        "producer_port_required": true
+      },
+      "execution_status": "requires_native_artifact_executor"
+    },
+    "conformal": null,
+    "robustness": null
+  },
+  "manifest": {
+    "archive_id": "archive:cb6a51b825bf5de858d8b190591f77e806d866b23dd6b27ee93b2aabbdee5363",
+    "member_inventory": [
+      {
+        "path": "dagml/execution_bundle.json",
+        "raw_sha256": "81ac94d812edc1e59732b6f2b7a90d62e21793224f920782ad8b3dc4bf336656",
+        "regular_file": true,
+        "semantic_fingerprint": "bb6ded24707d8b2334887d8b17eee518d8e79eb1777e75197c42f147e843fec7",
+        "semantic_profile": "dagml_tcv1",
+        "uncompressed_size_bytes": 5921
+      },
+      {
+        "path": "dagml/graph.json",
+        "raw_sha256": "afcdf86854597e87c922e049d072f37145a4ae8f461303585a8c1c81d76bcaaa",
+        "regular_file": true,
+        "semantic_fingerprint": "afcdf86854597e87c922e049d072f37145a4ae8f461303585a8c1c81d76bcaaa",
+        "semantic_profile": "dagml_historical_serde_json_v1",
+        "uncompressed_size_bytes": 873
+      },
+      {
+        "path": "dagml/portable_predictor_package.json",
+        "raw_sha256": "453948e9ba42c54ac17f72380248b2a7da684b22395d0bf553e3dcc2525793de",
+        "regular_file": true,
+        "semantic_fingerprint": "52c3c669d5e4cb528819ab734c65e0dc379bff0153621bea726a7dc533f8073a",
+        "semantic_profile": "dagml_tcv1",
+        "uncompressed_size_bytes": 20301
+      },
+      {
+        "path": "dagml/prediction_cache_payload_set.json",
+        "raw_sha256": "555b750773bd6b81e411b9b0931714a37006fc8e3cf054ebb1e5b6d0ad01f90d",
+        "regular_file": true,
+        "semantic_fingerprint": "555b750773bd6b81e411b9b0931714a37006fc8e3cf054ebb1e5b6d0ad01f90d",
+        "semantic_profile": "dagml_historical_serde_json_v1",
+        "uncompressed_size_bytes": 70
+      },
+      {
+        "path": "dagml/score_set.json",
+        "raw_sha256": "1e047ef11fcd373a20b6d7ba8a5712de2bfb496a7ebca90ea4b4d34e3edf5057",
+        "regular_file": true,
+        "semantic_fingerprint": "1e047ef11fcd373a20b6d7ba8a5712de2bfb496a7ebca90ea4b4d34e3edf5057",
+        "semantic_profile": "dagml_historical_serde_json_v1",
+        "uncompressed_size_bytes": 3137
+      },
+      {
+        "path": "dagml/training_outcome.json",
+        "raw_sha256": "cc714e4d3f06d05d4396e20499210e2c8f913296393013e6760c5a207eefeb6e",
+        "regular_file": true,
+        "semantic_fingerprint": "cb6a51b825bf5de858d8b190591f77e806d866b23dd6b27ee93b2aabbdee5363",
+        "semantic_profile": "dagml_tcv1",
+        "uncompressed_size_bytes": 21923
+      },
+      {
+        "path": "methods/model_compat.0.n4mm",
+        "raw_sha256": "4c4aead1e669235595970ee40530315d02c2dad80a72845c6930424d1580edc4",
+        "regular_file": true,
+        "semantic_fingerprint": "4c4aead1e669235595970ee40530315d02c2dad80a72845c6930424d1580edc4",
+        "semantic_profile": "n4mm_raw_sha256",
+        "uncompressed_size_bytes": 352
+      }
+    ],
+    "migration_provenance": null,
+    "payloads": {
+      "conformal": null,
+      "host_artifacts": [],
+      "methods": {
+        "n4mm": [
+          {
+            "abi_major": 2,
+            "artifact_id": "artifact:methods-pls:model:compat.0:refit",
+            "format_version": 1,
+            "kind": "N4MM",
+            "member_path": "methods/model_compat.0.n4mm",
+            "owner": "nirs4all-methods",
+            "raw_sha256": "4c4aead1e669235595970ee40530315d02c2dad80a72845c6930424d1580edc4",
+            "semantic_fingerprint": "4c4aead1e669235595970ee40530315d02c2dad80a72845c6930424d1580edc4",
+            "semantic_profile": "n4mm_raw_sha256"
+          }
+        ],
+        "n4mopt": []
+      },
+      "n4d_aggregate_reference": null,
+      "robustness": null
+    },
+    "persistence_kind": "n4a_archive",
+    "physical_profile": {
+      "container": "zip",
+      "limits": {
+        "max_compression_ratio": 100,
+        "max_entries": 256,
+        "max_member_uncompressed_bytes": 134217728,
+        "max_total_uncompressed_bytes": 536870912
+      },
+      "manifest_member": "manifest.json",
+      "regular_files_only": true
+    },
+    "profile": "nirs4all.archive_workspace.v2",
+    "reader_dispatch": {
+      "archive_v1": {
+        "accepted_versions": [
+          1
+        ],
+        "mutation": "never_in_place",
+        "read_mode": "immutable_dual_read"
+      },
+      "archive_v2": {
+        "accepted_versions": [
+          2
+        ],
+        "dispatch_before_extraction": true,
+        "future_versions": "refuse"
+      },
+      "legacy_n4a": {
+        "form": "historical_n4a_zip",
+        "manifest_member": "manifest.json",
+        "maximum_bundle_format_version": "1.0",
+        "migration_direction": "legacy_to_v1_copy_on_write_only",
+        "reader_id": "nirs4all.pipeline.bundle.loader.BundleLoader"
+      }
+    },
+    "replay": {
+      "future_artifacts": [],
+      "portable_predictor_package": {
+        "member_path": "dagml/portable_predictor_package.json",
+        "owner": "dag-ml",
+        "producer_port_required": true,
+        "raw_sha256": "453948e9ba42c54ac17f72380248b2a7da684b22395d0bf553e3dcc2525793de",
+        "schema_id": "https://github.com/GBeurier/dag-ml/schemas/portable_predictor_package.v2.schema.json",
+        "schema_version": 2,
+        "semantic_fingerprint": "52c3c669d5e4cb528819ab734c65e0dc379bff0153621bea726a7dc533f8073a",
+        "semantic_profile": "dagml_tcv1"
+      },
+      "training_artifacts": {
+        "execution_bundle": {
+          "member_path": "dagml/execution_bundle.json",
+          "owner": "dag-ml",
+          "producer_port_required": true,
+          "raw_sha256": "81ac94d812edc1e59732b6f2b7a90d62e21793224f920782ad8b3dc4bf336656",
+          "schema_id": "https://github.com/GBeurier/dag-ml/schemas/execution_bundle.v2.schema.json",
+          "schema_version": 2,
+          "semantic_fingerprint": "bb6ded24707d8b2334887d8b17eee518d8e79eb1777e75197c42f147e843fec7",
+          "semantic_profile": "dagml_tcv1"
+        },
+        "graph": {
+          "member_path": "dagml/graph.json",
+          "owner": "dag-ml",
+          "raw_sha256": "afcdf86854597e87c922e049d072f37145a4ae8f461303585a8c1c81d76bcaaa",
+          "schema_id": "https://github.com/GBeurier/dag-ml/schemas/graph_spec.v1.schema.json",
+          "schema_version": 1,
+          "semantic_fingerprint": "afcdf86854597e87c922e049d072f37145a4ae8f461303585a8c1c81d76bcaaa",
+          "semantic_profile": "dagml_historical_serde_json_v1"
+        },
+        "prediction_cache_payload_set": {
+          "member_path": "dagml/prediction_cache_payload_set.json",
+          "owner": "dag-ml",
+          "producer_port_required": true,
+          "raw_sha256": "555b750773bd6b81e411b9b0931714a37006fc8e3cf054ebb1e5b6d0ad01f90d",
+          "schema_id": "https://github.com/GBeurier/dag-ml/schemas/prediction_cache_payload_set.v2.schema.json",
+          "schema_version": 2,
+          "semantic_fingerprint": "555b750773bd6b81e411b9b0931714a37006fc8e3cf054ebb1e5b6d0ad01f90d",
+          "semantic_profile": "dagml_historical_serde_json_v1"
+        },
+        "score_set": {
+          "member_path": "dagml/score_set.json",
+          "owner": "dag-ml",
+          "producer_port_required": true,
+          "raw_sha256": "1e047ef11fcd373a20b6d7ba8a5712de2bfb496a7ebca90ea4b4d34e3edf5057",
+          "schema_id": "https://github.com/GBeurier/dag-ml/schemas/score_set.v2.schema.json",
+          "schema_version": 2,
+          "semantic_fingerprint": "1e047ef11fcd373a20b6d7ba8a5712de2bfb496a7ebca90ea4b4d34e3edf5057",
+          "semantic_profile": "dagml_historical_serde_json_v1"
+        },
+        "training_outcome": {
+          "member_path": "dagml/training_outcome.json",
+          "owner": "dag-ml",
+          "producer_port_required": true,
+          "raw_sha256": "cc714e4d3f06d05d4396e20499210e2c8f913296393013e6760c5a207eefeb6e",
+          "schema_id": "https://github.com/GBeurier/dag-ml/schemas/training_outcome.v2.schema.json",
+          "schema_version": 2,
+          "semantic_fingerprint": "cb6a51b825bf5de858d8b190591f77e806d866b23dd6b27ee93b2aabbdee5363",
+          "semantic_profile": "dagml_tcv1"
+        }
+      }
+    },
+    "schema_version": 2,
+    "security": {
+      "integrity_profile": "sha256_raw_member_inventory_v2",
+      "signature": null
+    },
+    "workspace": null,
+    "writer": {
+      "canonical_writer_id": "nirs4all-core.archive_workspace_writer.v2",
+      "product_aggregate_owner": "nirs4all-core"
+    }
+  }
+}

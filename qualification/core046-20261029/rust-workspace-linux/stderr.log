@@ -1,0 +1,11 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running unittests src/lib.rs (/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/target/debug/deps/nirs4all-473fc1d1f84fc708)
+     Running unittests src/bin/nirs4all-core-archive.rs (/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/target/debug/deps/nirs4all_core_archive-d9e4d577c965a931)
+     Running tests/conformal.rs (/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/target/debug/deps/conformal-531d18decbb44ada)
+     Running tests/formats_io.rs (/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/target/debug/deps/formats_io-37020fd681b7e67b)
+     Running tests/results.rs (/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/target/debug/deps/results-159ca75587fc54dc)
+     Running tests/workflow.rs (/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/target/debug/deps/workflow-4e9b528b6270ff73)
+     Running unittests src/lib.rs (/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/target/debug/deps/_native-2e02c0916c69358b)
+     Running unittests src/lib.rs (/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/target/debug/deps/nirs4all_core_wasm_native-6ea64685786238e6)
+   Doc-tests nirs4all
+   Doc-tests nirs4all_core_wasm_native

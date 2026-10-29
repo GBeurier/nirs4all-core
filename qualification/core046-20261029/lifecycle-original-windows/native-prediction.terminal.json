@@ -1,0 +1,54 @@
+{
+  "id": "native-prediction",
+  "command": [
+    "D:\\workspace\\nirs4all-release-20261029-quality\\target\\release\\nirs4all-core-archive.exe",
+    "workflow-predict",
+    "--input",
+    "D:\\workspace\\nirs4all-release-20261029-quality\\audit\\core046-lifecycle-windows-v2\\input.json",
+    "--archive",
+    "C:\\Temp\\n4a-core045-20261008\\fixtures\\historical-web-archive-v2\\multitarget-pls.n4a",
+    "--methods-library",
+    "D:\\workspace\\nirs4all-release-20261029-sdk1411\\prefix\\Lib\\site-packages\\n4m\\lib\\n4m.dll",
+    "--methods-library-sha256",
+    "a821dd2bc4d3d9f9a4640966542c31a60a54f7434c9d66b0d579e01acf61a7fb",
+    "--run-id",
+    "run:cli:lifecycle",
+    "--output",
+    "D:\\workspace\\nirs4all-release-20261029-quality\\audit\\core046-lifecycle-windows-v2\\output\\predict.json"
+  ],
+  "cwd": "D:\\workspace\\nirs4all-release-20261029-quality\\core-lifecycle-source",
+  "start_utc": "2026-10-29T17:05:18.471814+00:00",
+  "end_utc": "2026-10-29T17:05:23.223510+00:00",
+  "duration_seconds": 4.751572000095621,
+  "direct_exit": 0,
+  "expected_exit": 0,
+  "remaining_owned_roots": [],
+  "observed_dll_snapshots": {
+    "D:\\workspace\\nirs4all-release-20261029-quality\\audit\\core046-lifecycle-windows-v2\\tmp\\nirs4all-core-archive-uc39hL\\nirs4all-core-libn4m-DnZU3y\\n4m.dll|attributes=32|bytes=4174848": {
+      "path": "D:\\workspace\\nirs4all-release-20261029-quality\\audit\\core046-lifecycle-windows-v2\\tmp\\nirs4all-core-archive-uc39hL\\nirs4all-core-libn4m-DnZU3y\\n4m.dll",
+      "bytes": 4174848,
+      "readonly": false,
+      "attributes": 32,
+      "observed_at": "2026-10-29T17:05:21.214200+00:00"
+    },
+    "D:\\workspace\\nirs4all-release-20261029-quality\\audit\\core046-lifecycle-windows-v2\\tmp\\nirs4all-core-archive-uc39hL\\nirs4all-core-libn4m-DnZU3y\\n4m.dll|attributes=33|bytes=4174848": {
+      "path": "D:\\workspace\\nirs4all-release-20261029-quality\\audit\\core046-lifecycle-windows-v2\\tmp\\nirs4all-core-archive-uc39hL\\nirs4all-core-libn4m-DnZU3y\\n4m.dll",
+      "bytes": 4174848,
+      "readonly": true,
+      "attributes": 33,
+      "observed_at": "2026-10-29T17:05:22.188963+00:00"
+    }
+  },
+  "logs": {
+    "stdout": {
+      "path": "D:\\workspace\\nirs4all-release-20261029-quality\\audit\\core046-lifecycle-windows-v2\\logs\\native-prediction.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "stderr": {
+      "path": "D:\\workspace\\nirs4all-release-20261029-quality\\audit\\core046-lifecycle-windows-v2\\logs\\native-prediction.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  }
+}

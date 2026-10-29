@@ -1,0 +1,5 @@
+
+> nirs4all@0.4.6 typecheck
+> tsc --project tsconfig.typecheck.json
+
+

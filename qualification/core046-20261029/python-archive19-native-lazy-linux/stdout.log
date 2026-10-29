@@ -1,0 +1,2 @@
+{"core_origin": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/nirs4all_core/__init__.py", "native_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/nirs4all_core/_native.abi3.so", "native_sha256": "394f431bb0197d828995d5d066f8030d822d90968f73ebe88538aefe7d286c0e", "native_preloaded": false, "core": "0.4.6", "dag": "0.3.43"}
+ORIGINAL_NATIVE_CACHES_RESTORED=true

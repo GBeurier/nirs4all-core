@@ -1,0 +1,38 @@
+Core0.4.6 current qualification, 2026-10-29 UTC
+
+All22 actual local gates preserve policy minima and authorized skip identities.
+Rust source/full registry lock a857710eab4692be905f043102d2c41a561ee4b9;
+bounded MATLAB temporary identifier fix 1aa8d5a; browser minimum/test metadata
+557953d; real npm343 lock 6fb91685ccfc26e0cd073ad7031ebd6c95324cbb.
+
+The original verifier is unchanged. Inherited captures retain their actual
+source SHA and measured command identity; each declared gate scope is compared
+byte for byte. Runtime metadata-only or independent binding changes do not
+relabel old executions. Earlier Core0.4.5 evidence remains separate and intact.
+
+Linux170+490subtests and Windows169+490subtests retain six/seven authorized
+cold-process fixture skips. Mandatory independent live matrix, original public
+DAG023 fixture signer and current conformal child cases each execute two tests.
+The historical numerical archives/goldens are unchanged. Browser108 tests run
+against actual SRI-verified public DAG343/Methods139/IO211 packages, no skips.
+Native Octave10.3 executes the oracle and all six native workflows. Methods
+MEX shims are built from ownerb246 sources and use frozen actual ABI20 library.
+
+Rust workspace includes live tests except the private-library-copy witness,
+which must execute in a fresh process because Methods correctly freezes one
+loaded library identity. Its separate mandatory gate executes it without
+weakening the production identity guard or test assertions.
+
+Lifecycle captures contain original nine Linux/five Windows operations. The
+measured verifier commands recheck retained originals; they do not pretend to
+rerun original compilation or numerical execution. Original refusal exits1
+remain failures by intent, with three refusals per host and zero owned roots
+after every terminal. All four prediction values match exactly. Windows DLL
+readonly history is observed during child loading, then released by parent
+cleanup. The external sentinel was asserted before/after by the producer; its
+PRE state was not separately serialized, and no missing observation is invented.
+
+Candidate wheel/native origins remain explicit local full-registry builds.
+No local checksum/path lock is represented as a registry publication. Source
+publication may rebuild equivalent bytes from the qualified identical source;
+this receipt does not claim public wheel bytes before their real release.

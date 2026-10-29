@@ -1,0 +1,6 @@
+nirs4all MATLAB/Octave smoke passed
+OCTAVE_WORKFLOW_NATIVE_PASS variants=2 oof_rows=12 refit=1 relocated_predict=1 retrain=1
+OCTAVE_NATIVE_TUNING_RESUME_COLD_PREDICT_OK
+native MATLAB/Octave conformal and seeded robustness cross-language gate passed
+Native Octave result view: PASS
+OCTAVE_NATIVE_RUNTIME_PASS stored_cli resume export relocated_predict dataset_cli
