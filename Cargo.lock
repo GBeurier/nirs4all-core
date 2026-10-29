@@ -553,6 +553,8 @@ dependencies = [
 [[package]]
 name = "dag-ml"
 version = "0.3.43"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f1c43af1fccd1d599880c9cb994a241269386eb1083510299b52c4a5aecfbffd"
 dependencies = [
  "dag-ml-core",
 ]
@@ -560,6 +562,8 @@ dependencies = [
 [[package]]
 name = "dag-ml-core"
 version = "0.3.43"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b91f6b70a59b2e34218fa1cc47ec4c0ef72da72fe7a53436d3fda230731af46"
 dependencies = [
  "indexmap",
  "n4m",
@@ -608,6 +612,8 @@ dependencies = [
 [[package]]
 name = "dag-ml-results"
 version = "0.3.43"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d9968a4e92147a272324ae73d2e38d479f1590da55055238c5f58e17d2f3e413"
 dependencies = [
  "arrow-array",
  "arrow-schema",
