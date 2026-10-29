@@ -1,0 +1,33 @@
+{
+  "id": "cargo-build-cli",
+  "command": [
+    "/home/delete/.cargo/bin/cargo",
+    "build",
+    "--locked",
+    "--release",
+    "-p",
+    "nirs4all",
+    "--bin",
+    "nirs4all-core-archive"
+  ],
+  "cwd": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-source",
+  "start_utc": "2026-10-29T16:54:19.018084+00:00",
+  "end_utc": "2026-10-29T16:59:35.570070+00:00",
+  "duration_seconds": 316.5519838510081,
+  "direct_exit": 0,
+  "expected_exit": 0,
+  "remaining_owned_roots": [],
+  "observed_dll_snapshots": {},
+  "logs": {
+    "stdout": {
+      "path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux/logs/cargo-build-cli.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "stderr": {
+      "path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux/logs/cargo-build-cli.stderr.log",
+      "sha256": "0797665cca6a6d3ce67d3be7b771d7464bb379ce9a5e5ddae05e7d72c9827c1b",
+      "bytes": 5569
+    }
+  }
+}

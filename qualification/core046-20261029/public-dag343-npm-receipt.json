@@ -1,0 +1,106 @@
+{
+  "registry": {
+    "bugs": {
+      "url": "https://github.com/GBeurier/dag-ml/issues"
+    },
+    "dist": {
+      "shasum": "964ad460c664b6c24faf65c4ca7bf006b20bfcf0",
+      "tarball": "https://registry.npmjs.org/dag-ml-wasm/-/dag-ml-wasm-0.3.43.tgz",
+      "fileCount": 15,
+      "integrity": "sha512-QVQtyHcFMDUoBgTAY6m1PXGzkIP74F6V3RKerADK7hwsy7NNwGtv1Emm+/ZFbZejORo5DCZlcYZTE4C/H0Zg2w==",
+      "signatures": [
+        {
+          "sig": "MEYCIQDQx+vgApRaS9D7cj9Iek8xAtlECFLPzkl1z5Zl92hZnAIhAJG/t69xa5CB+y74iCqyd6Yi9EFwha20SuPI644cMMiX",
+          "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+        },
+        {
+          "sig": "MEUCIQDzECd1gXIy600YK6WwRSG+1Hw6ypd07epiZtgOrcVdrQIgREmUpz5hjFKiyC2lpMLH62dEHlAPNxF0kbdUcRMosnE=",
+          "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+        }
+      ],
+      "attestations": {
+        "url": "https://registry.npmjs.org/-/npm/v1/attestations/dag-ml-wasm@0.3.43",
+        "provenance": {
+          "predicateType": "https://slsa.dev/provenance/v1"
+        }
+      },
+      "unpackedSize": 11058080
+    },
+    "main": "dag_ml_wasm.js",
+    "name": "dag-ml-wasm",
+    "type": "module",
+    "types": "dag_ml_wasm.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dag_ml_wasm.d.ts",
+        "default": "./dag_ml_wasm.js"
+      },
+      "./*": "./*",
+      "./n4m-optimizer": {
+        "types": "./n4m_hpo_optimizer.d.ts",
+        "import": "./n4m_hpo_optimizer.mjs"
+      },
+      "./n4m-controller": {
+        "types": "./n4m_controller.d.ts",
+        "import": "./n4m_controller.mjs"
+      },
+      "./n4m-estimator-controller": {
+        "types": "./n4m_estimator_controller.d.ts",
+        "import": "./n4m_estimator_controller.mjs"
+      },
+      "./multimodal_dataset_replay": {
+        "import": "./multimodal_dataset_replay.mjs"
+      }
+    },
+    "gitHead": "747cb9c54271e32cc213b880928a983562bb1b20",
+    "license": "CECILL-2.1 OR AGPL-3.0-or-later",
+    "_npmUser": {
+      "name": "gbeurier",
+      "email": "beurier@cirad.fr"
+    },
+    "homepage": "https://github.com/GBeurier/dag-ml",
+    "repository": {
+      "url": "git+https://github.com/GBeurier/dag-ml.git",
+      "type": "git",
+      "directory": "crates/dag-ml-wasm"
+    },
+    "_npmVersion": "11.19.1",
+    "description": "WASM bindings for DAG-ML JSON contracts.",
+    "directories": {},
+    "maintainers": [
+      {
+        "name": "gbeurier",
+        "email": "beurier@cirad.fr"
+      }
+    ],
+    "sideEffects": [
+      "./snippets/*"
+    ],
+    "_nodeVersion": "24.22.1",
+    "collaborators": [
+      "G. Beurier <beurier@cirad.fr>"
+    ],
+    "publishConfig": {
+      "access": "public",
+      "provenance": true
+    },
+    "_hasShrinkwrap": false,
+    "peerDependencies": {
+      "@nirs4all/methods": "^1.2.1"
+    },
+    "peerDependenciesMeta": {
+      "@nirs4all/methods": {
+        "optional": true
+      }
+    },
+    "_npmOperationalInternal": {
+      "tmp": "tmp/dag-ml-wasm_0.3.43_1793295913265_0.03693573785155302",
+      "host": "s3://npm-registry-packages-npm-production"
+    },
+    "_id": "dag-ml-wasm@0.3.43",
+    "version": "0.3.43"
+  },
+  "sha256": "b3cc5b9407dc190399802198b23cf114120f16c3de68ed01af9fcca997ebb08c",
+  "bytes": 3611620,
+  "downloaded_at_utc": "2026-10-29T17:47:23.706990+00:00"
+}

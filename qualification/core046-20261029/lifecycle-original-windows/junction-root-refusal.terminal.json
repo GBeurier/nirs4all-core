@@ -1,0 +1,31 @@
+{
+  "id": "junction-root-refusal",
+  "command": [
+    "D:\\workspace\\nirs4all-release-20261029-quality\\target\\release\\nirs4all-core-archive.exe",
+    "inspect",
+    "--archive",
+    "C:\\Temp\\n4a-core045-20261008\\fixtures\\historical-web-archive-v2\\multitarget-pls.n4a",
+    "--output",
+    "D:\\workspace\\nirs4all-release-20261029-quality\\audit\\core046-lifecycle-windows-v2\\output\\junction-refused.json"
+  ],
+  "cwd": "D:\\workspace\\nirs4all-release-20261029-quality\\core-lifecycle-source",
+  "start_utc": "2026-10-29T17:05:31.854019+00:00",
+  "end_utc": "2026-10-29T17:05:33.520644+00:00",
+  "duration_seconds": 1.6665816999739036,
+  "direct_exit": 1,
+  "expected_exit": 1,
+  "remaining_owned_roots": [],
+  "observed_dll_snapshots": {},
+  "logs": {
+    "stdout": {
+      "path": "D:\\workspace\\nirs4all-release-20261029-quality\\audit\\core046-lifecycle-windows-v2\\logs\\junction-root-refusal.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "stderr": {
+      "path": "D:\\workspace\\nirs4all-release-20261029-quality\\audit\\core046-lifecycle-windows-v2\\logs\\junction-root-refusal.stderr.log",
+      "sha256": "12a05dadc99c1e6ff955c4f04fb59228c7259507b2e4078c533ecaabb1b84272",
+      "bytes": 69
+    }
+  }
+}

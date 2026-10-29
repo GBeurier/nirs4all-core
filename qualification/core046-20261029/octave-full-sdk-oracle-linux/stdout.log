@@ -1,0 +1,6 @@
+NIRS4ALL_CORE_PARITY_ORACLE=/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/tests/parity/expected/portable_python_oracle.json \
+NIRS4ALL_CORE_PARITY_FIXTURES=/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/tests/parity/fixtures \
+NIRS4ALL_METHODS_MATLAB_PATH=/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/methods139-mex-source/bindings/matlab \
+NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 \
+octave --quiet --eval "addpath('bindings/matlab/tests'); parity"
+nirs4all MATLAB/Octave execution parity passed

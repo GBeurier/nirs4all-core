@@ -1,0 +1,39 @@
+{
+  "id": "wrong-hash-refusal",
+  "command": [
+    "D:\\workspace\\nirs4all-release-20261029-quality\\target\\release\\nirs4all-core-archive.exe",
+    "workflow-predict",
+    "--input",
+    "D:\\workspace\\nirs4all-release-20261029-quality\\audit\\core046-lifecycle-windows-v2\\input.json",
+    "--archive",
+    "C:\\Temp\\n4a-core045-20261008\\fixtures\\historical-web-archive-v2\\multitarget-pls.n4a",
+    "--methods-library",
+    "D:\\workspace\\nirs4all-release-20261029-sdk1411\\prefix\\Lib\\site-packages\\n4m\\lib\\n4m.dll",
+    "--methods-library-sha256",
+    "0000000000000000000000000000000000000000000000000000000000000000",
+    "--run-id",
+    "run:cli:lifecycle",
+    "--output",
+    "D:\\workspace\\nirs4all-release-20261029-quality\\audit\\core046-lifecycle-windows-v2\\output\\refused.json"
+  ],
+  "cwd": "D:\\workspace\\nirs4all-release-20261029-quality\\core-lifecycle-source",
+  "start_utc": "2026-10-29T17:05:23.227022+00:00",
+  "end_utc": "2026-10-29T17:05:27.068777+00:00",
+  "duration_seconds": 3.841653599985875,
+  "direct_exit": 1,
+  "expected_exit": 1,
+  "remaining_owned_roots": [],
+  "observed_dll_snapshots": {},
+  "logs": {
+    "stdout": {
+      "path": "D:\\workspace\\nirs4all-release-20261029-quality\\audit\\core046-lifecycle-windows-v2\\logs\\wrong-hash-refusal.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "stderr": {
+      "path": "D:\\workspace\\nirs4all-release-20261029-quality\\audit\\core046-lifecycle-windows-v2\\logs\\wrong-hash-refusal.stderr.log",
+      "sha256": "b55a79110800ec5beaf1a0d4ff43e0d62c97b032bfe732a275097011fd411f4e",
+      "bytes": 200
+    }
+  }
+}

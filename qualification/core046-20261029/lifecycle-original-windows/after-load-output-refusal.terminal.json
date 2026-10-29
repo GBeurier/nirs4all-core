@@ -1,0 +1,54 @@
+{
+  "id": "after-load-output-refusal",
+  "command": [
+    "D:\\workspace\\nirs4all-release-20261029-quality\\target\\release\\nirs4all-core-archive.exe",
+    "workflow-predict",
+    "--input",
+    "D:\\workspace\\nirs4all-release-20261029-quality\\audit\\core046-lifecycle-windows-v2\\input.json",
+    "--archive",
+    "C:\\Temp\\n4a-core045-20261008\\fixtures\\historical-web-archive-v2\\multitarget-pls.n4a",
+    "--methods-library",
+    "D:\\workspace\\nirs4all-release-20261029-sdk1411\\prefix\\Lib\\site-packages\\n4m\\lib\\n4m.dll",
+    "--methods-library-sha256",
+    "a821dd2bc4d3d9f9a4640966542c31a60a54f7434c9d66b0d579e01acf61a7fb",
+    "--run-id",
+    "run:cli:lifecycle",
+    "--output",
+    "D:\\workspace\\nirs4all-release-20261029-quality\\audit\\core046-lifecycle-windows-v2\\output\\refuse-directory"
+  ],
+  "cwd": "D:\\workspace\\nirs4all-release-20261029-quality\\core-lifecycle-source",
+  "start_utc": "2026-10-29T17:05:27.071977+00:00",
+  "end_utc": "2026-10-29T17:05:31.510113+00:00",
+  "duration_seconds": 4.438013199949637,
+  "direct_exit": 1,
+  "expected_exit": 1,
+  "remaining_owned_roots": [],
+  "observed_dll_snapshots": {
+    "D:\\workspace\\nirs4all-release-20261029-quality\\audit\\core046-lifecycle-windows-v2\\tmp\\nirs4all-core-archive-i8zyXZ\\nirs4all-core-libn4m-Q349Fa\\n4m.dll|attributes=32|bytes=4174848": {
+      "path": "D:\\workspace\\nirs4all-release-20261029-quality\\audit\\core046-lifecycle-windows-v2\\tmp\\nirs4all-core-archive-i8zyXZ\\nirs4all-core-libn4m-Q349Fa\\n4m.dll",
+      "bytes": 4174848,
+      "readonly": false,
+      "attributes": 32,
+      "observed_at": "2026-10-29T17:05:30.070940+00:00"
+    },
+    "D:\\workspace\\nirs4all-release-20261029-quality\\audit\\core046-lifecycle-windows-v2\\tmp\\nirs4all-core-archive-i8zyXZ\\nirs4all-core-libn4m-Q349Fa\\n4m.dll|attributes=33|bytes=4174848": {
+      "path": "D:\\workspace\\nirs4all-release-20261029-quality\\audit\\core046-lifecycle-windows-v2\\tmp\\nirs4all-core-archive-i8zyXZ\\nirs4all-core-libn4m-Q349Fa\\n4m.dll",
+      "bytes": 4174848,
+      "readonly": true,
+      "attributes": 33,
+      "observed_at": "2026-10-29T17:05:30.060668+00:00"
+    }
+  },
+  "logs": {
+    "stdout": {
+      "path": "D:\\workspace\\nirs4all-release-20261029-quality\\audit\\core046-lifecycle-windows-v2\\logs\\after-load-output-refusal.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "stderr": {
+      "path": "D:\\workspace\\nirs4all-release-20261029-quality\\audit\\core046-lifecycle-windows-v2\\logs\\after-load-output-refusal.stderr.log",
+      "sha256": "6076328236ffe23f2848da436d582712a1613cc7e776e576c49a51efcc942615",
+      "bytes": 51
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "id": "unit-refusal_closes_owned_snapshot_tree_and_preserves_exit",
+  "command": [
+    "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/deps/nirs4all_core_archive-5525afd38692160a",
+    "--exact",
+    "tests::refusal_closes_owned_snapshot_tree_and_preserves_exit",
+    "--nocapture"
+  ],
+  "cwd": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-source",
+  "start_utc": "2026-10-29T16:59:36.191938+00:00",
+  "end_utc": "2026-10-29T16:59:36.195443+00:00",
+  "duration_seconds": 0.0035088960139546543,
+  "direct_exit": 0,
+  "expected_exit": 0,
+  "remaining_owned_roots": [],
+  "observed_dll_snapshots": {},
+  "logs": {
+    "stdout": {
+      "path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux/logs/unit-refusal_closes_owned_snapshot_tree_and_preserves_exit.stdout.log",
+      "sha256": "fc92cd829c3e3d56f5ae1b1ff63c5903079d4e2fa8752ad6768585ab79b004f5",
+      "bytes": 201
+    },
+    "stderr": {
+      "path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux/logs/unit-refusal_closes_owned_snapshot_tree_and_preserves_exit.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  }
+}

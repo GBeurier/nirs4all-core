@@ -1,0 +1,39 @@
+{
+  "id": "wrong-hash-refusal",
+  "command": [
+    "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive",
+    "workflow-predict",
+    "--input",
+    "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux/input.json",
+    "--archive",
+    "/mnt/c/Temp/n4a-core045-20261008/fixtures/historical-web-archive-v2/multitarget-pls.n4a",
+    "--methods-library",
+    "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0",
+    "--methods-library-sha256",
+    "0000000000000000000000000000000000000000000000000000000000000000",
+    "--run-id",
+    "run:cli:lifecycle",
+    "--output",
+    "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux/output/refused.json"
+  ],
+  "cwd": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-source",
+  "start_utc": "2026-10-29T16:59:36.283661+00:00",
+  "end_utc": "2026-10-29T16:59:36.315581+00:00",
+  "duration_seconds": 0.031928053009323776,
+  "direct_exit": 1,
+  "expected_exit": 1,
+  "remaining_owned_roots": [],
+  "observed_dll_snapshots": {},
+  "logs": {
+    "stdout": {
+      "path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux/logs/wrong-hash-refusal.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "stderr": {
+      "path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux/logs/wrong-hash-refusal.stderr.log",
+      "sha256": "6ffb894804a02894e77c2e97088822cf979dbe767f2e41930faa223e8bc98a72",
+      "bytes": 200
+    }
+  }
+}

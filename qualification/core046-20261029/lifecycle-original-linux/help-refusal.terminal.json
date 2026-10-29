@@ -1,0 +1,27 @@
+{
+  "id": "help-refusal",
+  "command": [
+    "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive",
+    "--help"
+  ],
+  "cwd": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-source",
+  "start_utc": "2026-10-29T16:59:36.195640+00:00",
+  "end_utc": "2026-10-29T16:59:36.199132+00:00",
+  "duration_seconds": 0.0034964549995493144,
+  "direct_exit": 1,
+  "expected_exit": 1,
+  "remaining_owned_roots": [],
+  "observed_dll_snapshots": {},
+  "logs": {
+    "stdout": {
+      "path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux/logs/help-refusal.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "stderr": {
+      "path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux/logs/help-refusal.stderr.log",
+      "sha256": "85fce53c6ea2c7d240b172019a679ad197a4236e064c0300c38c3909b75b3b38",
+      "bytes": 54
+    }
+  }
+}

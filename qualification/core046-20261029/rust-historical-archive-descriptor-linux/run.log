@@ -1,0 +1,39 @@
+
+running 1 test
+test native_methods_replay::json_tests::live_historical_archive_derives_native_predictor_descriptor ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 135 filtered out; finished in 0.27s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.19s
+     Running unittests src/lib.rs (/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/target/debug/deps/nirs4all-2bf776d87be5c8de)
+     Running unittests src/bin/nirs4all-core-archive.rs (/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/target/debug/deps/nirs4all_core_archive-2037209bdd8a3a69)
+     Running tests/conformal.rs (/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/target/debug/deps/conformal-0da594e5f2d31add)
+     Running tests/formats_io.rs (/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/target/debug/deps/formats_io-ede23c6069cf65d9)
+     Running tests/results.rs (/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/target/debug/deps/results-02bb6ca6d3baff26)
+     Running tests/workflow.rs (/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/target/debug/deps/workflow-ef6574d3293666ba)
