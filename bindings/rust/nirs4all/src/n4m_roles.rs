@@ -868,7 +868,21 @@ mod tests {
         .unwrap();
         assert_eq!(refit.feature_names(), Some(names.as_slice()));
         let predicted = values(refit.predict(&x_test, m, Some(&refs(&names))).unwrap());
-        assert!(max_diff(&predicted, &expected) <= 1e-9);
+        // Fresh fitting has an owner-versioned oracle; the stored historical
+        // envelope above must continue replaying against its original bytes.
+        let fresh = super::tests::fixture(include_str!(
+            "../tests/parity/expected/n4m_roles_v8_named_refit_methods139.json"
+        ));
+        assert_eq!(
+            format!(
+                "{:x}",
+                Sha256::digest(include_bytes!(
+                    "../tests/parity/fixtures/n4m_roles_v8_python_named.json"
+                ))
+            ),
+            fresh["input_sha256"].as_str().unwrap()
+        );
+        assert!(max_diff(&predicted, &numbers(&fresh["predict"])) <= 1e-9);
     }
 
     #[test]

@@ -33,6 +33,7 @@ include = [
     "tests/parity/fixtures/n4m_role_pipeline_methods.json",
     "tests/parity/expected/portable_python_oracle.json",
     "tests/parity/expected/n4m_roles_v8_r_trained_oracle.json",
+    "tests/parity/expected/n4m_roles_v8_named_refit_methods139.json",
 ]
 
 [lib]

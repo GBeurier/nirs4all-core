@@ -23,6 +23,7 @@ ROOT = Path(__file__).resolve().parents[3]
 FIXTURES = ROOT / "tests/parity/fixtures"
 PYTHON_TRAINED = json.loads((FIXTURES / "n4m_roles_v8_python_trained.json").read_text(encoding="utf-8"))
 PYTHON_NAMED = json.loads((FIXTURES / "n4m_roles_v8_python_named.json").read_text(encoding="utf-8"))
+NAMED_REFIT = json.loads((ROOT / "tests/parity/expected/n4m_roles_v8_named_refit_methods139.json").read_text(encoding="utf-8"))
 METHODS = json.loads((FIXTURES / "n4m_role_pipeline_methods.json").read_text(encoding="utf-8"))
 R_TRAINED = (FIXTURES / "n4m_roles_v8_r_trained.json").read_text(encoding="utf-8")
 R_ORACLE = json.loads((ROOT / "tests/parity/expected/n4m_roles_v8_r_trained_oracle.json").read_text(encoding="utf-8"))
@@ -157,7 +158,8 @@ class N4mRoleRecipeTests(unittest.TestCase):
         refit = n4core.N4mRolePipeline.fit_recipe(
             PYTHON_NAMED["envelope"]["recipe"], self.frame(PYTHON_NAMED["x_train"], names), PYTHON_NAMED["y_train"])
         self.assertEqual(refit.feature_names, names)
-        self.assertLessEqual(_max_abs_diff(refit.predict(self.frame(PYTHON_NAMED["x_test"], names)), PYTHON_NAMED["predict"]), 1e-9)
+        self.assertEqual(hashlib.sha256((FIXTURES / "n4m_roles_v8_python_named.json").read_bytes()).hexdigest(), NAMED_REFIT["input_sha256"])
+        self.assertLessEqual(_max_abs_diff(refit.predict(self.frame(PYTHON_NAMED["x_test"], names)), NAMED_REFIT["predict"]), 1e-9)
 
     def test_replays_the_methods_shared_pipelines(self) -> None:
         names = METHODS["feature_names"]
