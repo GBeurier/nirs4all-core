@@ -846,8 +846,7 @@ fn validate_reference_closure(
             || e.get("raw_sha256").and_then(Value::as_str) != Some(sha256(bytes).as_str())
         {
             return Err(ArchiveStoreError::Integrity(format!(
-                "inventory hash or size mismatch for {}",
-                path
+                "inventory hash or size mismatch for {path}"
             )));
         }
     }
