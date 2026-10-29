@@ -1101,6 +1101,8 @@ dependencies = [
 [[package]]
 name = "nirs4all-io"
 version = "0.2.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cc4fb28139c509acde40b89ea42115236dea83b02de3fcab816b5ee15227075f"
 dependencies = [
  "arrow-array",
  "arrow-schema",
@@ -1124,6 +1126,8 @@ dependencies = [
 [[package]]
 name = "nirs4all-io-core"
 version = "0.2.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d7674ad6138ce2f621a0b1a5d26daec26a8f538d6a5f3ce685e2318f1dd80423"
 dependencies = [
  "csv",
  "indexmap",
@@ -1138,6 +1142,8 @@ dependencies = [
 [[package]]
 name = "nirs4all-io-dagml"
 version = "0.2.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c22eeb5543f303d2d5c168fcb9c78151a573ae49772773785ab5b4284abbff51"
 dependencies = [
  "anyhow",
  "clap",
