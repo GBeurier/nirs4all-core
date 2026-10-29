@@ -1685,12 +1685,30 @@ mod json_tests {
         let library = directory.path().join("n4m.dll");
         std::fs::write(&library, b"fixture").expect("Methods fixture");
         let std_canonical = std::fs::canonicalize(&library).expect("Windows canonical path");
-        assert_ne!(
-            std_canonical, library,
-            "the regression fixture must exercise Windows' verbatim path spelling"
-        );
-
-        let identity = read_methods_library_identity(&library)
+        // TEMP can use a DOS 8.3 alias. Derive the requested spelling from the
+        // canonical long path so this fixture changes only the verbatim prefix.
+        use std::ffi::OsString;
+        use std::os::windows::ffi::{OsStrExt, OsStringExt};
+        let canonical_units = std_canonical.as_os_str().encode_wide().collect::<Vec<_>>();
+        let unc_prefix = r"\\?\UNC\".encode_utf16().collect::<Vec<_>>();
+        let ordinary_units = if canonical_units.starts_with(&unc_prefix) {
+            let mut units = r"\\".encode_utf16().collect::<Vec<_>>();
+            units.extend_from_slice(&canonical_units[unc_prefix.len()..]);
+            units
+        } else {
+            let disk_prefix = r"\\?\".encode_utf16().collect::<Vec<_>>();
+            assert!(canonical_units.starts_with(&disk_prefix));
+            canonical_units[disk_prefix.len()..].to_vec()
+        };
+        let ordinary = PathBuf::from(OsString::from_wide(&ordinary_units));
+        assert_ne!(std_canonical, ordinary);
+        if library != ordinary {
+            assert!(
+                read_methods_library_identity(&library).is_err(),
+                "a DOS alias is more than a verbatim-prefix change and stays refused"
+            );
+        }
+        let identity = read_methods_library_identity(&ordinary)
             .expect("an ordinary absolute Windows path is a canonical product input");
         assert_eq!(identity.source_canonical_path, std_canonical);
     }
