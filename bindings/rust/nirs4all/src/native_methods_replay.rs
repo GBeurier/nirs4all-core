@@ -245,8 +245,7 @@ fn hash_reader(
         .map_err(|error| replay_error(format!("cannot read {label}: {error}")))?;
     if bytes.len() as u64 > MAX_ATTESTED_METHODS_LIBRARY_BYTES {
         return Err(replay_error(format!(
-            "{label} exceeds the {} byte limit",
-            MAX_ATTESTED_METHODS_LIBRARY_BYTES
+            "{label} exceeds the {MAX_ATTESTED_METHODS_LIBRARY_BYTES} byte limit"
         )));
     }
     let sha256 = format!("{:x}", Sha256::digest(&bytes));
@@ -337,8 +336,7 @@ fn read_methods_library_identity(
     }
     if link_metadata.len() > MAX_ATTESTED_METHODS_LIBRARY_BYTES {
         return Err(replay_error(format!(
-            "attested libn4m exceeds the {} byte limit",
-            MAX_ATTESTED_METHODS_LIBRARY_BYTES
+            "attested libn4m exceeds the {MAX_ATTESTED_METHODS_LIBRARY_BYTES} byte limit"
         )));
     }
     let source_canonical_path = std::fs::canonicalize(path)
@@ -2126,6 +2124,9 @@ mod json_tests {
                 .expect("make only the private source copy writable");
         }
         #[cfg(not(unix))]
+        // Clearing Windows' read-only flag on this private test copy cannot
+        // change Unix mode bits; the Unix branch above changes owner-write only.
+        #[allow(clippy::permissions_set_readonly_false)]
         {
             let mut permissions = std::fs::metadata(&methods_library_path)
                 .expect("inspect mutable source copy permissions")
