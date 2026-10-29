@@ -1,5 +1,12 @@
 addpath(fullfile(fileparts(mfilename('fullpath')), '..'));
 
+% The surrounding temporary directory may be longer than DAG's identifier
+% budget. Only the unique filename token belongs in automatically assigned IDs.
+temporaryId = nirs4all.temporaryRunId('run:smoke:');
+assert(length(temporaryId) < 64);
+assert(~isempty(regexp(temporaryId, '^run:smoke:[A-Za-z0-9_.:-]+$', 'once')));
+assert(isempty(strfind(temporaryId, tempdir())));
+
 items = nirs4all.upstreams();
 assert(numel(items) == 6);
 assert(strcmp(items(1).key, 'dag_ml'));

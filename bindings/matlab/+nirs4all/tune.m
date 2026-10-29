@@ -3,7 +3,7 @@ function workflow = tune(data, varargin)
 parser=inputParser; addParameter(parser,'trials',8); addParameter(parser,'seed',91);
 addParameter(parser,'sampler','random'); addParameter(parser,'metric','rmse'); addParameter(parser,'sourceId','spectra');
 addParameter(parser,'methodsLibrary',getenv('N4M_LIB_PATH')); addParameter(parser,'archive',[tempname() '.n4a']);
-addParameter(parser,'checkpoint',''); addParameter(parser,'runId',['run:' strrep(tempname(),filesep,'_')]); addParameter(parser,'cli','');
+addParameter(parser,'checkpoint',''); addParameter(parser,'runId',nirs4all.temporaryRunId('run:')); addParameter(parser,'cli','');
 parse(parser,varargin{:}); o=parser.Results;
 if isempty(o.cli) && isa(data, 'nirs4all.PublicDataset'), o.cli = data.coreCli; end
 if ~isnumeric(o.seed) || ~isscalar(o.seed) || ~isfinite(o.seed) || o.seed<0 || o.seed>flintmax-1 || o.seed~=fix(o.seed)

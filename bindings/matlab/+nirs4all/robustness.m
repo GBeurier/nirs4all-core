@@ -13,6 +13,6 @@ values = arrayfun(@(i) num2cell(y(i,:)), (1:size(y,1)).', 'UniformOutput', false
 if nargin < 4, sampleIds = {}; end
 record = nirs4all.uncertaintyInput(X, sampleIds, o.sourceId, struct('truth',{values},'scenarios',{o.scenarios}), o.cli);
 flags = struct('archive', archive, 'methods_library', o.methodsLibrary, ...
-    'run_id', ['run:robustness:' strrep(tempname(), filesep, '_')]);
+    'run_id', nirs4all.temporaryRunId('run:robustness:'));
 result = nirs4all.workflowCli(o.cli, 'robustness', record, flags);
 end
