@@ -8,7 +8,7 @@ if isempty(o.cli) && isstruct(model) && isfield(model,'cli'), o.cli = model.cli;
 if isempty(o.methodsLibrary), o.methodsLibrary = getenv('N4M_LIB_PATH'); end
 if isstruct(model), archive = model.archive; else, archive = model; end
 flags = struct('archive', archive, 'methods_library', o.methodsLibrary, ...
-    'run_id', ['run:calibrated:predict:' strrep(tempname(), filesep, '_')]);
+    'run_id', nirs4all.temporaryRunId('run:calibrated:predict:'));
 if nargin < 3, sampleIds = {}; end
 record = nirs4all.uncertaintyInput(X, sampleIds, o.sourceId, struct(), o.cli);
 [result, nativeJson] = nirs4all.workflowCli(o.cli, 'conformal-predict', record, flags);
