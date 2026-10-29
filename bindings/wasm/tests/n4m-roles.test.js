@@ -25,6 +25,7 @@ const fixtures = new URL('../../../tests/parity/', import.meta.url);
 const read = (path) => JSON.parse(readFileSync(new URL(path, fixtures), 'utf8'));
 const pythonTrained = read('fixtures/n4m_roles_v8_python_trained.json');
 const pythonNamed = read('fixtures/n4m_roles_v8_python_named.json');
+const namedRefit = read('expected/n4m_roles_v8_named_refit_methods139.json');
 const shared = read('fixtures/n4m_role_pipeline_methods.json');
 const rTrained = read('fixtures/n4m_roles_v8_r_trained.json');
 const rOracle = read('expected/n4m_roles_v8_r_trained_oracle.json');
@@ -174,7 +175,8 @@ test('the Python-trained named envelope keeps column identity and training rows'
   const refit = await N4mRolePipeline.fit(
     pythonNamed.envelope.recipe, { ...matrix(pythonNamed.x_train, names), y: pythonNamed.y_train }, { methods });
   assert.deepEqual(refit.featureNames, names);
-  assert.ok(maxAbsDiff(refit.predict(matrix(pythonNamed.x_test, names)).data, pythonNamed.predict) <= 1e-9);
+  assert.equal(createHash('sha256').update(readFileSync(new URL('fixtures/n4m_roles_v8_python_named.json', fixtures))).digest('hex'), namedRefit.input_sha256);
+  assert.ok(maxAbsDiff(refit.predict(matrix(pythonNamed.x_test, names)).data, namedRefit.predict) <= 1e-9);
   refit.dispose();
 });
 

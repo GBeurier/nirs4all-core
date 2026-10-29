@@ -27,7 +27,7 @@ wasm_packages = ["dag-ml-data-wasm"]
 [[upstream]]
 key = "formats"
 repo = "GBeurier/nirs4all-formats"
-ref = "2d11fa97d33670e79919d2ce857823f4127e5f96"
+ref = "ca66d54034b90ead27dd758a768115bb879ae9d5"
 role = "Spectroscopy/NIRS vendor file readers"
 bindings = ["rust", "python", "r", "wasm", "c"]
 python_imports = ["nirs4all_formats", "nirs4all.formats"]
@@ -37,7 +37,7 @@ wasm_packages = ["@nirs4all/formats-wasm"]
 [[upstream]]
 key = "io"
 repo = "GBeurier/nirs4all-io"
-ref = "5a809ef13161d280a3fda2279b3c91d46d894e3b"
+ref = "1c452eefbea3f81b22392bbf6e68a8c6f70772b3"
 role = "Dataset assembly bridge"
 bindings = ["rust", "python", "r", "wasm", "c"]
 python_imports = ["nirs4all_io", "nirs4all.io"]
