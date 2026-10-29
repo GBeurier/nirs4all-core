@@ -24,7 +24,7 @@ fn is_link_or_reparse(metadata: &std::fs::Metadata) -> bool {
     {
         use std::os::windows::fs::MetadataExt;
         const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x400;
-        return metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0;
+        metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0
     }
     #[cfg(not(windows))]
     false
@@ -78,6 +78,9 @@ fn clear_owned_readonly(path: &Path) -> io::Result<()> {
         if metadata.is_file() && !is_link_or_reparse(&metadata) && metadata.permissions().readonly()
         {
             let mut permissions = metadata.permissions();
+            // This Windows-only function clears READONLY on a checked private
+            // file handle; Unix permission bits cannot be affected here.
+            #[allow(clippy::permissions_set_readonly_false)]
             permissions.set_readonly(false);
             file.set_permissions(permissions)?;
         }
