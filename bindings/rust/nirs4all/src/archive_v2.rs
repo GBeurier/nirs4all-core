@@ -992,15 +992,18 @@ fn validate_reference_declarations(
         let abi_min_minor = o.get("abi_min_minor").and_then(Value::as_u64);
         if o.get("kind").and_then(Value::as_str) != Some("N4MM")
             || o.get("owner").and_then(Value::as_str) != Some("nirs4all-methods")
-            || !matches!(format_version, Some(1 | 2))
+            || !matches!(format_version, Some(1..=3))
             || o.get("abi_major").and_then(Value::as_u64) != Some(2)
             || o.get("abi_min_minor")
                 .is_some_and(|value| value.as_u64().is_none_or(|minor| minor > u32::MAX as u64))
             || (format_version == Some(2) && abi_min_minor != Some(5))
+            || (format_version == Some(3) && abi_min_minor.is_none_or(|minor| minor < 20))
             || o.get("semantic_profile").and_then(Value::as_str) != Some("n4mm_raw_sha256")
             || o.get("semantic_fingerprint") != o.get("raw_sha256")
         {
-            return refuse("N4MM reference is not exact Methods ABI 2 format-1/format-2 data");
+            return refuse(
+                "N4MM reference is not a supported exact Methods ABI 2 wire-format declaration",
+            );
         }
         let path = required_str(o, "member_path")?;
         let artifact_id = o
@@ -2714,6 +2717,48 @@ mod tests {
         assert_eq!(declaration.abi_min_minor(), 5);
         let _ = fs::remove_file(pipeline_path);
     }
+    #[test]
+    fn v2_format_three_requires_explicit_supported_abi_and_preserves_members() {
+        for minor in [None, Some(0), Some(5), Some(19), Some(20), Some(21)] {
+            let target = path("format-three-abi.n4a");
+            let mut input = request();
+            input.manifest["payloads"]["methods"]["n4mm"][0]["format_version"] = Value::from(3);
+            if let Some(minor) = minor {
+                input.manifest["payloads"]["methods"]["n4mm"][0]["abi_min_minor"] =
+                    Value::from(minor);
+            }
+            let expected = input
+                .payloads
+                .iter()
+                .map(|payload| (payload.path.clone(), payload.bytes.clone()))
+                .collect::<BTreeMap<_, _>>();
+            // This is an opaque archive declaration/integrity witness. Actual
+            // native format-3 payload inspection/replay is qualified separately.
+            if minor.is_some_and(|minor| minor >= 20) {
+                write_archive_v2(&target, input).unwrap();
+                let loaded = load_archive_v2(&target).unwrap();
+                assert_eq!(
+                    loaded.methods_n4mm_artifacts().unwrap()[0].format_version(),
+                    3
+                );
+                assert_eq!(
+                    loaded.methods_n4mm_artifacts().unwrap()[0].abi_min_minor(),
+                    minor.unwrap()
+                );
+                for (name, bytes) in expected {
+                    assert_eq!(loaded.member(&name).unwrap(), bytes);
+                }
+                fs::remove_file(target).unwrap();
+            } else {
+                assert!(matches!(
+                    write_archive_v2(&target, input),
+                    Err(ArchiveStoreError::Format(_))
+                ));
+                assert!(!target.exists());
+            }
+        }
+    }
+
     #[test]
     fn v2_refuses_non_integer_abi_minimum() {
         let path = path("invalid-abi-minor.n4a");

@@ -479,9 +479,11 @@ impl Drop for DatasetPackageMethodsProvider {
 /// Closed PLS profiles exposed by the aggregate's canonical request builder.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CanonicalPlsProfile {
-    /// PLS over the raw numeric spectrum matrix (N4MM format 1).
+    /// PLS over the raw numeric spectrum matrix. Current ABI 2.20 writes N4MM 3;
+    /// historical N4MM 1 archives remain readable.
     Raw,
-    /// Native SNV → Savitzky-Golay → PLS over raw caller input (N4MM format 2).
+    /// Native SNV → Savitzky-Golay → PLS over raw caller input. Current ABI
+    /// 2.20 writes N4MM 3 with an attested pipeline; historical format 2 reads remain.
     SnvSavitzkyGolay,
 }
 
