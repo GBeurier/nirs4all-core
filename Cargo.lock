@@ -1017,6 +1017,8 @@ checksum = "743fb55ba31b18fb1ecef6bdc9aa2743314978ac084044301a7eee33fb99a20d"
 [[package]]
 name = "n4m"
 version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4d036a20611f734738741f0b70e8e0393a7fbf6dcf06bb41051a4eeae6d880b8"
 dependencies = [
  "cc",
  "libloading",
@@ -1070,6 +1072,8 @@ dependencies = [
 [[package]]
 name = "nirs4all-formats"
 version = "0.2.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "662a598c2580ce75e027d1a6179de2f42a1a1e2a22ff6802d6674f803ea63d19"
 dependencies = [
  "calamine",
  "cfb",
@@ -1085,6 +1089,8 @@ dependencies = [
 [[package]]
 name = "nirs4all-formats-core"
 version = "0.2.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "26b37f7540f019a607824481b2716077186a4e8b726ee1c47d05599f29837fc6"
 dependencies = [
  "serde",
  "serde_json",
