@@ -217,6 +217,8 @@ mod tests {
         assert!(std::fs::metadata(&target).unwrap().permissions().readonly());
         owned.close().unwrap();
         let mut permissions = std::fs::metadata(&target).unwrap().permissions();
+        // Windows-only private fixture cleanup; no Unix permission bits exist.
+        #[allow(clippy::permissions_set_readonly_false)]
         permissions.set_readonly(false);
         std::fs::set_permissions(&target, permissions).unwrap();
     }
