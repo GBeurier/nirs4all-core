@@ -23,7 +23,7 @@ use dag_ml_core::{
     PortableRefitPackageV3, PortableRefitReplayOutcomeV3, PredictionKind, PredictionPartition,
     RunId, RuntimeControllerRegistry, SampleId, SampleRelation, SampleRelationSet,
     TrainingReplayOutcome, TrainingReplayRequest, EXTERNAL_DATA_PLAN_ENVELOPE_SCHEMA_VERSION_V1,
-    METHODS_RUNTIME_ABI_MINOR, TRAINING_REPLAY_REQUEST_SCHEMA_VERSION,
+    TRAINING_REPLAY_REQUEST_SCHEMA_VERSION,
 };
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -96,7 +96,8 @@ const MAX_ATTESTED_METHODS_LIBRARY_BYTES: u64 = 64 * 1024 * 1024;
 const CORE_METHODS_ABI_MAJOR: u64 = 2;
 // This is the upstream binding's admitted ABI, not a guessed libn4m version.
 // Its dynamic-library negotiation still runs against the attested snapshot.
-const CORE_METHODS_ABI_MINOR: u64 = METHODS_RUNTIME_ABI_MINOR as u64;
+#[cfg(test)]
+const CORE_METHODS_ABI_MINOR: u64 = dag_ml_core::METHODS_RUNTIME_ABI_MINOR as u64;
 
 struct AttestedMethodsLibrary {
     source_canonical_path: PathBuf,
@@ -489,7 +490,7 @@ fn configure_methods_library_identity(
     let abi_error = MethodsRuntime::configure(&snapshot_path)
         .err()
         .map(|error| format!("cannot configure the attested Methods runtime: {error}"));
-    // Core's own n4m instance (the ABI 2.14 role pipelines) serves the same
+    // Core's candidate n4m 0.4.1 instance serves the same attested
     // snapshot. An older libn4m still replays Archive V2 but cannot load the
     // role-pipeline symbols; role recipes then report the unconfigured runtime.
     if abi_error.is_none() {
@@ -564,6 +565,7 @@ fn inspect_package_native_predictors(
     archive: &LoadedArchiveV2,
     package: &PortablePredictorPackage,
 ) -> Result<Vec<NativePredictorDescriptorV1>, NativeMethodsReplayError> {
+    require_configured_archive_methods_abi(archive.manifest(), "Archive V2")?;
     let mut declarations = archive
         .methods_n4mm_artifacts()
         .map_err(|error| {
@@ -651,14 +653,16 @@ fn inspect_package_native_predictors(
                 artifact.id
             )));
         }
-        if declaration.format_version() == 2
+        if declaration.format_version() >= 2
             && artifact
                 .native_predictor_descriptor
                 .as_ref()
-                .is_none_or(|embedded| embedded.pipeline.is_none())
+                .is_none_or(|embedded| {
+                    declaration.format_version() == 2 && embedded.pipeline.is_none()
+                })
         {
             return Err(replay_error(format!(
-                "Core Archive V2 pipeline N4MM `{}` requires its content-bound embedded descriptor",
+                "Core Archive V2 modern N4MM `{}` requires its content-bound embedded descriptor",
                 artifact.id
             )));
         }
@@ -963,6 +967,9 @@ pub fn replay_methods_archive_v2(
     input: MethodsArchivePredictRequest,
 ) -> Result<TrainingReplayOutcome, NativeMethodsReplayError> {
     let package = load_v2_predictor_package(archive)?;
+    validate_methods_replay_inputs(&input.request, &input.data_envelopes, &input.methods_inputs)?;
+    configure_methods_runtime_for_source(&input.methods_library_path)?;
+    require_configured_archive_methods_abi(archive.manifest(), "Archive V2")?;
     replay_methods_predictor_package(&package, input)
 }
 
@@ -988,6 +995,7 @@ pub fn predict_methods_archive_v2_matrix(
     let snapshot_path =
         configure_attested_methods_library(&input.methods_library_path, &expected_library_sha256)?;
     inspect_package_native_predictors(archive, &package)?;
+    require_configured_archive_methods_abi(archive.manifest(), "Archive V2")?;
     let mut input = input;
     input.methods_library_path = snapshot_path;
     let outcome = replay_methods_predictor_package(&package, input)?;
@@ -1043,6 +1051,7 @@ pub fn predict_tuning_archive_v2_matrix(
     } = compose_methods_archive_matrix_predict(&package, input)?;
     let snapshot_path =
         configure_attested_methods_library(&input.methods_library_path, &expected_library_sha256)?;
+    require_configured_archive_methods_abi(archive.manifest(), "Archive V2")?;
     let mut input = input;
     input.methods_library_path = snapshot_path;
     let outcome = replay_methods_predictor_package(&package, input)?;
@@ -1094,6 +1103,7 @@ pub fn predict_methods_archive_v2_matrix_conformal_presentation_v2(
     let snapshot_path =
         configure_attested_methods_library(&input.methods_library_path, &expected_library_sha256)?;
     let native_predictors = inspect_package_native_predictors(archive, &package)?;
+    require_configured_archive_methods_abi(archive.manifest(), "Archive V2")?;
     let mut input = input;
     input.methods_library_path = snapshot_path;
     let outcome = replay_methods_predictor_package(&package, input)?;
@@ -1266,7 +1276,6 @@ fn require_conformal_archive_identity(
 fn load_v2_predictor_package(
     archive: &LoadedArchiveV2,
 ) -> Result<PortablePredictorPackage, NativeMethodsReplayError> {
-    require_archive_methods_abi(archive.manifest(), "Archive V2")?;
     let package_bytes = archive.portable_predictor_package().map_err(|error| {
         NativeMethodsReplayError(format!("Core Archive V2 package read failed: {error}"))
     })?;
@@ -1282,12 +1291,25 @@ fn load_v2_predictor_package(
 }
 
 /// Refuse a payload before native import when its manifest requires a newer
-/// Methods ABI than the n4m binding compiled into this Core release.
+/// Methods ABI than the byte-attested library actually provides.
 ///
 /// The absent-field fallback is intentionally limited to the historical V2/V3
 /// profile: PLS N4MM existed at ABI 2.0 and usable N4MOPT at ABI 2.2. New writers emit
 /// `abi_min_minor` from the actual payload capability (for example, 3 for an
 /// imported-linear N4MM) rather than from the host runtime version.
+fn require_configured_archive_methods_abi(
+    manifest: &serde_json::Value,
+    archive_label: &str,
+) -> Result<(), NativeMethodsReplayError> {
+    let (major, minor, _) = n4m::runtime_abi_version().map_err(|error| {
+        replay_error(format!(
+            "cannot query attested Methods runtime ABI: {error}"
+        ))
+    })?;
+    require_archive_methods_abi_for_runtime(manifest, archive_label, major.into(), minor.into())
+}
+
+#[cfg(test)]
 fn require_archive_methods_abi(
     manifest: &serde_json::Value,
     archive_label: &str,
@@ -1443,7 +1465,6 @@ pub fn replay_methods_archive_v3(
     archive: &LoadedArchiveV3,
     input: MethodsArchiveRefitRequestV3,
 ) -> Result<PortableRefitReplayOutcomeV3, NativeMethodsReplayError> {
-    require_archive_methods_abi(archive.manifest(), "Archive V3")?;
     let package_bytes = archive.portable_refit_package().map_err(|error| {
         NativeMethodsReplayError(format!("Core Archive V3 package read failed: {error}"))
     })?;
@@ -1457,6 +1478,7 @@ pub fn replay_methods_archive_v3(
     })?;
     validate_methods_replay_inputs(&input.request, &input.data_envelopes, &input.methods_inputs)?;
     let runtime = configure_methods_runtime_for_source(&input.methods_library_path)?;
+    require_configured_archive_methods_abi(archive.manifest(), "Archive V3")?;
     execute_loaded_methods_portable_refit_replay_v3(MethodsPortableRefitReplayInputV3 {
         package: &package,
         request: &input.request,

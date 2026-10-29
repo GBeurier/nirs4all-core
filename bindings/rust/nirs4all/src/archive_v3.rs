@@ -414,7 +414,8 @@ fn validate_methods_ref<'a>(
     let version = reference.get("format_version").and_then(Value::as_u64);
     let minor = reference.get("abi_min_minor").and_then(Value::as_u64);
     let valid_version = version == Some(1)
-        || family == "n4mm" && version == Some(2) && minor.is_some_and(|minor| minor >= 5);
+        || family == "n4mm" && version == Some(2) && minor.is_some_and(|minor| minor >= 5)
+        || family == "n4mm" && version == Some(3) && minor.is_some_and(|minor| minor >= 20);
     if !is_id(artifact_id)
         || !valid_path
         || !valid_version
@@ -1293,6 +1294,29 @@ mod tests {
                 !archive.exists(),
                 "rejected declaration must not create a partial archive"
             );
+        }
+    }
+
+    #[test]
+    fn v3_format_three_requires_explicit_supported_abi_and_roundtrips() {
+        for minor in [None, Some(5), Some(19), Some(20), Some(21)] {
+            let mut input = request();
+            input.manifest["payloads"]["methods"]["n4mm"][0]["format_version"] = Value::from(3);
+            if let Some(minor) = minor {
+                input.manifest["payloads"]["methods"]["n4mm"][0]["abi_min_minor"] =
+                    Value::from(minor);
+            }
+            let archive = path("format-three.n4a");
+            if minor.is_some_and(|minor| minor >= 20) {
+                write_archive_v3(&archive, input).unwrap();
+                let view = crate::archive_v3_view(&load_archive_v3(&archive).unwrap()).unwrap();
+                assert_eq!(view.methods.n4mm[0].format_version, 3);
+                assert_eq!(view.methods.n4mm[0].abi_min_minor, minor);
+                fs::remove_file(archive).unwrap();
+            } else {
+                assert!(write_archive_v3(&archive, input).is_err());
+                assert!(!archive.exists());
+            }
         }
     }
 

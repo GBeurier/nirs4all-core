@@ -77,10 +77,10 @@ fn unsupported_format_refuses_without_fallback() {
 fn real_spectrum_file_trains_archive_reloads_and_fresh_predicts() {
     let library = std::env::var_os("N4M_LIBRARY_PATH")
         .map(PathBuf::from)
-        .expect("N4M_LIBRARY_PATH must name the exact ABI 2.5 libn4m");
+        .expect("N4M_LIBRARY_PATH must name the exact candidate ABI 2.20 libn4m");
     let library_sha256 = sha256(&library);
     preflight_methods_archive_v2_library(&library, &library_sha256)
-        .expect("exact Methods ABI 2.5 library passes Core preflight");
+        .expect("exact candidate Methods ABI 2.20 library passes Core preflight");
 
     let directory = tempfile::tempdir().expect("temporary E2E directory");
     let spectrum_path = directory.path().join("canonical_raw_pls.csv");
@@ -130,7 +130,14 @@ fn real_spectrum_file_trains_archive_reloads_and_fresh_predicts() {
             .native_predictor_descriptor
             .as_ref()
             .expect("portable native predictor descriptor");
-        assert_eq!(descriptor.format_version, 2);
+        assert_eq!(descriptor.format_version, 3);
+        assert!(descriptor.writer_abi.minor >= 20);
+        assert_eq!(
+            trained.training.execution_bundle.refit_artifacts[0]
+                .artifact
+                .abi_min_minor,
+            Some(20)
+        );
         assert!(descriptor.pipeline.is_some());
     }
 

@@ -2682,3 +2682,6 @@ mod tests {
             .fold(0.0, f64::max)
     }
 }
+
+#[cfg(test)]
+mod format3_qualification;

@@ -688,6 +688,8 @@ fn project_archive(bytes: &[u8]) -> Result<ValidatedMethodsArchiveV2, String> {
             if descriptor.format_version == 1 && descriptor.pipeline.is_none() => {}
         (2, Some(descriptor))
             if descriptor.format_version == 2 && descriptor.pipeline.is_some() => {}
+        (3, Some(descriptor))
+            if descriptor.format_version == 3 && descriptor.writer_abi.minor >= 20 => {}
         _ => {
             return refuse(
                 "N4MM format declaration does not match its content-bound predictor descriptor",
