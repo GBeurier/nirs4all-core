@@ -39,8 +39,9 @@ MATLAB/Octave execution support.
 - `nirs4all.calibrate()`, `predictCalibrated()`, `conformalMetrics()` and
   `robustness()` expose held-out calibration and frozen native audits.
 
-These native workflows require `nirs4all-core-archive` 0.4.2 or later and
-Methods 1.3.2 (ABI 2.17). Supply the Core executable through `cli` or
+These native workflows require `nirs4all-core-archive` 0.4.2 or later and a
+Methods ABI 2.17 or later library; Core 0.4.7 is qualified with Methods 1.3.13
+(ABI 2.20). Supply the Core executable through `cli` or
 `NIRS4ALL_CORE_CLI`, and the numerical library through `methodsLibrary` or
 `N4M_LIBRARY_PATH`. Workflow, tuning and calibrated objects retain the supplied
 CLI for subsequent operations; exports contain portable model metadata, and
