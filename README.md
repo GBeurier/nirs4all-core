@@ -209,17 +209,19 @@ with an optional **commercial license** for closed-source / SaaS use. For any co
 licenses (the sibling crates currently use CECILL-2.1 OR AGPL-3.0-or-later).
 See [`LICENSING.md`](LICENSING.md), [`LICENSES/`](LICENSES/), and [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 
-## Local candidate cohort
+## Dependency cohort
 
-Core 0.4.6 declares DAG-ML 0.3.42, n4m Rust 0.4.1, Formats 0.2.13 and
-IO 0.2.11. Native loading requires Methods 1.3.9 / ABI 2.20 and Rust 1.88.
-New PLS models use N4MM format 3, with an explicit ABI minimum and an exact
-content-bound descriptor; embedded preprocessing remains attested by Methods.
-Historical format 1/2 archives keep their wire formats and integrity checks.
+Core 0.4.7 compiles against the published DAG-ML 0.3.44, Data 0.2.16,
+Formats 0.2.14, IO 0.2.14 and n4m Rust 0.4.1 crates with Rust 1.88. The Python
+and JavaScript hosts require Methods 1.3.13; native loading requires the
+Methods ABI 2.20. New PLS models use N4MM format 3, with an explicit ABI
+minimum and an exact content-bound descriptor; embedded preprocessing remains
+attested by Methods. Historical format 1/2 archives keep their wire formats and
+integrity checks.
 
-These are local source candidates until their owner packages are published.
-`scripts/stage_local_format3.py` copies the source unchanged and records every
-local override; it never rewrites dependency versions. Supply `--dag-root`,
+`scripts/stage_local_format3.py` stages unpublished owner sources for local
+candidate work: it copies the source unchanged and records every local
+override; it never rewrites dependency versions. Supply `--dag-root`,
 `--methods-root`, `--formats-root` and `--io-root` explicitly. Direct worktree
 commands use the same declared versions with a local `.cargo/config.toml`,
 which is ignored and must never be published as a registry substitute.

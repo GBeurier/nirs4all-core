@@ -6,7 +6,7 @@
 [[upstream]]
 key = "dag_ml"
 repo = "GBeurier/dag-ml"
-ref = "65decf3b6c683f8b82933b2f2774cd0cc407944d"
+ref = "01226120552529aad45e5ba60d3f6327894adc67"
 role = "Leakage-safe DAG/ML execution coordinator"
 bindings = ["rust", "c", "python", "r", "matlab", "octave", "wasm"]
 python_imports = ["dag_ml"]
@@ -17,7 +17,7 @@ wasm_packages = ["dag-ml-wasm"]
 [[upstream]]
 key = "dag_ml_data"
 repo = "GBeurier/dag-ml-data"
-ref = "737cb572dd4e016178dabc2449f8287b11190e1e"
+ref = "eb2ad7835ca85feebf6f626d9f43f61575a1c9a9"
 role = "Sample-aligned data contracts for DAG/ML runtimes"
 bindings = ["rust", "c", "python", "r", "wasm"]
 python_imports = ["dag_ml_data"]
@@ -27,7 +27,7 @@ wasm_packages = ["dag-ml-data-wasm"]
 [[upstream]]
 key = "formats"
 repo = "GBeurier/nirs4all-formats"
-ref = "ca66d54034b90ead27dd758a768115bb879ae9d5"
+ref = "051fe9c0433160f26e8090566418dbc7546c4f96"
 role = "Spectroscopy/NIRS vendor file readers"
 bindings = ["rust", "python", "r", "wasm", "c"]
 python_imports = ["nirs4all_formats", "nirs4all.formats"]
@@ -37,7 +37,7 @@ wasm_packages = ["@nirs4all/formats-wasm"]
 [[upstream]]
 key = "io"
 repo = "GBeurier/nirs4all-io"
-ref = "1c452eefbea3f81b22392bbf6e68a8c6f70772b3"
+ref = "172a7acfcc029742f45fbcf477f55f46dc7fbafe"
 role = "Dataset assembly bridge"
 bindings = ["rust", "python", "r", "wasm", "c"]
 python_imports = ["nirs4all_io", "nirs4all.io"]
@@ -57,7 +57,7 @@ wasm_packages = ["@nirs4all/datasets-wasm"]
 [[upstream]]
 key = "methods"
 repo = "GBeurier/nirs4all-methods"
-ref = "a286ec65631203e7bab459f1080260eb51116671"
+ref = "fa8ff57603ec23bce95f73d52170285e8f3e2861"
 role = "Portable C ABI PLS/NIRS numerical engine"
 bindings = ["python", "r", "matlab", "octave", "wasm", "rust"]
 python_imports = ["nirs4all_methods", "pls4all", "n4m", "nirs4all.methods"]
