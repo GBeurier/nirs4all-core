@@ -10,8 +10,8 @@
   Core workflows keep their existing target requirements; for example the
   JavaScript estimator adapter still requires finite targets.
 - Require DAG-ML 0.3.44, Data 0.2.16, Formats 0.2.14, IO 0.2.14 and Methods
-  1.3.13 in the optional Python and JavaScript host integrations. The Methods
-  ABI stays 2.20.
+  1.3.13 in the optional Python and JavaScript host integrations, and Datasets
+  0.3.17 in the optional Python `datasets` extra. The Methods ABI stays 2.20.
 - Pin the release parity upstream refs to the published owner tags.
 
 ## 0.4.5

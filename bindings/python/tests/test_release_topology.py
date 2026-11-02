@@ -636,7 +636,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertFalse(
             any(dependency.startswith("nirs4all-datasets") for dependency in all_extra)
         )
-        self.assertEqual(extras["datasets"], ["nirs4all-datasets>=0.3.5"])
+        self.assertEqual(extras["datasets"], ["nirs4all-datasets>=0.3.17"])
         self.assertEqual(extras["dag-ml"], ["dag-ml>=0.3.44,<0.4"])
         self.assertIn("nirs4all-methods>=1.3.13,<2", extras["methods"])
         self.assertIn("pls4all>=1.3.13,<2", extras["methods"])
