@@ -1,6 +1,6 @@
 [package]
 name = "nirs4all-core-python-native"
-version = "0.4.6"
+version = "0.4.7"
 edition.workspace = true
 rust-version = "1.88"
 license.workspace = true

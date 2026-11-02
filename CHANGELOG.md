@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.7
+
+- Compile the Rust, Python-native and WASM-native aggregate with the published
+  DAG-ML 0.3.44, Data 0.2.16, Formats 0.2.14 and IO 0.2.14 crates. Fold sets
+  now carry DAG-ML target-missing sample identities and Data provider target
+  validation; IO keeps missing targets lossless and reads XLSX natively.
+- Require DAG-ML 0.3.44, Data 0.2.16, Formats 0.2.14, IO 0.2.14 and Methods
+  1.3.13 in the optional Python and JavaScript host integrations. The Methods
+  ABI stays 2.20.
+- Pin the release parity upstream refs to the published owner tags.
+
 ## 0.4.5
 
 - Compile the Rust, Python-native and WASM-native aggregate with DAG-ML 0.3.41,
