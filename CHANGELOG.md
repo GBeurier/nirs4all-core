@@ -2,10 +2,13 @@
 
 ## 0.4.7
 
-- Compile the Rust, Python-native and WASM-native aggregate with the published
-  DAG-ML 0.3.44, Data 0.2.16, Formats 0.2.14 and IO 0.2.14 crates. Fold sets
-  now carry DAG-ML target-missing sample identities and Data provider target
-  validation; IO keeps missing targets lossless and reads XLSX natively.
+- Compile the Rust and Python-native aggregate with the published DAG-ML
+  0.3.44, Data 0.2.16, Formats 0.2.14 and IO 0.2.14 crates, and WASM-native
+  with DAG-ML core 0.3.44. The re-exported DAG-ML fold sets can declare
+  target-missing samples, Data providers validate target values at
+  construction, and IO keeps missing targets lossless and reads XLSX natively.
+  Core workflows keep their existing target requirements; for example the
+  JavaScript estimator adapter still requires finite targets.
 - Require DAG-ML 0.3.44, Data 0.2.16, Formats 0.2.14, IO 0.2.14 and Methods
   1.3.13 in the optional Python and JavaScript host integrations. The Methods
   ABI stays 2.20.

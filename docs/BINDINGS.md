@@ -131,10 +131,11 @@ binding-specific parity gates.
   for N4MOPT). New writers always emit the capability-derived minimum (`3` for
   imported-linear N4MM and `5` for embedded SNV -> Savitzky-Golay N4MM v2),
   never the host runtime minor.
-- The descriptor consumer is qualified against unpublished local candidates
-  DAG-ML `dafb8b6fb98f9d380d30559a3f4b868c91e5b5c4` and Methods
-  `48ad1e5a50844f68c2b99e93b02ad6a3b491c07b`. Those publication holds do not
-  modify the release topology or upstream registry lock.
+- Historical note (Core 0.3.26): the descriptor consumer was first qualified
+  against then-unpublished local candidates DAG-ML
+  `dafb8b6fb98f9d380d30559a3f4b868c91e5b5c4` and Methods
+  `48ad1e5a50844f68c2b99e93b02ad6a3b491c07b`. Current releases compile against
+  the published registry cohort listed in the root README.
 - `replay_methods_archive_v2_conformal_presentation_v2(...)` exposes the
   additive, content-bound multi-target presentation. The scalar V1 entry point
   remains unchanged; neither path recalculates quantiles, endpoints, or joins
