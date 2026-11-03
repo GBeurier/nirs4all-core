@@ -1,0 +1,397 @@
+{
+  "id": "cli-linux-lifecycle-proof-controller",
+  "host": "linux-wsl",
+  "command": [
+    "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/bin/python",
+    "-B",
+    "/home/delete/nirs4all/_audits/2026-11-02-core047/core047-lifecycle-verify.py",
+    "--os-family",
+    "linux",
+    "--evidence-root",
+    "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux",
+    "--source-root",
+    "/home/delete/nirs4all/_audits/2026-11-02-core047/source",
+    "--source-freeze",
+    "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-source-freeze.json"
+  ],
+  "cwd": "/home/delete/nirs4all/_audits/2026-11-02-core047/source",
+  "environment": {
+    "PATH": "/home/delete/.cargo/bin:/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/bin:/usr/bin:/bin",
+    "RUSTUP_TOOLCHAIN": "1.88.0",
+    "CARGO_BUILD_JOBS": "4",
+    "CARGO_TARGET_DIR": "/home/delete/nirs4all/_audits/2026-11-02-core047/target",
+    "PYO3_PYTHON": "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/bin/python",
+    "N4M_LIBRARY_PATH": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0",
+    "N4M_LIB_PATH": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0",
+    "NIRS4ALL_METHODS_LIB": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0",
+    "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "NIRS4ALL_CORE_LIVE_ARCHIVE_V2": "/mnt/c/Temp/n4a-core045-20261008/fixtures/historical-web-archive-v2/multitarget-pls.n4a",
+    "NIRS4ALL_CORE_LIVE_METHODS_LIBRARY": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0",
+    "N4A_RT_PRED_ARCHIVE_V2": "/mnt/c/Temp/n4a-core045-20261008/fixtures/historical-web-archive-v2/multitarget-pls.n4a",
+    "N4A_RT_PRED_METHODS_LIBRARY": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0",
+    "N4A_RT_PRED_METHODS_SHA256": "998f39672da1bd0d330f3b56f0df7af756132c892a180acc0b1179201e639547",
+    "NIRS4ALL_CORE_FORMAT3_ARTIFACTS": "/home/delete/nirs4all/_audits/2026-11-02-core047/raw/cli-linux-lifecycle-proof-controller/format3-artifacts",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "input_fingerprints": {
+    "Cargo.lock": "847c62537c349e62d24e403491948aaeca3e17a2c4604726370b926ac8abbc04",
+    "Cargo.toml": "d3593455f0f5d3dd6d0c800b899890e486e0def9e4cbcdc8b2d9cbdb6a3b63cf",
+    "bindings/rust/nirs4all/Cargo.toml": "8dfd87944ac4f3325c482354e95cc57d8ac6f7268143a2f728593ca14e286b75",
+    "bindings/rust/nirs4all/src/archive_command.rs": "f1fdcc73c6308079005eab62c157800a9b47dc5b3f81105c6f9fcf759e8a610a",
+    "bindings/rust/nirs4all/src/archive_v1.rs": "9f3e7c0eca2f69877e22c2732746651a11c53d9c3b168ce4ab8e3150551ae23d",
+    "bindings/rust/nirs4all/src/archive_v1_fixtures/PROVENANCE.md": "2a34a7e3d11998c55ff6f6fd101f71292480edbb23f01107d74b6b4162f589b3",
+    "bindings/rust/nirs4all/src/archive_v1_fixtures/archive_workspace_manifest.v1.schema.json": "91daa7209843ab9043aa62a50200ff43b0f85f4c4e61ad8f73aa67b65a0a98dc",
+    "bindings/rust/nirs4all/src/archive_v1_fixtures/negative/refusals.v1.json": "d6522da50d8debc87b5c824392d793fd8895e4822ebe80289199a246f502ded5",
+    "bindings/rust/nirs4all/src/archive_v1_fixtures/positive/portable_split_conformal.json": "79acef8a6bedee201c9e7be7a398bf7ec0ef6de2c75777824ec9ec0633b4c451",
+    "bindings/rust/nirs4all/src/archive_v1_fixtures/positive/workspace_n4d_host_sidecar.json": "6c3d678e955258a2f652c886d86358d4775dc98e9e85714166d88ad0e16b13ca",
+    "bindings/rust/nirs4all/src/archive_v2.rs": "6009e980adbf84a8029264d40cb89975425de8ae36a68e4f8bf6f085ef5ea06f",
+    "bindings/rust/nirs4all/src/archive_v3.rs": "5a6851358cc556441186be89f4f89adb305b78cc3a7420410f7f13a27c6a4390",
+    "bindings/rust/nirs4all/src/archive_view.rs": "f09a1001d12f3aa4f6af4f4e8c02fe584339cbaf0d6906a33ab5897aeb1b5088",
+    "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs": "9fce5ffdfeac850445622e58845f539a0d7a0b2bf51fdb62dfd5b2b68925f59d",
+    "bindings/rust/nirs4all/src/conformal.rs": "e16a5f3f2535119f3c645fc55ea09cd434031a086b3c83417557fa606f9db9fe",
+    "bindings/rust/nirs4all/src/conformal_json.rs": "003b20d77d90cd0d49cde5ff3cbafdb4883719840a3732208a73baebda967776",
+    "bindings/rust/nirs4all/src/durability.rs": "d4dc011a8268b7b9216f633d288c23a90808dc9a587a0997adfe8a18abca35be",
+    "bindings/rust/nirs4all/src/format3_qualification.rs": "7c9c96ad4c2d97d5ed81ad9321f8633fa11180bd62f31584aa38dea744f6e0c8",
+    "bindings/rust/nirs4all/src/formats_io.rs": "d0ae25fcb33cfb401394d6eebeee8b27df6afdd1d641a8f0ba0b67d29295fdf3",
+    "bindings/rust/nirs4all/src/generation.rs": "24f55553af4de979ee0fd65763b9f422e58c86385e47590cd015161c5d011cde",
+    "bindings/rust/nirs4all/src/io_training.rs": "5d8221768a5a9ea06fcd08814833a67763b1b76f4cbb827fc80cd836c819d50d",
+    "bindings/rust/nirs4all/src/lib.rs": "a3466e2ae80ddf3b012748abd32a148e58db74c58ca7b69f486b9e3edc3dcc10",
+    "bindings/rust/nirs4all/src/multimodal_workflow.rs": "6b97e5937ec2d4073055752d64e5ad630ecde2b07668a7dfeeb94b4ed6e7c91f",
+    "bindings/rust/nirs4all/src/n4m_roles.rs": "11493f92b767d51330cce08a183a66b10ed53dfbb3c7576fda7c729e0a16884e",
+    "bindings/rust/nirs4all/src/native_methods_replay.rs": "cfa08e31a10fa5d751e7ce50b9f3f7009dbb57a893219eb68d17c8afbcd9a931",
+    "bindings/rust/nirs4all/src/native_pipeline_contract.rs": "ff8a2c2801672201b96690e636d886430818f718e3c693cd52ac3d3c41b856f8",
+    "bindings/rust/nirs4all/src/pipeline_workflow.rs": "6e66a0ecd801e79f0b0ab171ee855d0522275b5cb0e012634653d88ef3f6c414",
+    "bindings/rust/nirs4all/src/portable_session.rs": "376d94df8e588e0170bec51b1f63cacf7d2056ce75de191812daf82adc1f5196",
+    "bindings/rust/nirs4all/src/publication.rs": "3aaa956e0df6ad96df7522537dfe387b6b359a48f3787374739b3b14bfeef52b",
+    "bindings/rust/nirs4all/src/result_projection.rs": "4cb8446e0b1f1b84fee9508c0fe713f0e682ad58fcdc9830f9a1d08bb0ca71bb",
+    "bindings/rust/nirs4all/src/results.rs": "964e2103293b665a5f12e25f750784ec3fd4f3cbd2fbf40aa7a65ce468c51d58",
+    "bindings/rust/nirs4all/src/robustness.rs": "0c8e0fbb28801777843ffa06d08599b3329649ed38358f8169eafc7787bcda7b",
+    "bindings/rust/nirs4all/src/robustness_json.rs": "ba06e2710bad3ec27661ac3d43c76ff1afc6bc8b00a3d5c12aa4bae7f6042c1b",
+    "bindings/rust/nirs4all/src/test_fixture.rs": "68e3fd2f730da4adb7a705d2c55507ef4092e4b3aa840bba6e364bc66d052be4",
+    "bindings/rust/nirs4all/src/tuning.rs": "62100a3aa99195ae8d75463264d131464a52913b7ae0dfad221286e9ec42fa5d",
+    "bindings/rust/nirs4all/src/workflow.rs": "f3763bdeaf870181c2bd539b8abdf9c5f37922a51a68f1900f4fdaa1a0074369"
+  },
+  "started_at": "2026-11-02T22:54:19.120129+00:00",
+  "finished_at": "2026-11-02T22:54:20.004439+00:00",
+  "exit_code": 0,
+  "input_evidence": {
+    "path": "qualification/core047-20261102/cli-linux-lifecycle-proof-controller-linux/inherited-inputs.json",
+    "bytes": 4921,
+    "sha256": "b2a9808cb889f6f810b02a6dca6b00ec1b6fe5428928da32257e1091ca356161"
+  },
+  "timing_basis": "measured",
+  "duration_seconds": 2.0634427060140297,
+  "log": {
+    "path": "qualification/core047-20261102/cli-linux-lifecycle-proof-controller-linux/run.log",
+    "bytes": 8478,
+    "sha256": "9e963513f5f5c101c0cba792d420d408fab94afb3bf56db53f7cc6cc0cc46177"
+  },
+  "summary": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0
+  },
+  "skips": [],
+  "facts": {
+    "Windows_observations": null,
+    "actual_cli_sha256": "4b6429dd985241ec2f9852b83a2900588df1f1f373e007a5fc51f2f23e8c8b70",
+    "actual_methods_sha256": "998f39672da1bd0d330f3b56f0df7af756132c892a180acc0b1179201e639547",
+    "archive_sha256": "994252030ff80129d0431995bae53eb473082f05825b65714379262b72af13fa",
+    "expected_refusals": 3,
+    "frozen_runtime_files": 326,
+    "measured_original_commands": 9,
+    "os_family": "linux",
+    "owned_roots_after_each_terminal": 0,
+    "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "prediction_cells_exact": 4,
+    "predictions": [
+      [
+        1.6363636363636365,
+        13.272727272727273
+      ],
+      [
+        2.4999999999999996,
+        15.0
+      ]
+    ],
+    "retained_originals": [
+      {
+        "bytes": 94664,
+        "crc32": "1232f901",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/PRE.json",
+        "sha256": "3bcfc7ed99c59bdacf7cde0fb8e9cab0fb82ac2e89e42b289bb640dda2f5f449"
+      },
+      {
+        "bytes": 200252,
+        "crc32": "ea511bb7",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/qualification-completed.json",
+        "sha256": "1ca3a159b85eee5c4746bedb4137cf3db95b5dac71e6f2b34f984a64c455bcb5"
+      },
+      {
+        "bytes": 53516,
+        "crc32": "b74ec112",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-source-freeze.json",
+        "sha256": "d29ba4d51ca4761e1e8528af0774f433cd672150c3a9f2e350c55457e8aa3f13"
+      },
+      {
+        "bytes": 1009,
+        "crc32": "85eb94c9",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/cargo-build-cli.terminal.json",
+        "sha256": "95f29348bee554bc3c83896ba0cb995b17554ec80e4547b9580e3bff7e5a0b77"
+      },
+      {
+        "bytes": 0,
+        "crc32": "00000000",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/logs/cargo-build-cli.stdout.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 62,
+        "crc32": "5b48eb57",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/logs/cargo-build-cli.stderr.log",
+        "sha256": "3997fc6790b8063b86c119e91f87ac7395ac6cf26135da637dcb229006bc32dc"
+      },
+      {
+        "bytes": 1094,
+        "crc32": "99b28787",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/cargo-build-lifecycle-tests.terminal.json",
+        "sha256": "2b2ecc35e2bab6946f911da0dd14d097664d013dfcc20638fbfec8662245f166"
+      },
+      {
+        "bytes": 188691,
+        "crc32": "533adf68",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/logs/cargo-build-lifecycle-tests.stdout.log",
+        "sha256": "d33c68b11badb69521d3e28014b3a5b8742c577ec450e9c71cd9dbe028440be0"
+      },
+      {
+        "bytes": 62,
+        "crc32": "5a8a8160",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/logs/cargo-build-lifecycle-tests.stderr.log",
+        "sha256": "765f1396d07f30f3a451cd3f9d9cad4e83c92c8e0aecf955ffc09061a6cf1e02"
+      },
+      {
+        "bytes": 1146,
+        "crc32": "45d041ed",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/unit-success_closes_owned_snapshot_tree.terminal.json",
+        "sha256": "c68e67ce62e89776627c929eb03a66286b76e169857fa2f13ee5b37cae21a248"
+      },
+      {
+        "bytes": 182,
+        "crc32": "db73d1ec",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/logs/unit-success_closes_owned_snapshot_tree.stdout.log",
+        "sha256": "be928f61932d24bfe096ec87a9b474798ca9328fbfc722fac281e37a4999eec3"
+      },
+      {
+        "bytes": 0,
+        "crc32": "00000000",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/logs/unit-success_closes_owned_snapshot_tree.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 1223,
+        "crc32": "1362c74a",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/unit-refusal_closes_owned_snapshot_tree_and_preserves_exit.terminal.json",
+        "sha256": "7c88472ae6b09d14fe35f09641c35459a46d96bef8bd0065153431236a147948"
+      },
+      {
+        "bytes": 201,
+        "crc32": "c548b2ab",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/logs/unit-refusal_closes_owned_snapshot_tree_and_preserves_exit.stdout.log",
+        "sha256": "fc92cd829c3e3d56f5ae1b1ff63c5903079d4e2fa8752ad6768585ab79b004f5"
+      },
+      {
+        "bytes": 0,
+        "crc32": "00000000",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/logs/unit-refusal_closes_owned_snapshot_tree_and_preserves_exit.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 974,
+        "crc32": "eddb0ca0",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/help-refusal.terminal.json",
+        "sha256": "27e271ec26709733180fcdf4029ce18f29a54dd381efe9ba18cb9a8505ee4a73"
+      },
+      {
+        "bytes": 0,
+        "crc32": "00000000",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/logs/help-refusal.stdout.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 54,
+        "crc32": "07953e7d",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/logs/help-refusal.stderr.log",
+        "sha256": "85fce53c6ea2c7d240b172019a679ad197a4236e064c0300c38c3909b75b3b38"
+      },
+      {
+        "bytes": 967,
+        "crc32": "864a19a4",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/noargs-refusal.terminal.json",
+        "sha256": "c2e78289d3772f5d7f374d760403583175b5884ece4972fd1792036128c1a8db"
+      },
+      {
+        "bytes": 0,
+        "crc32": "00000000",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/logs/noargs-refusal.stdout.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 126,
+        "crc32": "3ffc59db",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/logs/noargs-refusal.stderr.log",
+        "sha256": "7e775fea079fd1832535d9870a25137f2d731105f473d51426f5f47366223782"
+      },
+      {
+        "bytes": 1200,
+        "crc32": "55ed2329",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/archive-inspect.terminal.json",
+        "sha256": "0d4b0c8e9e1b1287808fdf87a1abb8d4b9f0303875f37c48919fe7a1f7fe9cda"
+      },
+      {
+        "bytes": 0,
+        "crc32": "00000000",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/logs/archive-inspect.stdout.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 0,
+        "crc32": "00000000",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/logs/archive-inspect.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 1563,
+        "crc32": "6c97901d",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/native-prediction.terminal.json",
+        "sha256": "239458adc02176ee71bbc6538999b73678588cd19e73ade76d7c9e0ad4b206a5"
+      },
+      {
+        "bytes": 0,
+        "crc32": "00000000",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/logs/native-prediction.stdout.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 0,
+        "crc32": "00000000",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/logs/native-prediction.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 1568,
+        "crc32": "90d53686",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/wrong-hash-refusal.terminal.json",
+        "sha256": "dd63a29acbb69d653f422653433b835a986127047f9950e2f5d7bb2a3a5fb766"
+      },
+      {
+        "bytes": 0,
+        "crc32": "00000000",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/logs/wrong-hash-refusal.stdout.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 200,
+        "crc32": "f91e9f60",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/logs/wrong-hash-refusal.stderr.log",
+        "sha256": "64356a48f62d2c0874cef3d3c78a5f5eb33bb9dd2a3fb27d523e2fbcfd2a74d5"
+      },
+      {
+        "bytes": 140,
+        "crc32": "c05ca7a8",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/input.json",
+        "sha256": "967d833bdb3e394658cce81a74014148b7e053b038fb7b641b1d7b9284513754"
+      },
+      {
+        "bytes": 4600,
+        "crc32": "7a80ea57",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/output/predict.json",
+        "sha256": "2277da477a1ac5d9ae0518d6faa7f76f648081223dd7fa80cdd869e593892193"
+      },
+      {
+        "bytes": 11877,
+        "crc32": "77bc6e5c",
+        "path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux/output/inspect.json",
+        "sha256": "70e31f14004d409bb46c8b8cf6ac2563806ba7ba74b2d41f5f99a5ce3429b084"
+      }
+    ],
+    "scope": "Verification of retained original native lifecycle executions; no compilation or scientific execution replay. Original expected refusal exits remain1.",
+    "source_commit": "6804e5696e72d8006c65616e5689456a3c9b6eae",
+    "source_sha256": "9fce5ffdfeac850445622e58845f539a0d7a0b2bf51fdb62dfd5b2b68925f59d",
+    "status": "PASS",
+    "methods_engine": "1.3.13+abi.2.20.0"
+  },
+  "provenance": {
+    "tools": {
+      "python": "3.11.15",
+      "cargo": "cargo 1.88.0 (873a06493 2025-05-10)",
+      "rustc": "rustc 1.88.0 (6b00bc388 2025-06-23)\nbinary: rustc\ncommit-hash: 6b00bc3880198600130e1cf62b8f8a93494488cc\ncommit-date: 2025-06-23\nhost: x86_64-unknown-linux-gnu\nrelease: 1.88.0\nLLVM version: 20.1.5"
+    },
+    "source_artifacts": [
+      {
+        "name": "core-cli-lifecycle",
+        "version": "0.4.7",
+        "origin": "Actual Linux Rust1.88 cargo release build of the frozen Core 0.4.7 source, lifecycle Linux9",
+        "sha256": "4b6429dd985241ec2f9852b83a2900588df1f1f373e007a5fc51f2f23e8c8b70",
+        "bytes": 38836792,
+        "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux-target/release/nirs4all-core-archive",
+        "evidence": {
+          "path": "qualification/core047-20261102/cli-linux-lifecycle-proof-controller-linux/artifact-0.json",
+          "bytes": 7471,
+          "sha256": "94e25be38a381bdc299660c7aae1e771dd4fb2108190831498237fb9503403ad"
+        }
+      }
+    ],
+    "dependency_origins": [
+      {
+        "name": "methods-native",
+        "version": "1.3.13",
+        "origin": "Actual public PyPI nirs4all-methods 1.3.13 library, ABI 2.20",
+        "sha256": "998f39672da1bd0d330f3b56f0df7af756132c892a180acc0b1179201e639547",
+        "bytes": 5887336,
+        "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0",
+        "evidence": {
+          "path": "qualification/core047-20261102/cli-linux-lifecycle-proof-controller-linux/artifact-1.json",
+          "bytes": 7407,
+          "sha256": "c2d473ec63f0f18f35ac56fc6e110219dd2fce7943836923752eaaf79bbe744d"
+        }
+      },
+      {
+        "name": "historical-archive-v2",
+        "version": "0.3.23",
+        "origin": "Authentic immutable historical ArchiveV2 producer fixture; no regeneration",
+        "sha256": "994252030ff80129d0431995bae53eb473082f05825b65714379262b72af13fa",
+        "bytes": 60023,
+        "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/fixtures/historical-web-archive-v2/multitarget-pls.n4a",
+        "evidence": {
+          "path": "qualification/core047-20261102/cli-linux-lifecycle-proof-controller-linux/artifact-2.json",
+          "bytes": 7441,
+          "sha256": "c575bad8b8c47adbec0acada50d3033c90976faa7379c520eb74d2ff6e28aaba"
+        }
+      }
+    ]
+  },
+  "raw_reports": [
+    {
+      "path": "qualification/core047-20261102/cli-linux-lifecycle-proof-controller-linux/original-terminal.json",
+      "bytes": 90079,
+      "sha256": "d08892b1edc60d85365d4ea314ccf296c7b034b3e7c3727412e7722c9684e30f"
+    },
+    {
+      "path": "qualification/core047-20261102/cli-linux-lifecycle-proof-controller-linux/original-before.json",
+      "bytes": 48268,
+      "sha256": "3b8f05a8c8efbc963681741605b3c2d2bf43a617c7bda7673ea833310cc2b234"
+    },
+    {
+      "path": "qualification/core047-20261102/cli-linux-lifecycle-proof-controller-linux/stdout.log",
+      "bytes": 8477,
+      "sha256": "dd42704fc162fe1cde54460a710a798ab13781018c916c92470d9ce088d331e2"
+    },
+    {
+      "path": "qualification/core047-20261102/cli-linux-lifecycle-proof-controller-linux/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}
