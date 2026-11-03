@@ -1,0 +1,192 @@
+{
+  "id": "python-archive19-native-preloaded",
+  "host": "linux-wsl",
+  "command": [
+    "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/bin/python",
+    "-B",
+    "/home/delete/nirs4all/_audits/2026-11-02-core047/qualify_archive_portable.py",
+    "--source-root",
+    "/home/delete/nirs4all/_audits/2026-11-02-core047/source",
+    "--preload"
+  ],
+  "cwd": "/home/delete/nirs4all/_audits/2026-11-02-core047/source",
+  "environment": {
+    "PATH": "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/bin:/usr/bin:/bin",
+    "RUSTUP_TOOLCHAIN": "1.88.0",
+    "CARGO_BUILD_JOBS": "4",
+    "CARGO_TARGET_DIR": "/home/delete/nirs4all/_audits/2026-11-02-core047/target",
+    "PYO3_PYTHON": "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/bin/python",
+    "N4M_LIBRARY_PATH": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0",
+    "N4M_LIB_PATH": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0",
+    "NIRS4ALL_METHODS_LIB": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0",
+    "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "NIRS4ALL_CORE_LIVE_ARCHIVE_V2": "/mnt/c/Temp/n4a-core045-20261008/fixtures/historical-web-archive-v2/multitarget-pls.n4a",
+    "NIRS4ALL_CORE_LIVE_METHODS_LIBRARY": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0",
+    "N4A_RT_PRED_ARCHIVE_V2": "/mnt/c/Temp/n4a-core045-20261008/fixtures/historical-web-archive-v2/multitarget-pls.n4a",
+    "N4A_RT_PRED_METHODS_LIBRARY": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0",
+    "N4A_RT_PRED_METHODS_SHA256": "998f39672da1bd0d330f3b56f0df7af756132c892a180acc0b1179201e639547",
+    "NIRS4ALL_CORE_FORMAT3_ARTIFACTS": "/home/delete/nirs4all/_audits/2026-11-02-core047/raw/python-archive19-native-preloaded/format3-artifacts",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "NIRS4ALL_CORE_CLI": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux-target/release/nirs4all-core-archive",
+    "NIRS4ALL_BLOCK5_FIXTURE": "/home/delete/nirs4all/_audits/2026-11-02-core047/fixtures/current-native",
+    "NIRS4ALL_TUNING_DATASET": "/home/delete/nirs4all/_audits/2026-11-02-core047/fixtures/current-native/train.json",
+    "NIRS4ALL_EXPERIMENT_FIXTURE": "/home/delete/nirs4all/_audits/2026-11-02-core047/fixtures/current-native/experiment",
+    "NIRS4ALL_MODEL_FIXTURE": "/home/delete/nirs4all/_audits/2026-11-02-core047/fixtures/current-native/shared-model.n4a",
+    "NIRS4ALL_NATIVE_RESULTS_FIXTURE": "/home/delete/nirs4all/_audits/2026-11-02-core047/fixtures/current-native/results",
+    "NIRS4ALL_BROWSER_TUNING_FIXTURE": "/mnt/c/Temp/n4a-core045-20261008/fixtures/browser-tuning-linux-native134.json",
+    "TMPDIR": "/home/delete/nirs4all/_audits/2026-11-02-core047/owned-tmp",
+    "NIRS4ALL_CORE_LIVE_TMPDIR": "/home/delete/nirs4all/_audits/2026-11-02-core047/owned-tmp"
+  },
+  "input_fingerprints": {
+    "bindings/python/src/n4a/__init__.py": "a277a71c13fd9bde30dbb7e53b973ffe09c502bd99b080e1446de3c3bc90ad52",
+    "bindings/python/src/n4a/py.typed": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+    "bindings/python/src/nirs4all_core/__init__.py": "d50d46cfabd30298813921149cbefc55b10175aa55a721a1486d1d577a232a7b",
+    "bindings/python/src/nirs4all_core/_archive.py": "31d3329e46d41657ef2c5f63ce41793bcd8367843edfb5997323c5bf0d56d01d",
+    "bindings/python/src/nirs4all_core/_browser_tuning.py": "344152393b279fd2a4199cd119b44714b99f7b953f8062f36930ee5628a8ef86",
+    "bindings/python/src/nirs4all_core/_capabilities.py": "6c75574ae93e81ac61c9573961878e8ac95edfe5196de1228833be2b2f3769a4",
+    "bindings/python/src/nirs4all_core/_conformal.py": "67ee67a4bf397acf9ad47df54abb4e7758db1f18e2ea18f1fc72e72e7d40cb58",
+    "bindings/python/src/nirs4all_core/_dataset.py": "f3b3afa8b2da70dd40d00c45c2b7eeaf3e239c412c9aedc88552a99857491d80",
+    "bindings/python/src/nirs4all_core/_execution.py": "df473948e5273563692260eb82af4a407f8244367b91b570e218c5eebe2dd11f",
+    "bindings/python/src/nirs4all_core/_multimodal.py": "5bf76510c260daeb07eedb057546d889888b48b5c9f1a0bee0cd0c9b7562f1ac",
+    "bindings/python/src/nirs4all_core/_multimodal_archive.py": "df759469151dc197980bf5e341bf02060b2f3825319f4eb6716f98d3c31cd514",
+    "bindings/python/src/nirs4all_core/_n4m_roles.py": "74e4df9dac3974d0b520a1087bfa1aa3d73e4645dfe139d0039696d5866d232a",
+    "bindings/python/src/nirs4all_core/_native_multimodal.py": "2f4705f27e16e76d76b15c0102b6fc914d7bb606570e89c5f5275b49811fa144",
+    "bindings/python/src/nirs4all_core/_native_pipeline.py": "8ddc88df3aeb53344456a76816adb0e724902e202c61fee7570be5b38cc39048",
+    "bindings/python/src/nirs4all_core/_pipeline.py": "b63a7732a30e3adc4d80a6d3372029d4f642a04b88d26284a63c359285f11d2d",
+    "bindings/python/src/nirs4all_core/_results.py": "f563436531c1b91eb347b13436f3301f3f6e0bb2a7de9bc1bb7f508c44d8c117",
+    "bindings/python/src/nirs4all_core/_robustness.py": "f82508fd2bf5dc1a373a524baaface32f64d9a7bec48d291e85da60607dfae39",
+    "bindings/python/src/nirs4all_core/_topology.py": "c323b81ccb88f52e8a2d219e0512eca78ed9a9efc40b00e1bcabd7ad850486e7",
+    "bindings/python/src/nirs4all_core/_tuning.py": "fe20654b037b2592ca4f77f78efbd6305bfa13954a86b54e63b83ecdd8270b27",
+    "bindings/python/src/nirs4all_core/_upstreams.py": "ff4823f634987846e5bbf5a3ef0622125323cae052b46b9c39db08031b92ab4a",
+    "bindings/python/src/nirs4all_core/_workflow.py": "6f9d0785107c9c617d32000451f5b939ce6f14ff335a58f8d0f2e382f00c267b",
+    "bindings/python/src/nirs4all_core/_workspace.py": "e90bc5d5cdd6359b8a180af198253d701a05f8b0e8a425100ed0627da8ef75cd",
+    "bindings/python/src/nirs4all_core/py.typed": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+    "bindings/python/src/nirs4all_core/workspace_cli.py": "a7725e62444ce838adbc4f5e45b0b6fa0d0785557f6f03f799c067c7c2253995",
+    "bindings/python/tests/test_archive.py": "845eb34353cdb3c32fb89eced752d088527a3fe9a065979451d00e738365b252"
+  },
+  "started_at": "2026-11-02T22:53:18.157903+00:00",
+  "finished_at": "2026-11-02T22:53:19.001742+00:00",
+  "exit_code": 0,
+  "input_evidence": {
+    "path": "qualification/core047-20261102/python-archive19-native-preloaded-linux/captured-inputs.json",
+    "bytes": 9500,
+    "sha256": "4a9f45cfc9b3de3883685abdce3314d092adbe5a6089f2eaf726db26c1024f8a"
+  },
+  "timing_basis": "measured",
+  "duration_seconds": 1.012860336981248,
+  "log": {
+    "path": "qualification/core047-20261102/python-archive19-native-preloaded-linux/run.log",
+    "bytes": 3408,
+    "sha256": "48aea7d3fb5a81c387d5449c8c63338f8143808a320fd6a1771bbf9c4d631ccd"
+  },
+  "summary": {
+    "passed": 19,
+    "failed": 0,
+    "skipped": 0
+  },
+  "skips": [],
+  "facts": {
+    "native_caches_restored": true,
+    "core_version": "0.4.7",
+    "dag_version": "0.3.44",
+    "methods_engine": "1.3.13+abi.2.20.0"
+  },
+  "provenance": {
+    "tools": {
+      "python": "3.11.15"
+    },
+    "source_artifacts": [
+      {
+        "name": "core-wheel",
+        "version": "0.4.7",
+        "origin": "Actual Linux Rust1.88 maturin build of the frozen Core 0.4.7 source",
+        "sha256": "d88ad22c25b68c296fcacb3cc27889ac26434bad1c6a38d42d7a502a4b7e7273",
+        "bytes": 13095165,
+        "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/wheels/nirs4all_core-0.4.7-cp311-abi3-manylinux_2_34_x86_64.whl",
+        "evidence": {
+          "path": "qualification/core047-20261102/python-archive19-native-preloaded-linux/artifact-0.json",
+          "bytes": 6874,
+          "sha256": "479d7b3dd53c02cb8e55fa3a63fae8d2b6531c9b2d02ec7aec21a55056562a64"
+        }
+      },
+      {
+        "name": "core-native",
+        "version": "0.4.7",
+        "origin": "Actual extension installed from the Linux Core 0.4.7 wheel",
+        "sha256": "c6522c825581e171de6b5616784c315e8c13ba9a20a292ee943d24db57b3ade2",
+        "bytes": 39179512,
+        "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/lib/python3.11/site-packages/nirs4all_core/_native.abi3.so",
+        "evidence": {
+          "path": "qualification/core047-20261102/python-archive19-native-preloaded-linux/artifact-1.json",
+          "bytes": 6868,
+          "sha256": "47bc252913c6c82fdc8a9b8104accf6b3c3fb02a3f926d111b8821dde96a09e8"
+        }
+      },
+      {
+        "name": "core-cli",
+        "version": "0.4.7",
+        "origin": "Actual Linux Rust1.88 cargo release build of the frozen Core 0.4.7 source",
+        "sha256": "4b6429dd985241ec2f9852b83a2900588df1f1f373e007a5fc51f2f23e8c8b70",
+        "bytes": 38836792,
+        "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux-target/release/nirs4all-core-archive",
+        "evidence": {
+          "path": "qualification/core047-20261102/python-archive19-native-preloaded-linux/artifact-2.json",
+          "bytes": 6867,
+          "sha256": "eb5ebb4a22a0906173e1fcd274247a0b092a7cfa84c8d71ece289c48cda20d4d"
+        }
+      }
+    ],
+    "dependency_origins": [
+      {
+        "name": "dag-native",
+        "version": "0.3.44",
+        "origin": "Actual public PyPI dag-ml 0.3.44 wheel extension",
+        "sha256": "dbdc3ec2e6fc3abbeafbe57ffc6deb3d3b9c33ee66fe29b7348c52eee1436f1f",
+        "bytes": 43433544,
+        "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/lib/python3.11/site-packages/dag_ml/_dag_ml.abi3.so",
+        "evidence": {
+          "path": "qualification/core047-20261102/python-archive19-native-preloaded-linux/artifact-3.json",
+          "bytes": 6851,
+          "sha256": "8772e6f8f598e36182afee5f8c6686043663b6b772303d5f364d7730a6f38dee"
+        }
+      },
+      {
+        "name": "methods-native",
+        "version": "1.3.13",
+        "origin": "Actual public PyPI nirs4all-methods 1.3.13 library, ABI 2.20",
+        "sha256": "998f39672da1bd0d330f3b56f0df7af756132c892a180acc0b1179201e639547",
+        "bytes": 5887336,
+        "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0",
+        "evidence": {
+          "path": "qualification/core047-20261102/python-archive19-native-preloaded-linux/artifact-4.json",
+          "bytes": 6831,
+          "sha256": "cf0e940922486e7b53fa9232d2ab9845c264734c9722e774114b3b7af4338690"
+        }
+      }
+    ]
+  },
+  "raw_reports": [
+    {
+      "path": "qualification/core047-20261102/python-archive19-native-preloaded-linux/original-terminal.json",
+      "bytes": 91412,
+      "sha256": "b848ebda12b7e0db2c32f7530cad979f3d7d9a3a359d5f833f8499e319cd8a41"
+    },
+    {
+      "path": "qualification/core047-20261102/python-archive19-native-preloaded-linux/original-before.json",
+      "bytes": 48646,
+      "sha256": "9a476a54656f136deee169bac23dabff76ca191ee73b2614913aa375835c492e"
+    },
+    {
+      "path": "qualification/core047-20261102/python-archive19-native-preloaded-linux/stdout.log",
+      "bytes": 445,
+      "sha256": "c0e9e166a977ad6508c0522283292a893c009ab1b202432b4c70135ee48c0f07"
+    },
+    {
+      "path": "qualification/core047-20261102/python-archive19-native-preloaded-linux/stderr.log",
+      "bytes": 2962,
+      "sha256": "10fe9b316524f84cf180758ac7a17a76d4f33f29ddb61bdfd76930b59607b1b9"
+    }
+  ]
+}

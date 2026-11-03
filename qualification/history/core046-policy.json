@@ -1,0 +1,2076 @@
+{
+  "schema": "nirs4all.local-qualification.v1",
+  "project": "core",
+  "proposal_incomplete_not_for_publication": false,
+  "gates": [
+    {
+      "id": "rust-workspace",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "cargo",
+          "test",
+          "--locked",
+          "--workspace",
+          "--",
+          "--include-ignored",
+          "--skip",
+          "native_methods_replay::json_tests::real_multitarget_archive_matrix_product_contract"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/.cargo/bin/cargo"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/rust/nirs4all/",
+        "tests/parity/"
+      ],
+      "minimum_passed": 146,
+      "allowed_skips": [
+        "native_methods_replay::json_tests::live_historical_archive_derives_native_predictor_descriptor",
+        "native_methods_replay::json_tests::real_multitarget_archive_matrix_product_contract"
+      ],
+      "requires_provenance": true,
+      "facts": [],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-build-source",
+            "version": "0.4.6",
+            "origin": "Frozen Core a857710 source manifest, full public registry Cargo.lock; real Cargo compilation",
+            "sha256": "3f7a4d1791c9bf3875527a0f908d2305b9d30a2f2fb6b366300a8219fc01dcd1",
+            "bytes": 3066,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/rust/nirs4all/Cargo.toml"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "methods-native",
+            "version": "1.3.9",
+            "origin": "Frozen bit-identical qualified Methods ABI2.20 owner library, original SHA retained",
+            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
+            "bytes": 5880096,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+          },
+          {
+            "name": "historical-archive-v2",
+            "version": "0.3.23",
+            "origin": "Authentic immutable historical ArchiveV2 producer fixture; no regeneration",
+            "sha256": "994252030ff80129d0431995bae53eb473082f05825b65714379262b72af13fa",
+            "bytes": 60023,
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/fixtures/historical-web-archive-v2/multitarget-pls.n4a"
+          }
+        ]
+      }
+    },
+    {
+      "id": "rust-python-oracle",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "cargo",
+          "test",
+          "--locked",
+          "-p",
+          "nirs4all",
+          "rust_binding_execution_matches_full_python_nirs4all_oracle",
+          "--",
+          "--nocapture"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/.cargo/bin/cargo"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/rust/nirs4all/",
+        "tests/parity/"
+      ],
+      "minimum_passed": 1,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-build-source",
+            "version": "0.4.6",
+            "origin": "Frozen Core a857710 source manifest, full public registry Cargo.lock; real Cargo compilation",
+            "sha256": "3f7a4d1791c9bf3875527a0f908d2305b9d30a2f2fb6b366300a8219fc01dcd1",
+            "bytes": 3066,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/rust/nirs4all/Cargo.toml"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "methods-native",
+            "version": "1.3.9",
+            "origin": "Frozen bit-identical qualified Methods ABI2.20 owner library, original SHA retained",
+            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
+            "bytes": 5880096,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+          },
+          {
+            "name": "historical-archive-v2",
+            "version": "0.3.23",
+            "origin": "Authentic immutable historical ArchiveV2 producer fixture; no regeneration",
+            "sha256": "994252030ff80129d0431995bae53eb473082f05825b65714379262b72af13fa",
+            "bytes": 60023,
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/fixtures/historical-web-archive-v2/multitarget-pls.n4a"
+          }
+        ]
+      }
+    },
+    {
+      "id": "rust-historical-archive-descriptor",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "cargo",
+          "test",
+          "--locked",
+          "-p",
+          "nirs4all",
+          "native_methods_replay::json_tests::live_historical_archive_derives_native_predictor_descriptor",
+          "--",
+          "--exact",
+          "--ignored",
+          "--nocapture"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/.cargo/bin/cargo"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/rust/nirs4all/",
+        "tests/parity/"
+      ],
+      "minimum_passed": 1,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-build-source",
+            "version": "0.4.6",
+            "origin": "Frozen Core a857710 source manifest, full public registry Cargo.lock; real Cargo compilation",
+            "sha256": "3f7a4d1791c9bf3875527a0f908d2305b9d30a2f2fb6b366300a8219fc01dcd1",
+            "bytes": 3066,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/rust/nirs4all/Cargo.toml"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "methods-native",
+            "version": "1.3.9",
+            "origin": "Frozen bit-identical qualified Methods ABI2.20 owner library, original SHA retained",
+            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
+            "bytes": 5880096,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+          },
+          {
+            "name": "historical-archive-v2",
+            "version": "0.3.23",
+            "origin": "Authentic immutable historical ArchiveV2 producer fixture; no regeneration",
+            "sha256": "994252030ff80129d0431995bae53eb473082f05825b65714379262b72af13fa",
+            "bytes": 60023,
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/fixtures/historical-web-archive-v2/multitarget-pls.n4a"
+          }
+        ]
+      }
+    },
+    {
+      "id": "rust-real-multitarget-archive-matrix",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "cargo",
+          "test",
+          "--locked",
+          "-p",
+          "nirs4all",
+          "native_methods_replay::json_tests::real_multitarget_archive_matrix_product_contract",
+          "--",
+          "--exact",
+          "--ignored",
+          "--nocapture"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/.cargo/bin/cargo"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/rust/nirs4all/",
+        "tests/parity/"
+      ],
+      "minimum_passed": 1,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-build-source",
+            "version": "0.4.6",
+            "origin": "Frozen Core a857710 source manifest, full public registry Cargo.lock; real Cargo compilation",
+            "sha256": "3f7a4d1791c9bf3875527a0f908d2305b9d30a2f2fb6b366300a8219fc01dcd1",
+            "bytes": 3066,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/rust/nirs4all/Cargo.toml"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "methods-native",
+            "version": "1.3.9",
+            "origin": "Frozen bit-identical qualified Methods ABI2.20 owner library, original SHA retained",
+            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
+            "bytes": 5880096,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+          },
+          {
+            "name": "historical-archive-v2",
+            "version": "0.3.23",
+            "origin": "Authentic immutable historical ArchiveV2 producer fixture; no regeneration",
+            "sha256": "994252030ff80129d0431995bae53eb473082f05825b65714379262b72af13fa",
+            "bytes": 60023,
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/fixtures/historical-web-archive-v2/multitarget-pls.n4a"
+          }
+        ]
+      }
+    },
+    {
+      "id": "python-full-sdk-oracle",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "python",
+          "-B",
+          "-m",
+          "unittest",
+          "bindings/python/tests/test_execution_parity.py",
+          "-v"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/bin/python"
+        ]
+      },
+      "input_paths": [
+        "bindings/python/src/",
+        "bindings/python-native/",
+        "bindings/rust/nirs4all/src/",
+        "Cargo.toml",
+        "Cargo.lock",
+        "tests/parity/",
+        "scripts/parity/",
+        "bindings/python/tests/test_execution_parity.py"
+      ],
+      "minimum_passed": 1,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-wheel",
+            "version": "0.4.6",
+            "origin": "Actual Linux a857 full published registry source build",
+            "sha256": "666dcca4419931e1df65dcf0dee79cede7ba0da955812b7440cbf22c5b360ef4",
+            "bytes": 13078128,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/wheels-full-registry/nirs4all_core-0.4.6-cp311-abi3-manylinux_2_34_x86_64.whl"
+          },
+          {
+            "name": "core-native",
+            "version": "0.4.6",
+            "origin": "Actual extraction from fullregistry a857 Core wheel",
+            "sha256": "394f431bb0197d828995d5d066f8030d822d90968f73ebe88538aefe7d286c0e",
+            "bytes": 39068448,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/nirs4all_core/_native.abi3.so"
+          },
+          {
+            "name": "core-cli",
+            "version": "0.4.6",
+            "origin": "Actual Linux cargo release a857 full published registry build",
+            "sha256": "7f3a940fff385501d7fe4f3e31731e5726c2104d003411c5bc08c69000edf11b",
+            "bytes": 38738784,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "dag-native",
+            "version": "0.3.43",
+            "origin": "Actual locally qualified DAG343 candidate Python extension, no public PyPI claim",
+            "sha256": "fc31db48676e1480e96cfa0e48611805721b858b98e9092d372f4f2f66e848a0",
+            "bytes": 40634384,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/dag_ml/_dag_ml.abi3.so"
+          },
+          {
+            "name": "methods-native",
+            "version": "1.3.9",
+            "origin": "Frozen actual Methods139 ABI20 qualified runtime",
+            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
+            "bytes": 5880096,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "octave-full-sdk-oracle",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "make",
+          "test-matlab-parity"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "make"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/matlab/",
+        "bindings/rust/nirs4all/src/",
+        "tests/parity/",
+        "scripts/parity/"
+      ],
+      "minimum_passed": 1,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "oracle_assertions_source",
+          "op": "eq",
+          "value": "bindings/matlab/tests/parity.m"
+        }
+      ],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-cli",
+            "version": "0.4.6",
+            "origin": "Actual a857 release build with full published registry graph",
+            "sha256": "7f3a940fff385501d7fe4f3e31731e5726c2104d003411c5bc08c69000edf11b",
+            "bytes": 38738784,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "methods-native",
+            "version": "1.3.9",
+            "origin": "Frozen bit-identical qualified Methods ABI2.20 owner library, original SHA retained",
+            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
+            "bytes": 5880096,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+          },
+          {
+            "name": "historical-archive-v2",
+            "version": "0.3.23",
+            "origin": "Authentic immutable historical ArchiveV2 producer fixture; no regeneration",
+            "sha256": "994252030ff80129d0431995bae53eb473082f05825b65714379262b72af13fa",
+            "bytes": 60023,
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/fixtures/historical-web-archive-v2/multitarget-pls.n4a"
+          },
+          {
+            "name": "n4m_pls_fit_mex",
+            "version": "1.3.9",
+            "origin": "Actual Octave10.3 MEX built from Methods b246 owner C sources, linked to frozen ABI20 library",
+            "sha256": "8006664b237987a7e1aa087fc3db70313346bc13704b6d3041d9d48a635793f7",
+            "bytes": 15944,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/methods139-mex-source/bindings/matlab/+n4m/n4m_pls_fit_mex.mex"
+          },
+          {
+            "name": "n4m_preprocess_mex",
+            "version": "1.3.9",
+            "origin": "Actual Octave10.3 MEX built from Methods b246 owner C sources, linked to frozen ABI20 library",
+            "sha256": "12a75011b7ca31099491401baeffc72e84ec20d106a42f0328de6be36db56e6d",
+            "bytes": 16376,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/methods139-mex-source/bindings/matlab/+n4m/n4m_preprocess_mex.mex"
+          },
+          {
+            "name": "n4m_split_mex",
+            "version": "1.3.9",
+            "origin": "Actual Octave10.3 MEX built from Methods b246 owner C sources, linked to frozen ABI20 library",
+            "sha256": "c8517f058e4ae649e71a5e8643dd4a8f623773f2f60b712b12c256aca49f8ef7",
+            "bytes": 16320,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/methods139-mex-source/bindings/matlab/+n4m/n4m_split_mex.mex"
+          },
+          {
+            "name": "n4m_version_mex",
+            "version": "1.3.9",
+            "origin": "Actual Octave10.3 MEX built from Methods b246 owner C sources, linked to frozen ABI20 library",
+            "sha256": "3bc096411a6a962abeef97b6694c31183382927de2144e9fd7ecabed475d82ea",
+            "bytes": 15464,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/methods139-mex-source/bindings/matlab/+n4m/n4m_version_mex.mex"
+          }
+        ]
+      }
+    },
+    {
+      "id": "octave-native-workflows",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "octave",
+          "--quiet",
+          "--eval",
+          "addpath('bindings/matlab/tests'); smoke; workflow_native; tuning_native; conformal_native; result_view; native_runtime"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "octave"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/matlab/",
+        "bindings/rust/nirs4all/src/",
+        "tests/parity/",
+        "scripts/parity/"
+      ],
+      "minimum_passed": 6,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "suite_markers",
+          "op": "eq",
+          "value": [
+            "nirs4all MATLAB/Octave smoke passed",
+            "OCTAVE_WORKFLOW_NATIVE_PASS",
+            "OCTAVE_NATIVE_TUNING_RESUME_COLD_PREDICT_OK",
+            "native MATLAB/Octave conformal and seeded robustness cross-language gate passed",
+            "Native Octave result view: PASS",
+            "OCTAVE_NATIVE_RUNTIME_PASS"
+          ]
+        }
+      ],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-cli",
+            "version": "0.4.6",
+            "origin": "Actual a857 release build with full published registry graph",
+            "sha256": "7f3a940fff385501d7fe4f3e31731e5726c2104d003411c5bc08c69000edf11b",
+            "bytes": 38738784,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "methods-native",
+            "version": "1.3.9",
+            "origin": "Frozen bit-identical qualified Methods ABI2.20 owner library, original SHA retained",
+            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
+            "bytes": 5880096,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+          },
+          {
+            "name": "historical-archive-v2",
+            "version": "0.3.23",
+            "origin": "Authentic immutable historical ArchiveV2 producer fixture; no regeneration",
+            "sha256": "994252030ff80129d0431995bae53eb473082f05825b65714379262b72af13fa",
+            "bytes": 60023,
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/fixtures/historical-web-archive-v2/multitarget-pls.n4a"
+          },
+          {
+            "name": "n4m_pls_fit_mex",
+            "version": "1.3.9",
+            "origin": "Actual Octave10.3 MEX built from Methods b246 owner C sources, linked to frozen ABI20 library",
+            "sha256": "8006664b237987a7e1aa087fc3db70313346bc13704b6d3041d9d48a635793f7",
+            "bytes": 15944,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/methods139-mex-source/bindings/matlab/+n4m/n4m_pls_fit_mex.mex"
+          },
+          {
+            "name": "n4m_preprocess_mex",
+            "version": "1.3.9",
+            "origin": "Actual Octave10.3 MEX built from Methods b246 owner C sources, linked to frozen ABI20 library",
+            "sha256": "12a75011b7ca31099491401baeffc72e84ec20d106a42f0328de6be36db56e6d",
+            "bytes": 16376,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/methods139-mex-source/bindings/matlab/+n4m/n4m_preprocess_mex.mex"
+          },
+          {
+            "name": "n4m_split_mex",
+            "version": "1.3.9",
+            "origin": "Actual Octave10.3 MEX built from Methods b246 owner C sources, linked to frozen ABI20 library",
+            "sha256": "c8517f058e4ae649e71a5e8643dd4a8f623773f2f60b712b12c256aca49f8ef7",
+            "bytes": 16320,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/methods139-mex-source/bindings/matlab/+n4m/n4m_split_mex.mex"
+          },
+          {
+            "name": "n4m_version_mex",
+            "version": "1.3.9",
+            "origin": "Actual Octave10.3 MEX built from Methods b246 owner C sources, linked to frozen ABI20 library",
+            "sha256": "3bc096411a6a962abeef97b6694c31183382927de2144e9fd7ecabed475d82ea",
+            "bytes": 15464,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/methods139-mex-source/bindings/matlab/+n4m/n4m_version_mex.mex"
+          }
+        ]
+      }
+    },
+    {
+      "id": "python-complete-suite-io026-posix1g",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "python",
+          "-B",
+          "-m",
+          "pytest",
+          "--capture=sys",
+          "-q",
+          "-rs",
+          "bindings/python/tests",
+          "--basetemp",
+          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/owned-tmp/full-python",
+          "--junitxml",
+          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/python-complete.xml"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/bin/python"
+        ]
+      },
+      "input_paths": [
+        "bindings/python/src/",
+        "bindings/python/tests/",
+        "bindings/python-native/",
+        "bindings/rust/nirs4all/src/",
+        "Cargo.toml",
+        "Cargo.lock",
+        "tests/parity/",
+        "scripts/parity/"
+      ],
+      "minimum_passed": 170,
+      "allowed_skips": [
+        "tests.test_archive_live.LiveArchiveV2ReplayTests.test_real_wheel_replays_multi_target_n4mm_with_valid_cross_link",
+        "tests.test_archive_live.LiveArchiveV2ReplayTests.test_tampered_n4mm_is_refused_before_replay",
+        "tests.test_archive_live.LiveArchiveV2ConformalReplayTests.test_archive_replays_in_isolated_child_to_closed_presentation",
+        "tests.test_archive_live.LiveArchiveV2ConformalReplayTests.test_archive_tamper_precedes_library_configuration",
+        "tests.test_archive_matrix_live.LiveArchiveV2MatrixPredictionTests.test_attested_libn4m_replays_exact_multi_target_values",
+        "tests.test_archive_matrix_live.LiveArchiveV2MatrixPredictionTests.test_wrong_methods_sha256_is_refused"
+      ],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "subtests_passed",
+          "op": "eq",
+          "value": 490
+        }
+      ],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "input_exclusions": [
+        "bindings/python/tests/test_archive.py",
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs",
+        "bindings/python/tests/test_archive.py"
+      ],
+      "reviewed_test_delta": {
+        "original_file_sha256": "c2635ffa82f621837bfdf41f4de0c0e87fce59c0b0021f8063a1de4792a8ce31",
+        "new_candidate_sha256": "845eb34353cdb3c32fb89eced752d088527a3fe9a065979451d00e738365b252",
+        "required_supplemental_gates": [
+          "python-archive19-native-lazy",
+          "python-archive19-native-preloaded"
+        ],
+        "reason": "Only path spelling and native mock cache restoration changed; original scientific/runtime inputs and original full test evidence retained. Supplemental19cold/hot gates are mandatory."
+      },
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-wheel",
+            "version": "0.4.6",
+            "origin": "Actual Linux a857 full published registry source build",
+            "sha256": "666dcca4419931e1df65dcf0dee79cede7ba0da955812b7440cbf22c5b360ef4",
+            "bytes": 13078128,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/wheels-full-registry/nirs4all_core-0.4.6-cp311-abi3-manylinux_2_34_x86_64.whl"
+          },
+          {
+            "name": "core-native",
+            "version": "0.4.6",
+            "origin": "Actual extraction from fullregistry a857 Core wheel",
+            "sha256": "394f431bb0197d828995d5d066f8030d822d90968f73ebe88538aefe7d286c0e",
+            "bytes": 39068448,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/nirs4all_core/_native.abi3.so"
+          },
+          {
+            "name": "core-cli",
+            "version": "0.4.6",
+            "origin": "Actual Linux cargo release a857 full published registry build",
+            "sha256": "7f3a940fff385501d7fe4f3e31731e5726c2104d003411c5bc08c69000edf11b",
+            "bytes": 38738784,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "dag-native",
+            "version": "0.3.43",
+            "origin": "Actual locally qualified DAG343 candidate Python extension, no public PyPI claim",
+            "sha256": "fc31db48676e1480e96cfa0e48611805721b858b98e9092d372f4f2f66e848a0",
+            "bytes": 40634384,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/dag_ml/_dag_ml.abi3.so"
+          },
+          {
+            "name": "methods-native",
+            "version": "1.3.9",
+            "origin": "Frozen actual Methods139 ABI20 qualified runtime",
+            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
+            "bytes": 5880096,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "python-closed-matrix-historical-fixture",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "python",
+          "-B",
+          "-m",
+          "unittest",
+          "bindings/python/tests/test_archive_matrix_live.py",
+          "-v"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/bin/python"
+        ]
+      },
+      "input_paths": [
+        "bindings/python/src/",
+        "bindings/python-native/",
+        "bindings/rust/nirs4all/src/",
+        "Cargo.toml",
+        "Cargo.lock",
+        "tests/parity/",
+        "scripts/parity/",
+        "bindings/python/tests/test_archive_matrix_live.py"
+      ],
+      "minimum_passed": 2,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-wheel",
+            "version": "0.4.6",
+            "origin": "Actual Linux a857 full published registry source build",
+            "sha256": "666dcca4419931e1df65dcf0dee79cede7ba0da955812b7440cbf22c5b360ef4",
+            "bytes": 13078128,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/wheels-full-registry/nirs4all_core-0.4.6-cp311-abi3-manylinux_2_34_x86_64.whl"
+          },
+          {
+            "name": "core-native",
+            "version": "0.4.6",
+            "origin": "Actual extraction from fullregistry a857 Core wheel",
+            "sha256": "394f431bb0197d828995d5d066f8030d822d90968f73ebe88538aefe7d286c0e",
+            "bytes": 39068448,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/nirs4all_core/_native.abi3.so"
+          },
+          {
+            "name": "core-cli",
+            "version": "0.4.6",
+            "origin": "Actual Linux cargo release a857 full published registry build",
+            "sha256": "7f3a940fff385501d7fe4f3e31731e5726c2104d003411c5bc08c69000edf11b",
+            "bytes": 38738784,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "dag-native",
+            "version": "0.3.43",
+            "origin": "Actual locally qualified DAG343 candidate Python extension, no public PyPI claim",
+            "sha256": "fc31db48676e1480e96cfa0e48611805721b858b98e9092d372f4f2f66e848a0",
+            "bytes": 40634384,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/dag_ml/_dag_ml.abi3.so"
+          },
+          {
+            "name": "methods-native",
+            "version": "1.3.9",
+            "origin": "Frozen actual Methods139 ABI20 qualified runtime",
+            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
+            "bytes": 5880096,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "python-legacy023-replay-real-fixture",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "python",
+          "-m",
+          "unittest",
+          "-v",
+          "test_archive_live.LiveArchiveV2ReplayTests"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/legacy023-prefix/bin/python"
+        ]
+      },
+      "input_paths": [
+        "bindings/python/src/",
+        "bindings/python-native/",
+        "bindings/rust/nirs4all/src/",
+        "Cargo.toml",
+        "Cargo.lock",
+        "tests/parity/",
+        "scripts/parity/",
+        "bindings/python/tests/test_archive_live.py"
+      ],
+      "minimum_passed": 2,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "compatibility_profile": "Historical publicDAG023 helper contract, nativeCore045 compiledDAG041; not current minimum dependency profile.",
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-wheel",
+            "version": "0.4.6",
+            "origin": "Actual Linux a857 full published registry source build",
+            "sha256": "666dcca4419931e1df65dcf0dee79cede7ba0da955812b7440cbf22c5b360ef4",
+            "bytes": 13078128,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/wheels-full-registry/nirs4all_core-0.4.6-cp311-abi3-manylinux_2_34_x86_64.whl"
+          },
+          {
+            "name": "core-native",
+            "version": "0.4.6",
+            "origin": "Actual fullregistry a857 Core046 extension in isolated public DAG023 historical-fixture signing process",
+            "sha256": "394f431bb0197d828995d5d066f8030d822d90968f73ebe88538aefe7d286c0e",
+            "bytes": 39068448,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/legacy023-prefix/lib/python3.12/site-packages/nirs4all_core/_native.abi3.so"
+          },
+          {
+            "name": "core-cli",
+            "version": "0.4.6",
+            "origin": "Actual Linux cargo release a857 full published registry build",
+            "sha256": "7f3a940fff385501d7fe4f3e31731e5726c2104d003411c5bc08c69000edf11b",
+            "bytes": 38738784,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "dag-native",
+            "version": "0.3.23",
+            "origin": "Actual public PyPI historical DAG023 fixture signing process only",
+            "sha256": "7d67fac964a6cf53addfd3826229842b764003952f2ee0c9573913df8d0cec19",
+            "bytes": 34385584,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/legacy023-prefix/lib/python3.12/site-packages/dag_ml/_dag_ml.abi3.so"
+          },
+          {
+            "name": "methods-native",
+            "version": "1.3.9",
+            "origin": "Frozen actual Methods139 ABI20 qualified runtime",
+            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
+            "bytes": 5880096,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "python-conformal-two-feature-current041-helper",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "python",
+          "-m",
+          "unittest",
+          "-v",
+          "test_archive_live.LiveArchiveV2ConformalReplayTests"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/bin/python"
+        ]
+      },
+      "input_paths": [
+        "bindings/python/src/",
+        "bindings/python-native/",
+        "bindings/rust/nirs4all/src/",
+        "Cargo.toml",
+        "Cargo.lock",
+        "tests/parity/",
+        "scripts/parity/",
+        "bindings/python/tests/test_archive_live.py"
+      ],
+      "minimum_passed": 2,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-wheel",
+            "version": "0.4.6",
+            "origin": "Actual Linux a857 full published registry source build",
+            "sha256": "666dcca4419931e1df65dcf0dee79cede7ba0da955812b7440cbf22c5b360ef4",
+            "bytes": 13078128,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/wheels-full-registry/nirs4all_core-0.4.6-cp311-abi3-manylinux_2_34_x86_64.whl"
+          },
+          {
+            "name": "core-native",
+            "version": "0.4.6",
+            "origin": "Actual extraction from fullregistry a857 Core wheel",
+            "sha256": "394f431bb0197d828995d5d066f8030d822d90968f73ebe88538aefe7d286c0e",
+            "bytes": 39068448,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/nirs4all_core/_native.abi3.so"
+          },
+          {
+            "name": "core-cli",
+            "version": "0.4.6",
+            "origin": "Actual Linux cargo release a857 full published registry build",
+            "sha256": "7f3a940fff385501d7fe4f3e31731e5726c2104d003411c5bc08c69000edf11b",
+            "bytes": 38738784,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "dag-native",
+            "version": "0.3.43",
+            "origin": "Actual locally qualified DAG343 candidate Python extension, no public PyPI claim",
+            "sha256": "fc31db48676e1480e96cfa0e48611805721b858b98e9092d372f4f2f66e848a0",
+            "bytes": 40634384,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/dag_ml/_dag_ml.abi3.so"
+          },
+          {
+            "name": "methods-native",
+            "version": "1.3.9",
+            "origin": "Frozen actual Methods139 ABI20 qualified runtime",
+            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
+            "bytes": 5880096,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "wasm-complete-js-current-fixtures",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "npm",
+          "run",
+          "test:js",
+          "--prefix",
+          "bindings/wasm"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/.nvm/versions/node/v24.16.0/bin/npm"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/wasm/src/",
+        "bindings/wasm/tests/",
+        "bindings/wasm/package.json",
+        "bindings/wasm/package-lock.json",
+        "bindings/wasm/tsconfig.typecheck.json",
+        "bindings/wasm-native/",
+        "bindings/rust/nirs4all/src/",
+        "tests/parity/"
+      ],
+      "minimum_passed": 108,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "tap_tests",
+          "op": "eq",
+          "value": 108
+        },
+        {
+          "field": "cancelled",
+          "op": "eq",
+          "value": 0
+        }
+      ],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-wasm",
+            "version": "0.4.6",
+            "origin": "Actual wasm-pack Rust1.88 full published registry a857 build; scoped Rust inputs unchanged",
+            "sha256": "52309a44eae947f0f7449faa0e4d520390976aea0110d7f33969bb37ed0fd0d3",
+            "bytes": 6933582,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/wasm/native/nirs4all_core_wasm_native_bg.wasm"
+          },
+          {
+            "name": "core-cli",
+            "version": "0.4.6",
+            "origin": "Actual Linux fullregistry a857 release CLI",
+            "sha256": "7f3a940fff385501d7fe4f3e31731e5726c2104d003411c5bc08c69000edf11b",
+            "bytes": 38738784,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "methods-wasm",
+            "version": "1.3.9",
+            "origin": "Actual published npm Methods139 SRI-verified package",
+            "sha256": "bda33b89ebe7dba33e1f7360ab427bb32543fe4c49aa7366ee9fbd7cd625e5b7",
+            "bytes": 3080945,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/npm/methods/package/dist/n4m.wasm"
+          },
+          {
+            "name": "io-wasm",
+            "version": "0.2.11",
+            "origin": "Actual published npm IO211 SRI-verified package",
+            "sha256": "e110e05efc8781e66a5ad3d6795798103df07b4d22d0500fd826ef63f37bdb6c",
+            "bytes": 2273947,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/npm/io/package/nirs4all_io_wasm_bg.wasm"
+          },
+          {
+            "name": "dag-wasm",
+            "version": "0.3.43",
+            "origin": "Actual published npm DAG343 SRI-verified package, Sigstore3572743789",
+            "sha256": "7241aaed192fdd082bb42f362019cf15cc521de97fc07e1b7d6e524d2a61bd70",
+            "bytes": 10819988,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/wasm/node_modules/dag-ml-wasm/dag_ml_wasm_bg.wasm"
+          },
+          {
+            "name": "methods-native",
+            "version": "1.3.9",
+            "origin": "Frozen actual qualified Methods139 ABI20 library",
+            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
+            "bytes": 5880096,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "wasm-typecheck",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "npm",
+          "run",
+          "typecheck",
+          "--prefix",
+          "bindings/wasm"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/.nvm/versions/node/v24.16.0/bin/npm"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/wasm/src/",
+        "bindings/wasm/tests/",
+        "bindings/wasm/package.json",
+        "bindings/wasm/package-lock.json",
+        "bindings/wasm/tsconfig.typecheck.json",
+        "bindings/wasm-native/",
+        "bindings/rust/nirs4all/src/",
+        "tests/parity/"
+      ],
+      "minimum_passed": 1,
+      "allowed_skips": [],
+      "requires_provenance": false,
+      "facts": [
+        {
+          "field": "check",
+          "op": "eq",
+          "value": "tsc --project tsconfig.typecheck.json"
+        }
+      ],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-wasm",
+            "version": "0.4.6",
+            "origin": "Actual wasm-pack Rust1.88 full published registry a857 build; scoped Rust inputs unchanged",
+            "sha256": "52309a44eae947f0f7449faa0e4d520390976aea0110d7f33969bb37ed0fd0d3",
+            "bytes": 6933582,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/wasm/native/nirs4all_core_wasm_native_bg.wasm"
+          },
+          {
+            "name": "core-cli",
+            "version": "0.4.6",
+            "origin": "Actual Linux fullregistry a857 release CLI",
+            "sha256": "7f3a940fff385501d7fe4f3e31731e5726c2104d003411c5bc08c69000edf11b",
+            "bytes": 38738784,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "methods-wasm",
+            "version": "1.3.9",
+            "origin": "Actual published npm Methods139 SRI-verified package",
+            "sha256": "bda33b89ebe7dba33e1f7360ab427bb32543fe4c49aa7366ee9fbd7cd625e5b7",
+            "bytes": 3080945,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/npm/methods/package/dist/n4m.wasm"
+          },
+          {
+            "name": "io-wasm",
+            "version": "0.2.11",
+            "origin": "Actual published npm IO211 SRI-verified package",
+            "sha256": "e110e05efc8781e66a5ad3d6795798103df07b4d22d0500fd826ef63f37bdb6c",
+            "bytes": 2273947,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/npm/io/package/nirs4all_io_wasm_bg.wasm"
+          },
+          {
+            "name": "dag-wasm",
+            "version": "0.3.43",
+            "origin": "Actual published npm DAG343 SRI-verified package, Sigstore3572743789",
+            "sha256": "7241aaed192fdd082bb42f362019cf15cc521de97fc07e1b7d6e524d2a61bd70",
+            "bytes": 10819988,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/wasm/node_modules/dag-ml-wasm/dag_ml_wasm_bg.wasm"
+          },
+          {
+            "name": "methods-native",
+            "version": "1.3.9",
+            "origin": "Frozen actual qualified Methods139 ABI20 library",
+            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
+            "bytes": 5880096,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "python-archive19-native-lazy",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "python",
+          "-B",
+          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/qualify_archive_portable.py",
+          "--source-root",
+          "{root}"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/bin/python"
+        ]
+      },
+      "input_paths": [
+        "bindings/python/src/",
+        "bindings/python/tests/test_archive.py"
+      ],
+      "minimum_passed": 19,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "native_caches_restored",
+          "op": "eq",
+          "value": true
+        }
+      ],
+      "mapped_test_input": {
+        "observed_before_path": "/mnt/c/Temp/n4a-core045-20261008/audit/archive-mock-cache-fix-v2/test_archive.py",
+        "target_source_path": "bindings/python/tests/test_archive.py",
+        "sha256": "845eb34353cdb3c32fb89eced752d088527a3fe9a065979451d00e738365b252"
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-wheel",
+            "version": "0.4.6",
+            "origin": "Actual Linux a857 full published registry source build",
+            "sha256": "666dcca4419931e1df65dcf0dee79cede7ba0da955812b7440cbf22c5b360ef4",
+            "bytes": 13078128,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/wheels-full-registry/nirs4all_core-0.4.6-cp311-abi3-manylinux_2_34_x86_64.whl"
+          },
+          {
+            "name": "core-native",
+            "version": "0.4.6",
+            "origin": "Actual extraction from fullregistry a857 Core wheel",
+            "sha256": "394f431bb0197d828995d5d066f8030d822d90968f73ebe88538aefe7d286c0e",
+            "bytes": 39068448,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/nirs4all_core/_native.abi3.so"
+          },
+          {
+            "name": "core-cli",
+            "version": "0.4.6",
+            "origin": "Actual Linux cargo release a857 full published registry build",
+            "sha256": "7f3a940fff385501d7fe4f3e31731e5726c2104d003411c5bc08c69000edf11b",
+            "bytes": 38738784,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "dag-native",
+            "version": "0.3.43",
+            "origin": "Actual locally qualified DAG343 candidate Python extension, no public PyPI claim",
+            "sha256": "fc31db48676e1480e96cfa0e48611805721b858b98e9092d372f4f2f66e848a0",
+            "bytes": 40634384,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/dag_ml/_dag_ml.abi3.so"
+          },
+          {
+            "name": "methods-native",
+            "version": "1.3.9",
+            "origin": "Frozen actual Methods139 ABI20 qualified runtime",
+            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
+            "bytes": 5880096,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "python-archive19-native-preloaded",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "python",
+          "-B",
+          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/qualify_archive_portable.py",
+          "--source-root",
+          "{root}",
+          "--preload"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/bin/python"
+        ]
+      },
+      "input_paths": [
+        "bindings/python/src/",
+        "bindings/python/tests/test_archive.py"
+      ],
+      "minimum_passed": 19,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "native_caches_restored",
+          "op": "eq",
+          "value": true
+        }
+      ],
+      "mapped_test_input": {
+        "observed_before_path": "/mnt/c/Temp/n4a-core045-20261008/audit/archive-mock-cache-fix-v2/test_archive.py",
+        "target_source_path": "bindings/python/tests/test_archive.py",
+        "sha256": "845eb34353cdb3c32fb89eced752d088527a3fe9a065979451d00e738365b252"
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-wheel",
+            "version": "0.4.6",
+            "origin": "Actual Linux a857 full published registry source build",
+            "sha256": "666dcca4419931e1df65dcf0dee79cede7ba0da955812b7440cbf22c5b360ef4",
+            "bytes": 13078128,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/wheels-full-registry/nirs4all_core-0.4.6-cp311-abi3-manylinux_2_34_x86_64.whl"
+          },
+          {
+            "name": "core-native",
+            "version": "0.4.6",
+            "origin": "Actual extraction from fullregistry a857 Core wheel",
+            "sha256": "394f431bb0197d828995d5d066f8030d822d90968f73ebe88538aefe7d286c0e",
+            "bytes": 39068448,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/nirs4all_core/_native.abi3.so"
+          },
+          {
+            "name": "core-cli",
+            "version": "0.4.6",
+            "origin": "Actual Linux cargo release a857 full published registry build",
+            "sha256": "7f3a940fff385501d7fe4f3e31731e5726c2104d003411c5bc08c69000edf11b",
+            "bytes": 38738784,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "dag-native",
+            "version": "0.3.43",
+            "origin": "Actual locally qualified DAG343 candidate Python extension, no public PyPI claim",
+            "sha256": "fc31db48676e1480e96cfa0e48611805721b858b98e9092d372f4f2f66e848a0",
+            "bytes": 40634384,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/dag_ml/_dag_ml.abi3.so"
+          },
+          {
+            "name": "methods-native",
+            "version": "1.3.9",
+            "origin": "Frozen actual Methods139 ABI20 qualified runtime",
+            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
+            "bytes": 5880096,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "windows-identity",
+      "hosts": [
+        "windows"
+      ],
+      "commands": {
+        "windows": [
+          "python",
+          "-X",
+          "utf8",
+          "-B",
+          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-formal/windows_driver.py",
+          "--config",
+          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-formal/windows-config.json",
+          "--gate",
+          "identity"
+        ]
+      },
+      "executable_paths": {
+        "windows": [
+          "D:/workspace/nirs4all-release-20261029-quality/core046-final-prefix/Scripts/python.exe"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/python/src/",
+        "bindings/python-native/",
+        "bindings/rust/nirs4all/src/",
+        "tests/parity/"
+      ],
+      "minimum_passed": 1,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "core_version",
+          "op": "eq",
+          "value": "0.4.6"
+        },
+        {
+          "field": "dag_version",
+          "op": "eq",
+          "value": "0.3.43"
+        },
+        {
+          "field": "methods_engine",
+          "op": "eq",
+          "value": "1.3.9+abi.2.20.0"
+        }
+      ],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-wheel",
+            "version": "0.4.6",
+            "origin": "Actual WindowsRust1.88 fullregistry a857 wheel build/extraction, source/runtime continuity explicit",
+            "sha256": "b8d8b41e8a2a0c9aaa589c79c850d3e563dc4dad86d22be385d35358ce08aced",
+            "bytes": 11445260,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\wheels\\full-registry\\nirs4all_core-0.4.6-cp311-abi3-win_amd64.whl"
+          },
+          {
+            "name": "core-native",
+            "version": "0.4.6",
+            "origin": "Actual WindowsRust1.88 fullregistry a857 wheel build/extraction, source/runtime continuity explicit",
+            "sha256": "f8b8278ad5177839b464d0f0ebd14145cf11d98529b98697954375881f3166de",
+            "bytes": 34438144,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\nirs4all_core\\_native.pyd"
+          },
+          {
+            "name": "core-cli",
+            "version": "0.4.6",
+            "origin": "Actual WindowsRust1.88 fullregistry a857 CLI build, immutable lifecycle identity",
+            "sha256": "bee90f9c155cce23cdaac741a69f6c6fe1922560e7280d313ea7899c36146a4f",
+            "bytes": 34192896,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\target\\release\\nirs4all-core-archive.exe"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "dag-native",
+            "version": "0.3.43",
+            "origin": "actual local candidate build, source and registry cohort recorded separately",
+            "sha256": "956ca6be245bdf5620dc9d2f43f15f212a7b6be08b1de4aa55682bc461c6d5f9",
+            "bytes": 36821504,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\dag_ml\\_dag_ml.pyd"
+          },
+          {
+            "name": "methods-native",
+            "version": "1.3.9",
+            "origin": "actual local candidate build, source and registry cohort recorded separately",
+            "sha256": "a821dd2bc4d3d9f9a4640966542c31a60a54f7434c9d66b0d579e01acf61a7fb",
+            "bytes": 4174848,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\n4m\\lib\\n4m.dll"
+          }
+        ]
+      }
+    },
+    {
+      "id": "windows-generate-fixtures",
+      "hosts": [
+        "windows"
+      ],
+      "commands": {
+        "windows": [
+          "python",
+          "-X",
+          "utf8",
+          "-B",
+          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-formal/windows_driver.py",
+          "--config",
+          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-formal/windows-config.json",
+          "--gate",
+          "generate-fixtures"
+        ]
+      },
+      "executable_paths": {
+        "windows": [
+          "D:/workspace/nirs4all-release-20261029-quality/core046-final-prefix/Scripts/python.exe"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/python/src/",
+        "bindings/python-native/",
+        "bindings/rust/nirs4all/src/",
+        "tests/parity/"
+      ],
+      "minimum_passed": 1,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "core_version",
+          "op": "eq",
+          "value": "0.4.6"
+        },
+        {
+          "field": "dag_version",
+          "op": "eq",
+          "value": "0.3.43"
+        },
+        {
+          "field": "methods_engine",
+          "op": "eq",
+          "value": "1.3.9+abi.2.20.0"
+        }
+      ],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-wheel",
+            "version": "0.4.6",
+            "origin": "Actual WindowsRust1.88 fullregistry a857 wheel build/extraction, source/runtime continuity explicit",
+            "sha256": "b8d8b41e8a2a0c9aaa589c79c850d3e563dc4dad86d22be385d35358ce08aced",
+            "bytes": 11445260,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\wheels\\full-registry\\nirs4all_core-0.4.6-cp311-abi3-win_amd64.whl"
+          },
+          {
+            "name": "core-native",
+            "version": "0.4.6",
+            "origin": "Actual WindowsRust1.88 fullregistry a857 wheel build/extraction, source/runtime continuity explicit",
+            "sha256": "f8b8278ad5177839b464d0f0ebd14145cf11d98529b98697954375881f3166de",
+            "bytes": 34438144,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\nirs4all_core\\_native.pyd"
+          },
+          {
+            "name": "core-cli",
+            "version": "0.4.6",
+            "origin": "Actual WindowsRust1.88 fullregistry a857 CLI build, immutable lifecycle identity",
+            "sha256": "bee90f9c155cce23cdaac741a69f6c6fe1922560e7280d313ea7899c36146a4f",
+            "bytes": 34192896,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\target\\release\\nirs4all-core-archive.exe"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "dag-native",
+            "version": "0.3.43",
+            "origin": "actual local candidate build, source and registry cohort recorded separately",
+            "sha256": "956ca6be245bdf5620dc9d2f43f15f212a7b6be08b1de4aa55682bc461c6d5f9",
+            "bytes": 36821504,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\dag_ml\\_dag_ml.pyd"
+          },
+          {
+            "name": "methods-native",
+            "version": "1.3.9",
+            "origin": "actual local candidate build, source and registry cohort recorded separately",
+            "sha256": "a821dd2bc4d3d9f9a4640966542c31a60a54f7434c9d66b0d579e01acf61a7fb",
+            "bytes": 4174848,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\n4m\\lib\\n4m.dll"
+          }
+        ]
+      }
+    },
+    {
+      "id": "windows-python-oracle",
+      "hosts": [
+        "windows"
+      ],
+      "commands": {
+        "windows": [
+          "python",
+          "-X",
+          "utf8",
+          "-B",
+          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-formal/windows_driver.py",
+          "--config",
+          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-formal/windows-config.json",
+          "--gate",
+          "python-oracle"
+        ]
+      },
+      "executable_paths": {
+        "windows": [
+          "D:/workspace/nirs4all-release-20261029-quality/core046-final-prefix/Scripts/python.exe"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/python/src/",
+        "bindings/python-native/",
+        "bindings/rust/nirs4all/src/",
+        "tests/parity/",
+        "bindings/python/tests/test_execution_parity.py"
+      ],
+      "minimum_passed": 1,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "core_version",
+          "op": "eq",
+          "value": "0.4.6"
+        },
+        {
+          "field": "dag_version",
+          "op": "eq",
+          "value": "0.3.43"
+        },
+        {
+          "field": "methods_engine",
+          "op": "eq",
+          "value": "1.3.9+abi.2.20.0"
+        }
+      ],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-wheel",
+            "version": "0.4.6",
+            "origin": "Actual WindowsRust1.88 fullregistry a857 wheel build/extraction, source/runtime continuity explicit",
+            "sha256": "b8d8b41e8a2a0c9aaa589c79c850d3e563dc4dad86d22be385d35358ce08aced",
+            "bytes": 11445260,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\wheels\\full-registry\\nirs4all_core-0.4.6-cp311-abi3-win_amd64.whl"
+          },
+          {
+            "name": "core-native",
+            "version": "0.4.6",
+            "origin": "Actual WindowsRust1.88 fullregistry a857 wheel build/extraction, source/runtime continuity explicit",
+            "sha256": "f8b8278ad5177839b464d0f0ebd14145cf11d98529b98697954375881f3166de",
+            "bytes": 34438144,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\nirs4all_core\\_native.pyd"
+          },
+          {
+            "name": "core-cli",
+            "version": "0.4.6",
+            "origin": "Actual WindowsRust1.88 fullregistry a857 CLI build, immutable lifecycle identity",
+            "sha256": "bee90f9c155cce23cdaac741a69f6c6fe1922560e7280d313ea7899c36146a4f",
+            "bytes": 34192896,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\target\\release\\nirs4all-core-archive.exe"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "dag-native",
+            "version": "0.3.43",
+            "origin": "actual local candidate build, source and registry cohort recorded separately",
+            "sha256": "956ca6be245bdf5620dc9d2f43f15f212a7b6be08b1de4aa55682bc461c6d5f9",
+            "bytes": 36821504,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\dag_ml\\_dag_ml.pyd"
+          },
+          {
+            "name": "methods-native",
+            "version": "1.3.9",
+            "origin": "actual local candidate build, source and registry cohort recorded separately",
+            "sha256": "a821dd2bc4d3d9f9a4640966542c31a60a54f7434c9d66b0d579e01acf61a7fb",
+            "bytes": 4174848,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\n4m\\lib\\n4m.dll"
+          }
+        ]
+      }
+    },
+    {
+      "id": "windows-python-complete",
+      "hosts": [
+        "windows"
+      ],
+      "commands": {
+        "windows": [
+          "python",
+          "-X",
+          "utf8",
+          "-B",
+          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-formal/windows_driver.py",
+          "--config",
+          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-formal/windows-config.json",
+          "--gate",
+          "python-complete"
+        ]
+      },
+      "executable_paths": {
+        "windows": [
+          "D:/workspace/nirs4all-release-20261029-quality/core046-final-prefix/Scripts/python.exe"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/python/src/",
+        "bindings/python-native/",
+        "bindings/rust/nirs4all/src/",
+        "tests/parity/",
+        "bindings/python/tests/"
+      ],
+      "minimum_passed": 169,
+      "allowed_skips": [
+        "tests.test_archive_live.LiveArchiveV2ReplayTests.test_real_wheel_replays_multi_target_n4mm_with_valid_cross_link",
+        "tests.test_archive_live.LiveArchiveV2ReplayTests.test_tampered_n4mm_is_refused_before_replay",
+        "tests.test_archive_live.LiveArchiveV2ConformalReplayTests.test_archive_replays_in_isolated_child_to_closed_presentation",
+        "tests.test_archive_live.LiveArchiveV2ConformalReplayTests.test_archive_tamper_precedes_library_configuration",
+        "tests.test_archive_matrix_live.LiveArchiveV2MatrixPredictionTests.test_attested_libn4m_replays_exact_multi_target_values",
+        "tests.test_archive_matrix_live.LiveArchiveV2MatrixPredictionTests.test_wrong_methods_sha256_is_refused",
+        "tests.test_matlab_package.MatlabPackageTest.test_rebuild_is_reproducible_and_drops_stale_members"
+      ],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "core_version",
+          "op": "eq",
+          "value": "0.4.6"
+        },
+        {
+          "field": "dag_version",
+          "op": "eq",
+          "value": "0.3.43"
+        },
+        {
+          "field": "methods_engine",
+          "op": "eq",
+          "value": "1.3.9+abi.2.20.0"
+        },
+        {
+          "field": "subtests_passed",
+          "op": "eq",
+          "value": 490
+        }
+      ],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-wheel",
+            "version": "0.4.6",
+            "origin": "Actual WindowsRust1.88 fullregistry a857 wheel build/extraction, source/runtime continuity explicit",
+            "sha256": "b8d8b41e8a2a0c9aaa589c79c850d3e563dc4dad86d22be385d35358ce08aced",
+            "bytes": 11445260,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\wheels\\full-registry\\nirs4all_core-0.4.6-cp311-abi3-win_amd64.whl"
+          },
+          {
+            "name": "core-native",
+            "version": "0.4.6",
+            "origin": "Actual WindowsRust1.88 fullregistry a857 wheel build/extraction, source/runtime continuity explicit",
+            "sha256": "f8b8278ad5177839b464d0f0ebd14145cf11d98529b98697954375881f3166de",
+            "bytes": 34438144,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\nirs4all_core\\_native.pyd"
+          },
+          {
+            "name": "core-cli",
+            "version": "0.4.6",
+            "origin": "Actual WindowsRust1.88 fullregistry a857 CLI build, immutable lifecycle identity",
+            "sha256": "bee90f9c155cce23cdaac741a69f6c6fe1922560e7280d313ea7899c36146a4f",
+            "bytes": 34192896,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\target\\release\\nirs4all-core-archive.exe"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "dag-native",
+            "version": "0.3.43",
+            "origin": "actual local candidate build, source and registry cohort recorded separately",
+            "sha256": "956ca6be245bdf5620dc9d2f43f15f212a7b6be08b1de4aa55682bc461c6d5f9",
+            "bytes": 36821504,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\dag_ml\\_dag_ml.pyd"
+          },
+          {
+            "name": "methods-native",
+            "version": "1.3.9",
+            "origin": "actual local candidate build, source and registry cohort recorded separately",
+            "sha256": "a821dd2bc4d3d9f9a4640966542c31a60a54f7434c9d66b0d579e01acf61a7fb",
+            "bytes": 4174848,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\n4m\\lib\\n4m.dll"
+          }
+        ]
+      }
+    },
+    {
+      "id": "windows-python-matrix",
+      "hosts": [
+        "windows"
+      ],
+      "commands": {
+        "windows": [
+          "python",
+          "-X",
+          "utf8",
+          "-B",
+          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-formal/windows_driver.py",
+          "--config",
+          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-formal/matrix-config.json",
+          "--gate",
+          "python-matrix"
+        ]
+      },
+      "executable_paths": {
+        "windows": [
+          "D:/workspace/nirs4all-release-20261029-quality/core046-final-prefix/Scripts/python.exe"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/python/src/",
+        "bindings/python-native/",
+        "bindings/rust/nirs4all/src/",
+        "tests/parity/",
+        "bindings/python/tests/test_archive_matrix_live.py"
+      ],
+      "minimum_passed": 2,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "core_version",
+          "op": "eq",
+          "value": "0.4.6"
+        },
+        {
+          "field": "dag_version",
+          "op": "eq",
+          "value": "0.3.43"
+        },
+        {
+          "field": "methods_engine",
+          "op": "eq",
+          "value": "1.3.9+abi.2.20.0"
+        }
+      ],
+      "required_environment": {
+        "NIRS4ALL_CORE_REQUIRE_METHODS_PARITY": "1"
+      },
+      "input_exclusions": [
+        "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs"
+      ],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-wheel",
+            "version": "0.4.6",
+            "origin": "Actual WindowsRust1.88 fullregistry a857 wheel build/extraction, source/runtime continuity explicit",
+            "sha256": "b8d8b41e8a2a0c9aaa589c79c850d3e563dc4dad86d22be385d35358ce08aced",
+            "bytes": 11445260,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\wheels\\full-registry\\nirs4all_core-0.4.6-cp311-abi3-win_amd64.whl"
+          },
+          {
+            "name": "core-native",
+            "version": "0.4.6",
+            "origin": "Actual WindowsRust1.88 fullregistry a857 wheel build/extraction, source/runtime continuity explicit",
+            "sha256": "f8b8278ad5177839b464d0f0ebd14145cf11d98529b98697954375881f3166de",
+            "bytes": 34438144,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\nirs4all_core\\_native.pyd"
+          },
+          {
+            "name": "core-cli",
+            "version": "0.4.6",
+            "origin": "Actual WindowsRust1.88 fullregistry a857 CLI build, immutable lifecycle identity",
+            "sha256": "bee90f9c155cce23cdaac741a69f6c6fe1922560e7280d313ea7899c36146a4f",
+            "bytes": 34192896,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\target\\release\\nirs4all-core-archive.exe"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "dag-native",
+            "version": "0.3.43",
+            "origin": "actual local candidate build, source and registry cohort recorded separately",
+            "sha256": "956ca6be245bdf5620dc9d2f43f15f212a7b6be08b1de4aa55682bc461c6d5f9",
+            "bytes": 36821504,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\dag_ml\\_dag_ml.pyd"
+          },
+          {
+            "name": "methods-native",
+            "version": "1.3.9",
+            "origin": "actual local candidate build, source and registry cohort recorded separately",
+            "sha256": "a821dd2bc4d3d9f9a4640966542c31a60a54f7434c9d66b0d579e01acf61a7fb",
+            "bytes": 4174848,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\n4m\\lib\\n4m.dll"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cli-linux-lifecycle-proof-controller",
+      "hosts": [
+        "linux"
+      ],
+      "commands": {
+        "linux": [
+          "python",
+          "-B",
+          "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-verify.py",
+          "--os-family",
+          "linux",
+          "--evidence-root",
+          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux",
+          "--source-root",
+          "{root}",
+          "--source-freeze",
+          "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-source-freeze.json"
+        ]
+      },
+      "executable_paths": {
+        "linux": [
+          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/bin/python"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/rust/nirs4all/src/",
+        "bindings/rust/nirs4all/Cargo.toml"
+      ],
+      "minimum_passed": 1,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "measured_original_commands",
+          "op": "eq",
+          "value": 9
+        },
+        {
+          "field": "expected_refusals",
+          "op": "eq",
+          "value": 3
+        },
+        {
+          "field": "owned_roots_after_each_terminal",
+          "op": "eq",
+          "value": 0
+        },
+        {
+          "field": "prediction_cells_exact",
+          "op": "eq",
+          "value": 4
+        }
+      ],
+      "required_environment": {
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1"
+      },
+      "original_negative_commands_have_expected_exit_one": true,
+      "input_exclusions": [],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-cli-lifecycle",
+            "version": "0.4.6",
+            "origin": "Actual cargo release build from a857 with full registry lock, lifecycle Linux9",
+            "sha256": "7f3a940fff385501d7fe4f3e31731e5726c2104d003411c5bc08c69000edf11b",
+            "bytes": 38738784,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "methods-native",
+            "version": "1.3.9",
+            "origin": "Frozen bit-identical qualified Methods ABI2.20 owner library, original SHA retained",
+            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
+            "bytes": 5880096,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+          },
+          {
+            "name": "historical-archive-v2",
+            "version": "0.3.23",
+            "origin": "Authentic immutable historical ArchiveV2 producer fixture; no regeneration",
+            "sha256": "994252030ff80129d0431995bae53eb473082f05825b65714379262b72af13fa",
+            "bytes": 60023,
+            "artifact_path": "/mnt/c/Temp/n4a-core045-20261008/fixtures/historical-web-archive-v2/multitarget-pls.n4a"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cli-windows-lifecycle-proof-controller",
+      "hosts": [
+        "windows"
+      ],
+      "commands": {
+        "windows": [
+          "python",
+          "-B",
+          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-lifecycle-verify.py",
+          "--os-family",
+          "windows",
+          "--evidence-root",
+          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-lifecycle-windows-v2",
+          "--source-root",
+          "{root}",
+          "--source-freeze",
+          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-lifecycle-source-freeze.json"
+        ]
+      },
+      "executable_paths": {
+        "windows": [
+          "D:/workspace/nirs4all-release-20261029-sdk1411/prefix/Scripts/python.exe"
+        ]
+      },
+      "input_paths": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "bindings/rust/nirs4all/src/",
+        "bindings/rust/nirs4all/Cargo.toml"
+      ],
+      "minimum_passed": 1,
+      "allowed_skips": [],
+      "requires_provenance": true,
+      "facts": [
+        {
+          "field": "measured_original_commands",
+          "op": "eq",
+          "value": 5
+        },
+        {
+          "field": "expected_refusals",
+          "op": "eq",
+          "value": 3
+        },
+        {
+          "field": "owned_roots_after_each_terminal",
+          "op": "eq",
+          "value": 0
+        },
+        {
+          "field": "prediction_cells_exact",
+          "op": "eq",
+          "value": 4
+        }
+      ],
+      "required_environment": {
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1"
+      },
+      "original_negative_commands_have_expected_exit_one": true,
+      "input_exclusions": [],
+      "provenance_requirements": {
+        "source_artifacts": [
+          {
+            "name": "core-cli-lifecycle",
+            "version": "0.4.6",
+            "origin": "Actual Rust1.88 release a857 fullregistry build used by five Windows lifecycle operations",
+            "sha256": "bee90f9c155cce23cdaac741a69f6c6fe1922560e7280d313ea7899c36146a4f",
+            "bytes": 34192896,
+            "artifact_path": "D:/workspace/nirs4all-release-20261029-quality/target/release/nirs4all-core-archive.exe"
+          }
+        ],
+        "dependency_origins": [
+          {
+            "name": "methods-native",
+            "version": "1.3.9",
+            "origin": "Actual repaired Windows Methods139 packaged ABI20 DLL used by original lifecycle operations",
+            "sha256": "a821dd2bc4d3d9f9a4640966542c31a60a54f7434c9d66b0d579e01acf61a7fb",
+            "bytes": 4174848,
+            "artifact_path": "D:/workspace/nirs4all-release-20261029-sdk1411/prefix/Lib/site-packages/n4m/lib/n4m.dll"
+          }
+        ]
+      }
+    }
+  ],
+  "coverage_note": "All22 mandatory gates retain original minima. Full Linux170+490subtests and Windows169+490subtests retain six/seven approved cold skips covered independently. Rust workspace includes live tests except private-copy matrix, executed in its own mandatory fresh process. Native Octave10.3 parity+six workflows and all108JS tests execute without optional skips. Historical gate identifiers remain stable for audit continuity; actual current versions are bound in provenance.",
+  "source_basis": "Core0.4.6 actual full published registry cohort (Rust a857, MATLAB bounded identifier fix, JS min343/real registry resolution); original measured source SHAs retained per gate.",
+  "qualification_limits": [
+    "CLI owned snapshot cleanup is qualified after normal parent termination, successful prediction and controlled refusal; forced supervisor kill may leave its owned temporary directory.",
+    "Direct in-process Rust/Python/R binding snapshot lifetime is unchanged; the CLI parent-worker lifecycle fix does not claim to alter those static snapshots.",
+    "Exact Linux6 and Windows7 skip IDs are retained; historic archive witnesses are exercised separately, and the Windows ZIP packaging-tool skip is covered by the actual Linux packaging test."
+  ]
+}

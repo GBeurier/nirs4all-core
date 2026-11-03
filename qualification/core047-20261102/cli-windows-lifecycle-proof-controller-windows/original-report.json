@@ -1,0 +1,374 @@
+{
+  "id": "cli-windows-lifecycle-proof-controller",
+  "host": "windows-native",
+  "command": [
+    "D:/workspace/nirs4all-release-20261102-core047/prefix/Scripts/python.exe",
+    "-B",
+    "D:/workspace/nirs4all-release-20261102-core047/audit/core047-lifecycle-verify.py",
+    "--os-family",
+    "windows",
+    "--evidence-root",
+    "D:/workspace/nirs4all-release-20261102-core047/audit/lifecycle-windows",
+    "--source-root",
+    "D:/workspace/nirs4all-release-20261102-core047/source",
+    "--source-freeze",
+    "D:/workspace/nirs4all-release-20261102-core047/audit/core047-lifecycle-source-freeze.json"
+  ],
+  "cwd": "D:/workspace/nirs4all-release-20261102-core047/source",
+  "environment": {
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONUTF8": "1"
+  },
+  "input_fingerprints": {
+    "Cargo.lock": "847c62537c349e62d24e403491948aaeca3e17a2c4604726370b926ac8abbc04",
+    "Cargo.toml": "d3593455f0f5d3dd6d0c800b899890e486e0def9e4cbcdc8b2d9cbdb6a3b63cf",
+    "bindings/rust/nirs4all/Cargo.toml": "8dfd87944ac4f3325c482354e95cc57d8ac6f7268143a2f728593ca14e286b75",
+    "bindings/rust/nirs4all/src/archive_command.rs": "f1fdcc73c6308079005eab62c157800a9b47dc5b3f81105c6f9fcf759e8a610a",
+    "bindings/rust/nirs4all/src/archive_v1.rs": "9f3e7c0eca2f69877e22c2732746651a11c53d9c3b168ce4ab8e3150551ae23d",
+    "bindings/rust/nirs4all/src/archive_v1_fixtures/PROVENANCE.md": "2a34a7e3d11998c55ff6f6fd101f71292480edbb23f01107d74b6b4162f589b3",
+    "bindings/rust/nirs4all/src/archive_v1_fixtures/archive_workspace_manifest.v1.schema.json": "91daa7209843ab9043aa62a50200ff43b0f85f4c4e61ad8f73aa67b65a0a98dc",
+    "bindings/rust/nirs4all/src/archive_v1_fixtures/negative/refusals.v1.json": "d6522da50d8debc87b5c824392d793fd8895e4822ebe80289199a246f502ded5",
+    "bindings/rust/nirs4all/src/archive_v1_fixtures/positive/portable_split_conformal.json": "79acef8a6bedee201c9e7be7a398bf7ec0ef6de2c75777824ec9ec0633b4c451",
+    "bindings/rust/nirs4all/src/archive_v1_fixtures/positive/workspace_n4d_host_sidecar.json": "6c3d678e955258a2f652c886d86358d4775dc98e9e85714166d88ad0e16b13ca",
+    "bindings/rust/nirs4all/src/archive_v2.rs": "6009e980adbf84a8029264d40cb89975425de8ae36a68e4f8bf6f085ef5ea06f",
+    "bindings/rust/nirs4all/src/archive_v3.rs": "5a6851358cc556441186be89f4f89adb305b78cc3a7420410f7f13a27c6a4390",
+    "bindings/rust/nirs4all/src/archive_view.rs": "f09a1001d12f3aa4f6af4f4e8c02fe584339cbaf0d6906a33ab5897aeb1b5088",
+    "bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs": "9fce5ffdfeac850445622e58845f539a0d7a0b2bf51fdb62dfd5b2b68925f59d",
+    "bindings/rust/nirs4all/src/conformal.rs": "e16a5f3f2535119f3c645fc55ea09cd434031a086b3c83417557fa606f9db9fe",
+    "bindings/rust/nirs4all/src/conformal_json.rs": "003b20d77d90cd0d49cde5ff3cbafdb4883719840a3732208a73baebda967776",
+    "bindings/rust/nirs4all/src/durability.rs": "d4dc011a8268b7b9216f633d288c23a90808dc9a587a0997adfe8a18abca35be",
+    "bindings/rust/nirs4all/src/format3_qualification.rs": "7c9c96ad4c2d97d5ed81ad9321f8633fa11180bd62f31584aa38dea744f6e0c8",
+    "bindings/rust/nirs4all/src/formats_io.rs": "d0ae25fcb33cfb401394d6eebeee8b27df6afdd1d641a8f0ba0b67d29295fdf3",
+    "bindings/rust/nirs4all/src/generation.rs": "24f55553af4de979ee0fd65763b9f422e58c86385e47590cd015161c5d011cde",
+    "bindings/rust/nirs4all/src/io_training.rs": "5d8221768a5a9ea06fcd08814833a67763b1b76f4cbb827fc80cd836c819d50d",
+    "bindings/rust/nirs4all/src/lib.rs": "a3466e2ae80ddf3b012748abd32a148e58db74c58ca7b69f486b9e3edc3dcc10",
+    "bindings/rust/nirs4all/src/multimodal_workflow.rs": "6b97e5937ec2d4073055752d64e5ad630ecde2b07668a7dfeeb94b4ed6e7c91f",
+    "bindings/rust/nirs4all/src/n4m_roles.rs": "11493f92b767d51330cce08a183a66b10ed53dfbb3c7576fda7c729e0a16884e",
+    "bindings/rust/nirs4all/src/native_methods_replay.rs": "cfa08e31a10fa5d751e7ce50b9f3f7009dbb57a893219eb68d17c8afbcd9a931",
+    "bindings/rust/nirs4all/src/native_pipeline_contract.rs": "ff8a2c2801672201b96690e636d886430818f718e3c693cd52ac3d3c41b856f8",
+    "bindings/rust/nirs4all/src/pipeline_workflow.rs": "6e66a0ecd801e79f0b0ab171ee855d0522275b5cb0e012634653d88ef3f6c414",
+    "bindings/rust/nirs4all/src/portable_session.rs": "376d94df8e588e0170bec51b1f63cacf7d2056ce75de191812daf82adc1f5196",
+    "bindings/rust/nirs4all/src/publication.rs": "3aaa956e0df6ad96df7522537dfe387b6b359a48f3787374739b3b14bfeef52b",
+    "bindings/rust/nirs4all/src/result_projection.rs": "4cb8446e0b1f1b84fee9508c0fe713f0e682ad58fcdc9830f9a1d08bb0ca71bb",
+    "bindings/rust/nirs4all/src/results.rs": "964e2103293b665a5f12e25f750784ec3fd4f3cbd2fbf40aa7a65ce468c51d58",
+    "bindings/rust/nirs4all/src/robustness.rs": "0c8e0fbb28801777843ffa06d08599b3329649ed38358f8169eafc7787bcda7b",
+    "bindings/rust/nirs4all/src/robustness_json.rs": "ba06e2710bad3ec27661ac3d43c76ff1afc6bc8b00a3d5c12aa4bae7f6042c1b",
+    "bindings/rust/nirs4all/src/test_fixture.rs": "68e3fd2f730da4adb7a705d2c55507ef4092e4b3aa840bba6e364bc66d052be4",
+    "bindings/rust/nirs4all/src/tuning.rs": "62100a3aa99195ae8d75463264d131464a52913b7ae0dfad221286e9ec42fa5d",
+    "bindings/rust/nirs4all/src/workflow.rs": "f3763bdeaf870181c2bd539b8abdf9c5f37922a51a68f1900f4fdaa1a0074369"
+  },
+  "started_at": "2026-11-02T23:53:26.256729+00:00",
+  "finished_at": "2026-11-02T23:53:41.194564+00:00",
+  "exit_code": 0,
+  "input_evidence": {
+    "path": "qualification/core047-20261102/cli-windows-lifecycle-proof-controller-windows/captured-inputs.json",
+    "bytes": 10005,
+    "sha256": "cbfb3b221e4fc2e5da437a746e2e9a21d036aaaad31c2fdff69646e755cc3c69"
+  },
+  "timing_basis": "measured",
+  "duration_seconds": 23.991555000073276,
+  "log": {
+    "path": "qualification/core047-20261102/cli-windows-lifecycle-proof-controller-windows/run.log",
+    "bytes": 9975,
+    "sha256": "cb318c48e94004622146eb4939533753342609fcc73db3d11613e76386b6bc0c"
+  },
+  "summary": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0
+  },
+  "skips": [],
+  "facts": {
+    "Windows_observations": {
+      "actual_junction_refusal": true,
+      "attribute_state_history": {
+        "after-load-output-refusal": {
+          "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\tmp\\nirs4all-core-archive-CM7YDJ\\nirs4all-core-libn4m-0AOx3F\\n4m.dll|attributes=32|bytes=0": {
+            "attributes": 32,
+            "bytes": 0,
+            "observed_at": "2026-11-02T22:50:26.927038+00:00",
+            "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\tmp\\nirs4all-core-archive-CM7YDJ\\nirs4all-core-libn4m-0AOx3F\\n4m.dll",
+            "readonly": false
+          },
+          "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\tmp\\nirs4all-core-archive-CM7YDJ\\nirs4all-core-libn4m-0AOx3F\\n4m.dll|attributes=32|bytes=4222976": {
+            "attributes": 32,
+            "bytes": 4222976,
+            "observed_at": "2026-11-02T22:50:37.623808+00:00",
+            "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\tmp\\nirs4all-core-archive-CM7YDJ\\nirs4all-core-libn4m-0AOx3F\\n4m.dll",
+            "readonly": false
+          },
+          "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\tmp\\nirs4all-core-archive-CM7YDJ\\nirs4all-core-libn4m-0AOx3F\\n4m.dll|attributes=33|bytes=4222976": {
+            "attributes": 33,
+            "bytes": 4222976,
+            "observed_at": "2026-11-02T22:50:37.573880+00:00",
+            "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\tmp\\nirs4all-core-archive-CM7YDJ\\nirs4all-core-libn4m-0AOx3F\\n4m.dll",
+            "readonly": true
+          }
+        },
+        "native-prediction": {
+          "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\tmp\\nirs4all-core-archive-qJ2iEz\\nirs4all-core-libn4m-qQfgpX\\n4m.dll|attributes=32|bytes=0": {
+            "attributes": 32,
+            "bytes": 0,
+            "observed_at": "2026-11-02T22:49:42.966881+00:00",
+            "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\tmp\\nirs4all-core-archive-qJ2iEz\\nirs4all-core-libn4m-qQfgpX\\n4m.dll",
+            "readonly": false
+          },
+          "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\tmp\\nirs4all-core-archive-qJ2iEz\\nirs4all-core-libn4m-qQfgpX\\n4m.dll|attributes=32|bytes=4222976": {
+            "attributes": 32,
+            "bytes": 4222976,
+            "observed_at": "2026-11-02T22:49:57.360658+00:00",
+            "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\tmp\\nirs4all-core-archive-qJ2iEz\\nirs4all-core-libn4m-qQfgpX\\n4m.dll",
+            "readonly": false
+          },
+          "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\tmp\\nirs4all-core-archive-qJ2iEz\\nirs4all-core-libn4m-qQfgpX\\n4m.dll|attributes=33|bytes=4222976": {
+            "attributes": 33,
+            "bytes": 4222976,
+            "observed_at": "2026-11-02T22:49:57.243774+00:00",
+            "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\tmp\\nirs4all-core-archive-qJ2iEz\\nirs4all-core-libn4m-qQfgpX\\n4m.dll",
+            "readonly": true
+          }
+        }
+      },
+      "junction_reparse_point_retained": true,
+      "outside_sentinel": {
+        "bytes": 45,
+        "crc32": "b0ef45d1",
+        "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\outside-owned-target\\readonly.fixture",
+        "sha256": "219fa5a9d44eb5562d80dfb0e7194eba927b3188ca830984ecda454a1c8536ae"
+      },
+      "outside_sentinel_readonly": true,
+      "readonly_DLL_observed_in_success_and_after_load_refusal": true,
+      "sentinel_provenance": "Retained controller source creates this exact byte literal and asserts unchanged hash+attributes before/after the junction refusal; no separate original PRE sentinel receipt was emitted. Current verification confirms the exact literal and READONLY flag."
+    },
+    "actual_cli_sha256": "3c98a3addc2c55e0b7a712a799ccbc5fe1e05d556898a00cce5cd060c41f2dc6",
+    "actual_methods_sha256": "584748fc87316a894a2670c9d37f986b0725e20a7fac04cd20e13310b550f566",
+    "archive_sha256": "994252030ff80129d0431995bae53eb473082f05825b65714379262b72af13fa",
+    "expected_refusals": 3,
+    "frozen_runtime_files": 326,
+    "measured_original_commands": 5,
+    "os_family": "windows",
+    "owned_roots_after_each_terminal": 0,
+    "platform": "Windows-11-10.0.26200-SP0",
+    "prediction_cells_exact": 4,
+    "predictions": [
+      [
+        1.6363636363636365,
+        13.272727272727273
+      ],
+      [
+        2.4999999999999996,
+        15.0
+      ]
+    ],
+    "retained_originals": [
+      {
+        "bytes": 98601,
+        "crc32": "eaf97536",
+        "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\PRE.json",
+        "sha256": "dfd5315bc5b0de5c85937952f1b143a2f412d0c87a7dd8b3e2ef9a60ffe438c3"
+      },
+      {
+        "bytes": 208298,
+        "crc32": "b3cafd90",
+        "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\qualification-completed.json",
+        "sha256": "4c7b299ede6745fa9350e75c69008f19d0ab7d5ca3de46de941b1875f7b2a29d"
+      },
+      {
+        "bytes": 53516,
+        "crc32": "b74ec112",
+        "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\core047-lifecycle-source-freeze.json",
+        "sha256": "d29ba4d51ca4761e1e8528af0774f433cd672150c3a9f2e350c55457e8aa3f13"
+      },
+      {
+        "bytes": 1260,
+        "crc32": "d3da2dc9",
+        "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\archive-inspect.terminal.json",
+        "sha256": "38cb3b9d59fe6edc0fd3547056aa19e83f83772f11d0ac84bcb02a88effc4ae2"
+      },
+      {
+        "bytes": 0,
+        "crc32": "00000000",
+        "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\logs\\archive-inspect.stdout.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 0,
+        "crc32": "00000000",
+        "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\logs\\archive-inspect.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 3134,
+        "crc32": "d90dc5b4",
+        "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\native-prediction.terminal.json",
+        "sha256": "d67a514a424eaefac682f2d0daa07368b9c3f4c8a6ffe8691d54d995d06c7d3c"
+      },
+      {
+        "bytes": 0,
+        "crc32": "00000000",
+        "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\logs\\native-prediction.stdout.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 0,
+        "crc32": "00000000",
+        "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\logs\\native-prediction.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 1670,
+        "crc32": "1eaf4716",
+        "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\wrong-hash-refusal.terminal.json",
+        "sha256": "c7be89b48df121808376899e62ec52852c32649aad3db98d84cb7ea29fa73f64"
+      },
+      {
+        "bytes": 0,
+        "crc32": "00000000",
+        "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\logs\\wrong-hash-refusal.stdout.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 200,
+        "crc32": "a1c9c49f",
+        "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\logs\\wrong-hash-refusal.stderr.log",
+        "sha256": "c57f4f99c97a17341d4cb53888e7c7f6efba1817036e803f2bda7595cd33b4ac"
+      },
+      {
+        "bytes": 3162,
+        "crc32": "7556155f",
+        "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\after-load-output-refusal.terminal.json",
+        "sha256": "c8ae2aabbd31343ea1d156b7fc24de4da2fccb93dc591029962eed2eb0d067fd"
+      },
+      {
+        "bytes": 0,
+        "crc32": "00000000",
+        "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\logs\\after-load-output-refusal.stdout.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 51,
+        "crc32": "e68277a4",
+        "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\logs\\after-load-output-refusal.stderr.log",
+        "sha256": "6076328236ffe23f2848da436d582712a1613cc7e776e576c49a51efcc942615"
+      },
+      {
+        "bytes": 1288,
+        "crc32": "1c3282fa",
+        "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\junction-root-refusal.terminal.json",
+        "sha256": "8cf99b150cccf81f8d01e0f00836a8300e8b227c37341252beaac1be6d6a6fce"
+      },
+      {
+        "bytes": 0,
+        "crc32": "00000000",
+        "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\logs\\junction-root-refusal.stdout.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 69,
+        "crc32": "ae4b02b2",
+        "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\logs\\junction-root-refusal.stderr.log",
+        "sha256": "12a05dadc99c1e6ff955c4f04fb59228c7259507b2e4078c533ecaabb1b84272"
+      },
+      {
+        "bytes": 156,
+        "crc32": "0f4608b6",
+        "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\input.json",
+        "sha256": "4a6a7baea3fc8ae96e2cc6fbf5685ee5d20ab532f9308da38894296e1dc76dd3"
+      },
+      {
+        "bytes": 4600,
+        "crc32": "7a80ea57",
+        "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\output\\predict.json",
+        "sha256": "2277da477a1ac5d9ae0518d6faa7f76f648081223dd7fa80cdd869e593892193"
+      },
+      {
+        "bytes": 11877,
+        "crc32": "77bc6e5c",
+        "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\output\\inspect.json",
+        "sha256": "70e31f14004d409bb46c8b8cf6ac2563806ba7ba74b2d41f5f99a5ce3429b084"
+      },
+      {
+        "bytes": 223,
+        "crc32": "4c3055c2",
+        "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\junction.stdout.log",
+        "sha256": "b943a1dd3ba055b760a43648ddeb1fb0e57f788f1125936a0d1d51585c6724e7"
+      },
+      {
+        "bytes": 0,
+        "crc32": "00000000",
+        "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\junction.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 45,
+        "crc32": "b0ef45d1",
+        "path": "D:\\workspace\\nirs4all-release-20261102-core047\\audit\\lifecycle-windows\\outside-owned-target\\readonly.fixture",
+        "sha256": "219fa5a9d44eb5562d80dfb0e7194eba927b3188ca830984ecda454a1c8536ae"
+      }
+    ],
+    "scope": "Verification of retained original native lifecycle executions; no compilation or scientific execution replay. Original expected refusal exits remain1.",
+    "source_commit": "6804e5696e72d8006c65616e5689456a3c9b6eae",
+    "source_sha256": "9fce5ffdfeac850445622e58845f539a0d7a0b2bf51fdb62dfd5b2b68925f59d",
+    "status": "PASS",
+    "methods_engine": "1.3.13+abi.2.20.0"
+  },
+  "provenance": {
+    "tools": {
+      "python": "3.13.9"
+    },
+    "source_artifacts": [
+      {
+        "name": "core-cli-lifecycle",
+        "version": "0.4.7",
+        "origin": "Actual Windows Rust1.88 cargo release build of the frozen Core 0.4.7 source, used by the five Windows lifecycle operations",
+        "sha256": "3c98a3addc2c55e0b7a712a799ccbc5fe1e05d556898a00cce5cd060c41f2dc6",
+        "bytes": 34247168,
+        "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\target\\release\\nirs4all-core-archive.exe",
+        "evidence": {
+          "path": "qualification/core047-20261102/cli-windows-lifecycle-proof-controller-windows/artifact-0.json",
+          "bytes": 6094,
+          "sha256": "1ac0d46f14d1b633454f343820020c9aa85f20b2dbfc9feb74e7dfc4d67cddb7"
+        }
+      }
+    ],
+    "dependency_origins": [
+      {
+        "name": "methods-native",
+        "version": "1.3.13",
+        "origin": "Actual public PyPI nirs4all-methods 1.3.13 Windows library used by the original lifecycle operations",
+        "sha256": "584748fc87316a894a2670c9d37f986b0725e20a7fac04cd20e13310b550f566",
+        "bytes": 4222976,
+        "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\prefix\\Lib\\site-packages\\n4m\\lib\\n4m.dll",
+        "evidence": {
+          "path": "qualification/core047-20261102/cli-windows-lifecycle-proof-controller-windows/artifact-1.json",
+          "bytes": 6071,
+          "sha256": "9b396ffe24708f48c0dd181b63cc27f8393727f13f66dcf6aadef13ea122d62c"
+        }
+      }
+    ]
+  },
+  "raw_reports": [
+    {
+      "path": "qualification/core047-20261102/cli-windows-lifecycle-proof-controller-windows/original-terminal.json",
+      "bytes": 88028,
+      "sha256": "6cfa4491490f207a863f4ff0feeb502601d2adfed371810521cb81cc58ae004d"
+    },
+    {
+      "path": "qualification/core047-20261102/cli-windows-lifecycle-proof-controller-windows/original-before.json",
+      "bytes": 46569,
+      "sha256": "6b4574ca1a429fcc99a65d9710b5cd5597ba7abbef8c6156bc734d8307f35cd2"
+    },
+    {
+      "path": "qualification/core047-20261102/cli-windows-lifecycle-proof-controller-windows/stdout.log",
+      "bytes": 9974,
+      "sha256": "5aab575e3ecb18d526052f33728d7d50d97ba84e1512d60225a5298707125fdd"
+    },
+    {
+      "path": "qualification/core047-20261102/cli-windows-lifecycle-proof-controller-windows/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

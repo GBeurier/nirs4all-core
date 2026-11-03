@@ -48,21 +48,21 @@
         "source_artifacts": [
           {
             "name": "core-build-source",
-            "version": "0.4.6",
-            "origin": "Frozen Core a857710 source manifest, full public registry Cargo.lock; real Cargo compilation",
-            "sha256": "3f7a4d1791c9bf3875527a0f908d2305b9d30a2f2fb6b366300a8219fc01dcd1",
+            "version": "0.4.7",
+            "origin": "Frozen Core 0.4.7 source manifest with the published registry Cargo lock",
+            "sha256": "8dfd87944ac4f3325c482354e95cc57d8ac6f7268143a2f728593ca14e286b75",
             "bytes": 3066,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/rust/nirs4all/Cargo.toml"
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/source/bindings/rust/nirs4all/Cargo.toml"
           }
         ],
         "dependency_origins": [
           {
             "name": "methods-native",
-            "version": "1.3.9",
-            "origin": "Frozen bit-identical qualified Methods ABI2.20 owner library, original SHA retained",
-            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
-            "bytes": 5880096,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+            "version": "1.3.13",
+            "origin": "Actual public PyPI nirs4all-methods 1.3.13 library, ABI 2.20",
+            "sha256": "998f39672da1bd0d330f3b56f0df7af756132c892a180acc0b1179201e639547",
+            "bytes": 5887336,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0"
           },
           {
             "name": "historical-archive-v2",
@@ -117,21 +117,21 @@
         "source_artifacts": [
           {
             "name": "core-build-source",
-            "version": "0.4.6",
-            "origin": "Frozen Core a857710 source manifest, full public registry Cargo.lock; real Cargo compilation",
-            "sha256": "3f7a4d1791c9bf3875527a0f908d2305b9d30a2f2fb6b366300a8219fc01dcd1",
+            "version": "0.4.7",
+            "origin": "Frozen Core 0.4.7 source manifest with the published registry Cargo lock",
+            "sha256": "8dfd87944ac4f3325c482354e95cc57d8ac6f7268143a2f728593ca14e286b75",
             "bytes": 3066,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/rust/nirs4all/Cargo.toml"
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/source/bindings/rust/nirs4all/Cargo.toml"
           }
         ],
         "dependency_origins": [
           {
             "name": "methods-native",
-            "version": "1.3.9",
-            "origin": "Frozen bit-identical qualified Methods ABI2.20 owner library, original SHA retained",
-            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
-            "bytes": 5880096,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+            "version": "1.3.13",
+            "origin": "Actual public PyPI nirs4all-methods 1.3.13 library, ABI 2.20",
+            "sha256": "998f39672da1bd0d330f3b56f0df7af756132c892a180acc0b1179201e639547",
+            "bytes": 5887336,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0"
           },
           {
             "name": "historical-archive-v2",
@@ -188,21 +188,21 @@
         "source_artifacts": [
           {
             "name": "core-build-source",
-            "version": "0.4.6",
-            "origin": "Frozen Core a857710 source manifest, full public registry Cargo.lock; real Cargo compilation",
-            "sha256": "3f7a4d1791c9bf3875527a0f908d2305b9d30a2f2fb6b366300a8219fc01dcd1",
+            "version": "0.4.7",
+            "origin": "Frozen Core 0.4.7 source manifest with the published registry Cargo lock",
+            "sha256": "8dfd87944ac4f3325c482354e95cc57d8ac6f7268143a2f728593ca14e286b75",
             "bytes": 3066,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/rust/nirs4all/Cargo.toml"
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/source/bindings/rust/nirs4all/Cargo.toml"
           }
         ],
         "dependency_origins": [
           {
             "name": "methods-native",
-            "version": "1.3.9",
-            "origin": "Frozen bit-identical qualified Methods ABI2.20 owner library, original SHA retained",
-            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
-            "bytes": 5880096,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+            "version": "1.3.13",
+            "origin": "Actual public PyPI nirs4all-methods 1.3.13 library, ABI 2.20",
+            "sha256": "998f39672da1bd0d330f3b56f0df7af756132c892a180acc0b1179201e639547",
+            "bytes": 5887336,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0"
           },
           {
             "name": "historical-archive-v2",
@@ -259,21 +259,21 @@
         "source_artifacts": [
           {
             "name": "core-build-source",
-            "version": "0.4.6",
-            "origin": "Frozen Core a857710 source manifest, full public registry Cargo.lock; real Cargo compilation",
-            "sha256": "3f7a4d1791c9bf3875527a0f908d2305b9d30a2f2fb6b366300a8219fc01dcd1",
+            "version": "0.4.7",
+            "origin": "Frozen Core 0.4.7 source manifest with the published registry Cargo lock",
+            "sha256": "8dfd87944ac4f3325c482354e95cc57d8ac6f7268143a2f728593ca14e286b75",
             "bytes": 3066,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/rust/nirs4all/Cargo.toml"
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/source/bindings/rust/nirs4all/Cargo.toml"
           }
         ],
         "dependency_origins": [
           {
             "name": "methods-native",
-            "version": "1.3.9",
-            "origin": "Frozen bit-identical qualified Methods ABI2.20 owner library, original SHA retained",
-            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
-            "bytes": 5880096,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+            "version": "1.3.13",
+            "origin": "Actual public PyPI nirs4all-methods 1.3.13 library, ABI 2.20",
+            "sha256": "998f39672da1bd0d330f3b56f0df7af756132c892a180acc0b1179201e639547",
+            "bytes": 5887336,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0"
           },
           {
             "name": "historical-archive-v2",
@@ -303,7 +303,7 @@
       },
       "executable_paths": {
         "linux": [
-          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/bin/python"
+          "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/bin/python"
         ]
       },
       "input_paths": [
@@ -330,45 +330,45 @@
         "source_artifacts": [
           {
             "name": "core-wheel",
-            "version": "0.4.6",
-            "origin": "Actual Linux a857 full published registry source build",
-            "sha256": "666dcca4419931e1df65dcf0dee79cede7ba0da955812b7440cbf22c5b360ef4",
-            "bytes": 13078128,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/wheels-full-registry/nirs4all_core-0.4.6-cp311-abi3-manylinux_2_34_x86_64.whl"
+            "version": "0.4.7",
+            "origin": "Actual Linux Rust1.88 maturin build of the frozen Core 0.4.7 source",
+            "sha256": "d88ad22c25b68c296fcacb3cc27889ac26434bad1c6a38d42d7a502a4b7e7273",
+            "bytes": 13095165,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/wheels/nirs4all_core-0.4.7-cp311-abi3-manylinux_2_34_x86_64.whl"
           },
           {
             "name": "core-native",
-            "version": "0.4.6",
-            "origin": "Actual extraction from fullregistry a857 Core wheel",
-            "sha256": "394f431bb0197d828995d5d066f8030d822d90968f73ebe88538aefe7d286c0e",
-            "bytes": 39068448,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/nirs4all_core/_native.abi3.so"
+            "version": "0.4.7",
+            "origin": "Actual extension installed from the Linux Core 0.4.7 wheel",
+            "sha256": "c6522c825581e171de6b5616784c315e8c13ba9a20a292ee943d24db57b3ade2",
+            "bytes": 39179512,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/lib/python3.11/site-packages/nirs4all_core/_native.abi3.so"
           },
           {
             "name": "core-cli",
-            "version": "0.4.6",
-            "origin": "Actual Linux cargo release a857 full published registry build",
-            "sha256": "7f3a940fff385501d7fe4f3e31731e5726c2104d003411c5bc08c69000edf11b",
-            "bytes": 38738784,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive"
+            "version": "0.4.7",
+            "origin": "Actual Linux Rust1.88 cargo release build of the frozen Core 0.4.7 source",
+            "sha256": "4b6429dd985241ec2f9852b83a2900588df1f1f373e007a5fc51f2f23e8c8b70",
+            "bytes": 38836792,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux-target/release/nirs4all-core-archive"
           }
         ],
         "dependency_origins": [
           {
             "name": "dag-native",
-            "version": "0.3.43",
-            "origin": "Actual locally qualified DAG343 candidate Python extension, no public PyPI claim",
-            "sha256": "fc31db48676e1480e96cfa0e48611805721b858b98e9092d372f4f2f66e848a0",
-            "bytes": 40634384,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/dag_ml/_dag_ml.abi3.so"
+            "version": "0.3.44",
+            "origin": "Actual public PyPI dag-ml 0.3.44 wheel extension",
+            "sha256": "dbdc3ec2e6fc3abbeafbe57ffc6deb3d3b9c33ee66fe29b7348c52eee1436f1f",
+            "bytes": 43433544,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/lib/python3.11/site-packages/dag_ml/_dag_ml.abi3.so"
           },
           {
             "name": "methods-native",
-            "version": "1.3.9",
-            "origin": "Frozen actual Methods139 ABI20 qualified runtime",
-            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
-            "bytes": 5880096,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+            "version": "1.3.13",
+            "origin": "Actual public PyPI nirs4all-methods 1.3.13 library, ABI 2.20",
+            "sha256": "998f39672da1bd0d330f3b56f0df7af756132c892a180acc0b1179201e639547",
+            "bytes": 5887336,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0"
           }
         ]
       }
@@ -417,21 +417,21 @@
         "source_artifacts": [
           {
             "name": "core-cli",
-            "version": "0.4.6",
-            "origin": "Actual a857 release build with full published registry graph",
-            "sha256": "7f3a940fff385501d7fe4f3e31731e5726c2104d003411c5bc08c69000edf11b",
-            "bytes": 38738784,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive"
+            "version": "0.4.7",
+            "origin": "Actual Linux Rust1.88 cargo release build of the frozen Core 0.4.7 source",
+            "sha256": "4b6429dd985241ec2f9852b83a2900588df1f1f373e007a5fc51f2f23e8c8b70",
+            "bytes": 38836792,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux-target/release/nirs4all-core-archive"
           }
         ],
         "dependency_origins": [
           {
             "name": "methods-native",
-            "version": "1.3.9",
-            "origin": "Frozen bit-identical qualified Methods ABI2.20 owner library, original SHA retained",
-            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
-            "bytes": 5880096,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+            "version": "1.3.13",
+            "origin": "Actual public PyPI nirs4all-methods 1.3.13 library, ABI 2.20",
+            "sha256": "998f39672da1bd0d330f3b56f0df7af756132c892a180acc0b1179201e639547",
+            "bytes": 5887336,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0"
           },
           {
             "name": "historical-archive-v2",
@@ -443,35 +443,35 @@
           },
           {
             "name": "n4m_pls_fit_mex",
-            "version": "1.3.9",
-            "origin": "Actual Octave10.3 MEX built from Methods b246 owner C sources, linked to frozen ABI20 library",
-            "sha256": "8006664b237987a7e1aa087fc3db70313346bc13704b6d3041d9d48a635793f7",
+            "version": "1.3.13",
+            "origin": "Actual Octave10.3 MEX built from Methods v1.3.13 owner C sources, linked to the public 1.3.13 ABI20 library",
+            "sha256": "5e48a5824743d2b916a34fd873be095f663552cc34184905c95fb9861283ad17",
             "bytes": 15944,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/methods139-mex-source/bindings/matlab/+n4m/n4m_pls_fit_mex.mex"
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/methods-mex-source/bindings/matlab/+n4m/n4m_pls_fit_mex.mex"
           },
           {
             "name": "n4m_preprocess_mex",
-            "version": "1.3.9",
-            "origin": "Actual Octave10.3 MEX built from Methods b246 owner C sources, linked to frozen ABI20 library",
-            "sha256": "12a75011b7ca31099491401baeffc72e84ec20d106a42f0328de6be36db56e6d",
+            "version": "1.3.13",
+            "origin": "Actual Octave10.3 MEX built from Methods v1.3.13 owner C sources, linked to the public 1.3.13 ABI20 library",
+            "sha256": "5f80eb3ec7118991a57b0a06199fedff4d57c8cb945a815f7d12653c672d2907",
             "bytes": 16376,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/methods139-mex-source/bindings/matlab/+n4m/n4m_preprocess_mex.mex"
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/methods-mex-source/bindings/matlab/+n4m/n4m_preprocess_mex.mex"
           },
           {
             "name": "n4m_split_mex",
-            "version": "1.3.9",
-            "origin": "Actual Octave10.3 MEX built from Methods b246 owner C sources, linked to frozen ABI20 library",
-            "sha256": "c8517f058e4ae649e71a5e8643dd4a8f623773f2f60b712b12c256aca49f8ef7",
+            "version": "1.3.13",
+            "origin": "Actual Octave10.3 MEX built from Methods v1.3.13 owner C sources, linked to the public 1.3.13 ABI20 library",
+            "sha256": "d8cf873877c36995c02cc1c831318ed526f50563d66e63e3a01f3362076f982a",
             "bytes": 16320,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/methods139-mex-source/bindings/matlab/+n4m/n4m_split_mex.mex"
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/methods-mex-source/bindings/matlab/+n4m/n4m_split_mex.mex"
           },
           {
             "name": "n4m_version_mex",
-            "version": "1.3.9",
-            "origin": "Actual Octave10.3 MEX built from Methods b246 owner C sources, linked to frozen ABI20 library",
-            "sha256": "3bc096411a6a962abeef97b6694c31183382927de2144e9fd7ecabed475d82ea",
+            "version": "1.3.13",
+            "origin": "Actual Octave10.3 MEX built from Methods v1.3.13 owner C sources, linked to the public 1.3.13 ABI20 library",
+            "sha256": "6539fc7a3c812558023b0fa8b86c8bbbfd2bf0e90f8068b46359bb2732788c26",
             "bytes": 15464,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/methods139-mex-source/bindings/matlab/+n4m/n4m_version_mex.mex"
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/methods-mex-source/bindings/matlab/+n4m/n4m_version_mex.mex"
           }
         ]
       }
@@ -529,21 +529,21 @@
         "source_artifacts": [
           {
             "name": "core-cli",
-            "version": "0.4.6",
-            "origin": "Actual a857 release build with full published registry graph",
-            "sha256": "7f3a940fff385501d7fe4f3e31731e5726c2104d003411c5bc08c69000edf11b",
-            "bytes": 38738784,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive"
+            "version": "0.4.7",
+            "origin": "Actual Linux Rust1.88 cargo release build of the frozen Core 0.4.7 source",
+            "sha256": "4b6429dd985241ec2f9852b83a2900588df1f1f373e007a5fc51f2f23e8c8b70",
+            "bytes": 38836792,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux-target/release/nirs4all-core-archive"
           }
         ],
         "dependency_origins": [
           {
             "name": "methods-native",
-            "version": "1.3.9",
-            "origin": "Frozen bit-identical qualified Methods ABI2.20 owner library, original SHA retained",
-            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
-            "bytes": 5880096,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+            "version": "1.3.13",
+            "origin": "Actual public PyPI nirs4all-methods 1.3.13 library, ABI 2.20",
+            "sha256": "998f39672da1bd0d330f3b56f0df7af756132c892a180acc0b1179201e639547",
+            "bytes": 5887336,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0"
           },
           {
             "name": "historical-archive-v2",
@@ -555,35 +555,35 @@
           },
           {
             "name": "n4m_pls_fit_mex",
-            "version": "1.3.9",
-            "origin": "Actual Octave10.3 MEX built from Methods b246 owner C sources, linked to frozen ABI20 library",
-            "sha256": "8006664b237987a7e1aa087fc3db70313346bc13704b6d3041d9d48a635793f7",
+            "version": "1.3.13",
+            "origin": "Actual Octave10.3 MEX built from Methods v1.3.13 owner C sources, linked to the public 1.3.13 ABI20 library",
+            "sha256": "5e48a5824743d2b916a34fd873be095f663552cc34184905c95fb9861283ad17",
             "bytes": 15944,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/methods139-mex-source/bindings/matlab/+n4m/n4m_pls_fit_mex.mex"
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/methods-mex-source/bindings/matlab/+n4m/n4m_pls_fit_mex.mex"
           },
           {
             "name": "n4m_preprocess_mex",
-            "version": "1.3.9",
-            "origin": "Actual Octave10.3 MEX built from Methods b246 owner C sources, linked to frozen ABI20 library",
-            "sha256": "12a75011b7ca31099491401baeffc72e84ec20d106a42f0328de6be36db56e6d",
+            "version": "1.3.13",
+            "origin": "Actual Octave10.3 MEX built from Methods v1.3.13 owner C sources, linked to the public 1.3.13 ABI20 library",
+            "sha256": "5f80eb3ec7118991a57b0a06199fedff4d57c8cb945a815f7d12653c672d2907",
             "bytes": 16376,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/methods139-mex-source/bindings/matlab/+n4m/n4m_preprocess_mex.mex"
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/methods-mex-source/bindings/matlab/+n4m/n4m_preprocess_mex.mex"
           },
           {
             "name": "n4m_split_mex",
-            "version": "1.3.9",
-            "origin": "Actual Octave10.3 MEX built from Methods b246 owner C sources, linked to frozen ABI20 library",
-            "sha256": "c8517f058e4ae649e71a5e8643dd4a8f623773f2f60b712b12c256aca49f8ef7",
+            "version": "1.3.13",
+            "origin": "Actual Octave10.3 MEX built from Methods v1.3.13 owner C sources, linked to the public 1.3.13 ABI20 library",
+            "sha256": "d8cf873877c36995c02cc1c831318ed526f50563d66e63e3a01f3362076f982a",
             "bytes": 16320,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/methods139-mex-source/bindings/matlab/+n4m/n4m_split_mex.mex"
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/methods-mex-source/bindings/matlab/+n4m/n4m_split_mex.mex"
           },
           {
             "name": "n4m_version_mex",
-            "version": "1.3.9",
-            "origin": "Actual Octave10.3 MEX built from Methods b246 owner C sources, linked to frozen ABI20 library",
-            "sha256": "3bc096411a6a962abeef97b6694c31183382927de2144e9fd7ecabed475d82ea",
+            "version": "1.3.13",
+            "origin": "Actual Octave10.3 MEX built from Methods v1.3.13 owner C sources, linked to the public 1.3.13 ABI20 library",
+            "sha256": "6539fc7a3c812558023b0fa8b86c8bbbfd2bf0e90f8068b46359bb2732788c26",
             "bytes": 15464,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/methods139-mex-source/bindings/matlab/+n4m/n4m_version_mex.mex"
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/methods-mex-source/bindings/matlab/+n4m/n4m_version_mex.mex"
           }
         ]
       }
@@ -604,14 +604,14 @@
           "-rs",
           "bindings/python/tests",
           "--basetemp",
-          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/owned-tmp/full-python",
+          "/home/delete/nirs4all/_audits/2026-11-02-core047/owned-tmp/full-python",
           "--junitxml",
-          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/python-complete.xml"
+          "/home/delete/nirs4all/_audits/2026-11-02-core047/python-complete.xml"
         ]
       },
       "executable_paths": {
         "linux": [
-          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/bin/python"
+          "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/bin/python"
         ]
       },
       "input_paths": [
@@ -662,45 +662,45 @@
         "source_artifacts": [
           {
             "name": "core-wheel",
-            "version": "0.4.6",
-            "origin": "Actual Linux a857 full published registry source build",
-            "sha256": "666dcca4419931e1df65dcf0dee79cede7ba0da955812b7440cbf22c5b360ef4",
-            "bytes": 13078128,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/wheels-full-registry/nirs4all_core-0.4.6-cp311-abi3-manylinux_2_34_x86_64.whl"
+            "version": "0.4.7",
+            "origin": "Actual Linux Rust1.88 maturin build of the frozen Core 0.4.7 source",
+            "sha256": "da8446f4c1661ad00c008aff6f88c58ff18101c1240978a99195d2319bbe1553",
+            "bytes": 13095164,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/wheels-datasets/nirs4all_core-0.4.7-cp311-abi3-manylinux_2_34_x86_64.whl"
           },
           {
             "name": "core-native",
-            "version": "0.4.6",
-            "origin": "Actual extraction from fullregistry a857 Core wheel",
-            "sha256": "394f431bb0197d828995d5d066f8030d822d90968f73ebe88538aefe7d286c0e",
-            "bytes": 39068448,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/nirs4all_core/_native.abi3.so"
+            "version": "0.4.7",
+            "origin": "Actual extension installed from the Linux Core 0.4.7 wheel",
+            "sha256": "c6522c825581e171de6b5616784c315e8c13ba9a20a292ee943d24db57b3ade2",
+            "bytes": 39179512,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/lib/python3.11/site-packages/nirs4all_core/_native.abi3.so"
           },
           {
             "name": "core-cli",
-            "version": "0.4.6",
-            "origin": "Actual Linux cargo release a857 full published registry build",
-            "sha256": "7f3a940fff385501d7fe4f3e31731e5726c2104d003411c5bc08c69000edf11b",
-            "bytes": 38738784,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive"
+            "version": "0.4.7",
+            "origin": "Actual Linux Rust1.88 cargo release build of the frozen Core 0.4.7 source",
+            "sha256": "4b6429dd985241ec2f9852b83a2900588df1f1f373e007a5fc51f2f23e8c8b70",
+            "bytes": 38836792,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux-target/release/nirs4all-core-archive"
           }
         ],
         "dependency_origins": [
           {
             "name": "dag-native",
-            "version": "0.3.43",
-            "origin": "Actual locally qualified DAG343 candidate Python extension, no public PyPI claim",
-            "sha256": "fc31db48676e1480e96cfa0e48611805721b858b98e9092d372f4f2f66e848a0",
-            "bytes": 40634384,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/dag_ml/_dag_ml.abi3.so"
+            "version": "0.3.44",
+            "origin": "Actual public PyPI dag-ml 0.3.44 wheel extension",
+            "sha256": "dbdc3ec2e6fc3abbeafbe57ffc6deb3d3b9c33ee66fe29b7348c52eee1436f1f",
+            "bytes": 43433544,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/lib/python3.11/site-packages/dag_ml/_dag_ml.abi3.so"
           },
           {
             "name": "methods-native",
-            "version": "1.3.9",
-            "origin": "Frozen actual Methods139 ABI20 qualified runtime",
-            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
-            "bytes": 5880096,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+            "version": "1.3.13",
+            "origin": "Actual public PyPI nirs4all-methods 1.3.13 library, ABI 2.20",
+            "sha256": "998f39672da1bd0d330f3b56f0df7af756132c892a180acc0b1179201e639547",
+            "bytes": 5887336,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0"
           }
         ]
       }
@@ -722,7 +722,7 @@
       },
       "executable_paths": {
         "linux": [
-          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/bin/python"
+          "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/bin/python"
         ]
       },
       "input_paths": [
@@ -749,45 +749,45 @@
         "source_artifacts": [
           {
             "name": "core-wheel",
-            "version": "0.4.6",
-            "origin": "Actual Linux a857 full published registry source build",
-            "sha256": "666dcca4419931e1df65dcf0dee79cede7ba0da955812b7440cbf22c5b360ef4",
-            "bytes": 13078128,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/wheels-full-registry/nirs4all_core-0.4.6-cp311-abi3-manylinux_2_34_x86_64.whl"
+            "version": "0.4.7",
+            "origin": "Actual Linux Rust1.88 maturin build of the frozen Core 0.4.7 source",
+            "sha256": "d88ad22c25b68c296fcacb3cc27889ac26434bad1c6a38d42d7a502a4b7e7273",
+            "bytes": 13095165,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/wheels/nirs4all_core-0.4.7-cp311-abi3-manylinux_2_34_x86_64.whl"
           },
           {
             "name": "core-native",
-            "version": "0.4.6",
-            "origin": "Actual extraction from fullregistry a857 Core wheel",
-            "sha256": "394f431bb0197d828995d5d066f8030d822d90968f73ebe88538aefe7d286c0e",
-            "bytes": 39068448,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/nirs4all_core/_native.abi3.so"
+            "version": "0.4.7",
+            "origin": "Actual extension installed from the Linux Core 0.4.7 wheel",
+            "sha256": "c6522c825581e171de6b5616784c315e8c13ba9a20a292ee943d24db57b3ade2",
+            "bytes": 39179512,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/lib/python3.11/site-packages/nirs4all_core/_native.abi3.so"
           },
           {
             "name": "core-cli",
-            "version": "0.4.6",
-            "origin": "Actual Linux cargo release a857 full published registry build",
-            "sha256": "7f3a940fff385501d7fe4f3e31731e5726c2104d003411c5bc08c69000edf11b",
-            "bytes": 38738784,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive"
+            "version": "0.4.7",
+            "origin": "Actual Linux Rust1.88 cargo release build of the frozen Core 0.4.7 source",
+            "sha256": "4b6429dd985241ec2f9852b83a2900588df1f1f373e007a5fc51f2f23e8c8b70",
+            "bytes": 38836792,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux-target/release/nirs4all-core-archive"
           }
         ],
         "dependency_origins": [
           {
             "name": "dag-native",
-            "version": "0.3.43",
-            "origin": "Actual locally qualified DAG343 candidate Python extension, no public PyPI claim",
-            "sha256": "fc31db48676e1480e96cfa0e48611805721b858b98e9092d372f4f2f66e848a0",
-            "bytes": 40634384,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/dag_ml/_dag_ml.abi3.so"
+            "version": "0.3.44",
+            "origin": "Actual public PyPI dag-ml 0.3.44 wheel extension",
+            "sha256": "dbdc3ec2e6fc3abbeafbe57ffc6deb3d3b9c33ee66fe29b7348c52eee1436f1f",
+            "bytes": 43433544,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/lib/python3.11/site-packages/dag_ml/_dag_ml.abi3.so"
           },
           {
             "name": "methods-native",
-            "version": "1.3.9",
-            "origin": "Frozen actual Methods139 ABI20 qualified runtime",
-            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
-            "bytes": 5880096,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+            "version": "1.3.13",
+            "origin": "Actual public PyPI nirs4all-methods 1.3.13 library, ABI 2.20",
+            "sha256": "998f39672da1bd0d330f3b56f0df7af756132c892a180acc0b1179201e639547",
+            "bytes": 5887336,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0"
           }
         ]
       }
@@ -808,7 +808,7 @@
       },
       "executable_paths": {
         "linux": [
-          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/legacy023-prefix/bin/python"
+          "/home/delete/nirs4all/_audits/2026-11-02-core047/legacy023-prefix/bin/python"
         ]
       },
       "input_paths": [
@@ -836,27 +836,27 @@
         "source_artifacts": [
           {
             "name": "core-wheel",
-            "version": "0.4.6",
-            "origin": "Actual Linux a857 full published registry source build",
-            "sha256": "666dcca4419931e1df65dcf0dee79cede7ba0da955812b7440cbf22c5b360ef4",
-            "bytes": 13078128,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/wheels-full-registry/nirs4all_core-0.4.6-cp311-abi3-manylinux_2_34_x86_64.whl"
+            "version": "0.4.7",
+            "origin": "Actual Linux Rust1.88 maturin build of the frozen Core 0.4.7 source",
+            "sha256": "d88ad22c25b68c296fcacb3cc27889ac26434bad1c6a38d42d7a502a4b7e7273",
+            "bytes": 13095165,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/wheels/nirs4all_core-0.4.7-cp311-abi3-manylinux_2_34_x86_64.whl"
           },
           {
             "name": "core-native",
-            "version": "0.4.6",
-            "origin": "Actual fullregistry a857 Core046 extension in isolated public DAG023 historical-fixture signing process",
-            "sha256": "394f431bb0197d828995d5d066f8030d822d90968f73ebe88538aefe7d286c0e",
-            "bytes": 39068448,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/legacy023-prefix/lib/python3.12/site-packages/nirs4all_core/_native.abi3.so"
+            "version": "0.4.7",
+            "origin": "Actual Core 0.4.7 extension installed from the Linux wheel in the isolated legacy signer process",
+            "sha256": "c6522c825581e171de6b5616784c315e8c13ba9a20a292ee943d24db57b3ade2",
+            "bytes": 39179512,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/legacy023-prefix/lib/python3.12/site-packages/nirs4all_core/_native.abi3.so"
           },
           {
             "name": "core-cli",
-            "version": "0.4.6",
-            "origin": "Actual Linux cargo release a857 full published registry build",
-            "sha256": "7f3a940fff385501d7fe4f3e31731e5726c2104d003411c5bc08c69000edf11b",
-            "bytes": 38738784,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive"
+            "version": "0.4.7",
+            "origin": "Actual Linux Rust1.88 cargo release build of the frozen Core 0.4.7 source",
+            "sha256": "4b6429dd985241ec2f9852b83a2900588df1f1f373e007a5fc51f2f23e8c8b70",
+            "bytes": 38836792,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux-target/release/nirs4all-core-archive"
           }
         ],
         "dependency_origins": [
@@ -866,15 +866,15 @@
             "origin": "Actual public PyPI historical DAG023 fixture signing process only",
             "sha256": "7d67fac964a6cf53addfd3826229842b764003952f2ee0c9573913df8d0cec19",
             "bytes": 34385584,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/legacy023-prefix/lib/python3.12/site-packages/dag_ml/_dag_ml.abi3.so"
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/legacy023-prefix/lib/python3.12/site-packages/dag_ml/_dag_ml.abi3.so"
           },
           {
             "name": "methods-native",
-            "version": "1.3.9",
-            "origin": "Frozen actual Methods139 ABI20 qualified runtime",
-            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
-            "bytes": 5880096,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+            "version": "1.3.13",
+            "origin": "Actual public PyPI nirs4all-methods 1.3.13 library, ABI 2.20",
+            "sha256": "998f39672da1bd0d330f3b56f0df7af756132c892a180acc0b1179201e639547",
+            "bytes": 5887336,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0"
           }
         ]
       }
@@ -895,7 +895,7 @@
       },
       "executable_paths": {
         "linux": [
-          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/bin/python"
+          "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/bin/python"
         ]
       },
       "input_paths": [
@@ -922,45 +922,45 @@
         "source_artifacts": [
           {
             "name": "core-wheel",
-            "version": "0.4.6",
-            "origin": "Actual Linux a857 full published registry source build",
-            "sha256": "666dcca4419931e1df65dcf0dee79cede7ba0da955812b7440cbf22c5b360ef4",
-            "bytes": 13078128,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/wheels-full-registry/nirs4all_core-0.4.6-cp311-abi3-manylinux_2_34_x86_64.whl"
+            "version": "0.4.7",
+            "origin": "Actual Linux Rust1.88 maturin build of the frozen Core 0.4.7 source",
+            "sha256": "d88ad22c25b68c296fcacb3cc27889ac26434bad1c6a38d42d7a502a4b7e7273",
+            "bytes": 13095165,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/wheels/nirs4all_core-0.4.7-cp311-abi3-manylinux_2_34_x86_64.whl"
           },
           {
             "name": "core-native",
-            "version": "0.4.6",
-            "origin": "Actual extraction from fullregistry a857 Core wheel",
-            "sha256": "394f431bb0197d828995d5d066f8030d822d90968f73ebe88538aefe7d286c0e",
-            "bytes": 39068448,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/nirs4all_core/_native.abi3.so"
+            "version": "0.4.7",
+            "origin": "Actual extension installed from the Linux Core 0.4.7 wheel",
+            "sha256": "c6522c825581e171de6b5616784c315e8c13ba9a20a292ee943d24db57b3ade2",
+            "bytes": 39179512,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/lib/python3.11/site-packages/nirs4all_core/_native.abi3.so"
           },
           {
             "name": "core-cli",
-            "version": "0.4.6",
-            "origin": "Actual Linux cargo release a857 full published registry build",
-            "sha256": "7f3a940fff385501d7fe4f3e31731e5726c2104d003411c5bc08c69000edf11b",
-            "bytes": 38738784,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive"
+            "version": "0.4.7",
+            "origin": "Actual Linux Rust1.88 cargo release build of the frozen Core 0.4.7 source",
+            "sha256": "4b6429dd985241ec2f9852b83a2900588df1f1f373e007a5fc51f2f23e8c8b70",
+            "bytes": 38836792,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux-target/release/nirs4all-core-archive"
           }
         ],
         "dependency_origins": [
           {
             "name": "dag-native",
-            "version": "0.3.43",
-            "origin": "Actual locally qualified DAG343 candidate Python extension, no public PyPI claim",
-            "sha256": "fc31db48676e1480e96cfa0e48611805721b858b98e9092d372f4f2f66e848a0",
-            "bytes": 40634384,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/dag_ml/_dag_ml.abi3.so"
+            "version": "0.3.44",
+            "origin": "Actual public PyPI dag-ml 0.3.44 wheel extension",
+            "sha256": "dbdc3ec2e6fc3abbeafbe57ffc6deb3d3b9c33ee66fe29b7348c52eee1436f1f",
+            "bytes": 43433544,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/lib/python3.11/site-packages/dag_ml/_dag_ml.abi3.so"
           },
           {
             "name": "methods-native",
-            "version": "1.3.9",
-            "origin": "Frozen actual Methods139 ABI20 qualified runtime",
-            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
-            "bytes": 5880096,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+            "version": "1.3.13",
+            "origin": "Actual public PyPI nirs4all-methods 1.3.13 library, ABI 2.20",
+            "sha256": "998f39672da1bd0d330f3b56f0df7af756132c892a180acc0b1179201e639547",
+            "bytes": 5887336,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0"
           }
         ]
       }
@@ -1021,53 +1021,53 @@
         "source_artifacts": [
           {
             "name": "core-wasm",
-            "version": "0.4.6",
-            "origin": "Actual wasm-pack Rust1.88 full published registry a857 build; scoped Rust inputs unchanged",
-            "sha256": "52309a44eae947f0f7449faa0e4d520390976aea0110d7f33969bb37ed0fd0d3",
-            "bytes": 6933582,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/wasm/native/nirs4all_core_wasm_native_bg.wasm"
+            "version": "0.4.7",
+            "origin": "Actual wasm-pack Rust1.88 build of the frozen Core 0.4.7 source",
+            "sha256": "e8d51876bfc8cafe52b37d41772cd71a1bfbe7e5d7e33561ac17ff96c068517d",
+            "bytes": 6958886,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/source/bindings/wasm/native/nirs4all_core_wasm_native_bg.wasm"
           },
           {
             "name": "core-cli",
-            "version": "0.4.6",
-            "origin": "Actual Linux fullregistry a857 release CLI",
-            "sha256": "7f3a940fff385501d7fe4f3e31731e5726c2104d003411c5bc08c69000edf11b",
-            "bytes": 38738784,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive"
+            "version": "0.4.7",
+            "origin": "Actual Linux Rust1.88 cargo release build of the frozen Core 0.4.7 source",
+            "sha256": "4b6429dd985241ec2f9852b83a2900588df1f1f373e007a5fc51f2f23e8c8b70",
+            "bytes": 38836792,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux-target/release/nirs4all-core-archive"
           }
         ],
         "dependency_origins": [
           {
             "name": "methods-wasm",
-            "version": "1.3.9",
-            "origin": "Actual published npm Methods139 SRI-verified package",
-            "sha256": "bda33b89ebe7dba33e1f7360ab427bb32543fe4c49aa7366ee9fbd7cd625e5b7",
-            "bytes": 3080945,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/npm/methods/package/dist/n4m.wasm"
+            "version": "1.3.13",
+            "origin": "Actual published npm @nirs4all/methods 1.3.13, SRI-verified",
+            "sha256": "7b935f5fe0c1785b738f8119e763d0651899396c6eed4e54202794e0ff7a948f",
+            "bytes": 3119339,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/npm/methods/package/dist/n4m.wasm"
           },
           {
             "name": "io-wasm",
-            "version": "0.2.11",
-            "origin": "Actual published npm IO211 SRI-verified package",
-            "sha256": "e110e05efc8781e66a5ad3d6795798103df07b4d22d0500fd826ef63f37bdb6c",
-            "bytes": 2273947,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/npm/io/package/nirs4all_io_wasm_bg.wasm"
+            "version": "0.2.14",
+            "origin": "Actual published npm @nirs4all/io-wasm 0.2.14, SRI-verified",
+            "sha256": "3eb972aee81e9a8c912100bada96294250664b0e6fefe1e7879790ed2dd4540f",
+            "bytes": 2324241,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/npm/io/package/nirs4all_io_wasm_bg.wasm"
           },
           {
             "name": "dag-wasm",
-            "version": "0.3.43",
-            "origin": "Actual published npm DAG343 SRI-verified package, Sigstore3572743789",
-            "sha256": "7241aaed192fdd082bb42f362019cf15cc521de97fc07e1b7d6e524d2a61bd70",
-            "bytes": 10819988,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/wasm/node_modules/dag-ml-wasm/dag_ml_wasm_bg.wasm"
+            "version": "0.3.44",
+            "origin": "Actual published npm dag-ml-wasm 0.3.44, SRI-verified lock",
+            "sha256": "9329ecd5f1d1a4f77829c3023690d5b1d48421eec33322bae831b9d47a781e73",
+            "bytes": 10863620,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/source/bindings/wasm/node_modules/dag-ml-wasm/dag_ml_wasm_bg.wasm"
           },
           {
             "name": "methods-native",
-            "version": "1.3.9",
-            "origin": "Frozen actual qualified Methods139 ABI20 library",
-            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
-            "bytes": 5880096,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+            "version": "1.3.13",
+            "origin": "Actual public PyPI nirs4all-methods 1.3.13 library, ABI 2.20",
+            "sha256": "998f39672da1bd0d330f3b56f0df7af756132c892a180acc0b1179201e639547",
+            "bytes": 5887336,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0"
           }
         ]
       }
@@ -1123,53 +1123,53 @@
         "source_artifacts": [
           {
             "name": "core-wasm",
-            "version": "0.4.6",
-            "origin": "Actual wasm-pack Rust1.88 full published registry a857 build; scoped Rust inputs unchanged",
-            "sha256": "52309a44eae947f0f7449faa0e4d520390976aea0110d7f33969bb37ed0fd0d3",
-            "bytes": 6933582,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/wasm/native/nirs4all_core_wasm_native_bg.wasm"
+            "version": "0.4.7",
+            "origin": "Actual wasm-pack Rust1.88 build of the frozen Core 0.4.7 source",
+            "sha256": "e8d51876bfc8cafe52b37d41772cd71a1bfbe7e5d7e33561ac17ff96c068517d",
+            "bytes": 6958886,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/source/bindings/wasm/native/nirs4all_core_wasm_native_bg.wasm"
           },
           {
             "name": "core-cli",
-            "version": "0.4.6",
-            "origin": "Actual Linux fullregistry a857 release CLI",
-            "sha256": "7f3a940fff385501d7fe4f3e31731e5726c2104d003411c5bc08c69000edf11b",
-            "bytes": 38738784,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive"
+            "version": "0.4.7",
+            "origin": "Actual Linux Rust1.88 cargo release build of the frozen Core 0.4.7 source",
+            "sha256": "4b6429dd985241ec2f9852b83a2900588df1f1f373e007a5fc51f2f23e8c8b70",
+            "bytes": 38836792,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux-target/release/nirs4all-core-archive"
           }
         ],
         "dependency_origins": [
           {
             "name": "methods-wasm",
-            "version": "1.3.9",
-            "origin": "Actual published npm Methods139 SRI-verified package",
-            "sha256": "bda33b89ebe7dba33e1f7360ab427bb32543fe4c49aa7366ee9fbd7cd625e5b7",
-            "bytes": 3080945,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/npm/methods/package/dist/n4m.wasm"
+            "version": "1.3.13",
+            "origin": "Actual published npm @nirs4all/methods 1.3.13, SRI-verified",
+            "sha256": "7b935f5fe0c1785b738f8119e763d0651899396c6eed4e54202794e0ff7a948f",
+            "bytes": 3119339,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/npm/methods/package/dist/n4m.wasm"
           },
           {
             "name": "io-wasm",
-            "version": "0.2.11",
-            "origin": "Actual published npm IO211 SRI-verified package",
-            "sha256": "e110e05efc8781e66a5ad3d6795798103df07b4d22d0500fd826ef63f37bdb6c",
-            "bytes": 2273947,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/npm/io/package/nirs4all_io_wasm_bg.wasm"
+            "version": "0.2.14",
+            "origin": "Actual published npm @nirs4all/io-wasm 0.2.14, SRI-verified",
+            "sha256": "3eb972aee81e9a8c912100bada96294250664b0e6fefe1e7879790ed2dd4540f",
+            "bytes": 2324241,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/npm/io/package/nirs4all_io_wasm_bg.wasm"
           },
           {
             "name": "dag-wasm",
-            "version": "0.3.43",
-            "origin": "Actual published npm DAG343 SRI-verified package, Sigstore3572743789",
-            "sha256": "7241aaed192fdd082bb42f362019cf15cc521de97fc07e1b7d6e524d2a61bd70",
-            "bytes": 10819988,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/source/bindings/wasm/node_modules/dag-ml-wasm/dag_ml_wasm_bg.wasm"
+            "version": "0.3.44",
+            "origin": "Actual published npm dag-ml-wasm 0.3.44, SRI-verified lock",
+            "sha256": "9329ecd5f1d1a4f77829c3023690d5b1d48421eec33322bae831b9d47a781e73",
+            "bytes": 10863620,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/source/bindings/wasm/node_modules/dag-ml-wasm/dag_ml_wasm_bg.wasm"
           },
           {
             "name": "methods-native",
-            "version": "1.3.9",
-            "origin": "Frozen actual qualified Methods139 ABI20 library",
-            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
-            "bytes": 5880096,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+            "version": "1.3.13",
+            "origin": "Actual public PyPI nirs4all-methods 1.3.13 library, ABI 2.20",
+            "sha256": "998f39672da1bd0d330f3b56f0df7af756132c892a180acc0b1179201e639547",
+            "bytes": 5887336,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0"
           }
         ]
       }
@@ -1183,14 +1183,14 @@
         "linux": [
           "python",
           "-B",
-          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/qualify_archive_portable.py",
+          "/home/delete/nirs4all/_audits/2026-11-02-core047/qualify_archive_portable.py",
           "--source-root",
           "{root}"
         ]
       },
       "executable_paths": {
         "linux": [
-          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/bin/python"
+          "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/bin/python"
         ]
       },
       "input_paths": [
@@ -1219,45 +1219,45 @@
         "source_artifacts": [
           {
             "name": "core-wheel",
-            "version": "0.4.6",
-            "origin": "Actual Linux a857 full published registry source build",
-            "sha256": "666dcca4419931e1df65dcf0dee79cede7ba0da955812b7440cbf22c5b360ef4",
-            "bytes": 13078128,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/wheels-full-registry/nirs4all_core-0.4.6-cp311-abi3-manylinux_2_34_x86_64.whl"
+            "version": "0.4.7",
+            "origin": "Actual Linux Rust1.88 maturin build of the frozen Core 0.4.7 source",
+            "sha256": "d88ad22c25b68c296fcacb3cc27889ac26434bad1c6a38d42d7a502a4b7e7273",
+            "bytes": 13095165,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/wheels/nirs4all_core-0.4.7-cp311-abi3-manylinux_2_34_x86_64.whl"
           },
           {
             "name": "core-native",
-            "version": "0.4.6",
-            "origin": "Actual extraction from fullregistry a857 Core wheel",
-            "sha256": "394f431bb0197d828995d5d066f8030d822d90968f73ebe88538aefe7d286c0e",
-            "bytes": 39068448,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/nirs4all_core/_native.abi3.so"
+            "version": "0.4.7",
+            "origin": "Actual extension installed from the Linux Core 0.4.7 wheel",
+            "sha256": "c6522c825581e171de6b5616784c315e8c13ba9a20a292ee943d24db57b3ade2",
+            "bytes": 39179512,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/lib/python3.11/site-packages/nirs4all_core/_native.abi3.so"
           },
           {
             "name": "core-cli",
-            "version": "0.4.6",
-            "origin": "Actual Linux cargo release a857 full published registry build",
-            "sha256": "7f3a940fff385501d7fe4f3e31731e5726c2104d003411c5bc08c69000edf11b",
-            "bytes": 38738784,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive"
+            "version": "0.4.7",
+            "origin": "Actual Linux Rust1.88 cargo release build of the frozen Core 0.4.7 source",
+            "sha256": "4b6429dd985241ec2f9852b83a2900588df1f1f373e007a5fc51f2f23e8c8b70",
+            "bytes": 38836792,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux-target/release/nirs4all-core-archive"
           }
         ],
         "dependency_origins": [
           {
             "name": "dag-native",
-            "version": "0.3.43",
-            "origin": "Actual locally qualified DAG343 candidate Python extension, no public PyPI claim",
-            "sha256": "fc31db48676e1480e96cfa0e48611805721b858b98e9092d372f4f2f66e848a0",
-            "bytes": 40634384,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/dag_ml/_dag_ml.abi3.so"
+            "version": "0.3.44",
+            "origin": "Actual public PyPI dag-ml 0.3.44 wheel extension",
+            "sha256": "dbdc3ec2e6fc3abbeafbe57ffc6deb3d3b9c33ee66fe29b7348c52eee1436f1f",
+            "bytes": 43433544,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/lib/python3.11/site-packages/dag_ml/_dag_ml.abi3.so"
           },
           {
             "name": "methods-native",
-            "version": "1.3.9",
-            "origin": "Frozen actual Methods139 ABI20 qualified runtime",
-            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
-            "bytes": 5880096,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+            "version": "1.3.13",
+            "origin": "Actual public PyPI nirs4all-methods 1.3.13 library, ABI 2.20",
+            "sha256": "998f39672da1bd0d330f3b56f0df7af756132c892a180acc0b1179201e639547",
+            "bytes": 5887336,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0"
           }
         ]
       }
@@ -1271,7 +1271,7 @@
         "linux": [
           "python",
           "-B",
-          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/qualify_archive_portable.py",
+          "/home/delete/nirs4all/_audits/2026-11-02-core047/qualify_archive_portable.py",
           "--source-root",
           "{root}",
           "--preload"
@@ -1279,7 +1279,7 @@
       },
       "executable_paths": {
         "linux": [
-          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/bin/python"
+          "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/bin/python"
         ]
       },
       "input_paths": [
@@ -1308,45 +1308,45 @@
         "source_artifacts": [
           {
             "name": "core-wheel",
-            "version": "0.4.6",
-            "origin": "Actual Linux a857 full published registry source build",
-            "sha256": "666dcca4419931e1df65dcf0dee79cede7ba0da955812b7440cbf22c5b360ef4",
-            "bytes": 13078128,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/wheels-full-registry/nirs4all_core-0.4.6-cp311-abi3-manylinux_2_34_x86_64.whl"
+            "version": "0.4.7",
+            "origin": "Actual Linux Rust1.88 maturin build of the frozen Core 0.4.7 source",
+            "sha256": "d88ad22c25b68c296fcacb3cc27889ac26434bad1c6a38d42d7a502a4b7e7273",
+            "bytes": 13095165,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/wheels/nirs4all_core-0.4.7-cp311-abi3-manylinux_2_34_x86_64.whl"
           },
           {
             "name": "core-native",
-            "version": "0.4.6",
-            "origin": "Actual extraction from fullregistry a857 Core wheel",
-            "sha256": "394f431bb0197d828995d5d066f8030d822d90968f73ebe88538aefe7d286c0e",
-            "bytes": 39068448,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/nirs4all_core/_native.abi3.so"
+            "version": "0.4.7",
+            "origin": "Actual extension installed from the Linux Core 0.4.7 wheel",
+            "sha256": "c6522c825581e171de6b5616784c315e8c13ba9a20a292ee943d24db57b3ade2",
+            "bytes": 39179512,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/lib/python3.11/site-packages/nirs4all_core/_native.abi3.so"
           },
           {
             "name": "core-cli",
-            "version": "0.4.6",
-            "origin": "Actual Linux cargo release a857 full published registry build",
-            "sha256": "7f3a940fff385501d7fe4f3e31731e5726c2104d003411c5bc08c69000edf11b",
-            "bytes": 38738784,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive"
+            "version": "0.4.7",
+            "origin": "Actual Linux Rust1.88 cargo release build of the frozen Core 0.4.7 source",
+            "sha256": "4b6429dd985241ec2f9852b83a2900588df1f1f373e007a5fc51f2f23e8c8b70",
+            "bytes": 38836792,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux-target/release/nirs4all-core-archive"
           }
         ],
         "dependency_origins": [
           {
             "name": "dag-native",
-            "version": "0.3.43",
-            "origin": "Actual locally qualified DAG343 candidate Python extension, no public PyPI claim",
-            "sha256": "fc31db48676e1480e96cfa0e48611805721b858b98e9092d372f4f2f66e848a0",
-            "bytes": 40634384,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/lib/python3.11/site-packages/dag_ml/_dag_ml.abi3.so"
+            "version": "0.3.44",
+            "origin": "Actual public PyPI dag-ml 0.3.44 wheel extension",
+            "sha256": "dbdc3ec2e6fc3abbeafbe57ffc6deb3d3b9c33ee66fe29b7348c52eee1436f1f",
+            "bytes": 43433544,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/lib/python3.11/site-packages/dag_ml/_dag_ml.abi3.so"
           },
           {
             "name": "methods-native",
-            "version": "1.3.9",
-            "origin": "Frozen actual Methods139 ABI20 qualified runtime",
-            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
-            "bytes": 5880096,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+            "version": "1.3.13",
+            "origin": "Actual public PyPI nirs4all-methods 1.3.13 library, ABI 2.20",
+            "sha256": "998f39672da1bd0d330f3b56f0df7af756132c892a180acc0b1179201e639547",
+            "bytes": 5887336,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0"
           }
         ]
       }
@@ -1362,16 +1362,16 @@
           "-X",
           "utf8",
           "-B",
-          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-formal/windows_driver.py",
+          "D:/workspace/nirs4all-release-20261102-core047/audit/formal/windows_driver.py",
           "--config",
-          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-formal/windows-config.json",
+          "D:/workspace/nirs4all-release-20261102-core047/audit/formal/windows-config.json",
           "--gate",
           "identity"
         ]
       },
       "executable_paths": {
         "windows": [
-          "D:/workspace/nirs4all-release-20261029-quality/core046-final-prefix/Scripts/python.exe"
+          "D:/workspace/nirs4all-release-20261102-core047/prefix/Scripts/python.exe"
         ]
       },
       "input_paths": [
@@ -1389,17 +1389,17 @@
         {
           "field": "core_version",
           "op": "eq",
-          "value": "0.4.6"
+          "value": "0.4.7"
         },
         {
           "field": "dag_version",
           "op": "eq",
-          "value": "0.3.43"
+          "value": "0.3.44"
         },
         {
           "field": "methods_engine",
           "op": "eq",
-          "value": "1.3.9+abi.2.20.0"
+          "value": "1.3.13+abi.2.20.0"
         }
       ],
       "required_environment": {
@@ -1412,45 +1412,45 @@
         "source_artifacts": [
           {
             "name": "core-wheel",
-            "version": "0.4.6",
-            "origin": "Actual WindowsRust1.88 fullregistry a857 wheel build/extraction, source/runtime continuity explicit",
-            "sha256": "b8d8b41e8a2a0c9aaa589c79c850d3e563dc4dad86d22be385d35358ce08aced",
-            "bytes": 11445260,
-            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\wheels\\full-registry\\nirs4all_core-0.4.6-cp311-abi3-win_amd64.whl"
+            "version": "0.4.7",
+            "origin": "Actual Windows Rust1.88 maturin build of the frozen Core 0.4.7 source",
+            "sha256": "93ff5755ab4add8f66256d09fc65a6a4638a67dc3af9bf73ed1e67f2ffc63343",
+            "bytes": 11474750,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\wheels-datasets\\nirs4all_core-0.4.7-cp311-abi3-win_amd64.whl"
           },
           {
             "name": "core-native",
-            "version": "0.4.6",
-            "origin": "Actual WindowsRust1.88 fullregistry a857 wheel build/extraction, source/runtime continuity explicit",
-            "sha256": "f8b8278ad5177839b464d0f0ebd14145cf11d98529b98697954375881f3166de",
-            "bytes": 34438144,
-            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\nirs4all_core\\_native.pyd"
+            "version": "0.4.7",
+            "origin": "Actual extension installed from the Windows Core 0.4.7 wheel",
+            "sha256": "efc36be748c0eeed18e8704d9bf7987dfc0532329838a395b2b768fcb124b591",
+            "bytes": 34493952,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\prefix\\Lib\\site-packages\\nirs4all_core\\_native.pyd"
           },
           {
             "name": "core-cli",
-            "version": "0.4.6",
-            "origin": "Actual WindowsRust1.88 fullregistry a857 CLI build, immutable lifecycle identity",
-            "sha256": "bee90f9c155cce23cdaac741a69f6c6fe1922560e7280d313ea7899c36146a4f",
-            "bytes": 34192896,
-            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\target\\release\\nirs4all-core-archive.exe"
+            "version": "0.4.7",
+            "origin": "Actual Windows Rust1.88 cargo release build of the frozen Core 0.4.7 source",
+            "sha256": "3c98a3addc2c55e0b7a712a799ccbc5fe1e05d556898a00cce5cd060c41f2dc6",
+            "bytes": 34247168,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\target\\release\\nirs4all-core-archive.exe"
           }
         ],
         "dependency_origins": [
           {
             "name": "dag-native",
-            "version": "0.3.43",
-            "origin": "actual local candidate build, source and registry cohort recorded separately",
-            "sha256": "956ca6be245bdf5620dc9d2f43f15f212a7b6be08b1de4aa55682bc461c6d5f9",
-            "bytes": 36821504,
-            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\dag_ml\\_dag_ml.pyd"
+            "version": "0.3.44",
+            "origin": "Actual public PyPI dag-ml 0.3.44 Windows wheel extension",
+            "sha256": "f4b1408b2f62d01d63c6812343160f7b3477b4bf717dcfce813a757ca163c320",
+            "bytes": 36186112,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\prefix\\Lib\\site-packages\\dag_ml\\_dag_ml.pyd"
           },
           {
             "name": "methods-native",
-            "version": "1.3.9",
-            "origin": "actual local candidate build, source and registry cohort recorded separately",
-            "sha256": "a821dd2bc4d3d9f9a4640966542c31a60a54f7434c9d66b0d579e01acf61a7fb",
-            "bytes": 4174848,
-            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\n4m\\lib\\n4m.dll"
+            "version": "1.3.13",
+            "origin": "Actual public PyPI nirs4all-methods 1.3.13 Windows library, ABI 2.20",
+            "sha256": "584748fc87316a894a2670c9d37f986b0725e20a7fac04cd20e13310b550f566",
+            "bytes": 4222976,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\prefix\\Lib\\site-packages\\n4m\\lib\\n4m.dll"
           }
         ]
       }
@@ -1466,16 +1466,16 @@
           "-X",
           "utf8",
           "-B",
-          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-formal/windows_driver.py",
+          "D:/workspace/nirs4all-release-20261102-core047/audit/formal/windows_driver.py",
           "--config",
-          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-formal/windows-config.json",
+          "D:/workspace/nirs4all-release-20261102-core047/audit/formal/windows-config.json",
           "--gate",
           "generate-fixtures"
         ]
       },
       "executable_paths": {
         "windows": [
-          "D:/workspace/nirs4all-release-20261029-quality/core046-final-prefix/Scripts/python.exe"
+          "D:/workspace/nirs4all-release-20261102-core047/prefix/Scripts/python.exe"
         ]
       },
       "input_paths": [
@@ -1493,17 +1493,17 @@
         {
           "field": "core_version",
           "op": "eq",
-          "value": "0.4.6"
+          "value": "0.4.7"
         },
         {
           "field": "dag_version",
           "op": "eq",
-          "value": "0.3.43"
+          "value": "0.3.44"
         },
         {
           "field": "methods_engine",
           "op": "eq",
-          "value": "1.3.9+abi.2.20.0"
+          "value": "1.3.13+abi.2.20.0"
         }
       ],
       "required_environment": {
@@ -1516,45 +1516,45 @@
         "source_artifacts": [
           {
             "name": "core-wheel",
-            "version": "0.4.6",
-            "origin": "Actual WindowsRust1.88 fullregistry a857 wheel build/extraction, source/runtime continuity explicit",
-            "sha256": "b8d8b41e8a2a0c9aaa589c79c850d3e563dc4dad86d22be385d35358ce08aced",
-            "bytes": 11445260,
-            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\wheels\\full-registry\\nirs4all_core-0.4.6-cp311-abi3-win_amd64.whl"
+            "version": "0.4.7",
+            "origin": "Actual Windows Rust1.88 maturin build of the frozen Core 0.4.7 source",
+            "sha256": "93ff5755ab4add8f66256d09fc65a6a4638a67dc3af9bf73ed1e67f2ffc63343",
+            "bytes": 11474750,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\wheels-datasets\\nirs4all_core-0.4.7-cp311-abi3-win_amd64.whl"
           },
           {
             "name": "core-native",
-            "version": "0.4.6",
-            "origin": "Actual WindowsRust1.88 fullregistry a857 wheel build/extraction, source/runtime continuity explicit",
-            "sha256": "f8b8278ad5177839b464d0f0ebd14145cf11d98529b98697954375881f3166de",
-            "bytes": 34438144,
-            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\nirs4all_core\\_native.pyd"
+            "version": "0.4.7",
+            "origin": "Actual extension installed from the Windows Core 0.4.7 wheel",
+            "sha256": "efc36be748c0eeed18e8704d9bf7987dfc0532329838a395b2b768fcb124b591",
+            "bytes": 34493952,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\prefix\\Lib\\site-packages\\nirs4all_core\\_native.pyd"
           },
           {
             "name": "core-cli",
-            "version": "0.4.6",
-            "origin": "Actual WindowsRust1.88 fullregistry a857 CLI build, immutable lifecycle identity",
-            "sha256": "bee90f9c155cce23cdaac741a69f6c6fe1922560e7280d313ea7899c36146a4f",
-            "bytes": 34192896,
-            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\target\\release\\nirs4all-core-archive.exe"
+            "version": "0.4.7",
+            "origin": "Actual Windows Rust1.88 cargo release build of the frozen Core 0.4.7 source",
+            "sha256": "3c98a3addc2c55e0b7a712a799ccbc5fe1e05d556898a00cce5cd060c41f2dc6",
+            "bytes": 34247168,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\target\\release\\nirs4all-core-archive.exe"
           }
         ],
         "dependency_origins": [
           {
             "name": "dag-native",
-            "version": "0.3.43",
-            "origin": "actual local candidate build, source and registry cohort recorded separately",
-            "sha256": "956ca6be245bdf5620dc9d2f43f15f212a7b6be08b1de4aa55682bc461c6d5f9",
-            "bytes": 36821504,
-            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\dag_ml\\_dag_ml.pyd"
+            "version": "0.3.44",
+            "origin": "Actual public PyPI dag-ml 0.3.44 Windows wheel extension",
+            "sha256": "f4b1408b2f62d01d63c6812343160f7b3477b4bf717dcfce813a757ca163c320",
+            "bytes": 36186112,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\prefix\\Lib\\site-packages\\dag_ml\\_dag_ml.pyd"
           },
           {
             "name": "methods-native",
-            "version": "1.3.9",
-            "origin": "actual local candidate build, source and registry cohort recorded separately",
-            "sha256": "a821dd2bc4d3d9f9a4640966542c31a60a54f7434c9d66b0d579e01acf61a7fb",
-            "bytes": 4174848,
-            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\n4m\\lib\\n4m.dll"
+            "version": "1.3.13",
+            "origin": "Actual public PyPI nirs4all-methods 1.3.13 Windows library, ABI 2.20",
+            "sha256": "584748fc87316a894a2670c9d37f986b0725e20a7fac04cd20e13310b550f566",
+            "bytes": 4222976,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\prefix\\Lib\\site-packages\\n4m\\lib\\n4m.dll"
           }
         ]
       }
@@ -1570,16 +1570,16 @@
           "-X",
           "utf8",
           "-B",
-          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-formal/windows_driver.py",
+          "D:/workspace/nirs4all-release-20261102-core047/audit/formal/windows_driver.py",
           "--config",
-          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-formal/windows-config.json",
+          "D:/workspace/nirs4all-release-20261102-core047/audit/formal/windows-config.json",
           "--gate",
           "python-oracle"
         ]
       },
       "executable_paths": {
         "windows": [
-          "D:/workspace/nirs4all-release-20261029-quality/core046-final-prefix/Scripts/python.exe"
+          "D:/workspace/nirs4all-release-20261102-core047/prefix/Scripts/python.exe"
         ]
       },
       "input_paths": [
@@ -1598,17 +1598,17 @@
         {
           "field": "core_version",
           "op": "eq",
-          "value": "0.4.6"
+          "value": "0.4.7"
         },
         {
           "field": "dag_version",
           "op": "eq",
-          "value": "0.3.43"
+          "value": "0.3.44"
         },
         {
           "field": "methods_engine",
           "op": "eq",
-          "value": "1.3.9+abi.2.20.0"
+          "value": "1.3.13+abi.2.20.0"
         }
       ],
       "required_environment": {
@@ -1621,45 +1621,45 @@
         "source_artifacts": [
           {
             "name": "core-wheel",
-            "version": "0.4.6",
-            "origin": "Actual WindowsRust1.88 fullregistry a857 wheel build/extraction, source/runtime continuity explicit",
-            "sha256": "b8d8b41e8a2a0c9aaa589c79c850d3e563dc4dad86d22be385d35358ce08aced",
-            "bytes": 11445260,
-            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\wheels\\full-registry\\nirs4all_core-0.4.6-cp311-abi3-win_amd64.whl"
+            "version": "0.4.7",
+            "origin": "Actual Windows Rust1.88 maturin build of the frozen Core 0.4.7 source",
+            "sha256": "93ff5755ab4add8f66256d09fc65a6a4638a67dc3af9bf73ed1e67f2ffc63343",
+            "bytes": 11474750,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\wheels-datasets\\nirs4all_core-0.4.7-cp311-abi3-win_amd64.whl"
           },
           {
             "name": "core-native",
-            "version": "0.4.6",
-            "origin": "Actual WindowsRust1.88 fullregistry a857 wheel build/extraction, source/runtime continuity explicit",
-            "sha256": "f8b8278ad5177839b464d0f0ebd14145cf11d98529b98697954375881f3166de",
-            "bytes": 34438144,
-            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\nirs4all_core\\_native.pyd"
+            "version": "0.4.7",
+            "origin": "Actual extension installed from the Windows Core 0.4.7 wheel",
+            "sha256": "efc36be748c0eeed18e8704d9bf7987dfc0532329838a395b2b768fcb124b591",
+            "bytes": 34493952,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\prefix\\Lib\\site-packages\\nirs4all_core\\_native.pyd"
           },
           {
             "name": "core-cli",
-            "version": "0.4.6",
-            "origin": "Actual WindowsRust1.88 fullregistry a857 CLI build, immutable lifecycle identity",
-            "sha256": "bee90f9c155cce23cdaac741a69f6c6fe1922560e7280d313ea7899c36146a4f",
-            "bytes": 34192896,
-            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\target\\release\\nirs4all-core-archive.exe"
+            "version": "0.4.7",
+            "origin": "Actual Windows Rust1.88 cargo release build of the frozen Core 0.4.7 source",
+            "sha256": "3c98a3addc2c55e0b7a712a799ccbc5fe1e05d556898a00cce5cd060c41f2dc6",
+            "bytes": 34247168,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\target\\release\\nirs4all-core-archive.exe"
           }
         ],
         "dependency_origins": [
           {
             "name": "dag-native",
-            "version": "0.3.43",
-            "origin": "actual local candidate build, source and registry cohort recorded separately",
-            "sha256": "956ca6be245bdf5620dc9d2f43f15f212a7b6be08b1de4aa55682bc461c6d5f9",
-            "bytes": 36821504,
-            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\dag_ml\\_dag_ml.pyd"
+            "version": "0.3.44",
+            "origin": "Actual public PyPI dag-ml 0.3.44 Windows wheel extension",
+            "sha256": "f4b1408b2f62d01d63c6812343160f7b3477b4bf717dcfce813a757ca163c320",
+            "bytes": 36186112,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\prefix\\Lib\\site-packages\\dag_ml\\_dag_ml.pyd"
           },
           {
             "name": "methods-native",
-            "version": "1.3.9",
-            "origin": "actual local candidate build, source and registry cohort recorded separately",
-            "sha256": "a821dd2bc4d3d9f9a4640966542c31a60a54f7434c9d66b0d579e01acf61a7fb",
-            "bytes": 4174848,
-            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\n4m\\lib\\n4m.dll"
+            "version": "1.3.13",
+            "origin": "Actual public PyPI nirs4all-methods 1.3.13 Windows library, ABI 2.20",
+            "sha256": "584748fc87316a894a2670c9d37f986b0725e20a7fac04cd20e13310b550f566",
+            "bytes": 4222976,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\prefix\\Lib\\site-packages\\n4m\\lib\\n4m.dll"
           }
         ]
       }
@@ -1675,16 +1675,16 @@
           "-X",
           "utf8",
           "-B",
-          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-formal/windows_driver.py",
+          "D:/workspace/nirs4all-release-20261102-core047/audit/formal/windows_driver.py",
           "--config",
-          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-formal/windows-config.json",
+          "D:/workspace/nirs4all-release-20261102-core047/audit/formal/windows-config.json",
           "--gate",
           "python-complete"
         ]
       },
       "executable_paths": {
         "windows": [
-          "D:/workspace/nirs4all-release-20261029-quality/core046-final-prefix/Scripts/python.exe"
+          "D:/workspace/nirs4all-release-20261102-core047/prefix/Scripts/python.exe"
         ]
       },
       "input_paths": [
@@ -1711,17 +1711,17 @@
         {
           "field": "core_version",
           "op": "eq",
-          "value": "0.4.6"
+          "value": "0.4.7"
         },
         {
           "field": "dag_version",
           "op": "eq",
-          "value": "0.3.43"
+          "value": "0.3.44"
         },
         {
           "field": "methods_engine",
           "op": "eq",
-          "value": "1.3.9+abi.2.20.0"
+          "value": "1.3.13+abi.2.20.0"
         },
         {
           "field": "subtests_passed",
@@ -1739,45 +1739,45 @@
         "source_artifacts": [
           {
             "name": "core-wheel",
-            "version": "0.4.6",
-            "origin": "Actual WindowsRust1.88 fullregistry a857 wheel build/extraction, source/runtime continuity explicit",
-            "sha256": "b8d8b41e8a2a0c9aaa589c79c850d3e563dc4dad86d22be385d35358ce08aced",
-            "bytes": 11445260,
-            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\wheels\\full-registry\\nirs4all_core-0.4.6-cp311-abi3-win_amd64.whl"
+            "version": "0.4.7",
+            "origin": "Actual Windows Rust1.88 maturin build of the frozen Core 0.4.7 source",
+            "sha256": "93ff5755ab4add8f66256d09fc65a6a4638a67dc3af9bf73ed1e67f2ffc63343",
+            "bytes": 11474750,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\wheels-datasets\\nirs4all_core-0.4.7-cp311-abi3-win_amd64.whl"
           },
           {
             "name": "core-native",
-            "version": "0.4.6",
-            "origin": "Actual WindowsRust1.88 fullregistry a857 wheel build/extraction, source/runtime continuity explicit",
-            "sha256": "f8b8278ad5177839b464d0f0ebd14145cf11d98529b98697954375881f3166de",
-            "bytes": 34438144,
-            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\nirs4all_core\\_native.pyd"
+            "version": "0.4.7",
+            "origin": "Actual extension installed from the Windows Core 0.4.7 wheel",
+            "sha256": "efc36be748c0eeed18e8704d9bf7987dfc0532329838a395b2b768fcb124b591",
+            "bytes": 34493952,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\prefix\\Lib\\site-packages\\nirs4all_core\\_native.pyd"
           },
           {
             "name": "core-cli",
-            "version": "0.4.6",
-            "origin": "Actual WindowsRust1.88 fullregistry a857 CLI build, immutable lifecycle identity",
-            "sha256": "bee90f9c155cce23cdaac741a69f6c6fe1922560e7280d313ea7899c36146a4f",
-            "bytes": 34192896,
-            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\target\\release\\nirs4all-core-archive.exe"
+            "version": "0.4.7",
+            "origin": "Actual Windows Rust1.88 cargo release build of the frozen Core 0.4.7 source",
+            "sha256": "3c98a3addc2c55e0b7a712a799ccbc5fe1e05d556898a00cce5cd060c41f2dc6",
+            "bytes": 34247168,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\target\\release\\nirs4all-core-archive.exe"
           }
         ],
         "dependency_origins": [
           {
             "name": "dag-native",
-            "version": "0.3.43",
-            "origin": "actual local candidate build, source and registry cohort recorded separately",
-            "sha256": "956ca6be245bdf5620dc9d2f43f15f212a7b6be08b1de4aa55682bc461c6d5f9",
-            "bytes": 36821504,
-            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\dag_ml\\_dag_ml.pyd"
+            "version": "0.3.44",
+            "origin": "Actual public PyPI dag-ml 0.3.44 Windows wheel extension",
+            "sha256": "f4b1408b2f62d01d63c6812343160f7b3477b4bf717dcfce813a757ca163c320",
+            "bytes": 36186112,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\prefix\\Lib\\site-packages\\dag_ml\\_dag_ml.pyd"
           },
           {
             "name": "methods-native",
-            "version": "1.3.9",
-            "origin": "actual local candidate build, source and registry cohort recorded separately",
-            "sha256": "a821dd2bc4d3d9f9a4640966542c31a60a54f7434c9d66b0d579e01acf61a7fb",
-            "bytes": 4174848,
-            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\n4m\\lib\\n4m.dll"
+            "version": "1.3.13",
+            "origin": "Actual public PyPI nirs4all-methods 1.3.13 Windows library, ABI 2.20",
+            "sha256": "584748fc87316a894a2670c9d37f986b0725e20a7fac04cd20e13310b550f566",
+            "bytes": 4222976,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\prefix\\Lib\\site-packages\\n4m\\lib\\n4m.dll"
           }
         ]
       }
@@ -1793,16 +1793,16 @@
           "-X",
           "utf8",
           "-B",
-          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-formal/windows_driver.py",
+          "D:/workspace/nirs4all-release-20261102-core047/audit/formal/windows_driver.py",
           "--config",
-          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-formal/matrix-config.json",
+          "D:/workspace/nirs4all-release-20261102-core047/audit/formal/matrix-config.json",
           "--gate",
           "python-matrix"
         ]
       },
       "executable_paths": {
         "windows": [
-          "D:/workspace/nirs4all-release-20261029-quality/core046-final-prefix/Scripts/python.exe"
+          "D:/workspace/nirs4all-release-20261102-core047/prefix/Scripts/python.exe"
         ]
       },
       "input_paths": [
@@ -1821,17 +1821,17 @@
         {
           "field": "core_version",
           "op": "eq",
-          "value": "0.4.6"
+          "value": "0.4.7"
         },
         {
           "field": "dag_version",
           "op": "eq",
-          "value": "0.3.43"
+          "value": "0.3.44"
         },
         {
           "field": "methods_engine",
           "op": "eq",
-          "value": "1.3.9+abi.2.20.0"
+          "value": "1.3.13+abi.2.20.0"
         }
       ],
       "required_environment": {
@@ -1844,45 +1844,45 @@
         "source_artifacts": [
           {
             "name": "core-wheel",
-            "version": "0.4.6",
-            "origin": "Actual WindowsRust1.88 fullregistry a857 wheel build/extraction, source/runtime continuity explicit",
-            "sha256": "b8d8b41e8a2a0c9aaa589c79c850d3e563dc4dad86d22be385d35358ce08aced",
-            "bytes": 11445260,
-            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\wheels\\full-registry\\nirs4all_core-0.4.6-cp311-abi3-win_amd64.whl"
+            "version": "0.4.7",
+            "origin": "Actual Windows Rust1.88 maturin build of the frozen Core 0.4.7 source",
+            "sha256": "93ff5755ab4add8f66256d09fc65a6a4638a67dc3af9bf73ed1e67f2ffc63343",
+            "bytes": 11474750,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\wheels-datasets\\nirs4all_core-0.4.7-cp311-abi3-win_amd64.whl"
           },
           {
             "name": "core-native",
-            "version": "0.4.6",
-            "origin": "Actual WindowsRust1.88 fullregistry a857 wheel build/extraction, source/runtime continuity explicit",
-            "sha256": "f8b8278ad5177839b464d0f0ebd14145cf11d98529b98697954375881f3166de",
-            "bytes": 34438144,
-            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\nirs4all_core\\_native.pyd"
+            "version": "0.4.7",
+            "origin": "Actual extension installed from the Windows Core 0.4.7 wheel",
+            "sha256": "efc36be748c0eeed18e8704d9bf7987dfc0532329838a395b2b768fcb124b591",
+            "bytes": 34493952,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\prefix\\Lib\\site-packages\\nirs4all_core\\_native.pyd"
           },
           {
             "name": "core-cli",
-            "version": "0.4.6",
-            "origin": "Actual WindowsRust1.88 fullregistry a857 CLI build, immutable lifecycle identity",
-            "sha256": "bee90f9c155cce23cdaac741a69f6c6fe1922560e7280d313ea7899c36146a4f",
-            "bytes": 34192896,
-            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\target\\release\\nirs4all-core-archive.exe"
+            "version": "0.4.7",
+            "origin": "Actual Windows Rust1.88 cargo release build of the frozen Core 0.4.7 source",
+            "sha256": "3c98a3addc2c55e0b7a712a799ccbc5fe1e05d556898a00cce5cd060c41f2dc6",
+            "bytes": 34247168,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\target\\release\\nirs4all-core-archive.exe"
           }
         ],
         "dependency_origins": [
           {
             "name": "dag-native",
-            "version": "0.3.43",
-            "origin": "actual local candidate build, source and registry cohort recorded separately",
-            "sha256": "956ca6be245bdf5620dc9d2f43f15f212a7b6be08b1de4aa55682bc461c6d5f9",
-            "bytes": 36821504,
-            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\dag_ml\\_dag_ml.pyd"
+            "version": "0.3.44",
+            "origin": "Actual public PyPI dag-ml 0.3.44 Windows wheel extension",
+            "sha256": "f4b1408b2f62d01d63c6812343160f7b3477b4bf717dcfce813a757ca163c320",
+            "bytes": 36186112,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\prefix\\Lib\\site-packages\\dag_ml\\_dag_ml.pyd"
           },
           {
             "name": "methods-native",
-            "version": "1.3.9",
-            "origin": "actual local candidate build, source and registry cohort recorded separately",
-            "sha256": "a821dd2bc4d3d9f9a4640966542c31a60a54f7434c9d66b0d579e01acf61a7fb",
-            "bytes": 4174848,
-            "artifact_path": "D:\\workspace\\nirs4all-release-20261029-quality\\core046-final-prefix\\Lib\\site-packages\\n4m\\lib\\n4m.dll"
+            "version": "1.3.13",
+            "origin": "Actual public PyPI nirs4all-methods 1.3.13 Windows library, ABI 2.20",
+            "sha256": "584748fc87316a894a2670c9d37f986b0725e20a7fac04cd20e13310b550f566",
+            "bytes": 4222976,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\prefix\\Lib\\site-packages\\n4m\\lib\\n4m.dll"
           }
         ]
       }
@@ -1896,20 +1896,20 @@
         "linux": [
           "python",
           "-B",
-          "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-verify.py",
+          "/home/delete/nirs4all/_audits/2026-11-02-core047/core047-lifecycle-verify.py",
           "--os-family",
           "linux",
           "--evidence-root",
-          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux",
+          "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux",
           "--source-root",
           "{root}",
           "--source-freeze",
-          "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-source-freeze.json"
+          "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-source-freeze.json"
         ]
       },
       "executable_paths": {
         "linux": [
-          "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/prefix/bin/python"
+          "/home/delete/nirs4all/_audits/2026-11-02-core047/prefix/bin/python"
         ]
       },
       "input_paths": [
@@ -1953,21 +1953,21 @@
         "source_artifacts": [
           {
             "name": "core-cli-lifecycle",
-            "version": "0.4.6",
-            "origin": "Actual cargo release build from a857 with full registry lock, lifecycle Linux9",
-            "sha256": "7f3a940fff385501d7fe4f3e31731e5726c2104d003411c5bc08c69000edf11b",
-            "bytes": 38738784,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/publication/core046/lifecycle-linux-target/release/nirs4all-core-archive"
+            "version": "0.4.7",
+            "origin": "Actual Linux Rust1.88 cargo release build of the frozen Core 0.4.7 source, lifecycle Linux9",
+            "sha256": "4b6429dd985241ec2f9852b83a2900588df1f1f373e007a5fc51f2f23e8c8b70",
+            "bytes": 38836792,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/lifecycle-linux-target/release/nirs4all-core-archive"
           }
         ],
         "dependency_origins": [
           {
             "name": "methods-native",
-            "version": "1.3.9",
-            "origin": "Frozen bit-identical qualified Methods ABI2.20 owner library, original SHA retained",
-            "sha256": "b54bc8e9ee781eb12560445f092d9258b8c8cd2385786892b1e07940ec0ac7cd",
-            "bytes": 5880096,
-            "artifact_path": "/home/delete/nirs4all/_audits/2026-10-29-remediation/core046-lifecycle-inputs/libn4m.so.2.20.0"
+            "version": "1.3.13",
+            "origin": "Actual public PyPI nirs4all-methods 1.3.13 library, ABI 2.20",
+            "sha256": "998f39672da1bd0d330f3b56f0df7af756132c892a180acc0b1179201e639547",
+            "bytes": 5887336,
+            "artifact_path": "/home/delete/nirs4all/_audits/2026-11-02-core047/inputs/libn4m.so.2.20.0"
           },
           {
             "name": "historical-archive-v2",
@@ -1989,20 +1989,20 @@
         "windows": [
           "python",
           "-B",
-          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-lifecycle-verify.py",
+          "D:/workspace/nirs4all-release-20261102-core047/audit/core047-lifecycle-verify.py",
           "--os-family",
           "windows",
           "--evidence-root",
-          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-lifecycle-windows-v2",
+          "D:/workspace/nirs4all-release-20261102-core047/audit/lifecycle-windows",
           "--source-root",
           "{root}",
           "--source-freeze",
-          "D:/workspace/nirs4all-release-20261029-quality/audit/core046-lifecycle-source-freeze.json"
+          "D:/workspace/nirs4all-release-20261102-core047/audit/core047-lifecycle-source-freeze.json"
         ]
       },
       "executable_paths": {
         "windows": [
-          "D:/workspace/nirs4all-release-20261029-sdk1411/prefix/Scripts/python.exe"
+          "D:/workspace/nirs4all-release-20261102-core047/prefix/Scripts/python.exe"
         ]
       },
       "input_paths": [
@@ -2046,28 +2046,28 @@
         "source_artifacts": [
           {
             "name": "core-cli-lifecycle",
-            "version": "0.4.6",
-            "origin": "Actual Rust1.88 release a857 fullregistry build used by five Windows lifecycle operations",
-            "sha256": "bee90f9c155cce23cdaac741a69f6c6fe1922560e7280d313ea7899c36146a4f",
-            "bytes": 34192896,
-            "artifact_path": "D:/workspace/nirs4all-release-20261029-quality/target/release/nirs4all-core-archive.exe"
+            "version": "0.4.7",
+            "origin": "Actual Windows Rust1.88 cargo release build of the frozen Core 0.4.7 source, used by the five Windows lifecycle operations",
+            "sha256": "3c98a3addc2c55e0b7a712a799ccbc5fe1e05d556898a00cce5cd060c41f2dc6",
+            "bytes": 34247168,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\target\\release\\nirs4all-core-archive.exe"
           }
         ],
         "dependency_origins": [
           {
             "name": "methods-native",
-            "version": "1.3.9",
-            "origin": "Actual repaired Windows Methods139 packaged ABI20 DLL used by original lifecycle operations",
-            "sha256": "a821dd2bc4d3d9f9a4640966542c31a60a54f7434c9d66b0d579e01acf61a7fb",
-            "bytes": 4174848,
-            "artifact_path": "D:/workspace/nirs4all-release-20261029-sdk1411/prefix/Lib/site-packages/n4m/lib/n4m.dll"
+            "version": "1.3.13",
+            "origin": "Actual public PyPI nirs4all-methods 1.3.13 Windows library used by the original lifecycle operations",
+            "sha256": "584748fc87316a894a2670c9d37f986b0725e20a7fac04cd20e13310b550f566",
+            "bytes": 4222976,
+            "artifact_path": "D:\\workspace\\nirs4all-release-20261102-core047\\prefix\\Lib\\site-packages\\n4m\\lib\\n4m.dll"
           }
         ]
       }
     }
   ],
   "coverage_note": "All22 mandatory gates retain original minima. Full Linux170+490subtests and Windows169+490subtests retain six/seven approved cold skips covered independently. Rust workspace includes live tests except private-copy matrix, executed in its own mandatory fresh process. Native Octave10.3 parity+six workflows and all108JS tests execute without optional skips. Historical gate identifiers remain stable for audit continuity; actual current versions are bound in provenance.",
-  "source_basis": "Core0.4.6 actual full published registry cohort (Rust a857, MATLAB bounded identifier fix, JS min343/real registry resolution); original measured source SHAs retained per gate.",
+  "source_basis": "Core 0.4.7 on the published DAG 0.3.44 / Data 0.2.16 / Formats 0.2.14 / IO 0.2.14 / Methods 1.3.13 registry cohort; every gate measured on the frozen release source; original measured source SHAs retained per gate.",
   "qualification_limits": [
     "CLI owned snapshot cleanup is qualified after normal parent termination, successful prediction and controlled refusal; forced supervisor kill may leave its owned temporary directory.",
     "Direct in-process Rust/Python/R binding snapshot lifetime is unchanged; the CLI parent-worker lifecycle fix does not claim to alter those static snapshots.",
