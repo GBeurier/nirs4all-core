@@ -277,7 +277,11 @@ fn classification_dataset() -> Value {
 }
 
 fn assert_owner_classification(result: &Value, data: &Value, scope: &str) {
-    assert_eq!(result["profile"], "portable_linear_classification.v1");
+    assert_owner_classification_profile(result, data, scope, "portable_linear_classification.v1");
+}
+
+fn assert_owner_classification_profile(result: &Value, data: &Value, scope: &str, profile: &str) {
+    assert_eq!(result["profile"], profile);
     assert_eq!(result["evaluation"]["scope"], scope);
     assert_eq!(result["evaluation"]["independent_test"], false);
     let y = data["y"].as_array().unwrap();
@@ -775,5 +779,329 @@ fn native_terminal_fit_inputs_reach_mbpls_and_group_sparse_and_methods_owns_widt
         );
         assert!(error.contains("incompatible length"), "{error}");
         assert!(error.contains(name), "{error}");
+    }
+}
+
+#[test]
+fn native_feature_classification_scores_raw_views_and_keeps_order_in_both_modes() {
+    use n4m::roles::{
+        Estimator, FitInputs,
+        ParamValue::{Double, Int},
+    };
+    let library = library();
+    let data = classification_dataset();
+    let x = data["X"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|row| {
+            row.as_array()
+                .unwrap()
+                .iter()
+                .map(|v| v.as_f64().unwrap())
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+    let y = data["y"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| v.as_i64().unwrap())
+        .collect::<Vec<_>>();
+    let cols = x[0].len();
+    let ids = (0..x.len())
+        .map(|r| format!("row_{}", x.len() - r))
+        .collect::<Vec<_>>();
+    let mut data = data;
+    data["sample_ids"] = json!(ids);
+    for branch in [true, false] {
+        for holdout in [true, false] {
+            let mut pipeline = Vec::new();
+            if holdout {
+                pipeline.push(json!({"class":"n4m.KennardStone","params":{"test_size":0.3}}));
+            }
+            if branch {
+                pipeline.extend([
+                    json!({"branch":[
+                    {"name":"z_msc","steps":[{"class":"n4m.MSC"}]},
+                    {"name":"a_snv","steps":[{"class":"n4m.SNV"}]}]}),
+                    json!({"merge":"features"}),
+                ]);
+            } else {
+                pipeline.extend([
+                    json!({"train_augmentation":{"class":"n4m.NativeXAugmentation",
+                    "params":{"kind":"gaussian_noise","values":[0.02],"seed":7}}}),
+                    json!({"class":"n4m.MSC"}),
+                ]);
+            }
+            pipeline.push(json!({"model":{"class":"n4m.SparsePLSDA","params":{"n_components":2,"sparsity_lambda":0.05}}}));
+            let result = nirs4all::portable_execution::run(&json!({"schema_version":1,
+                "profile":"portable_feature_classification.v1","definition":pipeline,"dataset":data}), &library).unwrap();
+            assert_owner_classification_profile(
+                &result,
+                &data,
+                if holdout {
+                    "selection_validation"
+                } else {
+                    "training"
+                },
+                "portable_feature_classification.v1",
+            );
+            assert_eq!(
+                result["owner"]["profile"],
+                if holdout {
+                    "single_resampled_holdout_graph_classification_bank.v1"
+                } else {
+                    "training_graph_classification_bank.v1"
+                }
+            );
+            assert!(result["owner"]["evidence"]
+                .get("selected_package")
+                .is_none());
+            assert_eq!(result["identities"]["sample_ids"], json!(ids));
+            let train = indexes(&result["split"]["trainIndices"]);
+            let evaluation = indexes(&result["split"]["testIndices"]);
+            let flat = |indexes: &[usize]| {
+                indexes
+                    .iter()
+                    .flat_map(|i| x[*i].clone())
+                    .collect::<Vec<_>>()
+            };
+            let raw_fit = flat(&train);
+            let raw_eval = flat(&evaluation);
+            let labels = train.iter().map(|i| y[*i]).collect::<Vec<_>>();
+            let context = n4m::Context::new().unwrap();
+            let fit_x = if branch {
+                raw_fit.clone()
+            } else {
+                augment(
+                    &context,
+                    "augmentation.noise.gaussian_noise",
+                    &[("sigma", Double(0.02)), ("seed", Int(7))],
+                    &raw_fit,
+                    cols,
+                )
+            };
+            fn view(values: &[f64], cols: usize) -> n4m::MatrixRef<'_> {
+                n4m::MatrixRef::row_major(values, values.len() / cols, cols).unwrap()
+            }
+            let methods: &[&str] = if branch {
+                &["preprocessing.scatter.msc", "preprocessing.scatter.snv"]
+            } else {
+                &["preprocessing.scatter.msc"]
+            };
+            let mut fit_branches = Vec::new();
+            let mut eval_branches = Vec::new();
+            for method in methods {
+                let mut estimator = Estimator::new(&context, method, None).unwrap();
+                estimator
+                    .fit(&context, &FitInputs::new(view(&fit_x, cols)))
+                    .unwrap();
+                fit_branches.push(estimator.transform(&context, view(&fit_x, cols)).unwrap());
+                // Raw training rows are also the scoring input in training mode.
+                eval_branches.push(
+                    estimator
+                        .transform(&context, view(&raw_eval, cols))
+                        .unwrap(),
+                );
+            }
+            let join = |branches: &[n4m::Matrix]| {
+                (0..branches[0].rows)
+                    .flat_map(|r| {
+                        branches
+                            .iter()
+                            .flat_map(move |b| b.data[r * b.cols..(r + 1) * b.cols].iter().copied())
+                    })
+                    .collect::<Vec<_>>()
+            };
+            let fit = join(&fit_branches);
+            let evaluation_x = join(&eval_branches);
+            let width = cols * methods.len();
+            let named = params(
+                &context,
+                "models.sparse.sparse_pls_da",
+                &[("n_components", Int(2)), ("sparsity_lambda", Double(0.05))],
+            );
+            let mut classifier =
+                Estimator::new(&context, "models.sparse.sparse_pls_da", Some(&named)).unwrap();
+            classifier
+                .fit(
+                    &context,
+                    &FitInputs::new(n4m::MatrixRef::row_major(&fit, train.len(), width).unwrap())
+                        .labels(&labels),
+                )
+                .unwrap();
+            let expected = classifier
+                .predict_labels(
+                    &context,
+                    n4m::MatrixRef::row_major(&evaluation_x, evaluation.len(), width).unwrap(),
+                )
+                .unwrap();
+            assert_eq!(result["selected"]["predictions"], json!(expected));
+            let blocks = &result["selected"]["feature_blocks"];
+            if branch {
+                let ordered = blocks.as_object().unwrap().values().next().unwrap();
+                assert_eq!(ordered[0]["branch_id"], "z_msc");
+                assert_eq!(ordered[1]["branch_id"], "a_snv");
+                assert_eq!(ordered[0]["column_count"], cols);
+                assert_eq!(ordered[1]["column_count"], cols);
+            } else {
+                assert_eq!(blocks, &json!({}));
+            }
+        }
+    }
+}
+
+#[test]
+fn native_branch_terminal_fit_inputs_describe_the_joined_ordered_axis() {
+    use n4m::roles::{
+        Estimator, FitInputs,
+        ParamValue::{Double, Int},
+    };
+    let library = library();
+    let data = oracle()["dataset"].clone();
+    let cols = data["cols"].as_u64().unwrap() as usize;
+    let all_y = data["y"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| v.as_f64().unwrap())
+        .collect::<Vec<_>>();
+    let blocks = vec![cols as i64, cols as i64];
+    let groups = (0..2 * cols)
+        .map(|c| if c < cols { 1_i64 } else { 0 })
+        .collect::<Vec<_>>();
+    for grouped in [false, true] {
+        let mut pipeline = Vec::new();
+        if grouped {
+            pipeline.push(json!({"class":"n4m.KennardStone","params":{"test_size":0.3}}));
+        }
+        pipeline.extend([
+            json!({"branch":[
+            {"name":"z_snv","steps":[{"class":"n4m.SNV"}]},
+            {"name":"a_msc","steps":[{"class":"n4m.MSC"}]}]}),
+            json!({"merge":"features"}),
+        ]);
+        pipeline.push(if grouped {
+            json!({"model":{"class":"n4m.GroupSparsePLS","params":{"n_components":2,"group_lambda":0.2,"group_assignment":groups}}})
+        } else {json!({"model":{"class":"n4m.MBPLS","params":{"n_components":2,"block_sizes":blocks}}})});
+        let run = |pipeline: &[Value]| {
+            nirs4all::portable_execution::run(
+                &json!({"schema_version":1,"definition":pipeline,"dataset":data}),
+                &library,
+            )
+        };
+        let result = run(&pipeline).unwrap();
+        assert_eq!(result["profile"], "portable_feature_regression.v1");
+        assert_eq!(
+            result["evaluation"]["scope"],
+            if grouped {
+                "selection_validation"
+            } else {
+                "training"
+            }
+        );
+        let train = indexes(&result["split"]["trainIndices"]);
+        let evaluation = indexes(&result["split"]["testIndices"]);
+        let fit_x = pick_rows(&data, &train);
+        let eval_x = pick_rows(&data, &evaluation);
+        let y = train.iter().map(|i| all_y[*i]).collect::<Vec<_>>();
+        let context = n4m::Context::new().unwrap();
+        let mut fit_branches = Vec::new();
+        let mut eval_branches = Vec::new();
+        for method in ["preprocessing.scatter.snv", "preprocessing.scatter.msc"] {
+            let mut estimator = Estimator::new(&context, method, None).unwrap();
+            let fit_view = n4m::MatrixRef::row_major(&fit_x, train.len(), cols).unwrap();
+            estimator.fit(&context, &FitInputs::new(fit_view)).unwrap();
+            fit_branches.push(estimator.transform(&context, fit_view).unwrap());
+            eval_branches.push(
+                estimator
+                    .transform(
+                        &context,
+                        n4m::MatrixRef::row_major(&eval_x, evaluation.len(), cols).unwrap(),
+                    )
+                    .unwrap(),
+            );
+        }
+        let join = |branches: &[n4m::Matrix]| {
+            (0..branches[0].rows)
+                .flat_map(|r| {
+                    branches
+                        .iter()
+                        .flat_map(move |b| b.data[r * b.cols..(r + 1) * b.cols].iter().copied())
+                })
+                .collect::<Vec<_>>()
+        };
+        let fit = join(&fit_branches);
+        let eval = join(&eval_branches);
+        let method = if grouped {
+            "models.sparse.group_sparse_pls"
+        } else {
+            "models.multiblock.mb_pls"
+        };
+        let mut named = vec![("n_components", Int(2))];
+        if grouped {
+            named.push(("group_lambda", Double(0.2)));
+        }
+        let named = params(&context, method, &named);
+        let mut estimator = Estimator::new(&context, method, Some(&named)).unwrap();
+        let inputs =
+            FitInputs::new(n4m::MatrixRef::row_major(&fit, train.len(), 2 * cols).unwrap())
+                .y(n4m::MatrixRef::row_major(&y, y.len(), 1).unwrap());
+        let inputs = if grouped {
+            inputs.feature_groups(&groups)
+        } else {
+            inputs.blocks(&blocks)
+        };
+        estimator.fit(&context, &inputs).unwrap();
+        let expected = estimator
+            .predict(
+                &context,
+                n4m::MatrixRef::row_major(&eval, evaluation.len(), 2 * cols).unwrap(),
+            )
+            .unwrap();
+        assert_close(
+            &result["selected"]["predictions"],
+            &expected.data,
+            "same-kernel joined fit-input transport",
+        );
+        let recipe = &result["owner"]["evidence"]["variants"][0]["identity"]["recipe"];
+        assert_eq!(
+            recipe[2]["params"]["fit_inputs_v1"],
+            if grouped {
+                json!({"feature_groups":groups})
+            } else {
+                json!({"blocks":blocks})
+            }
+        );
+        let evidence = result["selected"]["feature_blocks"]
+            .as_object()
+            .unwrap()
+            .values()
+            .next()
+            .unwrap();
+        assert_eq!(
+            evidence,
+            &json!([
+            {"branch_id":"z_snv","column_count":cols},
+            {"branch_id":"a_msc","column_count":cols}])
+        );
+        // A carrier for the raw axis is invalid after joining two full axes.
+        let key = if grouped {
+            "group_assignment"
+        } else {
+            "block_sizes"
+        };
+        pipeline[if grouped { 3 } else { 2 }]["model"]["params"][key] = if grouped {
+            json!(groups[..cols])
+        } else {
+            json!([1, cols - 1])
+        };
+        let error = run(&pipeline).unwrap_err();
+        assert!(error.contains("incompatible length"), "{error}");
+        assert!(
+            error.contains(if grouped { "feature_groups" } else { "blocks" }),
+            "{error}"
+        );
     }
 }
