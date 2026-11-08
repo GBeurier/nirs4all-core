@@ -25,14 +25,27 @@ For the shared portable parity subset, call
 loads the C ABI dynamically and compares against the same full Python
 `nirs4all` oracle as the Python, R, and JavaScript/WASM bindings.
 
-`PortableSession::run_with_library()` can save and reload a bounded
-native session export for that run. The export includes the normalized portable
-definition and the selected native `N4MM` model; load it with an explicit
-compatible `libn4m` path through `PortableSession::load_with_library()`, then
-`predict()` follows the content-inspected ownership contract. Historical v1
-models replay their declared preprocessing once in Core; v2 models receive raw
-input and apply their embedded Methods SNV/Savitzky-Golay pipeline once. It
-never falls back to Python or a host executor.
+`PortableSession::run_with_library()` saves a session with schema
+`nirs4all-core.portable-session.v1` (public constant `PORTABLE_SESSION_SCHEMA`).
+The export retains the full normalized definition string and its SHA-256,
+dataset SHA-256, and selected native `N4MM` bytes. Load it with an explicit
+compatible `libn4m` path through `PortableSession::load_with_library()`.
+The required `preprocessing_owner` determines the content-inspected contract:
+`core_external` replays every owner-admitted preprocessing parameter in Core,
+with no input-domain or pipeline-fingerprint fields; `embedded_methods`
+requires `input_domain: "raw"` and fingerprint fields equal to the inspected
+Methods SNV/Savitzky-Golay pipeline. Contradictory ownership is refused.
+The retired `nirs4all-core.portable-session-export.v1` and `.v2` tags are refused
+before any native library load; re-run to export the new schema. Session/model
+bytes have no intrinsic size ceiling; available host RAM bounds the operation.
+This session contract covers the linear PLS export surface on Linux native.
+It never falls back to Python or a host executor.
+
+The raw export, prediction and validation APIs interpret definitions under
+current owner admission, including non-default SNV flags. Unversioned
+definition/N4MM pairs from earlier Core versions that ignored SNV parameters
+cannot be detected and are unsupported. Use the versioned session for persisted
+exchange. Methods N4MM wire formats and ABI remain unchanged.
 
 ## Generic n4m role recipes (trained envelope v8)
 

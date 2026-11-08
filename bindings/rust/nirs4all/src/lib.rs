@@ -96,8 +96,7 @@ pub use native_methods_replay::{
     MethodsArchiveReplayJsonRequest, NativeMethodsReplayError,
 };
 pub use portable_session::{
-    PortableSession, PortableSessionError, PortableSessionState, PORTABLE_SESSION_EXPORT_SCHEMA,
-    PORTABLE_SESSION_EXPORT_SCHEMA_V2,
+    PortableSession, PortableSessionError, PortableSessionState, PORTABLE_SESSION_SCHEMA,
 };
 pub use publication::publish_directory_noreplace;
 pub use workflow::{
@@ -396,6 +395,11 @@ pub fn run_portable_pipeline_with_library(
 /// `N4MM` payload owned by libn4m. Methods selects the current payload format;
 /// exact default SNV -> Savitzky-Golay smoothing may be embedded, while other
 /// admitted stateless recipes replay their complete parameters externally.
+///
+/// The definition uses current owner admission, applying every declared
+/// preprocessing parameter. Unversioned definition/N4MM pairs from earlier Core
+/// versions that ignored SNV parameters cannot be detected and are unsupported.
+/// Use the versioned [`PortableSession`] for persisted exchange.
 pub fn run_portable_pipeline_with_exported_model(
     input: &str,
     dataset: &PortableDataset,
@@ -439,10 +443,15 @@ pub fn run_portable_pipeline_with_exported_model(
 }
 
 /// Replay a selected `N4MM` model under the content-inspected preprocessing
-/// contract. Historical model-only payloads apply the portable definition;
+/// contract. Model-only payloads apply the portable definition;
 /// embedded Methods pipelines consume raw input directly. This is intentionally
 /// limited to the same executable subset accepted by
 /// [`run_portable_pipeline_with_library`].
+///
+/// The definition uses current owner admission, applying every declared
+/// preprocessing parameter. Unversioned definition/N4MM pairs from earlier Core
+/// versions that ignored SNV parameters cannot be detected and are unsupported.
+/// Use the versioned [`PortableSession`] for persisted exchange.
 pub fn predict_exported_portable_model_with_library(
     input: &str,
     model_n4mm: &[u8],
@@ -474,6 +483,11 @@ pub fn predict_exported_portable_model_with_library(
 }
 
 /// Preflight a persisted selected model against an explicit libn4m runtime.
+///
+/// The definition uses current owner admission, applying every declared
+/// preprocessing parameter. Unversioned definition/N4MM pairs from earlier Core
+/// versions that ignored SNV parameters cannot be detected and are unsupported.
+/// Use the versioned [`PortableSession`] for persisted exchange.
 pub fn validate_exported_portable_model_with_library(
     input: &str,
     model_n4mm: &[u8],
@@ -1137,7 +1151,7 @@ impl MethodsLibrary {
                         None,
                     )?;
                 }
-                if len == 0 || len > 64 * 1024 * 1024 {
+                if len == 0 {
                     return Err("n4m_model_export_size returned an invalid N4MM length".to_string());
                 }
                 let mut bytes = vec![0u8; len];
@@ -1177,8 +1191,8 @@ impl MethodsLibrary {
         rows: usize,
         cols: usize,
     ) -> Result<Vec<f64>, String> {
-        if model_n4mm.is_empty() || model_n4mm.len() > 64 * 1024 * 1024 {
-            return Err("N4MM model payload is empty or exceeds the portable-session limit".into());
+        if model_n4mm.is_empty() {
+            return Err("N4MM model payload is empty".into());
         }
         let mut x = input.to_vec();
         let mut out = vec![0.0; rows];
