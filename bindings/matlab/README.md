@@ -56,6 +56,8 @@ Octave; it does not establish a licensed MATLAB runtime qualification.
 flat. JSON-decoded numeric matrices and nested numeric cells are accepted so the
 same oracle fixtures work in MATLAB and Octave.
 
+The portable MATLAB/Octave Kennard-Stone path is fraction-only and refuses nonempty `n_train`; missing fields, null-empty values and empty characters remain unset, while native owner count support is unchanged.
+
 Savitzky-Golay defaults to `mode = 'interp'` for full nirs4all parity and
 preserves explicit methods-backed modes (`mirror`, `constant`, `nearest`,
 `wrap`, `interp`) plus `cval`.

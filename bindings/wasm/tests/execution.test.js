@@ -29,6 +29,65 @@ test('portable parsers share bounded positive and negative contract cases', () =
   }
 });
 
+test('portable KS refuses training counts before Methods', async () => {
+  const dataset = { X: [1, 2, 3, 4, 5, 6, 7, 8], y: [1, 2, 3, 4], rows: 4, cols: 2 };
+  for (const params of [{ n_train: 2 }, { n_train: 2, test_size: 0.5 }, { n_train: 0 }, { n_train: false }]) {
+    const calls = [];
+    const methods = Object.fromEntries([
+      'loadModule', 'computeSplitIndices', 'computeSplit', 'ppCreate', 'ppFit', 'fitPls', 'fitModel',
+    ].map((name) => [name, () => {
+      calls.push(name);
+      throw new Error(`Methods ${name} must not run for an unsupported count`);
+    }]));
+    const source = { pipeline: [
+      { class: 'n4m.KennardStone', params },
+      { class: 'n4m.SNV' },
+      { model: { class: 'n4m.PLSRegression', params: { n_components: 1 } } },
+    ] };
+    await assert.rejects(runPortablePipeline(source, dataset, { methods }), {
+      name: 'TypeError',
+      message: "Unsupported portable KennardStone parameter 'n_train': training-count splits are not supported by this execution profile.",
+    });
+    assert.deepEqual(calls, [], 'count refusal must precede Methods load, split, preprocessing and fit');
+  }
+});
+
+test('portable KS preserves fractional defaults and null omissions', async () => {
+  const dataset = { X: [1, 2, 3, 4, 5, 6, 7, 8], y: [1, 2, 3, 4], rows: 4, cols: 2 };
+  const cases = [
+    [undefined, 0.25], [{}, 0.25], [{ test_size: null }, 0.25],
+    [{ n_train: undefined }, 0.25], [{ n_train: null }, 0.25], [{ n_train: '' }, 0.25],
+    [{ n_train: null, test_size: null }, 0.25], [{ test_size: 0.375 }, 0.375],
+    [{ n_train: null, test_size: 0.375 }, 0.375], [{ n_train: '', test_size: 0.375 }, 0.375],
+  ];
+  for (const [params, expected] of cases) {
+    const forwarded = [];
+    // All numerical operations are inert stubs: only parser/forwarding behavior is tested.
+    const methods = {
+      loadModule() {},
+      computeSplitIndices(_type, _X, _y, options) {
+        forwarded.push(options);
+        return { trainIndices: [0, 1], testIndices: [2, 3] };
+      },
+      ppCreate: () => ({}), ppFit() {}, ppGetState: () => [],
+      ppTransform: (_op, data) => Float64Array.from(data), ppDestroy() {},
+      fitPls: () => ({
+        coefficients: Float64Array.of(0, 0), xMean: Float64Array.of(0, 0),
+        yMean: Float64Array.of(0), intercept: null, n_features: 2, n_targets: 1,
+      }),
+      predictPls: (_model, X) => ({ data: new Float64Array(X.rows), rows: X.rows, cols: 1 }),
+    };
+    const source = { pipeline: [
+      { class: 'n4m.KennardStone', ...(params === undefined ? {} : { params }) },
+      { class: 'n4m.SNV' },
+      { model: { class: 'n4m.PLSRegression', params: { n_components: 1 } } },
+    ] };
+    assert.equal(parseExecutionPlan(source).splitter.params.test_size, expected);
+    await runPortablePipeline(source, dataset, { methods });
+    assert.deepEqual(forwarded, [{ testSize: expected }]);
+  }
+});
+
 function deterministicNoise(row, col) {
   let state = ((row + 1) * 73856093) ^ ((col + 1) * 19349663);
   state >>>= 0;

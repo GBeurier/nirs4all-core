@@ -208,6 +208,8 @@ be imported into the browser.
   readable; a persisted MSC step without fitted state is rejected because its
   training reference cannot be recovered from prediction data.
 
+The temporary portable JavaScript KennardStone runner accepts fractional `test_size` only and refuses supplied `n_train` except unset (`undefined`, `null`, or `''`); native owner count support is unchanged.
+
 MSC recipes accept `n4m.MSC` and the nirs4all Python `MSC` /
 `MultiplicativeScatterCorrection` class aliases. They call the Methods `MSC`
 operator with no numeric parameters. The Python `scale` and `copy` flags are
