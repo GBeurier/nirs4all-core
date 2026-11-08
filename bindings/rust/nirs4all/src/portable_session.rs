@@ -82,8 +82,8 @@ impl PortableSession {
         let (result, model_n4mm) =
             run_portable_pipeline_with_exported_model(input, dataset, &library_path)
                 .map_err(PortableSessionError::Run)?;
-        let definition =
-            crate::load_pipeline_definition_str(input).map_err(PortableSessionError::Run)?;
+        let definition = crate::portable_execution::decode_definition(input)
+            .map_err(PortableSessionError::Run)?;
         let descriptor = inspect_portable_model_descriptor(&model_n4mm, &library_path)
             .map_err(PortableSessionError::Run)?;
         let plan = crate::parse_execution_plan(&definition).map_err(PortableSessionError::Run)?;
@@ -296,7 +296,6 @@ fn validate_export(export: &Value) -> Result<(), PortableSessionError> {
         .get("definition")
         .and_then(Value::as_str)
         .ok_or_else(|| PortableSessionError::Format("definition must be a string".into()))?;
-    crate::load_pipeline_definition_str(definition).map_err(PortableSessionError::Format)?;
     crate::parse_execution_plan_str(definition).map_err(PortableSessionError::Format)?;
     if root.get("definition_sha256").and_then(Value::as_str)
         != Some(sha256(definition.as_bytes()).as_str())

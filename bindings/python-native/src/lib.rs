@@ -50,7 +50,6 @@ use pyo3::{
     prelude::*,
     types::{PyAny, PyBytes, PyDict, PyList, PySlice, PyString, PyTuple},
 };
-use serde_json::Value;
 
 fn archive_error(error: impl std::fmt::Display) -> PyErr {
     PyValueError::new_err(format!("Archive V2 validation refused: {error}"))

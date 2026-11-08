@@ -1,7 +1,6 @@
 import json
 import unittest
 from pathlib import Path
-from unittest.mock import patch
 
 import nirs4all_core as n4core
 
@@ -18,13 +17,12 @@ class PipelineContractTests(unittest.TestCase):
             with self.subTest(case=case["name"]):
                 with self.assertRaises((ValueError, TypeError)):
                     n4core.parse_execution_plan(case)
-                with patch("nirs4all_core._execution._load_methods_surface") as load_methods:
-                    with self.assertRaises((ValueError, TypeError)):
-                        n4core.run_portable_pipeline(case, {})
-                    load_methods.assert_not_called()
+                with self.assertRaises((ValueError, TypeError)):
+                    n4core.run_portable_pipeline(case, {})
         for case in cases["valid"]:
             with self.subTest(case=case["name"]):
-                self.assertEqual(n4core.parse_execution_plan(case)["nComponents"], case["components"])
+                recipe = {key: value for key, value in case.items() if key != "components"}
+                self.assertEqual(n4core.parse_execution_plan(recipe)["nComponents"], case["components"])
         for copy in (
             ROOT / "bindings/rust/nirs4all/tests/parity/fixtures/execution_contract_cases.json",
         ):
@@ -84,7 +82,12 @@ class PipelineContractTests(unittest.TestCase):
             }
         )
 
-        self.assertEqual(plan["preprocessing"][0]["params"], [11, 3, 0, 4, 0.0])
+        params = plan["preprocessing"][0]["params"]
+        self.assertEqual(params["window_length"], 11)
+        self.assertEqual(params["polyorder"], 3)
+        self.assertEqual(params["deriv"], 0)
+        self.assertEqual(params["mode"], "interp")
+        self.assertEqual(params["cval"], 0.0)
 
     def test_savgol_mode_and_cval_are_preserved(self) -> None:
         plan = n4core.parse_execution_plan(
@@ -104,7 +107,12 @@ class PipelineContractTests(unittest.TestCase):
             }
         )
 
-        self.assertEqual(plan["preprocessing"][0]["params"], [11, 3, 0, 1, 7.25])
+        params = plan["preprocessing"][0]["params"]
+        self.assertEqual(params["window_length"], 11)
+        self.assertEqual(params["polyorder"], 3)
+        self.assertEqual(params["deriv"], 0)
+        self.assertEqual(params["mode"], "constant")
+        self.assertEqual(params["cval"], 7.25)
 
     def test_steps_alias_and_direct_list_match_nirs4all_loader_surface(self) -> None:
         definition = n4core.load_pipeline_definition(FIXTURE_DIR / "portable_methods_pipeline.json")
@@ -118,8 +126,8 @@ class PipelineContractTests(unittest.TestCase):
         self.assertEqual(from_list.name, "pipeline")
 
     def test_unsupported_operator_is_rejected(self) -> None:
-        with self.assertRaisesRegex(ValueError, "outside the current nirs4all-core portable subset"):
-            n4core.load_pipeline_definition(
+        with self.assertRaisesRegex(ValueError, "sklearn.ensemble.RandomForestRegressor"):
+            n4core.parse_execution_plan(
                 {
                     "pipeline": [
                         {"class": "sklearn.ensemble.RandomForestRegressor"},

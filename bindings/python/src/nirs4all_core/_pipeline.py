@@ -1,4 +1,4 @@
-"""Pipeline definition loading and validation for nirs4all-compatible syntax."""
+"""Pipeline document decoding and presentation for the native owner adapter."""
 
 from __future__ import annotations
 
@@ -10,38 +10,24 @@ from typing import Any
 
 import yaml
 
-from ._n4m_roles import n4m_role_method_id, resolves_n4m_role
-
-_PORTABLE_OPERATOR_CLASSES: frozenset[str] = frozenset(
-    {
-        "nirs4all.operators.splitters.KennardStoneSplitter",
-        "nirs4all.operators.splitters.splitters.KennardStoneSplitter",
-        "nirs4all.operators.transforms.SNV",
-        "nirs4all.operators.transforms.StandardNormalVariate",
-        "nirs4all.operators.transforms.scalers.StandardNormalVariate",
-        "nirs4all.operators.transforms.SavitzkyGolay",
-        "nirs4all.operators.transforms.nirs.SavitzkyGolay",
-        "sklearn.cross_decomposition.PLSRegression",
-        "sklearn.cross_decomposition._pls.PLSRegression",
-        "n4m.KennardStone",
-        "n4m.SNV",
-        "n4m.SavitzkyGolay",
-        "n4m.PLS",
-        "n4m.PLSRegression",
-    }
-)
+from ._n4m_roles import n4m_role_method_id
 
 
 @dataclass(frozen=True)
 class PipelineDefinition:
-    """A nirs4all-style pipeline definition restricted to portable operators."""
+    """A pipeline display view retaining its complete source document."""
 
     name: str
     description: str
     random_state: int | None
     pipeline: list[Any]
+    source: dict[str, Any] | list[Any] | None = None
+    source_text: str | None = None
 
-    def as_dict(self) -> dict[str, Any]:
+    def as_dict(self) -> dict[str, Any] | list[Any]:
+        """Return a detached original document, or a manually built definition."""
+        if self.source is not None:
+            return deepcopy(self.source)
         result: dict[str, Any] = {
             "name": self.name,
             "description": self.description,
@@ -53,19 +39,23 @@ class PipelineDefinition:
 
 
 def load_pipeline_definition(source: str | Path | dict[str, Any] | list[Any]) -> PipelineDefinition:
-    """Load a nirs4all JSON/YAML pipeline definition and validate portable classes."""
+    """Decode a document without granting permission to execute its operators."""
 
+    source_text = None
     if isinstance(source, (dict, list)):
         data = deepcopy(source)
-    elif isinstance(source, Path):
-        data = _parse_file(source)
     else:
-        path = _path_like_source(source)
+        path = source if isinstance(source, Path) else _path_like_source(source)
         if path is not None:
-            data = _parse_file(path)
+            if not path.is_file():
+                raise FileNotFoundError(f"Configuration file does not exist: {path}")
+            source_text = path.read_bytes().decode("utf-8")
+            data = _parse_text(source_text, suffix=path.suffix.lower())
         else:
+            source_text = source
             data = _parse_text(source, suffix="")
 
+    original = deepcopy(data)
     data = _normalize_pipeline_root(data)
 
     pipeline = data["pipeline"]
@@ -73,7 +63,6 @@ def load_pipeline_definition(source: str | Path | dict[str, Any] | list[Any]) ->
         raise ValueError("Pipeline definition key 'pipeline' or 'steps' must contain a list of steps.")
 
     cleaned_pipeline = _strip_comments(pipeline)
-    _validate_portable_classes(cleaned_pipeline)
 
     random_state = data.get("random_state")
     if isinstance(random_state, bool):
@@ -86,6 +75,8 @@ def load_pipeline_definition(source: str | Path | dict[str, Any] | list[Any]) ->
         description=str(data.get("description") or ""),
         random_state=random_state,
         pipeline=cleaned_pipeline,
+        source=original,
+        source_text=source_text,
     )
 
 
@@ -114,12 +105,6 @@ def _parse_text(text: str, *, suffix: str) -> Any:
         return json.loads(text)
     except json.JSONDecodeError:
         return yaml.safe_load(text)
-
-
-def _parse_file(path: Path) -> Any:
-    if not path.is_file():
-        raise FileNotFoundError(f"Configuration file does not exist: {path}")
-    return _parse_text(path.read_text(encoding="utf-8"), suffix=path.suffix.lower())
 
 
 def _path_like_source(source: str) -> Path | None:
@@ -166,18 +151,6 @@ def _strip_comments(value: Any) -> Any:
 
 def _is_comment_step(value: Any) -> bool:
     return isinstance(value, dict) and set(value) == {"_comment"}
-
-
-def _validate_portable_classes(value: Any) -> None:
-    # Legacy class names use the portable subset; "n4m:<method id>" tokens
-    # resolve through the Methods manifest.
-    classes = portable_class_names(value)
-    unsupported = [name for name in classes if name not in _PORTABLE_OPERATOR_CLASSES and not resolves_n4m_role(name)]
-    if unsupported:
-        raise ValueError(
-            "Pipeline uses operators outside the current nirs4all-core portable subset: "
-            + ", ".join(dict.fromkeys(unsupported))
-        )
 
 
 def _collect_classes(value: Any, output: list[str]) -> None:

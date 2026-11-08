@@ -62,6 +62,8 @@ fn options(
             | "native-multimodal-export"
             | "pipeline-retrain"
             | "native-multimodal-retrain"
+            | "portable-pipeline-plan"
+            | "portable-pipeline-run"
             | "pipeline-run"
             | "pipeline-export"
             | "pipeline-load"
@@ -133,6 +135,8 @@ fn options(
         | "native-multimodal-load"
         | "native-multimodal-predict"
         | "native-multimodal-retrain" => &["input", "output", "methods-library", "run-id"],
+        "portable-pipeline-plan" => &["input", "output"],
+        "portable-pipeline-run" => &["input", "output", "methods-library"],
         "pipeline-run" | "pipeline-load" | "pipeline-predict" | "pipeline-retrain" => {
             &["input", "output", "source-id", "methods-library", "run-id"]
         }
@@ -596,6 +600,19 @@ fn replay_methods(
 }
 
 fn execute(command: &str, values: &BTreeMap<String, OsString>) -> Result<()> {
+    if matches!(command, "portable-pipeline-plan" | "portable-pipeline-run") {
+        let record: Value =
+            serde_json::from_str(&read_json_transport(Path::new(required(values, "input")?))?)?;
+        let result = if command == "portable-pipeline-plan" {
+            crate::portable_execution::plan(&record)?
+        } else {
+            crate::portable_execution::run(
+                &record,
+                Path::new(required(values, "methods-library")?),
+            )?
+        };
+        return emit_json(values, &result);
+    }
     // Canonical V1 containers are routed before every legacy archive loader.
     if command.starts_with("n4a-") {
         return n4a_command(command, values);
