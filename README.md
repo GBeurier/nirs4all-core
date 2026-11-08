@@ -99,24 +99,23 @@ from the historical portable runner and its retained limits.
 
 ## Pipeline definitions
 
-The lightweight parser accepts the same definition envelope as the full Python
-`nirs4all.pipeline.PipelineConfigs`: a direct list of steps, a mapping with
-`pipeline`, a mapping with `steps`, a JSON/YAML path, or JSON/YAML text. The
-current portable fixtures use the nirs4all examples syntax for Kennard-Stone,
-SNV, Savitzky-Golay, and a PLS `n_components` sweep via `_range_`/`param`.
-Python, Rust, JavaScript/WASM, R, and MATLAB/Octave expose this parser contract.
-Savitzky-Golay keeps the full Python nirs4all default boundary behavior
-(`mode: "interp"`) and also preserves explicit methods-backed SciPy modes
-(`mirror`, `constant`, `nearest`, `wrap`, `interp`) plus `cval`.
+The JavaScript `loadPipelineDefinition` loader accepts JSON/YAML text, direct
+step arrays and `pipeline` / `steps` envelopes for manifest-resolved
+`n4m:<method id>` role recipes. Pass `{methods}` or first await
+`loadMethodsWasm()`. Legacy Python class aliases are refused. `portableClassNames`
+only extracts names from supplied content; it does not list executable operators.
+`N4mRolePipeline` delegates fit and replay to Methods. Browser/native workflow
+and package APIs retain their separately documented owner contracts.
 
-JavaScript/WASM, Python, Rust, R, and MATLAB/Octave execute the initial portable
-subset through `nirs4all-methods` and compare the same four JSON/YAML fixtures
-against the full Python `nirs4all` oracle. The JavaScript/WASM binding
-additionally returns a serialized PLS model and exposes
-`predictPortablePipeline()` so browser clients can reuse the selected portable
-pipeline without reimplementing the preprocessing or prediction path. The
-MATLAB/Octave execution path delegates to the upstream `+n4m` MEX shims and
-is strict-parity gated in CI. See [`docs/PARITY.md`](docs/PARITY.md).
+The retained Core portable runner is the MATLAB/Octave
+`nirs4all.runPortablePipeline()` route through the upstream `+n4m` MEX shims.
+Its KS/SNV/Savitzky-Golay/PLS fixtures and full-Python oracle remain unchanged,
+including Savitzky-Golay boundary modes and the training-count refusal.
+The retired JS runner has no execution or coefficient-replay export. Its original
+source/tests are preserved as non-executable text under
+[`tests/parity/reference/core-js-runner`](tests/parity/reference/core-js-runner/README.md),
+separately from the active numerical and role-envelope checks.
+See [`docs/PARITY.md`](docs/PARITY.md).
 
 ## Repository layout
 
@@ -169,7 +168,7 @@ npm test --prefix bindings/wasm
 `make test-v1-surfaces` covers the core-owned Python, Rust, JavaScript/WASM,
 and MATLAB/Octave surfaces. The R product runs its checks in `nirs4all-r`.
 
-Strict Python-vs-full-`nirs4all` execution parity needs local
+Historical Python-vs-full-`nirs4all` reference command (not a JS runner gate), using local
 `nirs4all-methods` Python bindings and libn4m:
 
 ```bash
@@ -179,7 +178,7 @@ NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 \
 python -m unittest bindings/python/tests/test_execution_parity.py -v
 ```
 
-Strict Rust-vs-full-`nirs4all` execution parity needs a local libn4m build:
+Historical Rust-vs-full-`nirs4all` reference command, using a local libn4m build:
 
 ```bash
 NIRS4ALL_METHODS_LIB=/path/to/libn4m.so \
@@ -188,8 +187,8 @@ NIRS4ALL_CORE_REQUIRE_METHODS_PARITY=1 \
 cargo test -p nirs4all rust_binding_execution_matches_full_python_nirs4all_oracle -- --nocapture
 ```
 
-Strict R-vs-Python parity is tested in `nirs4all-r` against the portable
-JSON/YAML fixtures retained under `tests/parity` here.
+The historical R-vs-Python reference belongs to `nirs4all-r`; its portable
+JSON/YAML fixtures remain under `tests/parity` here.
 
 Strict MATLAB/Octave-vs-full-`nirs4all` execution parity needs the
 `nirs4all-methods` `+n4m` MEX shims on the Octave/MATLAB path:

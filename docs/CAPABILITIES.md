@@ -103,16 +103,17 @@ generated from `compat/capabilities.toml` by
 Each operation is `supported` with entrypoints or `unsupported` with a reason
 (`unsupported` means not claimed). The R product is recorded as an externally
 federated surface, not a Core runtime surface. No coarse parity ledger, runtime
-contract or controller manifest is published; the temporary portable runner and
-compiler that active callers still use are tracked as removal work, not as a
-profile.
+contract or controller manifest is published. The JS portable runner is retired;
+the retained Core MATLAB/Octave portable runner is separate from these profiles.
+Historical JS source/tests are non-executable references, not capabilities.
 
 ## Generic n4m role recipes (trained envelope v8)
 
-Besides the temporary portable-runner aliases, every binding that consults the
-portable whitelist accepts the generic step token `"n4m:<catalog method id>"`, resolved
-through the Methods manifest rather than a hand-maintained list, and each
-executing binding fits and replays role recipes through the
+Python, Rust and JavaScript/WASM accept the generic step token
+`"n4m:<catalog method id>"`, resolved through the Methods manifest. The JS loader
+refuses legacy class aliases; `portableClassNames` only extracts names from
+supplied content and is not a capability list. Each role binding fits and replays
+recipes through the
 `nirs4all.n4m.trained_pipeline.v8` envelope (N4ME states per fitted step):
 
 | Language | Token resolution | Fit / replay entry point | Gate |

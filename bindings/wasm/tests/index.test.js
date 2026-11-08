@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import test from 'node:test';
+import { parse as parseYaml } from 'yaml';
 
 import * as nirs4all from '../src/index.js';
 import {
@@ -29,18 +30,28 @@ import {
   loadArchiveV2Native,
   methods,
   methodsWasm,
-  parseExecutionPlan,
   portableClassNames,
-  predictPortablePipeline,
   replayMethodsArchiveV2,
-  runPortablePipeline,
   runtimeSurfaces,
   upstream,
   upstreams,
 } from '../src/index.js';
 
-const fixtureUrl = new URL('../../../tests/parity/fixtures/portable_methods_pipeline.json', import.meta.url);
-const yamlFixtureUrl = new URL('../../../tests/parity/fixtures/portable_methods_pipeline.yaml', import.meta.url);
+const roleRecipe = {
+  name: 'role-loader',
+  pipeline: [
+    'n4m:preprocessing.scatter.snv',
+    { class: 'n4m:models.pls.cppls', params: { n_components: 2 } },
+  ],
+};
+const roleMethods = {
+  methodClass(id) {
+    if (!['preprocessing.scatter.snv', 'models.pls.cppls'].includes(id)) {
+      throw new Error(`Unknown method ${id}`);
+    }
+    return class {};
+  },
+};
 
 test('public V1 WASM surface exports expected names', () => {
   assert.deepEqual(
@@ -118,15 +129,12 @@ test('public V1 WASM surface exports expected names', () => {
       'N4mRolePipeline',
       'n4mRoleCapabilities',
       'openN4aContainer',
-      'parseExecutionPlan',
       'portableClassNames',
       'predictN4aNative',
-      'predictPortablePipeline',
       'produceN4aNative',
       'readPortableArchiveV2',
       'replayMethodsArchiveV2',
       'retrainN4aNative',
-      'runPortablePipeline',
       'runtimeSurfaces',
       'upstream',
       'upstreams',
@@ -138,8 +146,6 @@ test('public V1 WASM surface exports expected names', () => {
     ].sort(),
   );
   assert.equal(nirs4all.loadPipelineDefinition, loadPipelineDefinition);
-  assert.equal(nirs4all.runPortablePipeline, runPortablePipeline);
-  assert.equal(nirs4all.predictPortablePipeline, predictPortablePipeline);
   assert.equal(nirs4all.loadArchiveV2Native, loadArchiveV2Native);
   assert.equal(nirs4all.replayMethodsArchiveV2, replayMethodsArchiveV2);
   assert.equal(nirs4all.runtimeSurfaces, runtimeSurfaces);
@@ -229,41 +235,65 @@ test('upstream imports fail explicitly when optional wasm packages are absent', 
   await assert.rejects(() => loadPortableStack(['methods']), /nirs4all upstream 'methods' is not installed/);
 });
 
-test('nirs4all JSON and YAML pipeline syntax normalize to the same portable definition', () => {
-  const jsonPipeline = loadPipelineDefinition(readFileSync(fixtureUrl, 'utf8'));
-  const yamlPipeline = loadPipelineDefinition(readFileSync(yamlFixtureUrl, 'utf8'));
-
+test('manifest-resolved role recipes normalize from JSON and YAML', () => {
+  const jsonPipeline = loadPipelineDefinition(JSON.stringify(roleRecipe), { methods: roleMethods });
+  const yamlPipeline = loadPipelineDefinition(`name: role-loader
+pipeline:
+  - n4m:preprocessing.scatter.snv
+  - class: n4m:models.pls.cppls
+    params:
+      n_components: 2
+`, { methods: roleMethods });
   assert.deepEqual(jsonPipeline, yamlPipeline);
-  assert.deepEqual(
-    portableClassNames(jsonPipeline),
-    [
-      'nirs4all.operators.splitters.KennardStoneSplitter',
-      'nirs4all.operators.transforms.StandardNormalVariate',
-      'nirs4all.operators.transforms.SavitzkyGolay',
-      'sklearn.cross_decomposition.PLSRegression',
-    ],
-  );
-  assert.deepEqual(jsonPipeline.pipeline.at(-1)._range_, [2, 11, 2]);
+  assert.deepEqual(portableClassNames(jsonPipeline), [
+    'n4m:preprocessing.scatter.snv', 'n4m:models.pls.cppls',
+  ]);
+  assert.equal(jsonPipeline.pipeline[1].params.n_components, 2);
 });
 
-test('R-shaped train augmentation normalizes from JSON and YAML without widening other runtimes', () => {
-  const source = {
-    pipeline: [
-      { train_augmentation: {
-        class: 'n4m.NativeXAugmentation',
-        params: { kind: 'gaussian_noise', values: [0.03], seed: 42 },
-      } },
-      { model: { class: 'sklearn.cross_decomposition.PLSRegression', params: { n_components: 2 } } },
-    ],
-  };
-  assert.deepEqual(loadPipelineDefinition(JSON.stringify(source)),
-    loadPipelineDefinition('pipeline:\n  - train_augmentation:\n      class: n4m.NativeXAugmentation\n      params:\n        kind: gaussian_noise\n        values: [0.03]\n        seed: 42\n  - model:\n      class: sklearn.cross_decomposition.PLSRegression\n      params:\n        n_components: 2\n'));
+test('legacy runner aliases are refused; class-name inspection is not admission', () => {
+  for (const name of [
+    'nirs4all.operators.transforms.StandardNormalVariate',
+    'sklearn.cross_decomposition.PLSRegression',
+    'n4m.KennardStone', 'n4m.SNV', 'n4m.PLSRegression',
+  ]) {
+    const source = { pipeline: [{ class: name }] };
+    assert.deepEqual(portableClassNames(source), [name]);
+    assert.throws(() => loadPipelineDefinition(source, { methods: roleMethods }),
+      /outside the current nirs4all-core portable subset/);
+  }
+  assert.throws(() => loadPipelineDefinition({ pipeline: ['n4m:not.a.method'] },
+    { methods: roleMethods }), /outside the current.*n4m:not\.a\.method$/);
+  assert.throws(() => loadPipelineDefinition(roleRecipe), /resolve through the Methods manifest/);
+});
+
+test('R-shaped train augmentation normalizes from JSON and YAML with role recipes', () => {
+  const augmentation = { train_augmentation: {
+    class: 'n4m.NativeXAugmentation',
+    params: { kind: 'gaussian_noise', values: [0.03], seed: 42 },
+  } };
+  const source = { pipeline: [augmentation, roleRecipe.pipeline[1]] };
+  assert.deepEqual(loadPipelineDefinition(JSON.stringify(source), { methods: roleMethods }),
+    loadPipelineDefinition(`pipeline:
+  - train_augmentation:
+      class: n4m.NativeXAugmentation
+      params:
+        kind: gaussian_noise
+        values: [0.03]
+        seed: 42
+  - class: n4m:models.pls.cppls
+    params:
+      n_components: 2
+`, { methods: roleMethods }));
   assert.throws(() => loadPipelineDefinition({ pipeline: [
-    { class: 'n4m.NativeXAugmentation' }, source.pipeline[1],
-  ] }), /outside the current/);
+    { class: 'n4m.NativeXAugmentation' }, roleRecipe.pipeline[1],
+  ] }, { methods: roleMethods }), /outside the current/);
+  assert.throws(() => loadPipelineDefinition({ pipeline: [
+    augmentation, augmentation, roleRecipe.pipeline[1],
+  ] }, { methods: roleMethods }), /outside the current/);
 });
 
-test('all shared parity fixtures keep JSON and YAML in lockstep', () => {
+test('historical shared parity fixtures keep JSON and YAML in lockstep', () => {
   const fixtureDir = new URL('../../../tests/parity/fixtures/', import.meta.url);
   const names = readdirSync(fixtureDir)
     .filter((name) => name.startsWith('portable_') && name.endsWith('.json'))
@@ -272,18 +302,27 @@ test('all shared parity fixtures keep JSON and YAML in lockstep', () => {
 
   assert.ok(names.length >= 4);
   for (const name of names) {
-    const jsonPipeline = loadPipelineDefinition(readFileSync(new URL(`${name}.json`, fixtureDir), 'utf8'));
-    const yamlPipeline = loadPipelineDefinition(readFileSync(new URL(`${name}.yaml`, fixtureDir), 'utf8'));
+    const jsonPipeline = JSON.parse(readFileSync(new URL(`${name}.json`, fixtureDir), 'utf8'));
+    const yamlPipeline = parseYaml(readFileSync(new URL(`${name}.yaml`, fixtureDir), 'utf8'));
     assert.deepEqual(jsonPipeline, yamlPipeline);
     assert.ok(portableClassNames(jsonPipeline).length > 0);
   }
 });
 
-test('steps alias and direct arrays match the nirs4all loader surface', () => {
-  const definition = loadPipelineDefinition(readFileSync(fixtureUrl, 'utf8'));
-
-  assert.deepEqual(loadPipelineDefinition({ steps: definition.pipeline }).pipeline, definition.pipeline);
-  assert.deepEqual(loadPipelineDefinition(definition.pipeline).pipeline, definition.pipeline);
+test('role-loader envelopes, direct arrays and comments preserve recipe data', () => {
+  const options = { methods: roleMethods };
+  const definition = loadPipelineDefinition(roleRecipe, options);
+  assert.deepEqual(loadPipelineDefinition({ steps: definition.pipeline }, options).pipeline, definition.pipeline);
+  assert.deepEqual(loadPipelineDefinition(definition.pipeline, options).pipeline, definition.pipeline);
+  const commented = loadPipelineDefinition({
+    ...roleRecipe, description: 'Role recipe', random_state: 42,
+    pipeline: [{ _comment: 'Ignored step' }, roleRecipe.pipeline[0],
+      { ...roleRecipe.pipeline[1], _comment: 'Ignored annotation' }],
+  }, options);
+  assert.deepEqual(commented.pipeline, definition.pipeline);
+  assert.equal(commented.description, 'Role recipe');
+  assert.equal(commented.random_state, 42);
+  assert.throws(() => loadPipelineDefinition({ pipeline: {} }, options), /array of steps/);
 });
 
 const profilesFixtureUrl = new URL('../../../tests/parity/expected/capability_profiles.json', import.meta.url);

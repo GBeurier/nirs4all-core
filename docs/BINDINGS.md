@@ -18,7 +18,7 @@ Every binding must:
   execution path can actually plan or call them;
 - participate in parity checks before release.
 
-For the portable Savitzky-Golay operator, every binding normalizes the same
+The retained MATLAB/Octave portable Savitzky-Golay runner preserves the
 methods-backed SciPy boundary-mode contract: `mirror=0`, `constant=1`,
 `nearest=2`, `wrap=3`, and `interp=4`. The default remains `interp` to match
 the full Python nirs4all operator; explicit `mode` and `cval` values must be
@@ -147,8 +147,8 @@ never deserializes a stored host payload; a refusal is a `ValueError`.
   concrete callback type `T`; DAG-ML owns the loss/metric descriptors,
   validation, exact resolution and attestation semantics.
 - Keep FFI handles explicit; never hide ownership transfers.
-- The portable KS/SNV/Savitzky-Golay/PLS subset executes through a caller-supplied
-  `libn4m` path and is covered by the shared full-Python `nirs4all` oracle.
+- Historical portable KS/SNV/Savitzky-Golay/PLS references use a caller-supplied
+  `libn4m` path and the retained shared full-Python `nirs4all` oracle.
 - `train_dataset_package_methods_archive_v2(...)` composes one selected dense
   IO `DatasetPackage` source with DAG-ML training and Methods numerics, then
   persists the portable Package V2 as Core Archive V2. The conformal variant
@@ -177,12 +177,15 @@ paths. Every `n4a-*` command accepts `--memory-budget-bytes <decimal u64>`.
 - Future external operator adapters should be ESM functions/classes over
   browser-safe values and `TypedArray` data, with async initialization where
   WASM is required.
-- The portable KS/SNV/Savitzky-Golay/PLS subset executes with
-  `runPortablePipeline()` and predicts from its serialized selected model with
-  `predictPortablePipeline()`, both delegating to `@nirs4all/methods`.
+- The JS portable runner, its coefficient DTOs and execution exports are retired.
+  Original source/tests remain non-executable historical references under
+  `tests/parity/reference/core-js-runner/`; no compatibility replay is provided.
+- `loadPipelineDefinition` retains JSON/YAML text and array / `pipeline` / `steps`
+  envelopes, augmentation parsing and manifest-resolved `n4m:<method id>` roles.
+  Legacy class aliases are refused. `portableClassNames` extracts supplied names,
+  not supported capabilities. `N4mRolePipeline` delegates role fit/replay to Methods.
 - `executionProfiles()` is the authoritative custom-host signal for the
-  supported native profiles; the portable runner above is temporary
-  implementation tracked for removal, not a supported profile.
+  supported native profiles; retirement changes none of those declarations.
 - `nirs4all-web` consumes this package; UI code does not live here.
 - Current upstream package candidates prefer the target scoped names
   `@nirs4all/formats-wasm`, `@nirs4all/io-wasm`,
@@ -211,8 +214,8 @@ paths. Every `n4a-*` command accepts `--memory-budget-bytes <decimal u64>`.
   support exists.
 - Keep Octave compatibility in the public subset unless a function is marked
   MATLAB-only.
-- The portable KS/SNV/Savitzky-Golay/PLS subset executes through
-  `nirs4all.runPortablePipeline()` by delegating to the `nirs4all-methods`
+- The retained Core portable runner is MATLAB/Octave-only. Its
+  KS/SNV/Savitzky-Golay/PLS subset executes through `nirs4all.runPortablePipeline()` by delegating to the `nirs4all-methods`
   `+n4m` MEX shims. The aggregate binding still owns only parsing,
   orchestration, and result-shape translation.
 - `nirs4all.upstreams()` keeps metadata rows for `dag_ml`, `dag_ml_data`,
