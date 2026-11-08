@@ -1,7 +1,8 @@
 function definition = loadPipelineDefinition(source)
 %LOADPIPELINEDEFINITION Load a nirs4all JSON/YAML pipeline definition.
 
-data = parsePipelineSource(source);
+[data, originalSource] = parsePipelineSource(source);
+original = data;
 data = normalizePipelineRoot(data);
 
 if ~isfield(data, 'pipeline') || ~(iscell(data.pipeline) || isstruct(data.pipeline))
@@ -10,21 +11,10 @@ if ~isfield(data, 'pipeline') || ~(iscell(data.pipeline) || isstruct(data.pipeli
 end
 
 pipeline = stripComments(coerceStepList(data.pipeline));
-classes = nirs4all.portableClassNames(pipeline);
-supported = nirs4all.portableOperatorClasses();
-unsupported = {};
-for idx = 1:numel(classes)
-    if ~any(strcmp(supported, classes{idx})) && ~any(strcmp(unsupported, classes{idx}))
-        unsupported{end + 1} = classes{idx}; %#ok<AGROW>
-    end
-end
-if ~isempty(unsupported)
-    error('nirs4all:UnsupportedOperator', ...
-        'Pipeline uses operators outside the current nirs4all-core portable subset: %s', ...
-        strjoin(unsupported, ', '));
-end
 
 definition = struct();
+definition.source = originalSource;
+definition.original_root = original;
 definition.name = getFieldOrDefault(data, 'name', 'pipeline');
 definition.description = getFieldOrDefault(data, 'description', '');
 if isfield(data, 'random_state') && isnumeric(data.random_state)
@@ -46,7 +36,8 @@ error('nirs4all:InvalidPipeline', ...
     'Pipeline definition key ''pipeline'' or ''steps'' must contain a list of steps.');
 end
 
-function data = parsePipelineSource(source)
+function [data, originalSource] = parsePipelineSource(source)
+originalSource = source;
 if ischar(source)
     path = pathLikeSource(source);
     if ~isempty(path)
@@ -54,6 +45,7 @@ if ischar(source)
             error('nirs4all:MissingPipelineFile', 'Configuration file does not exist: %s', path);
         end
         text = fileread(path);
+        originalSource = text;
         [~, ~, extension] = fileparts(path);
         data = parsePipelineText(text, lower(extension));
         return
@@ -63,7 +55,7 @@ if ischar(source)
 end
 
 if isstring(source)
-    data = parsePipelineSource(char(source));
+    [data, originalSource] = parsePipelineSource(char(source));
     return
 end
 
@@ -84,7 +76,14 @@ end
 function data = parsePipelineText(text, extension)
 trimmed = strtrim(text);
 if strcmp(extension, '.json') || (~isempty(trimmed) && any(trimmed(1) == '[{'))
-    data = jsondecode(text);
+    if exist('OCTAVE_VERSION', 'builtin')
+        data = jsondecode(text, 'makeValidName', false);
+    else
+        data = jsondecode(text);
+    end
+    if ~isempty(trimmed) && trimmed(1) == '[' && isstruct(data)
+        data = num2cell(data);
+    end
     return
 end
 
@@ -140,11 +139,11 @@ if iscell(value)
 end
 
 if isstruct(value)
+    if isfield(value, '_comment')
+        value = rmfield(value, '_comment');
+    end
     for idx = 1:numel(value)
         item = value(idx);
-        if isfield(item, '_comment')
-            item = rmfield(item, '_comment');
-        end
         fields = fieldnames(item);
         for fieldIdx = 1:numel(fields)
             item.(fields{fieldIdx}) = stripComments(item.(fields{fieldIdx}));
@@ -181,9 +180,14 @@ while i <= numel(lines)
     end
 
     [key, rawValue] = splitKeyValue(line);
-    if strcmp(key, 'pipeline') && isempty(rawValue)
+    if any(strcmp(key, {'pipeline', 'steps'})) && isempty(rawValue)
         [pipeline, i] = parseYamlPipeline(lines, i + 1);
-        data.pipeline = pipeline;
+        data.(key) = pipeline;
+        continue
+    end
+    if isempty(rawValue)
+        [nested, i] = parseYamlMap(lines, i + 1, lineIndent(lines{i}) + 2);
+        data.(key) = nested;
         continue
     end
 
@@ -231,7 +235,7 @@ while i <= numel(lines)
     while i <= numel(lines)
         raw = lines{i};
         trimmed = strtrim(raw);
-        if isempty(trimmed)
+        if isempty(trimmed) || trimmed(1) == '#'
             i = i + 1;
             continue
         end
@@ -258,17 +262,25 @@ map = struct();
 while i <= numel(lines)
     raw = lines{i};
     trimmed = strtrim(raw);
-    if isempty(trimmed)
+    if isempty(trimmed) || trimmed(1) == '#'
         i = i + 1;
         continue
     end
     indent = lineIndent(raw);
-    if indent < expectedIndent || trimmed(1) == '-'
+    if indent < expectedIndent
         break
     end
+    if trimmed(1) == '-'
+        error('nirs4all:InvalidYaml', 'Nested YAML sequences require JSON or a struct.');
+    end
     [key, rawValue] = splitKeyValue(trimmed);
-    map.(key) = parseYamlScalar(rawValue);
-    i = i + 1;
+    if isempty(rawValue)
+        [nested, i] = parseYamlMap(lines, i + 1, indent + 2);
+        map.(key) = nested;
+    else
+        map.(key) = parseYamlScalar(rawValue);
+        i = i + 1;
+    end
 end
 end
 

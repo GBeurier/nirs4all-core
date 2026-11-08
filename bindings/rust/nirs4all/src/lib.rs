@@ -5,7 +5,6 @@
 
 #[cfg(test)]
 use std::cell::Cell;
-use std::cmp::Ordering;
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_double, c_int, c_void};
 use std::path::Path;
@@ -42,9 +41,14 @@ pub mod n4a_owner;
 pub mod n4a_owner_portable;
 pub mod n4a_physical;
 mod n4m_roles;
+#[cfg(test)]
+#[allow(dead_code)]
+#[path = "../tests/fixtures/n4a_native_actions_v1/data.rs"]
+pub(crate) mod native_action_test_data;
 mod native_methods_replay;
 pub mod native_pipeline_contract;
 pub mod pipeline_workflow;
+pub mod portable_execution;
 mod portable_session;
 mod publication;
 pub mod result_projection;
@@ -155,32 +159,6 @@ const PORTABLE_OPERATOR_CLASSES: &[&str] = &[
     "nirs4all.operators.transforms.SavitzkyGolay",
     "nirs4all.operators.transforms.nirs.SavitzkyGolay",
     "n4m.SavitzkyGolay",
-    "sklearn.cross_decomposition.PLSRegression",
-    "sklearn.cross_decomposition._pls.PLSRegression",
-    "n4m.PLS",
-    "n4m.PLSRegression",
-];
-
-const KENNARD_STONE_CLASSES: &[&str] = &[
-    "nirs4all.operators.splitters.KennardStoneSplitter",
-    "nirs4all.operators.splitters.splitters.KennardStoneSplitter",
-    "n4m.KennardStone",
-];
-
-const SNV_CLASSES: &[&str] = &[
-    "nirs4all.operators.transforms.SNV",
-    "nirs4all.operators.transforms.StandardNormalVariate",
-    "nirs4all.operators.transforms.scalers.StandardNormalVariate",
-    "n4m.SNV",
-];
-
-const SAVGOL_CLASSES: &[&str] = &[
-    "nirs4all.operators.transforms.SavitzkyGolay",
-    "nirs4all.operators.transforms.nirs.SavitzkyGolay",
-    "n4m.SavitzkyGolay",
-];
-
-const PLS_CLASSES: &[&str] = &[
     "sklearn.cross_decomposition.PLSRegression",
     "sklearn.cross_decomposition._pls.PLSRegression",
     "n4m.PLS",
@@ -314,6 +292,8 @@ pub struct ExecutionPlan {
     pub splitter: Option<PortableSplitter>,
     pub preprocessing: Vec<PortablePreprocessing>,
     pub n_components: Vec<i32>,
+    /// Complete owner admission; compact compatibility fields never erase flags.
+    pub owner_admission: dag_ml_core::PortableLinearAdmission,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -387,97 +367,12 @@ pub struct PortableVariant {
 }
 
 pub fn parse_execution_plan_str(input: &str) -> Result<ExecutionPlan, String> {
-    let definition = load_pipeline_definition_str(input)?;
-    parse_execution_plan(&definition)
+    parse_execution_plan(&portable_execution::decode_definition(input)?)
 }
 
 pub fn parse_execution_plan(definition: &Value) -> Result<ExecutionPlan, String> {
-    let pipeline = definition
-        .get("pipeline")
-        .and_then(Value::as_array)
-        .ok_or_else(|| "pipeline definition must contain a pipeline array".to_string())?;
-    let mut splitter = None;
-    let mut preprocessing = Vec::new();
-    let mut model_step = None;
-
-    for step in pipeline {
-        let class_name = step
-            .as_str()
-            .or_else(|| step.get("class").and_then(Value::as_str));
-        if class_name.and_then(n4m_role_method_id).is_some() {
-            return Err(
-                "n4m:<method id> role recipes run through N4mRolePipeline, not the legacy portable plan"
-                    .to_string(),
-            );
-        }
-        let step_obj = step
-            .as_object()
-            .ok_or_else(|| "portable pipeline steps must be mapping objects".to_string())?;
-
-        if model_step.is_some() {
-            return Err("the model must be the final portable pipeline step".to_string());
-        }
-        if step_obj.contains_key("class") && step_obj.contains_key("model") {
-            return Err("a portable step cannot contain both class and model".to_string());
-        }
-
-        if let Some(class_name) = step_obj.get("class").and_then(Value::as_str) {
-            if KENNARD_STONE_CLASSES.contains(&class_name) {
-                if splitter.is_some() {
-                    return Err(
-                        "the optional splitter must appear once, before the model".to_string()
-                    );
-                }
-                let params = step_obj.get("params").unwrap_or(&Value::Null);
-                splitter = Some(PortableSplitter {
-                    kind: "KennardStone".to_string(),
-                    test_size: number_param(params.get("test_size"), 0.25)?,
-                });
-            } else if SNV_CLASSES.contains(&class_name) {
-                preprocessing.push(PortablePreprocessing::StandardNormalVariate);
-            } else if SAVGOL_CLASSES.contains(&class_name) {
-                preprocessing.push(PortablePreprocessing::SavitzkyGolay(savgol_params(
-                    step_obj.get("params").unwrap_or(&Value::Null),
-                )?));
-            } else {
-                return Err(format!(
-                    "portable execution does not support step class '{class_name}'"
-                ));
-            }
-            continue;
-        }
-
-        if step_obj.get("model").and_then(Value::as_object).is_some() {
-            if model_step.is_some() {
-                return Err("portable execution supports exactly one model step".to_string());
-            }
-            model_step = Some(step);
-            continue;
-        }
-
-        return Err(format!(
-            "portable execution does not support pipeline step: {step}"
-        ));
-    }
-
-    let model_step = model_step
-        .ok_or_else(|| "portable execution requires a PLSRegression model step".to_string())?;
-    let model_class = model_step
-        .get("model")
-        .and_then(|model| model.get("class"))
-        .and_then(Value::as_str)
-        .ok_or_else(|| "portable execution requires a model class".to_string())?;
-    if !PLS_CLASSES.contains(&model_class) {
-        return Err(format!(
-            "portable execution does not support model class '{model_class}'"
-        ));
-    }
-
-    Ok(ExecutionPlan {
-        splitter,
-        preprocessing,
-        n_components: component_values(model_step)?,
-    })
+    let admission = dag_ml_core::admit_portable_linear(definition).map_err(|e| e.to_string())?;
+    portable_execution::admission_plan(admission)
 }
 
 pub fn run_portable_pipeline_with_library(
@@ -485,144 +380,58 @@ pub fn run_portable_pipeline_with_library(
     dataset: &PortableDataset,
     library_path: impl AsRef<Path>,
 ) -> Result<PortablePipelineResult, String> {
-    let definition = load_pipeline_definition_str(input)?;
-    let plan = parse_execution_plan(&definition)?;
-    let methods = MethodsLibrary::load(library_path)?;
-    let split = methods.compute_split(plan.splitter.as_ref(), dataset)?;
-
-    let mut x_train = select_rows(&dataset.x, dataset.rows, dataset.cols, &split.train_indices)?;
-    let mut x_test = select_rows(&dataset.x, dataset.rows, dataset.cols, &split.test_indices)?;
-    let y_train = select_rows(&dataset.y, dataset.rows, 1, &split.train_indices)?;
-    let targets = select_rows(&dataset.y, dataset.rows, 1, &split.test_indices)?;
-
-    let mut preprocessing = Vec::new();
-    for step in &plan.preprocessing {
-        match step {
-            PortablePreprocessing::StandardNormalVariate => {
-                x_train =
-                    methods.snv_transform(&x_train, split.train_indices.len(), dataset.cols)?;
-                x_test = methods.snv_transform(&x_test, split.test_indices.len(), dataset.cols)?;
-                preprocessing.push(PortablePreprocessingResult {
-                    kind: "StandardNormalVariate".to_string(),
-                    params: Vec::new(),
-                });
-            }
-            PortablePreprocessing::SavitzkyGolay(params) => {
-                x_train = methods.savgol_transform(
-                    &x_train,
-                    split.train_indices.len(),
-                    dataset.cols,
-                    params,
-                )?;
-                x_test = methods.savgol_transform(
-                    &x_test,
-                    split.test_indices.len(),
-                    dataset.cols,
-                    params,
-                )?;
-                preprocessing.push(PortablePreprocessingResult {
-                    kind: "SavitzkyGolay".to_string(),
-                    params: vec![
-                        f64::from(params.window_length),
-                        f64::from(params.polyorder),
-                        f64::from(params.deriv),
-                        f64::from(params.mode),
-                        params.cval,
-                    ],
-                });
-            }
-        }
-    }
-
-    let mut variants = Vec::new();
-    for &n_components in &plan.n_components {
-        let (predictions, _) = methods.fit_predict_pls(
-            PlsFitInput {
-                x_train: &x_train,
-                y_train: &y_train,
-                train_rows: split.train_indices.len(),
-                cols: dataset.cols,
-                n_components,
-                x_test: &x_test,
-                test_rows: split.test_indices.len(),
-                embedded_pipeline: None,
-            },
-            false,
-        )?;
-        variants.push(PortableVariant {
-            n_components,
-            rmse: rmse(&predictions, &targets)?,
-            predictions,
-        });
-    }
-    let selected = variants
-        .iter()
-        .min_by(|left, right| {
-            left.rmse
-                .partial_cmp(&right.rmse)
-                .unwrap_or(Ordering::Equal)
-        })
-        .ok_or_else(|| "portable execution needs at least one PLS variant".to_string())?
-        .clone();
-
-    Ok(PortablePipelineResult {
-        name: definition
-            .get("name")
-            .and_then(Value::as_str)
-            .unwrap_or("pipeline")
-            .to_string(),
-        rows: dataset.rows,
-        cols: dataset.cols,
-        split,
-        preprocessing,
-        variants,
-        selected,
-        targets,
-    })
+    let definition = portable_execution::decode_definition(input)?;
+    // Preserve the historical Rust PLS surface; the generic dispatcher shares
+    // the same executor while carrying declared IO identities when supplied.
+    parse_execution_plan(&definition)?;
+    let result = portable_execution::run(
+        &serde_json::json!({"schema_version":1,"definition":definition,
+        "dataset":{"X":dataset.x,"y":dataset.y,"rows":dataset.rows,"cols":dataset.cols}}),
+        library_path.as_ref(),
+    )?;
+    portable_execution::legacy_result(&result)
 }
 
 /// Run the portable subset and export the selected native PLS model as an
-/// `N4MM` payload owned by libn4m. The exact SNV -> Savitzky-Golay smoothing
-/// lane is embedded by Methods as N4MM v2; other historical portable plans
-/// remain N4MM v1 and replay their declared preprocessing externally.
+/// `N4MM` payload owned by libn4m. Methods selects the current payload format;
+/// exact default SNV -> Savitzky-Golay smoothing may be embedded, while other
+/// admitted stateless recipes replay their complete parameters externally.
 pub fn run_portable_pipeline_with_exported_model(
     input: &str,
     dataset: &PortableDataset,
     library_path: impl AsRef<Path>,
 ) -> Result<(PortablePipelineResult, Vec<u8>), String> {
-    let result = run_portable_pipeline_with_library(input, dataset, &library_path)?;
-    let definition = load_pipeline_definition_str(input)?;
-    let plan = parse_execution_plan(&definition)?;
-    let methods = MethodsLibrary::load(library_path)?;
-    let split = methods.compute_split(plan.splitter.as_ref(), dataset)?;
-    let mut x_train = select_rows(&dataset.x, dataset.rows, dataset.cols, &split.train_indices)?;
-    let y_train = select_rows(&dataset.y, dataset.rows, 1, &split.train_indices)?;
+    // N4MM representability is decided before any evaluation fit.
+    let plan = parse_execution_plan_str(input)?;
+    let model_params = plan
+        .owner_admission
+        .recipe
+        .last()
+        .ok_or("owner model missing")?["params"]
+        .as_object()
+        .ok_or("owner model params missing")?
+        .clone();
     let embedded_pipeline = embedded_pipeline_spec(&plan);
+    let result = run_portable_pipeline_with_library(input, dataset, &library_path)?;
+    let methods = MethodsLibrary::load(library_path)?;
+    let train = &result.split.train_indices;
+    let mut x_train = select_rows(&dataset.x, dataset.rows, dataset.cols, train)?;
+    let y_train = select_rows(&dataset.y, dataset.rows, 1, train)?;
     if embedded_pipeline.is_none() {
-        for step in &plan.preprocessing {
-            x_train = match step {
-                PortablePreprocessing::StandardNormalVariate => {
-                    methods.snv_transform(&x_train, split.train_indices.len(), dataset.cols)?
-                }
-                PortablePreprocessing::SavitzkyGolay(params) => methods.savgol_transform(
-                    &x_train,
-                    split.train_indices.len(),
-                    dataset.cols,
-                    params,
-                )?,
-            };
-        }
+        x_train =
+            transform_portable_preprocessing(&plan, &methods, &x_train, train.len(), dataset.cols)?;
     }
     let (_, model) = methods.fit_predict_pls(
         PlsFitInput {
             x_train: &x_train,
             y_train: &y_train,
-            train_rows: split.train_indices.len(),
+            train_rows: train.len(),
             cols: dataset.cols,
             n_components: result.selected.n_components,
             x_test: &x_train,
-            test_rows: split.train_indices.len(),
+            test_rows: train.len(),
             embedded_pipeline,
+            model_params: &model_params,
         },
         true,
     )?;
@@ -642,8 +451,7 @@ pub fn predict_exported_portable_model_with_library(
     cols: usize,
     library_path: impl AsRef<Path>,
 ) -> Result<Vec<f64>, String> {
-    let definition = load_pipeline_definition_str(input)?;
-    let plan = parse_execution_plan(&definition)?;
+    let plan = parse_execution_plan_str(input)?;
     let mut transformed = x.to_vec();
     if transformed.len()
         != rows
@@ -660,16 +468,7 @@ pub fn predict_exported_portable_model_with_library(
     validate_portable_model_plan(&plan, &descriptor)?;
     let methods = MethodsLibrary::load(library_path)?;
     if descriptor.pipeline.is_none() {
-        for step in &plan.preprocessing {
-            transformed = match step {
-                PortablePreprocessing::StandardNormalVariate => {
-                    methods.snv_transform(&transformed, rows, cols)?
-                }
-                PortablePreprocessing::SavitzkyGolay(params) => {
-                    methods.savgol_transform(&transformed, rows, cols, params)?
-                }
-            };
-        }
+        transformed = transform_portable_preprocessing(&plan, &methods, &transformed, rows, cols)?;
     }
     methods.import_predict_pls(model_n4mm, &transformed, rows, cols)
 }
@@ -681,8 +480,7 @@ pub fn validate_exported_portable_model_with_library(
     cols: usize,
     library_path: impl AsRef<Path>,
 ) -> Result<(), String> {
-    let definition = load_pipeline_definition_str(input)?;
-    let plan = parse_execution_plan(&definition)?;
+    let plan = parse_execution_plan_str(input)?;
     let library_path = library_path.as_ref();
     let descriptor = inspect_portable_model_descriptor(model_n4mm, library_path)?;
     validate_portable_model_plan(&plan, &descriptor)?;
@@ -693,6 +491,14 @@ pub fn validate_exported_portable_model_with_library(
 }
 
 fn embedded_pipeline_spec(plan: &ExecutionPlan) -> Option<EmbeddedPipelineSpec> {
+    let snv = plan.owner_admission.recipe.first()?;
+    if snv["methodId"] != "preprocessing.scatter.snv"
+        || snv["params"]["with_mean"] != true
+        || snv["params"]["with_std"] != true
+        || snv["params"]["ddof"] != 0
+    {
+        return None;
+    }
     let [PortablePreprocessing::StandardNormalVariate, PortablePreprocessing::SavitzkyGolay(sg)] =
         plan.preprocessing.as_slice()
     else {
@@ -709,6 +515,40 @@ fn embedded_pipeline_spec(plan: &ExecutionPlan) -> Option<EmbeddedPipelineSpec> 
             savgol_window: sg.window_length,
             savgol_poly_degree: sg.polyorder,
         })
+}
+
+fn transform_portable_preprocessing(
+    plan: &ExecutionPlan,
+    methods: &MethodsLibrary,
+    input: &[f64],
+    rows: usize,
+    cols: usize,
+) -> Result<Vec<f64>, String> {
+    let mut transformed = input.to_vec();
+    for (index, step) in plan.preprocessing.iter().enumerate() {
+        transformed = match step {
+            PortablePreprocessing::StandardNormalVariate => {
+                let params = &plan.owner_admission.recipe[index]["params"];
+                methods.snv_transform(
+                    &transformed,
+                    rows,
+                    cols,
+                    params["with_mean"]
+                        .as_bool()
+                        .ok_or("owner SNV with_mean missing")?,
+                    params["with_std"]
+                        .as_bool()
+                        .ok_or("owner SNV with_std missing")?,
+                    i32::try_from(params["ddof"].as_i64().ok_or("owner SNV ddof missing")?)
+                        .map_err(|_| "SNV ddof outside i32")?,
+                )?
+            }
+            PortablePreprocessing::SavitzkyGolay(params) => {
+                methods.savgol_transform(&transformed, rows, cols, params)?
+            }
+        };
+    }
+    Ok(transformed)
 }
 
 pub(crate) fn inspect_portable_model_descriptor(
@@ -860,184 +700,6 @@ fn collect_classes(value: &Value, output: &mut Vec<String>) {
     }
 }
 
-fn savgol_params(params: &Value) -> Result<SavitzkyGolayParams, String> {
-    let delta = number_param(params.get("delta"), 1.0)?;
-    if delta != 1.0 {
-        return Err(
-            "portable Savitzky-Golay execution currently supports delta=1 only".to_string(),
-        );
-    }
-    let window_length = int_param(
-        params.get("window_length").or_else(|| params.get("window")),
-        11,
-    )?;
-    if window_length < 1 {
-        return Err("window_length must be >= 1".to_string());
-    }
-    let polyorder = int_param(params.get("polyorder"), 3)?;
-    if polyorder < 0 {
-        return Err("polyorder must be >= 0".to_string());
-    }
-    let deriv = int_param(params.get("deriv"), 0)?;
-    if deriv < 0 {
-        return Err("deriv must be >= 0".to_string());
-    }
-    Ok(SavitzkyGolayParams {
-        window_length,
-        polyorder,
-        deriv,
-        mode: savgol_mode(params.get("mode"))?,
-        cval: number_param(params.get("cval"), 0.0)?,
-    })
-}
-
-fn savgol_mode(value: Option<&Value>) -> Result<i32, String> {
-    match value {
-        None => Ok(4),
-        Some(Value::String(mode)) => match mode.to_ascii_lowercase().as_str() {
-            "mirror" => Ok(0),
-            "constant" => Ok(1),
-            "nearest" => Ok(2),
-            "wrap" => Ok(3),
-            "interp" => Ok(4),
-            _ => Err(format!("unsupported Savitzky-Golay mode: {mode}")),
-        },
-        Some(value) => {
-            let mode = int_param(Some(value), 4)?;
-            if (0..=4).contains(&mode) {
-                Ok(mode)
-            } else {
-                Err(format!("unsupported Savitzky-Golay mode: {value}"))
-            }
-        }
-    }
-}
-
-fn component_values(step: &Value) -> Result<Vec<i32>, String> {
-    if let Some(range) = step.get("_range_") {
-        if step.get("param").and_then(Value::as_str) != Some("n_components") {
-            return Err(
-                "portable execution only supports _range_ sweeps over 'n_components'".to_string(),
-            );
-        }
-        let values = range
-            .as_array()
-            .ok_or_else(|| "invalid n_components _range_; expected an array".to_string())?;
-        if values.len() != 3 {
-            return Err(
-                "invalid n_components _range_; expected [start, stop, positive_step]".to_string(),
-            );
-        }
-        let start = int_param(values.first(), 0)?;
-        let stop = int_param(values.get(1), 0)?;
-        let stride = int_param(values.get(2), 0)?;
-        if start < 1 || stop < 1 {
-            return Err("invalid n_components _range_; start and stop must be >= 1".to_string());
-        }
-        if stride <= 0 {
-            return Err("invalid n_components _range_; expected a positive step".to_string());
-        }
-        if start > stop {
-            return Err("invalid n_components _range_; start must be <= stop".to_string());
-        }
-        // Count and iterate in i64: even a single i32::MAX candidate must not
-        // overflow while advancing past the final value.
-        let count = (i64::from(stop) - i64::from(start)) / i64::from(stride) + 1;
-        if count > 10_000 {
-            return Err("portable n_components sweep exceeds 10000 variants".to_string());
-        }
-        return Ok((0..count)
-            .map(|index| (i64::from(start) + index * i64::from(stride)) as i32)
-            .collect());
-    }
-    let params = step
-        .get("model")
-        .and_then(|model| model.get("params"))
-        .unwrap_or(&Value::Null);
-    let n_components = int_param(params.get("n_components"), 2)?;
-    if n_components < 1 {
-        return Err("n_components must be >= 1".to_string());
-    }
-    Ok(vec![n_components])
-}
-
-fn number_param(value: Option<&Value>, fallback: f64) -> Result<f64, String> {
-    let number = match value {
-        None | Some(Value::Null) => Ok(fallback),
-        Some(Value::Number(number)) => number
-            .as_f64()
-            .ok_or_else(|| "numeric parameter is outside f64 range".to_string()),
-        Some(Value::String(text)) => text
-            .trim()
-            .parse::<f64>()
-            .map_err(|error| format!("invalid numeric parameter '{text}': {error}")),
-        Some(other) => Err(format!("expected numeric parameter, got {other}")),
-    }?;
-    if !number.is_finite() {
-        return Err("numeric parameter must be finite".to_string());
-    }
-    Ok(number)
-}
-
-fn int_param(value: Option<&Value>, fallback: i32) -> Result<i32, String> {
-    let Some(value) = value else {
-        return Ok(fallback);
-    };
-    if value.is_null() {
-        return Ok(fallback);
-    }
-    let raw = match value {
-        Value::Number(number) => integer_from_number(number, value)?,
-        Value::String(text) => integer_from_string(text)?,
-        other => return Err(format!("expected integer parameter, got {other}")),
-    };
-    i32::try_from(raw).map_err(|_| format!("integer parameter {raw} is outside i32 range"))
-}
-
-fn integer_from_number(number: &serde_json::Number, value: &Value) -> Result<i64, String> {
-    if let Some(raw) = number.as_i64() {
-        return Ok(raw);
-    }
-    let raw = number
-        .as_f64()
-        .ok_or_else(|| "integer parameter is outside f64 range".to_string())?;
-    if !raw.is_finite() {
-        return Err("integer parameter must be finite".to_string());
-    }
-    if raw.fract() != 0.0 {
-        return Err(format!("expected integer parameter, got {value}"));
-    }
-    if raw < i64::MIN as f64 || raw > i64::MAX as f64 {
-        return Err("integer parameter is outside i64 range".to_string());
-    }
-    Ok(raw as i64)
-}
-
-fn integer_from_string(text: &str) -> Result<i64, String> {
-    let trimmed = text.trim();
-    if trimmed.is_empty() {
-        return Err("invalid integer parameter: empty string".to_string());
-    }
-    if let Ok(raw) = trimmed.parse::<i64>() {
-        return Ok(raw);
-    }
-    let raw = trimmed
-        .parse::<f64>()
-        .map_err(|error| format!("invalid integer parameter '{text}': {error}"))?;
-    if !raw.is_finite() {
-        return Err(format!("invalid integer parameter '{text}': not finite"));
-    }
-    if raw.fract() != 0.0 {
-        return Err(format!(
-            "invalid integer parameter '{text}': not an integer"
-        ));
-    }
-    if raw < i64::MIN as f64 || raw > i64::MAX as f64 {
-        return Err(format!("integer parameter '{text}' is outside i64 range"));
-    }
-    Ok(raw as i64)
-}
-
 fn flatten_matrix(
     value: &Value,
     rows: usize,
@@ -1101,25 +763,6 @@ fn select_rows(
     Ok(out)
 }
 
-fn rmse(predictions: &[f64], targets: &[f64]) -> Result<f64, String> {
-    if predictions.len() != targets.len() {
-        return Err(format!(
-            "prediction/target length mismatch: {} != {}",
-            predictions.len(),
-            targets.len()
-        ));
-    }
-    let sum = predictions
-        .iter()
-        .zip(targets)
-        .map(|(actual, expected)| {
-            let diff = actual - expected;
-            diff * diff
-        })
-        .sum::<f64>();
-    Ok((sum / predictions.len() as f64).sqrt())
-}
-
 type N4mStatus = c_int;
 type N4mHandle = *mut c_void;
 
@@ -1149,32 +792,6 @@ impl Drop for NativeHandleGuard {
     }
 }
 
-struct SplitResultGuard {
-    result: N4mSplitResult,
-    destroy: unsafe extern "C" fn(*mut N4mSplitResult),
-}
-
-impl SplitResultGuard {
-    fn new(destroy: unsafe extern "C" fn(*mut N4mSplitResult)) -> Self {
-        Self {
-            result: N4mSplitResult {
-                train_idx: ptr::null_mut(),
-                n_train: 0,
-                test_idx: ptr::null_mut(),
-                n_test: 0,
-                owner: ptr::null_mut(),
-            },
-            destroy,
-        }
-    }
-}
-
-impl Drop for SplitResultGuard {
-    fn drop(&mut self) {
-        unsafe { (self.destroy)(&mut self.result) };
-    }
-}
-
 const N4M_OK: N4mStatus = 0;
 const N4M_DTYPE_F64: c_int = 1;
 
@@ -1188,16 +805,6 @@ struct N4mMatrixView {
     col_stride: i64,
     dtype: c_int,
     reserved0: i32,
-}
-
-#[repr(C)]
-#[derive(Debug, Clone, Copy)]
-struct N4mSplitResult {
-    train_idx: *mut i64,
-    n_train: i64,
-    test_idx: *mut i64,
-    n_test: i64,
-    owner: *mut c_void,
 }
 
 struct MethodsLibrary {
@@ -1239,6 +846,7 @@ struct PlsFitInput<'a> {
     x_test: &'a [f64],
     test_rows: usize,
     embedded_pipeline: Option<EmbeddedPipelineSpec>,
+    model_params: &'a serde_json::Map<String, Value>,
 }
 
 impl MethodsLibrary {
@@ -1249,63 +857,15 @@ impl MethodsLibrary {
         Ok(Self { library })
     }
 
-    fn compute_split(
+    fn snv_transform(
         &self,
-        splitter: Option<&PortableSplitter>,
-        dataset: &PortableDataset,
-    ) -> Result<PortableSplitResult, String> {
-        let Some(splitter) = splitter else {
-            let indices = (0..dataset.rows).collect::<Vec<_>>();
-            return Ok(PortableSplitResult {
-                kind: "all".to_string(),
-                train_indices: indices.clone(),
-                test_indices: indices,
-            });
-        };
-
-        let create: Symbol<unsafe extern "C" fn(*mut N4mHandle, c_double) -> N4mStatus> =
-            self.symbol(b"n4m_model_selection_kennard_stone_create")?;
-        let split_fn: Symbol<
-            unsafe extern "C" fn(N4mHandle, N4mMatrixView, *mut N4mSplitResult) -> N4mStatus,
-        > = self.symbol(b"n4m_model_selection_kennard_stone_split")?;
-        let destroy: Symbol<unsafe extern "C" fn(N4mHandle)> =
-            self.symbol(b"n4m_model_selection_kennard_stone_destroy")?;
-        let result_destroy: Symbol<unsafe extern "C" fn(*mut N4mSplitResult)> =
-            self.symbol(b"n4m_split_result_destroy")?;
-
-        let mut x = dataset.x.clone();
-        let x_view = matrix_view(&mut x, dataset.rows, dataset.cols)?;
-        let mut handle = NativeHandleGuard::new(*destroy);
-        unsafe {
-            self.check(
-                create(&mut handle.handle, splitter.test_size),
-                "n4m_model_selection_kennard_stone_create",
-                None,
-            )?;
-        }
-        let mut result = SplitResultGuard::new(*result_destroy);
-        let split_status = unsafe { split_fn(handle.handle, x_view, &mut result.result) };
-        let split_result = if let Err(error) = self.check(
-            split_status,
-            "n4m_model_selection_kennard_stone_split",
-            None,
-        ) {
-            return Err(error);
-        } else {
-            let train = copy_indices(result.result.train_idx, result.result.n_train);
-            let test = copy_indices(result.result.test_idx, result.result.n_test);
-            let train = train?;
-            let test = test?;
-            PortableSplitResult {
-                kind: splitter.kind.clone(),
-                train_indices: train,
-                test_indices: test,
-            }
-        };
-        Ok(split_result)
-    }
-
-    fn snv_transform(&self, input: &[f64], rows: usize, cols: usize) -> Result<Vec<f64>, String> {
+        input: &[f64],
+        rows: usize,
+        cols: usize,
+        with_mean: bool,
+        with_std: bool,
+        ddof: i32,
+    ) -> Result<Vec<f64>, String> {
         #[cfg(test)]
         HOST_SNV_TRANSFORMS.set(HOST_SNV_TRANSFORMS.get() + 1);
         let create: Symbol<unsafe extern "C" fn(*mut N4mHandle, c_int, c_int, c_int) -> N4mStatus> =
@@ -1323,7 +883,12 @@ impl MethodsLibrary {
         let mut handle = NativeHandleGuard::new(*destroy);
         unsafe {
             self.check(
-                create(&mut handle.handle, 1, 1, 0),
+                create(
+                    &mut handle.handle,
+                    i32::from(with_mean),
+                    i32::from(with_std),
+                    ddof,
+                ),
                 "n4m_transform_snv_create",
                 None,
             )?;
@@ -1454,16 +1019,67 @@ impl MethodsLibrary {
         }
         checked!(config_create(&mut cfg.handle), "n4m_config_create");
         checked!(set_algorithm(cfg.handle, 0), "n4m_config_set_algorithm");
-        checked!(set_solver(cfg.handle, 1), "n4m_config_set_solver");
+        let solver = match input.model_params["solver"].as_str() {
+            Some("nipals") => 0,
+            Some("simpls") => 1,
+            Some("orthogonal_scores") => 2,
+            Some("kernel_algorithm") => 3,
+            Some("wide_kernel") => 4,
+            Some("svd") => 5,
+            Some("power") => 6,
+            Some("randomized_svd") => 7,
+            _ => return Err("owner PLS solver is not representable by N4MM export".into()),
+        };
+        checked!(set_solver(cfg.handle, solver), "n4m_config_set_solver");
         checked!(set_deflation(cfg.handle, 0), "n4m_config_set_deflation");
         checked!(
             set_n_components(cfg.handle, input.n_components),
             "n4m_config_set_n_components"
         );
-        checked!(set_center_x(cfg.handle, 1), "n4m_config_set_center_x");
-        checked!(set_scale_x(cfg.handle, 1), "n4m_config_set_scale_x");
-        checked!(set_center_y(cfg.handle, 1), "n4m_config_set_center_y");
-        checked!(set_scale_y(cfg.handle, 1), "n4m_config_set_scale_y");
+        checked!(
+            set_center_x(
+                cfg.handle,
+                i32::from(
+                    input.model_params["center_x"]
+                        .as_bool()
+                        .ok_or("owner center_x missing")?
+                )
+            ),
+            "n4m_config_set_center_x"
+        );
+        checked!(
+            set_scale_x(
+                cfg.handle,
+                i32::from(
+                    input.model_params["scale_x"]
+                        .as_bool()
+                        .ok_or("owner scale_x missing")?
+                )
+            ),
+            "n4m_config_set_scale_x"
+        );
+        checked!(
+            set_center_y(
+                cfg.handle,
+                i32::from(
+                    input.model_params["center_y"]
+                        .as_bool()
+                        .ok_or("owner center_y missing")?
+                )
+            ),
+            "n4m_config_set_center_y"
+        );
+        checked!(
+            set_scale_y(
+                cfg.handle,
+                i32::from(
+                    input.model_params["scale_y"]
+                        .as_bool()
+                        .ok_or("owner scale_y missing")?
+                )
+            ),
+            "n4m_config_set_scale_y"
+        );
 
         let _pipeline = if let Some(spec) = input.embedded_pipeline {
             let pipeline_create: Symbol<unsafe extern "C" fn(*mut N4mHandle) -> N4mStatus> =
@@ -1680,26 +1296,6 @@ fn matrix_view(data: &mut [f64], rows: usize, cols: usize) -> Result<N4mMatrixVi
     })
 }
 
-fn copy_indices(ptr: *const i64, len: i64) -> Result<Vec<usize>, String> {
-    if len < 0 {
-        return Err(format!("split result contains a negative length: {len}"));
-    }
-    if len == 0 {
-        return Ok(Vec::new());
-    }
-    if ptr.is_null() {
-        return Err("split result contains a null index buffer".to_string());
-    }
-    let values = unsafe { std::slice::from_raw_parts(ptr, len as usize) };
-    values
-        .iter()
-        .map(|&value| {
-            usize::try_from(value)
-                .map_err(|_| format!("split index {value} cannot be represented as usize"))
-        })
-        .collect()
-}
-
 unsafe fn c_string(ptr: *const c_char) -> Option<String> {
     if ptr.is_null() {
         None
@@ -1727,7 +1323,9 @@ mod tests {
             );
         }
         for case in cases["valid"].as_array().unwrap() {
-            let plan = parse_execution_plan(case).unwrap();
+            let mut recipe = case.clone();
+            recipe.as_object_mut().unwrap().remove("components");
+            let plan = parse_execution_plan(&recipe).unwrap();
             assert_eq!(
                 serde_json::json!(plan.n_components),
                 case["components"],
@@ -1981,7 +1579,7 @@ mod tests {
             serde_json::json!([{
                 "schema": "nirs4all.calibrated.v1",
                 "owner": "nirs4all-core",
-                "carried_in": "Core calibration wrapper JSON, only on the content_routes that name this schema: the Rust calibrate_archive return value, the CLI fit/load responses and the MATLAB struct. The JS/WASM host object and the Python host object carry no schema id; import/export transfer the current native archive V2"
+                "carried_in": "Core calibration wrapper JSON, only on the content_routes that name this schema: the Rust calibrate_archive return value, the CLI fit/load responses and the MATLAB struct. The JS/WASM host object and the Python host object carry no schema id; import/export transfer the native DAG Package V2 (scientific package schema2) carried in the owner-neutral Core V1 container (physical schema1) via native-methods-package@1"
             }])
         );
 
@@ -2273,7 +1871,7 @@ mod tests {
         });
         assert!(parse_execution_plan(&definition)
             .unwrap_err()
-            .contains("expected integer parameter"));
+            .contains("$.pipeline[0].params.window_length: integer in 3..i32::MAX required"));
 
         let definition = serde_json::json!({
             "pipeline": [
@@ -2287,7 +1885,7 @@ mod tests {
         });
         assert!(parse_execution_plan(&definition)
             .unwrap_err()
-            .contains("expected integer parameter"));
+            .contains("$.pipeline[0].model.params.n_components: integer in 1..i32::MAX required"));
 
         let definition = serde_json::json!({
             "pipeline": [
@@ -2300,7 +1898,7 @@ mod tests {
         });
         assert!(parse_execution_plan(&definition)
             .unwrap_err()
-            .contains("start and stop must be >= 1"));
+            .contains("$.pipeline[0]: integer in 1..i32::MAX required"));
 
         let definition = serde_json::json!({
             "pipeline": [
@@ -2313,7 +1911,7 @@ mod tests {
         });
         assert!(parse_execution_plan(&definition)
             .unwrap_err()
-            .contains("start must be <= stop"));
+            .contains("$.pipeline[0]: range start exceeds stop"));
     }
 
     fn rust_loss_reference() -> dag_ml::LossReference {

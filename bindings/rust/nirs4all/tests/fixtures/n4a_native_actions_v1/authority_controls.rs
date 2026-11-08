@@ -1,11 +1,9 @@
 //! Adversarial owner artifacts are trained with real IO and owner execution.
 //! This private unit module exports no test bridge or caller admission API.
 use super::*;
+use crate::native_action_test_data as data;
 use crate::pipeline_workflow::native_pipeline_export_training_request;
 use dag_ml_core::{BundleId, FittedArtifactMode, TrainingOutcome, TrainingRequest};
-#[allow(dead_code)]
-#[path = "data.rs"]
-mod data;
 const RELATIONS: &str = "native_pipeline_training_relations";
 
 fn library() -> (std::path::PathBuf, String) {

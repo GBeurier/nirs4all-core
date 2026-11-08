@@ -1367,7 +1367,7 @@ mod tests {
         assert!(error.contains("n4m:not.a.method"), "{error}");
         assert!(crate::parse_execution_plan(&definition)
             .unwrap_err()
-            .contains("N4mRolePipeline"));
+            .contains("$.pipeline[0]: object required"));
 
         let capabilities = n4m_role_capabilities().unwrap();
         let cppls = capabilities

@@ -17,9 +17,7 @@ use crate::io_training::{
     base_regression_training_request, CanonicalPlsProfile, DatasetPackageMethodsProvider,
 };
 
-#[allow(dead_code)]
-#[path = "data.rs"]
-mod data;
+use crate::native_action_test_data as data;
 
 /// Construct a fingerprint-bound, catalog-resolved training request for a linear native
 /// pipeline. Each fitted transform executes separately inside every CV fold.

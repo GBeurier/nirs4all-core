@@ -1,6 +1,6 @@
 function parity()
 scriptDir = fileparts(mfilename('fullpath'));
-root = fileparts(fileparts(fileparts(fileparts(scriptDir))));
+root = fileparts(fileparts(fileparts(scriptDir)));
 addpath(fullfile(scriptDir, '..'));
 
 methodsPath = getenv('NIRS4ALL_METHODS_MATLAB_PATH');
@@ -15,13 +15,12 @@ if ~isempty(methodsPath) && exist(methodsPath, 'dir') == 7
 end
 
 strict = strcmp(getenv('NIRS4ALL_CORE_REQUIRE_METHODS_PARITY'), '1');
-if isempty(which('n4m.pls_fit'))
-    if strict
-        error('nirs4all:testFailed', 'n4m MATLAB/Octave binding is required for strict parity');
-    end
-    disp('Skipping MATLAB/Octave execution parity: n4m is not on the path');
-    return
-end
+% The migrated native Core facade is required. MEX availability is not a gate.
+probe = ['{"schema_version":1,"definition":{"pipeline":' ...
+    '[{"model":{"class":"n4m.PLSRegression","params":{"n_components":1}}}]}}'];
+admission = nirs4all.workflowCli('', 'portable-pipeline-plan', probe, struct());
+assert(strcmp(admission.profile, 'portable_linear_regression.v1'));
+assert(strcmp(admission.mode, 'training'));
 
 oraclePath = getenv('NIRS4ALL_CORE_PARITY_ORACLE');
 if isempty(oraclePath)
@@ -69,7 +68,8 @@ modeFixture.pipeline = { ...
 };
 modeResult = nirs4all.runPortablePipeline(modeFixture, dataset);
 modeParams = modeResult.preprocessing{1}.params;
-assert(isequal(double(modeParams(:)).', [11, 3, 0, 1, 7.25]));
+assert(modeParams.window_length == 11 && modeParams.polyorder == 3 && modeParams.deriv == 0);
+assert(strcmp(modeParams.mode, 'constant') && modeParams.cval == 7.25);
 
 for idx = 1:numel(cases)
     expected = cases{idx};
@@ -78,10 +78,14 @@ for idx = 1:numel(cases)
     actual = nirs4all.runPortablePipeline(fixture, dataset);
     if ~strcmp(actual.split.kind, 'all')
         alternate = nirs4all.loadPipelineDefinition(fixture);
-        steps = alternate.pipeline;
-        alternate.pipeline = [steps(2:end-1), steps(1), steps(end)];
+        alternate = alternate.original_root;
+        steps = asCell(alternate.pipeline);
+        steps = steps(:);
+        alternate.pipeline = [steps(2:end-1); steps(1); steps(end)];
         reordered = nirs4all.runPortablePipeline(alternate, dataset);
-        assert(isequal(reordered, actual));
+        for field = {'split', 'preprocessing', 'variants', 'selected', 'targets', 'evaluation', 'identities'}
+            assert(isequal(reordered.(field{1}), actual.(field{1})));
+        end
     end
     assert(~actual.evaluation.independent_test);
     if strcmp(actual.split.kind, 'all')
@@ -93,6 +97,12 @@ for idx = 1:numel(cases)
     assert(strcmp(actual.split.kind, expected.split.kind));
     assert(isequal(double(actual.split.trainIndices(:)), double(expected.split.trainIndices(:))));
     assert(isequal(double(actual.split.testIndices(:)), double(expected.split.testIndices(:))));
+    assert(strcmp(actual.profile, 'portable_linear_regression.v1'));
+    assert(strcmp(actual.owner_profile, 'pipeline_steps.v1'));
+    ids = actual.identities.sample_ids;
+    assert(isequal(actual.identities.training_sample_ids(:), ids(double(actual.split.trainIndices(:)) + 1)));
+    assert(isequal(actual.identities.evaluation_sample_ids(:), ids(double(actual.split.testIndices(:)) + 1)));
+    assert(~isempty(fieldnames(actual.owner.decision)));
     assert(maxAbsDiff(actual.targets, expected.targets) <= tolerances.targets_abs);
 
     expectedVariants = asCell(expected.variants);
@@ -105,6 +115,49 @@ for idx = 1:numel(cases)
         assert(maxAbsDiff(actualVariant.predictions, expectedVariant.predictions) <= tolerances.predictions_abs);
     end
     assert(double(actual.selected.n_components) == double(expected.selected.n_components));
+end
+
+% Frozen B02 case inputs, with new assertions against the native owner route.
+% The original fixture/oracle files and tolerances are unchanged.
+for caseIdx = 1:2
+    if caseIdx == 1
+        snvParams = struct('with_std', false, 'ddof', 3);
+        modelParams = struct('n_components', 2);
+        components = 2;
+        paths = {'.params.with_std', '.params.ddof'};
+    else
+        snvParams = struct();
+        modelParams = struct('n_components', 5, 'scale', false);
+        components = [1 2 3];
+        paths = {'.params.scale'};
+    end
+    snv = struct('class', 'n4m.SNV', 'params', snvParams);
+    model = struct('model', struct('class', 'sklearn.cross_decomposition.PLSRegression', 'params', modelParams));
+    if caseIdx == 2
+        model.param = 'n_components'; model.('_range_') = [1 3 1];
+    end
+    try
+        actual = nirs4all.runPortablePipeline(struct('pipeline', {{snv, model}}), dataset);
+    catch err
+        named = false;
+        for pathIdx = 1:numel(paths)
+            named = named || ~isempty(strfind(err.message, paths{pathIdx}));
+        end
+        assert(named, err.message);
+        continue
+    end
+    assert(strcmp(actual.evaluation.scope, 'training') && ~actual.evaluation.independent_test);
+    assert(isequal(double(actual.split.trainIndices(:)), (0:(double(dataset.rows) - 1)).'));
+    assert(isequal(actual.split.trainIndices, actual.split.testIndices));
+    assert(isequal(double(actual.targets(:)), double(dataset.y(:))));
+    assert(numel(actual.variants) == numel(components));
+    for variantIdx = 1:numel(components)
+        assert(actual.variants{variantIdx}.n_components == components(variantIdx));
+    end
+    if caseIdx == 1
+        assert(~actual.preprocessing{1}.params.with_std && actual.preprocessing{1}.params.ddof == 3);
+    end
+    assert(~isempty(fieldnames(actual.owner.decision)));
 end
 
 disp('nirs4all MATLAB/Octave execution parity passed');

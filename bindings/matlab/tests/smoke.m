@@ -92,7 +92,7 @@ assert(numel(from_steps.pipeline) == numel(json_pipeline.pipeline));
 assert(numel(from_list.pipeline) == numel(json_pipeline.pipeline));
 
 try
-    nirs4all.loadPipelineDefinition(struct('pipeline', {{struct('class', 'sklearn.ensemble.RandomForestRegressor')}}));
+    nirs4all.runPortablePipeline(struct('pipeline', {{struct('class', 'sklearn.ensemble.RandomForestRegressor')}}), struct());
     error('nirs4all:testFailed', 'unsupported operator should fail');
 catch err
     assert(strcmp(err.identifier, 'nirs4all:UnsupportedOperator'));
