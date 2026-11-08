@@ -16,7 +16,6 @@ import {
   N4mRolePipeline,
   loadPipelineDefinition,
   n4mRoleCapabilities,
-  parseExecutionPlan,
   portableClassNames,
 } from '../src/index.js';
 import { requireMethodsArtifact } from './methods-artifact.js';
@@ -91,7 +90,6 @@ test('n4m:<method id> tokens resolve through the Methods manifest', async (t) =>
     () => loadPipelineDefinition({ pipeline: ['n4m:not.a.method'] }, { methods }),
     /outside the current nirs4all-core portable subset: n4m:not\.a\.method$/,
   );
-  assert.throws(() => parseExecutionPlan(loadPipelineDefinition(recipe, { methods })), /N4mRolePipeline\.fit/);
 
   const capabilities = await n4mRoleCapabilities({ methods });
   const cppls = capabilities.find((item) => item.token === 'n4m:models.pls.cppls');

@@ -12,14 +12,21 @@ The initial shared cases are:
 - Kennard-Stone + SNV + Savitzky-Golay + PLS `n_components` sweep via
   `_range_` / `param`.
 
-`expected/portable_python_oracle.json` is generated from the full Python
-`nirs4all` library and is the source of truth for the WASM execution parity
-test in `bindings/wasm/tests/parity.test.js` and the optional strict Python,
-Rust binding execution parity tests here, and the R product tests in
-`bindings/python/tests/test_execution_parity.py`,
-`bindings/rust/nirs4all/src/lib.rs` and `nirs4all-r/tests/portable-json-yaml.R`.
+`expected/portable_python_oracle.json` is frozen from the full Python
+`nirs4all` library. It remains the retained MATLAB/Octave portable runner's
+reference and historical Python/R/Rust evidence. The former JS execution
+comparison is preserved verbatim as non-executable `.txt` under
+[`reference/core-js-runner`](reference/core-js-runner/README.md), with source
+provenance and hashes. No production test imports the retired JS runner.
 
-Regenerate it with:
+Active JS `bindings/wasm/tests/parity.test.js` checks the independent R/Python
+MBPLS and corrected Python n4m GroupSparsePLS held-out vectors directly through
+Methods, preserving `<1e-10`. `native-augmentation.test.js` preserves the 22
+native/R cases in `fixtures/native_x_augmentation_cases.json`, their input/seed,
+provenance and `1e-10 * max(1, abs(expected))` tolerance. These primitive checks
+do not establish DAG workflow parity.
+
+Historical generation command (provenance only; do not regenerate for retirement):
 
 ```bash
 PYTHONPATH=/path/to/nirs4all \
@@ -27,7 +34,7 @@ PYTHONPATH=/path/to/nirs4all \
   scripts/parity/generate_python_oracle.py
 ```
 
-Then run:
+Retained Methods-backed JS gates and historical other-language reference commands:
 
 ```bash
 make check-wasm-methods-artifact \
