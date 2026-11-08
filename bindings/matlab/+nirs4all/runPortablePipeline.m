@@ -147,6 +147,10 @@ for idx = 1:numel(definition.pipeline)
                 error('nirs4all:InvalidPipeline', 'The optional splitter must appear once, before the model.');
             end
             splitter = struct('type', 'KennardStone', 'params', getFieldOrDefault(step, 'params', struct()));
+            if isfield(splitter.params, 'n_train') && ~isempty(splitter.params.n_train)
+                error('nirs4all:UnsupportedOperator', ...
+                    'Unsupported portable KennardStone parameter ''n_train'': training-count splits are not supported by this execution profile.');
+            end
             splitter.params.test_size = numericParam(getFieldOrDefault(splitter.params, 'test_size', 0.25));
         elseif any(strcmp(className, { ...
                 'nirs4all.operators.transforms.SNV', ...
