@@ -780,3 +780,148 @@ test('the shared ZIP64 fixture opens and streams through a file reader with a sm
     } finally { container.close(); }
   } finally { await handle.close(); }
 });
+
+
+// Produced once by produce_real_dmd_initial_refit_facets, outside the repository.
+// Root selects the baseline in one fresh process, then the two new-reader cases.
+// NIRS4ALL_REQUIRE_CORE_N4A=1 makes missing producer input fail rather than skip.
+const RELINK_OLD_WASM_SHA256 = '3377eb6c0e2bcff7a042fce6c5c4af0dd7d5db3940ec15a645114c69cef1eab3';
+function relinkFixture(t) {
+  const directory = process.env.NIRS4ALL_CORE_RELINK_OUTPUT;
+  if (!directory) {
+    assert.notEqual(process.env.NIRS4ALL_REQUIRE_CORE_N4A, '1',
+      'NIRS4ALL_CORE_RELINK_OUTPUT is required; run the ignored native producer first');
+    t.skip('NOT RUN: NIRS4ALL_CORE_RELINK_OUTPUT is unset; no real DMD facet assertion ran');
+    return;
+  }
+  // A configured but missing, incomplete or changed fixture always fails.
+  const receipt = JSON.parse(fs.readFileSync(`${directory}/receipt.json`, 'utf8'));
+  const facets = new Uint8Array(fs.readFileSync(`${directory}/facets.n4a`));
+  const tamper = new Uint8Array(fs.readFileSync(`${directory}/tamper-s.n4a`));
+  const source = fs.readFileSync(`${directory}/source-package.json`);
+  assert.equal(receipt.source_sha256, '20552dc6779a742f8cddc02a13cf7c3c14056144054fc516a461a4c1def3a918');
+  assert.equal(sha256(source), receipt.source_sha256);
+  assert.equal(sha256(facets), receipt.facets_sha256, 'both readers must use the native producer facets SHA');
+  assert.equal(sha256(tamper), receipt.tamper_sha256);
+  assert.notEqual(receipt.source_relation_key_s, receipt.canonical_relation_key_c);
+  const nativeSha256 = sha256(fs.readFileSync(new URL('../native/nirs4all_core_wasm_native_bg.wasm', import.meta.url)));
+  return { receipt, facets, tamper, source: JSON.parse(source.toString('utf8')), nativeSha256 };
+}
+
+test('real DMD initial-refit facet old-baseline refusal', async (t) => {
+  const fixture = relinkFixture(t);
+  if (!fixture) return;
+  assert.equal(fixture.nativeSha256, RELINK_OLD_WASM_SHA256, 'baseline must load the preserved 3377 native package');
+  await withContainer(fixture.facets, (container) => {
+    const view = container.view();
+    assert.equal(view.readability.storage, 'verified');
+    assert.equal(view.readability.container_sha256, fixture.receipt.facets_sha256);
+    assert.equal(view.readability.semantics.status, 'refused',
+      'STOP before any build unless old3377 demonstrates the owner semantic gap');
+    assert.match(view.readability.semantics.detail,
+      /differs from its relations|Archive V2 requires the trusted Methods RolePipeline RAW codec/,
+      'STOP: unexpected old3377 refusal; return the actual detail to Root/89e');
+    assert.equal(view.executability, 'not_evaluated');
+    t.diagnostic(JSON.stringify({
+      native_sha256: fixture.nativeSha256,
+      facets_sha256: fixture.receipt.facets_sha256,
+      semantics: view.readability.semantics,
+      scope: 'Actual old3377 first refusal only; reader coverage and authority correction are combined, with no S/C isolation. Root must observe this before the conditional WASM build.',
+    }));
+  });
+});
+
+test('real DMD initial-refit facet admission', async (t) => {
+  const fixture = relinkFixture(t);
+  if (!fixture) return;
+  assert.notEqual(fixture.nativeSha256, RELINK_OLD_WASM_SHA256, 'mount the new native package in a fresh process');
+  await withContainer(fixture.facets, (container) => {
+    const view = container.view();
+    const semantics = view.readability.semantics;
+    const manifest = view.readability.manifest;
+    assert.equal(view.readability.storage, 'verified');
+    assert.equal(view.readability.container_sha256, fixture.receipt.facets_sha256,
+      'same native-produced facets SHA as the old baseline reader');
+    assert.equal(semantics.status, 'report_only', semantics.detail);
+    assert.equal(view.executability, 'not_evaluated');
+    assert.deepEqual(manifest, fixture.receipt.manifest);
+    assert.deepEqual(manifest.entrypoints, []);
+    assert.deepEqual(manifest.required_features, []);
+    assert.equal(semantics.artifacts.length, 4);
+    assert.deepEqual(Object.fromEntries(semantics.artifacts.map(({ artifact_id, content }) => [artifact_id, content])), {
+      recipe: 'validated', full_refit: 'validated', model: 'unresolved', run: 'unresolved',
+    });
+    const fullRefit = semantics.artifacts.find(({ artifact_id }) => artifact_id === 'full_refit');
+    assert.deepEqual(fullRefit.state_members, fixture.receipt.full_refit_state_members);
+    assert.ok(fullRefit.model_states.length > 0, 'native model records remain reported without execution');
+    for (const id of ['model', 'run']) {
+      const artifact = manifest.artifacts.find((item) => item.id === id);
+      assert.equal(artifact.storage.kind, 'reference');
+      assert.equal(artifact.storage.root_sha256, fixture.receipt.owner_root_sha256);
+    }
+    const rootBytes = container.member(fixture.receipt.owner_root_member);
+    assert.equal(sha256(rootBytes), fixture.receipt.owner_root_sha256);
+    const root = JSON.parse(decode(rootBytes));
+    assert.equal(root.package_id, fixture.source.package_id);
+    assert.equal(root.package_id, fixture.receipt.package_id);
+    assert.equal(root.package_fingerprint, fixture.source.package_fingerprint);
+    assert.equal(root.package_fingerprint, fixture.receipt.package_fingerprint);
+    assert.deepEqual(root.training_sample_ids, fixture.source.training_sample_ids);
+    assert.deepEqual(root.training_sample_ids, fixture.receipt.ordered_training_ids);
+    assert.equal(root.training_sample_ids.length, 28);
+    assert.equal(root.training_envelope.relation_fingerprint, fixture.receipt.source_relation_key_s);
+    assert.deepEqual(root.raw_artifact_payloads, fixture.source.raw_artifact_payloads);
+    for (const state of fullRefit.state_members) {
+      const bytes = container.member(state.member_path);
+      assert.equal(bytes.byteLength, state.byte_length);
+      assert.equal(sha256(bytes), state.sha256);
+      same(bytes, root.raw_artifact_payloads[state.artifact_id]);
+    }
+    const expectedLinks = [
+      ['recipe_of', 'recipe', 'full_refit', 'validated'],
+      ['recipe_of', 'recipe', 'model', 'unverified'],
+      ['recipe_of', 'recipe', 'run', 'unverified'],
+      ['produced_by', 'full_refit', 'run', 'unverified'],
+      ['produced_by', 'model', 'run', 'unverified'],
+    ];
+    assert.equal(manifest.links.length, expectedLinks.length);
+    assert.equal(semantics.links.length, expectedLinks.length);
+    for (const [relation, source, target, status] of expectedLinks) {
+      const links = manifest.links.filter((link) => link.relation === relation
+        && link.source_artifact === source && link.target_artifact === target);
+      assert.equal(links.length, 1);
+      const reports = semantics.links.filter((link) => link.link_id === links[0].id);
+      assert.equal(reports.length, 1);
+      assert.equal(reports[0].verdict.status, status);
+      if (status === 'unverified') assert.match(reports[0].verdict.reason, /owner bytes\/proof are unresolved/);
+    }
+    assert.deepEqual(semantics.opaque_link_ids, []);
+    assert.deepEqual(semantics.entrypoints, []);
+    t.diagnostic(JSON.stringify({
+      native_sha256: fixture.nativeSha256, facets_sha256: fixture.receipt.facets_sha256,
+      artifacts: semantics.artifacts.map(({ artifact_id, content }) => ({ artifact_id, content })),
+      links: semantics.links,
+      scope: 'Partial semantic reading: two embedded contents validated, two references unresolved, one link validated and four unverified; no executability or replay claim.',
+    }));
+  });
+});
+
+test('real DMD initial-refit facet S-tamper integrity refusal', async (t) => {
+  const fixture = relinkFixture(t);
+  if (!fixture) return;
+  assert.notEqual(fixture.nativeSha256, RELINK_OLD_WASM_SHA256, 'mount the new native package in a fresh process');
+  await withContainer(fixture.tamper, (container) => {
+    const view = container.view();
+    assert.equal(view.readability.storage, 'verified', 'the single tamper has a valid physical inventory');
+    assert.equal(view.readability.container_sha256, fixture.receipt.tamper_sha256);
+    assert.equal(view.readability.semantics.status, 'refused');
+    assert.equal(view.readability.semantics.detail, fixture.receipt.tamper_refusal_detail);
+    assert.match(view.readability.semantics.detail, /package fingerprint/);
+    assert.equal(view.executability, 'not_evaluated');
+    t.diagnostic(JSON.stringify({
+      native_sha256: fixture.nativeSha256, tamper_sha256: fixture.receipt.tamper_sha256,
+      detail: view.readability.semantics.detail,
+      scope: 'Package-fingerprint integrity refusal after one S tamper; not evidence of an S-specific authority check.',
+    }));
+  });
+});
