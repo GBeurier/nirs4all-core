@@ -61,6 +61,25 @@ pub fn plan(value: &Value) -> Result<Value, String> {
     serde_json::to_value(admit(&request)?).map_err(|e| e.to_string())
 }
 
+/// Pure structural/component expansion through the DAG owner. This operation
+/// accepts only the original definition, without data or runtime controls.
+pub fn expand(value: &Value) -> Result<Value, String> {
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct ExpandRequest {
+        schema_version: u32,
+        definition: Value,
+    }
+    let request: ExpandRequest =
+        serde_json::from_value(value.clone()).map_err(|e| e.to_string())?;
+    if request.schema_version != 1 {
+        return Err("unsupported portable expansion request schema".into());
+    }
+    let definitions =
+        dag::expand_portable_pipeline(&request.definition).map_err(|e| e.to_string())?;
+    Ok(json!({"schema_version":1,"definitions":definitions}))
+}
+
 /// Marshals a dense host matrix to IO's existing public record. Validation and
 /// package materialization use IO, including preservation of F64 storage.
 fn record(

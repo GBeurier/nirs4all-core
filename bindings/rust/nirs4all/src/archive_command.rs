@@ -62,6 +62,7 @@ fn options(
             | "native-multimodal-export"
             | "pipeline-retrain"
             | "native-multimodal-retrain"
+            | "portable-pipeline-expand"
             | "portable-pipeline-plan"
             | "portable-pipeline-run"
             | "pipeline-run"
@@ -135,7 +136,7 @@ fn options(
         | "native-multimodal-load"
         | "native-multimodal-predict"
         | "native-multimodal-retrain" => &["input", "output", "methods-library", "run-id"],
-        "portable-pipeline-plan" => &["input", "output"],
+        "portable-pipeline-expand" | "portable-pipeline-plan" => &["input", "output"],
         "portable-pipeline-run" => &["input", "output", "methods-library"],
         "pipeline-run" | "pipeline-load" | "pipeline-predict" | "pipeline-retrain" => {
             &["input", "output", "source-id", "methods-library", "run-id"]
@@ -600,10 +601,15 @@ fn replay_methods(
 }
 
 fn execute(command: &str, values: &BTreeMap<String, OsString>) -> Result<()> {
-    if matches!(command, "portable-pipeline-plan" | "portable-pipeline-run") {
+    if matches!(
+        command,
+        "portable-pipeline-expand" | "portable-pipeline-plan" | "portable-pipeline-run"
+    ) {
         let record: Value =
             serde_json::from_str(&read_json_transport(Path::new(required(values, "input")?))?)?;
-        let result = if command == "portable-pipeline-plan" {
+        let result = if command == "portable-pipeline-expand" {
+            crate::portable_execution::expand(&record)?
+        } else if command == "portable-pipeline-plan" {
             crate::portable_execution::plan(&record)?
         } else {
             crate::portable_execution::run(
@@ -1908,6 +1914,146 @@ pub fn execute_archive_command(args: impl IntoIterator<Item = OsString>) -> Resu
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn portable_expand_command_is_pure_strict_and_preserves_core_json_key_order() {
+        let directory = tempfile::tempdir().unwrap();
+        let input = directory.path().join("expand.json");
+        let output = directory.path().join("expanded.json");
+        let request = r#"{"schema_version":1,"definition":{
+            "description":"ordered","name":"echo","random_state":7,"pipeline":[
+            {"_comment":{"z":1.0000000000000002,"a":[{},[]]}},
+            {"branch":{"z_msc":[{"params":{},"class":"n4m.MSC"}],"a_snv":[{"class":"n4m.SNV"}]}},
+            {"merge":"features"},
+            {"_or_":[{"name":"terminal","_range_":[1,2,1],"model":{"params":{"scale":false},"class":"n4m.PLS"},"_comment":{"z":1,"a":2},"param":"n_components"}]}
+        ]}}"#;
+        std::fs::write(&input, request).unwrap();
+        let args = vec![
+            OsString::from("portable-pipeline-expand"),
+            OsString::from("--input"),
+            input.clone().into_os_string(),
+            OsString::from("--output"),
+            output.clone().into_os_string(),
+        ];
+        execute_archive_command(args.clone()).unwrap();
+        let result: Value = serde_json::from_slice(&std::fs::read(&output).unwrap()).unwrap();
+        assert_eq!(result.as_object().unwrap().len(), 2);
+        assert_eq!(result["schema_version"], 1);
+        let definitions = result["definitions"].as_array().unwrap();
+        assert_eq!(definitions.len(), 2);
+        let original: Value = serde_json::from_str(request).unwrap();
+        for (index, definition) in definitions.iter().enumerate() {
+            assert_eq!(
+                definition
+                    .as_object()
+                    .unwrap()
+                    .keys()
+                    .map(String::as_str)
+                    .collect::<Vec<_>>(),
+                ["description", "name", "random_state", "pipeline"]
+            );
+            assert_eq!(
+                definition["pipeline"][0],
+                original["definition"]["pipeline"][0]
+            );
+            assert_eq!(
+                definition["pipeline"][0]["_comment"]
+                    .as_object()
+                    .unwrap()
+                    .keys()
+                    .map(String::as_str)
+                    .collect::<Vec<_>>(),
+                ["z", "a"]
+            );
+            assert_eq!(
+                definition["pipeline"][1]["branch"]
+                    .as_object()
+                    .unwrap()
+                    .keys()
+                    .map(String::as_str)
+                    .collect::<Vec<_>>(),
+                ["z_msc", "a_snv"]
+            );
+            assert_eq!(
+                definition["pipeline"][1],
+                original["definition"]["pipeline"][1]
+            );
+            let terminal = &definition["pipeline"][3];
+            assert_eq!(
+                terminal
+                    .as_object()
+                    .unwrap()
+                    .keys()
+                    .map(String::as_str)
+                    .collect::<Vec<_>>(),
+                ["name", "model", "_comment"]
+            );
+            assert_eq!(
+                terminal["model"]
+                    .as_object()
+                    .unwrap()
+                    .keys()
+                    .map(String::as_str)
+                    .collect::<Vec<_>>(),
+                ["params", "class"]
+            );
+            assert_eq!(
+                terminal["model"]["params"]
+                    .as_object()
+                    .unwrap()
+                    .keys()
+                    .map(String::as_str)
+                    .collect::<Vec<_>>(),
+                ["scale", "n_components"]
+            );
+            assert_eq!(terminal["model"]["params"]["scale"], false);
+            assert_eq!(terminal["model"]["params"]["n_components"], index + 1);
+        }
+        // Plan/run admission keeps its current explicit generator refusal.
+        let error = crate::portable_execution::plan(&original).unwrap_err();
+        assert!(error.contains("$.pipeline[3]"), "{error}");
+        let rejected = directory.path().join("rejected.json");
+        let mut rejected_args = args.clone();
+        rejected_args[4] = rejected.clone().into_os_string();
+        for (field, value, expected) in [
+            ("dataset", json!({"X":[[1]],"y":[1]}), "dataset"),
+            ("dataset", Value::Null, "dataset"),
+            (
+                "profile",
+                json!("portable_linear_regression.v1"),
+                "unknown field",
+            ),
+            ("source_id", json!("spectra"), "unknown field"),
+            (
+                "schema_version",
+                json!(2),
+                "unsupported portable expansion request schema",
+            ),
+        ] {
+            let mut invalid = original.clone();
+            invalid[field] = value;
+            std::fs::write(&input, serde_json::to_vec(&invalid).unwrap()).unwrap();
+            let error = execute_archive_command(rejected_args.clone())
+                .unwrap_err()
+                .to_string();
+            assert!(error.contains(expected), "{error}");
+            assert!(!rejected.exists());
+        }
+        let mut unknown_root = original.clone();
+        unknown_root["definition"]["unexpected"] = json!(true);
+        std::fs::write(&input, serde_json::to_vec(&unknown_root).unwrap()).unwrap();
+        let error = execute_archive_command(rejected_args)
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("$.unexpected"), "{error}");
+        assert!(!rejected.exists());
+        assert!(options(
+            ["portable-pipeline-expand", "--methods-library", "missing"]
+                .into_iter()
+                .map(OsString::from)
+        )
+        .is_err());
+    }
 
     #[test]
     fn training_destinations_refuse_collisions_before_any_fit() {
