@@ -22,8 +22,8 @@ from nirs4all_core import (
     replay_methods_archive_v2_conformal_presentation_v1,
     replay_methods_archive_v2_conformal_presentation_v2,
     replay_methods_archive_v3,
-    write_archive_v2_from_native_payloads,
-    write_archive_v3_from_native_payloads,
+    write_native_predictor_package,
+    write_native_refit_package,
 )
 
 
@@ -397,60 +397,52 @@ class ArchiveFacadeTests(unittest.TestCase):
                 )
         self.assertFalse(called)
 
-    def test_writer_forwards_opaque_dagml_members_without_zip_logic(self) -> None:
+    def test_native_package_writers_forward_exact_json_bytes_without_zip_logic(self) -> None:
         observed: list[object] = []
 
-        def write(path: str, manifest: dict[str, object], members: list[tuple[str, bytes]]) -> tuple[str, str]:
-            observed.extend([path, manifest, members])
+        def write_v2(path: str, outcome: bytes, package: bytes, *, container_id: str) -> tuple[str, str]:
+            observed.extend([path, outcome, package, container_id])
             return ("archive:v2", "a" * 64)
 
-        module = types.SimpleNamespace(write_archive_v2_from_native_payloads=write)
-        with _mock_native_bridge(module):
-            reference = write_archive_v2_from_native_payloads(
-                MODEL_PATH,
-                {"schema_version": 2},
-                {"dagml/package.json": bytearray([1, 2]), "methods/model.n4mm": b"raw"},
-            )
-
-        self.assertEqual(reference, {"archive_id": "archive:v2", "archive_sha256": "a" * 64})
-        self.assertEqual(observed[0], MODEL_PATH)
-        self.assertEqual(observed[1], {"schema_version": 2})
-        self.assertEqual(
-            observed[2],
-            [("dagml/package.json", b"\x01\x02"), ("methods/model.n4mm", b"raw")],
-        )
-
-    def test_writer_rejects_non_bytes_before_native_call(self) -> None:
-        with self.assertRaises(TypeError, msg="non-byte payload must be refused"):
-            write_archive_v2_from_native_payloads(
-                MODEL_PATH, {"schema_version": 2}, {"member": "not-bytes"}
-            )
-
-    def test_v3_writer_forwards_opaque_dagml_members_without_zip_logic(self) -> None:
-        observed: list[object] = []
-
-        def write(path: str, manifest: dict[str, object], members: list[tuple[str, bytes]]) -> tuple[str, str]:
-            observed.extend([path, manifest, members])
+        def write_v3(path: str, package: bytes, *, container_id: str, memory_budget_bytes: int) -> tuple[str, str]:
+            observed.extend([path, package, container_id, memory_budget_bytes])
             return ("archive:v3", "b" * 64)
 
-        module = types.SimpleNamespace(write_archive_v3_from_native_payloads=write)
+        module = types.SimpleNamespace(write_native_predictor_package=write_v2, write_native_refit_package=write_v3)
         with _mock_native_bridge(module):
-            reference = write_archive_v3_from_native_payloads(
-                REFIT_PATH,
-                {"schema_version": 3},
-                {"dagml/refit.json": memoryview(b"refit"), "methods/model.n4mm": b"raw"},
-            )
+            first = write_native_predictor_package(MODEL_PATH, b'{"outcome":1}', b'{"schema_version":2}', container_id="archive:v2")
+            second = write_native_refit_package(REFIT_PATH, b'{"schema_version":3}', container_id="archive:v3", memory_budget_bytes=1024)
 
-        self.assertEqual(reference, {"archive_id": "archive:v3", "archive_sha256": "b" * 64})
-        self.assertEqual(observed[0], REFIT_PATH)
-        self.assertEqual(observed[1], {"schema_version": 3})
+        self.assertEqual(first, ("archive:v2", "a" * 64))
+        self.assertEqual(second, ("archive:v3", "b" * 64))
         self.assertEqual(
-            observed[2],
-            [("dagml/refit.json", b"refit"), ("methods/model.n4mm", b"raw")],
+            observed,
+            [MODEL_PATH, b'{"outcome":1}', b'{"schema_version":2}', "archive:v2",
+             REFIT_PATH, b'{"schema_version":3}', "archive:v3", 1024],
         )
 
-    def test_v3_writer_rejects_non_bytes_before_native_call(self) -> None:
+    def test_native_package_writers_reject_non_bytes_before_native_call(self) -> None:
         with self.assertRaises(TypeError, msg="non-byte payload must be refused"):
-            write_archive_v3_from_native_payloads(
-                REFIT_PATH, {"schema_version": 3}, {"member": "not-bytes"}
-            )
+            write_native_predictor_package(MODEL_PATH, "{}", b"{}", container_id="archive:v2")  # type: ignore[arg-type]
+        with self.assertRaises(TypeError, msg="empty container id must be refused"):
+            write_native_refit_package(REFIT_PATH, b"{}", container_id="")
+
+    def test_native_package_writers_reject_invalid_package_bytes(self) -> None:
+        with self.assertRaises(TypeError):
+            write_native_predictor_package(MODEL_PATH, b"{}", "{}", container_id="archive:v2")  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            write_native_refit_package(REFIT_PATH, "{}", container_id="archive:v3")  # type: ignore[arg-type]
+
+    def test_readers_forward_selection_and_a_retained_native_package(self) -> None:
+        observed: list[tuple[object, dict[str, object]]] = []
+
+        def read(path: object, **selection: object) -> bytes:
+            observed.append((path, selection))
+            return b'{"schema_version":2}'
+
+        retained = object()
+        module = types.SimpleNamespace(read_portable_predictor_package_v2=read)
+        with _mock_native_bridge(module):
+            read_portable_predictor_package_v2(retained, entrypoint="predict-external", memory_budget_bytes=2048)
+        self.assertEqual(observed, [(retained, {"entrypoint": "predict-external", "memory_budget_bytes": 2048})])
+

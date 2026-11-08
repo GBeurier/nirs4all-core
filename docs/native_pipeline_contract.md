@@ -11,3 +11,16 @@ Export writes an atomic, non-overwriting JSON file. Its schema is `nirs4all.nati
 The Node API currently requires a native CLI host; it refuses browser execution. Python, R and MATLAB bindings contain no numerical learning implementation. Arbitrary SDK Python estimators and arbitrary DL weights are outside this contract.
 
 Explicit Methods library paths supplied at training or loading are retained by the in-memory CPU facades for prediction and retraining. A per-call path overrides that runtime. Exported native model JSON contains no host library path; a new host supplies its own runtime when loading.
+
+The new [native n4a actions](n4a_native_actions.md) compose the typed pipeline
+producer into canonical containers on a separate byte-facing path. Only that
+producer adds reserved schema/relation metadata before owner fingerprinting.
+For an admitted numeric IO-backed canonical record that mixes train and test
+rows, the complete record is stored unchanged while training, folds, selection
+and refit use only the train rows; held-out rows serve prediction only. This is
+the admitted canonical contract; qualification stays per profile, operation,
+artifact and platform. This transport path scopes the record by the same
+contract or refuses it, and no further claim is made for it. See
+[native n4a actions](n4a_native_actions.md).
+The existing `nirs4all.native-pipeline.v1` request/transport path is retained;
+byte-equivalence and runtime qualification remain explicit controller gates.

@@ -1,14 +1,25 @@
-"""Validated native Archive V2/V3 access and callback-free Methods replay.
+"""Validated native Package V2/V3 access and callback-free Methods replay.
 
-The Python facade intentionally has no ZIP parser. The optional Rust extension
-validates archives and delegates signed package/replay semantics to DAG-ML.
-The portable execution surface accepts numeric Methods inputs only; it has no
-Python callback or serialized host-model path.
+The Python facade intentionally has no ZIP parser, root selection or entrypoint
+admission. The optional Rust extension reads the owner-neutral Core V1 container,
+validates the selected native scientific closure (owner, content type, profile,
+operation, links and fitted states) and delegates signed package/replay semantics
+to DAG-ML. Package schema versions 2 and 3 are the Package roots; the container,
+Methods ABI and wire versions are independent.
+
+Every reader and action accepts a path (``os.PathLike``), a retained open
+:class:`~nirs4all_core.N4aFile` or a ``NativePackage`` returned by
+:func:`open_native_package`, plus keyword-only ``entrypoint`` and
+``memory_budget_bytes``. A ``NativePackage`` reuses its selected proof; an omitted
+budget inherits the retained handle's budget. The portable execution surface
+accepts numeric Methods inputs only; it has no Python callback or serialized
+host-model path.
 """
 
 from __future__ import annotations
 
 import json
+import os
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
@@ -18,23 +29,155 @@ class NativeArchiveUnavailableError(RuntimeError):
     """The installed Python facade has no matching native archive bridge."""
 
 
-def read_archive_v2_payloads(path: str | Path) -> dict[str, Any]:
-    """Read the exact opaque inventory from a native-validated Archive V2.
+def _input(source: Any) -> Any:
+    """Forward a path as text; a retained ``N4aFile``/``NativePackage`` unchanged (Core types it)."""
+    if isinstance(source, (str, os.PathLike)):
+        return str(Path(source))
+    return source
 
-    This validates storage integrity only. DAG-ML must validate package
-    semantics, artifact closure and controller trust before any replay.
+
+def _budget(value: int | None) -> int | None:
+    from ._n4a import _budget as validate
+
+    return validate(value)
+
+
+def _selection(entrypoint: str | None, memory_budget_bytes: int | None) -> dict[str, Any]:
+    """The keyword-only Core selection shared by every native reader and action.
+
+    Only supplied values are forwarded: an omitted ``entrypoint`` lets Core select the unique
+    matching one and an omitted budget inherits the retained handle's budget.
+    """
+    if entrypoint is not None and not isinstance(entrypoint, str):
+        raise TypeError("entrypoint must be a string or None")
+    selection: dict[str, Any] = {}
+    if entrypoint is not None:
+        selection["entrypoint"] = entrypoint
+    budget = _budget(memory_budget_bytes)
+    if budget is not None:
+        selection["memory_budget_bytes"] = budget
+    return selection
+
+
+def open_native_package(
+    path: Any,
+    *,
+    entrypoint: str | None = None,
+    operation: str = "predict-external",
+    memory_budget_bytes: int | None = None,
+) -> Any:
+    """Open one ephemeral ``NativePackage``: Core's selected, validated native closure.
+
+    Core selects the unique entrypoint declaring ``operation`` (or checks the explicit
+    ``entrypoint``), validates the selected closure once and retains the source and proof.
+    Pass the result to any native reader or action to reuse that proof. Calibration opens
+    with ``operation="calibrate-external"``; a predict proof is not a calibration admission.
+    The facade never looks up entrypoint ids or infers a root from artifact order.
+    """
+    if not isinstance(operation, str) or not operation:
+        raise TypeError("operation must be a non-empty string")
+    opener = _native_replay("open_native_package", "native package")
+    return opener(_input(path), operation=operation, **_selection(entrypoint, memory_budget_bytes))
+
+
+def read_native_package_view(
+    path: Any,
+    *,
+    entrypoint: str | None = None,
+    operation: str = "predict-external",
+    memory_budget_bytes: int | None = None,
+) -> dict[str, Any]:
+    """Return the retained handle's native view (``package_schema_version`` 2 or 3)."""
+    package = open_native_package(
+        path, entrypoint=entrypoint, operation=operation, memory_budget_bytes=memory_budget_bytes
+    )
+    view = package.view()
+    if not isinstance(view, dict):  # pragma: no cover - native bridge contract guard
+        raise RuntimeError("native package view did not return a mapping")
+    return view
+
+
+def read_archive_v2_payloads(
+    path: Any, *, entrypoint: str | None = None, memory_budget_bytes: int | None = None
+) -> dict[str, Any]:
+    """Read the selected, Core-validated closure of a native Package V2 container.
+
+    Returns ``{manifest, members, package, training_outcome, view}``: the neutral Core V1
+    manifest, the selected physical members only (no aliases or nested archive), the exact
+    package root bytes, the exact training outcome bytes and the native view. Core has
+    already validated the closure; the result must not be passed to a physical-manifest
+    validator.
     """
     read = _native_replay("read_archive_v2_payloads", "V2 payload inventory")
-    result = read(str(Path(path)))
-    if not isinstance(result, dict) or set(result) != {"manifest", "members"}:
-        raise RuntimeError("native Archive V2 inventory returned an invalid mapping")
-    if not isinstance(result["manifest"], dict) or not isinstance(result["members"], dict):
+    result = read(_input(path), **_selection(entrypoint, memory_budget_bytes))
+    keys = {"manifest", "members", "package", "training_outcome", "view"}
+    if not isinstance(result, dict) or set(result) != keys:
+        raise RuntimeError("native Package V2 inventory returned an invalid mapping")
+    if not (
+        isinstance(result["manifest"], dict)
+        and isinstance(result["members"], dict)
+        and isinstance(result["view"], dict)
+        and isinstance(result["package"], bytes)
+        and isinstance(result["training_outcome"], bytes)
+    ):
         # A native bridge contract violation is a runtime failure, not bad user input.
-        raise RuntimeError("native Archive V2 inventory returned invalid payloads")  # noqa: TRY004
+        raise RuntimeError("native Package V2 inventory returned invalid payloads")  # noqa: TRY004
     if not all(isinstance(path, str) and isinstance(data, bytes)
                for path, data in result["members"].items()):
-        raise RuntimeError("native Archive V2 inventory returned invalid member bytes")
+        raise RuntimeError("native Package V2 inventory returned invalid member bytes")
     return result
+
+
+def write_native_predictor_package(
+    path: str | os.PathLike[str],
+    outcome: bytes,
+    package: bytes,
+    *,
+    container_id: str,
+    memory_budget_bytes: int | None = None,
+) -> tuple[str, str]:
+    """Write a NEW native Package V2 container; return ``(container_id, file_sha256)``.
+
+    ``outcome`` and ``package`` are the exact TrainingOutcome and PortablePredictorPackage V2
+    JSON bytes. Core builds the native scientific closure through DAG-ML and writes the
+    owner-neutral V1 container; it never replaces an existing destination (a caller that
+    overwrites stages a new path and replaces it itself).
+    """
+    return _write_native("write_native_predictor_package", path, (outcome, package), container_id, memory_budget_bytes)
+
+
+def write_native_refit_package(
+    path: str | os.PathLike[str],
+    package: bytes,
+    *,
+    container_id: str,
+    memory_budget_bytes: int | None = None,
+) -> tuple[str, str]:
+    """Write a NEW native Package V3 container; return ``(container_id, file_sha256)``.
+
+    ``package`` is the exact PortableRefitPackage V3 JSON bytes. The child is stored
+    standalone: no parent outcome, ``RefitOf`` link or score is invented. Core never replaces
+    an existing destination.
+    """
+    return _write_native("write_native_refit_package", path, (package,), container_id, memory_budget_bytes)
+
+
+def _write_native(
+    name: str,
+    path: str | os.PathLike[str],
+    payloads: tuple[bytes, ...],
+    container_id: str,
+    memory_budget_bytes: int | None,
+) -> tuple[str, str]:
+    if not isinstance(path, (str, os.PathLike)):
+        raise TypeError("a native package destination must be a path")
+    if not isinstance(container_id, str) or not container_id:
+        raise TypeError("container_id must be a non-empty string")
+    if not all(isinstance(payload, bytes) for payload in payloads):
+        raise TypeError("native package writers take exact JSON bytes")
+    write = _native_replay(name, "native package writing")
+    container, digest = write(_input(path), *payloads, container_id=container_id, **_selection(None, memory_budget_bytes))
+    return str(container), str(digest)
 
 
 def _contract_json(value: Any, label: str) -> str:
@@ -80,12 +223,14 @@ def _decode_replay_outcome(payload: Any, version: str) -> dict[str, Any]:
     return outcome
 
 
-def read_archive_v3_view(path: str | Path) -> dict[str, Any]:
-    """Project a Rust-validated Archive V3 into host-safe inventory metadata.
+def read_archive_v3_view(
+    path: Any, *, entrypoint: str | None = None, memory_budget_bytes: int | None = None
+) -> dict[str, Any]:
+    """Project a Rust-validated native Package V3 container into its native view.
 
-    The returned mapping contains only Core's validated replay references and
-    N4MM inventory declarations. This facade never opens ZIP members in
-    Python, decodes a DAG-ML/N4MM payload, or executes a replay.
+    The returned mapping is the native view (``package_schema_version`` 3, root and
+    package member, receipt). This facade never opens ZIP members in Python, decodes a
+    DAG-ML/N4MM payload, or executes a replay.
     """
 
     try:
@@ -95,14 +240,16 @@ def read_archive_v3_view(path: str | Path) -> dict[str, Any]:
             "Archive V3 access requires the nirs4all-core native wheel; "
             "install a matching nirs4all-core distribution."
         ) from error
-    result = _native.read_archive_v3_view(str(Path(path)))
+    result = _native.read_archive_v3_view(_input(path), **_selection(entrypoint, memory_budget_bytes))
     if not isinstance(result, dict):  # pragma: no cover - native bridge contract guard
         raise RuntimeError("native Archive V3 view did not return a mapping")
     return result
 
 
-def read_portable_predictor_package_v2(path: str | Path) -> bytes:
-    """Read exact Package V2 bytes from a Rust-validated Archive V2.
+def read_portable_predictor_package_v2(
+    path: Any, *, entrypoint: str | None = None, memory_budget_bytes: int | None = None
+) -> bytes:
+    """Read exact Package V2 root bytes from a Rust-validated native Package V2 container.
 
     This function neither opens ZIP members in Python nor decodes the package.
     Archive integrity and version dispatch remain owned by ``nirs4all-core``;
@@ -117,11 +264,13 @@ def read_portable_predictor_package_v2(path: str | Path) -> bytes:
             "install a matching nirs4all-core distribution."
         ) from error
 
-    return bytes(_native.read_portable_predictor_package_v2(str(Path(path))))
+    return bytes(_native.read_portable_predictor_package_v2(_input(path), **_selection(entrypoint, memory_budget_bytes)))
 
 
-def read_portable_refit_package_v3(path: str | Path) -> bytes:
-    """Read exact Package V3 refit bytes from a Rust-validated Archive V3.
+def read_portable_refit_package_v3(
+    path: Any, *, entrypoint: str | None = None, memory_budget_bytes: int | None = None
+) -> bytes:
+    """Read exact Package V3 refit root bytes from a Rust-validated native Package V3 container.
 
     This function neither opens ZIP members in Python nor decodes the package.
     Archive integrity and version dispatch remain owned by ``nirs4all-core``;
@@ -136,14 +285,16 @@ def read_portable_refit_package_v3(path: str | Path) -> bytes:
             "install a matching nirs4all-core distribution."
         ) from error
 
-    return bytes(_native.read_portable_refit_package_v3(str(Path(path))))
+    return bytes(_native.read_portable_refit_package_v3(_input(path), **_selection(entrypoint, memory_budget_bytes)))
 
 
 def inspect_methods_archive_v2_predictors(
-    path: str | Path,
+    path: Any,
     *,
     methods_library_path: str | Path,
     methods_library_sha256: str,
+    entrypoint: str | None = None,
+    memory_budget_bytes: int | None = None,
 ) -> list[dict[str, Any]]:
     """Return native predictor descriptors derived from Archive V2 bytes.
 
@@ -155,9 +306,10 @@ def inspect_methods_archive_v2_predictors(
 
     inspect = _native_replay("inspect_methods_archive_v2_predictors_json", "V2 inspection")
     payload = inspect(
-        str(Path(path)),
+        _input(path),
         str(Path(methods_library_path)),
         methods_library_sha256,
+        **_selection(entrypoint, memory_budget_bytes),
     )
     if not isinstance(payload, str):
         raise RuntimeError("native Archive V2 inspection returned a non-JSON payload")
@@ -173,7 +325,7 @@ def inspect_methods_archive_v2_predictors(
 
 
 def replay_methods_archive_v2(
-    path: str | Path,
+    path: Any,
     request: Any,
     data_envelopes: Any,
     methods_inputs: Any,
@@ -183,6 +335,8 @@ def replay_methods_archive_v2(
     run_id: str,
     warnings: Any = (),
     diagnostics: Any = None,
+    entrypoint: str | None = None,
+    memory_budget_bytes: int | None = None,
 ) -> dict[str, Any]:
     """Replay a portable Methods Archive V2 without Python model callbacks.
 
@@ -194,7 +348,7 @@ def replay_methods_archive_v2(
 
     replay = _native_replay("replay_methods_archive_v2_json", "V2")
     payload = replay(
-        str(Path(path)),
+        _input(path),
         _contract_json(request, "replay request"),
         _contract_json(data_envelopes, "data envelopes"),
         _contract_json(methods_inputs, "Methods inputs"),
@@ -203,12 +357,13 @@ def replay_methods_archive_v2(
         run_id,
         _contract_json(warnings, "warnings"),
         _contract_json({} if diagnostics is None else diagnostics, "diagnostics"),
+        **_selection(entrypoint, memory_budget_bytes),
     )
     return _decode_replay_outcome(payload, "V2")
 
 
 def predict_methods_archive_v2_matrix(
-    path: str | Path,
+    path: Any,
     sample_ids: list[str],
     x: list[list[float]],
     expected_target_names: list[str],
@@ -220,6 +375,8 @@ def predict_methods_archive_v2_matrix(
     run_id: str,
     warnings: Any = (),
     diagnostics: Any = None,
+    entrypoint: str | None = None,
+    memory_budget_bytes: int | None = None,
 ) -> dict[str, Any]:
     """Execute one closed, attested X-only Archive V2 prediction.
 
@@ -232,7 +389,7 @@ def predict_methods_archive_v2_matrix(
 
     predict = _native_replay("predict_methods_archive_v2_matrix_json", "V2 matrix prediction")
     payload = predict(
-        str(Path(path)),
+        _input(path),
         _contract_json(
             {
                 "sample_ids": sample_ids,
@@ -248,12 +405,13 @@ def predict_methods_archive_v2_matrix(
             },
             "Archive V2 matrix prediction request",
         ),
+        **_selection(entrypoint, memory_budget_bytes),
     )
     return _decode_replay_outcome(payload, "V2 matrix prediction")
 
 
 def replay_methods_archive_v2_conformal_presentation_v1(
-    path: str | Path,
+    path: Any,
     request: Any,
     data_envelopes: Any,
     methods_inputs: Any,
@@ -263,6 +421,8 @@ def replay_methods_archive_v2_conformal_presentation_v1(
     run_id: str,
     warnings: Any = (),
     diagnostics: Any = None,
+    entrypoint: str | None = None,
+    memory_budget_bytes: int | None = None,
 ) -> dict[str, Any]:
     """Replay a calibrated Archive V2 into a closed UI presentation.
 
@@ -276,7 +436,7 @@ def replay_methods_archive_v2_conformal_presentation_v1(
         "replay_methods_archive_v2_conformal_presentation_v1_json", "V2 conformal"
     )
     payload = replay(
-        str(Path(path)),
+        _input(path),
         _contract_json(request, "replay request"),
         _contract_json(data_envelopes, "data envelopes"),
         _contract_json(methods_inputs, "Methods inputs"),
@@ -285,12 +445,13 @@ def replay_methods_archive_v2_conformal_presentation_v1(
         run_id,
         _contract_json(warnings, "warnings"),
         _contract_json({} if diagnostics is None else diagnostics, "diagnostics"),
+        **_selection(entrypoint, memory_budget_bytes),
     )
     return _decode_replay_outcome(payload, "V2 conformal presentation")
 
 
 def replay_methods_archive_v2_conformal_presentation_v2(
-    path: str | Path,
+    path: Any,
     request: Any,
     data_envelopes: Any,
     methods_inputs: Any,
@@ -300,6 +461,8 @@ def replay_methods_archive_v2_conformal_presentation_v2(
     run_id: str,
     warnings: Any = (),
     diagnostics: Any = None,
+    entrypoint: str | None = None,
+    memory_budget_bytes: int | None = None,
 ) -> dict[str, Any]:
     """Replay a calibrated Archive V2 into its complete native presentation.
 
@@ -313,7 +476,7 @@ def replay_methods_archive_v2_conformal_presentation_v2(
         "V2 conformal presentation V2",
     )
     payload = replay(
-        str(Path(path)),
+        _input(path),
         _contract_json(request, "replay request"),
         _contract_json(data_envelopes, "data envelopes"),
         _contract_json(methods_inputs, "Methods inputs"),
@@ -322,12 +485,13 @@ def replay_methods_archive_v2_conformal_presentation_v2(
         run_id,
         _contract_json(warnings, "warnings"),
         _contract_json({} if diagnostics is None else diagnostics, "diagnostics"),
+        **_selection(entrypoint, memory_budget_bytes),
     )
     return _decode_replay_outcome(payload, "V2 conformal presentation V2")
 
 
 def replay_methods_archive_v3(
-    path: str | Path,
+    path: Any,
     request: Any,
     data_envelopes: Any,
     methods_inputs: Any,
@@ -337,6 +501,8 @@ def replay_methods_archive_v3(
     run_id: str,
     warnings: Any = (),
     diagnostics: Any = None,
+    entrypoint: str | None = None,
+    memory_budget_bytes: int | None = None,
 ) -> dict[str, Any]:
     """Replay a portable Methods Archive V3 without host controllers.
 
@@ -347,7 +513,7 @@ def replay_methods_archive_v3(
 
     replay = _native_replay("replay_methods_archive_v3_json", "V3")
     payload = replay(
-        str(Path(path)),
+        _input(path),
         _contract_json(request, "replay request"),
         _contract_json(data_envelopes, "data envelopes"),
         _contract_json(methods_inputs, "Methods inputs"),
@@ -356,74 +522,6 @@ def replay_methods_archive_v3(
         run_id,
         _contract_json(warnings, "warnings"),
         _contract_json({} if diagnostics is None else diagnostics, "diagnostics"),
+        **_selection(entrypoint, memory_budget_bytes),
     )
     return _decode_replay_outcome(payload, "V3")
-
-
-def write_archive_v2_from_native_payloads(
-    path: str | Path,
-    manifest: Mapping[str, Any],
-    members: Mapping[str, bytes | bytearray | memoryview],
-) -> dict[str, str]:
-    """Atomically write a native Archive V2 from DAG-ML-assembled bytes.
-
-    This facade owns no ZIP format, member hashing or DAG-ML replay semantics.
-    It passes the manifest and exact opaque members to Core, which validates the
-    closed Archive V2 contract and refuses existing targets before publishing.
-    """
-
-    if not isinstance(manifest, Mapping):
-        raise TypeError("Archive V2 manifest must be a mapping")
-    payloads: list[tuple[str, bytes]] = []
-    for member_path, payload in sorted(members.items()):
-        if not isinstance(member_path, str):
-            raise TypeError("Archive V2 member paths must be strings")
-        if not isinstance(payload, (bytes, bytearray, memoryview)):
-            raise TypeError("Archive V2 member payloads must be bytes-like")
-        payloads.append((member_path, bytes(payload)))
-    try:
-        from . import _native
-    except ImportError as error:  # pragma: no cover - depends on wheel build
-        raise NativeArchiveUnavailableError(
-            "Archive V2 access requires the nirs4all-core native wheel; "
-            "install a matching nirs4all-core distribution."
-        ) from error
-    archive_id, archive_sha256 = _native.write_archive_v2_from_native_payloads(
-        str(Path(path)), dict(manifest), payloads
-    )
-    return {"archive_id": str(archive_id), "archive_sha256": str(archive_sha256)}
-
-
-def write_archive_v3_from_native_payloads(
-    path: str | Path,
-    manifest: Mapping[str, Any],
-    members: Mapping[str, bytes | bytearray | memoryview],
-) -> dict[str, str]:
-    """Atomically write a native Archive V3 from opaque DAG-ML bytes.
-
-    The aggregate deliberately does not parse the portable refit package or
-    its N4MM payload.  It gives the canonical manifest and bytes to Rust Core,
-    which validates the closed V3 contract, recomputes inventory hashes and
-    publishes only if the destination does not already exist.
-    """
-
-    if not isinstance(manifest, Mapping):
-        raise TypeError("Archive V3 manifest must be a mapping")
-    payloads: list[tuple[str, bytes]] = []
-    for member_path, payload in sorted(members.items()):
-        if not isinstance(member_path, str):
-            raise TypeError("Archive V3 member paths must be strings")
-        if not isinstance(payload, (bytes, bytearray, memoryview)):
-            raise TypeError("Archive V3 member payloads must be bytes-like")
-        payloads.append((member_path, bytes(payload)))
-    try:
-        from . import _native
-    except ImportError as error:  # pragma: no cover - depends on wheel build
-        raise NativeArchiveUnavailableError(
-            "Archive V3 access requires the nirs4all-core native wheel; "
-            "install a matching nirs4all-core distribution."
-        ) from error
-    archive_id, archive_sha256 = _native.write_archive_v3_from_native_payloads(
-        str(Path(path)), dict(manifest), payloads
-    )
-    return {"archive_id": str(archive_id), "archive_sha256": str(archive_sha256)}

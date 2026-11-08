@@ -1,0 +1,20 @@
+[
+  {
+    "file": "training_outcome.json",
+    "origin": "/home/delete/nirs4all/dag-ml/crates/dag-ml-core/tests/fixtures/artifact_facets/native_role/training_outcome.json",
+    "sha256": "41b7de234d2a760e75c9fe43a03a0ed147eca679dc2cc830f072659a9b3ee1f1",
+    "purpose": "Unmodified DAG native RolePipeline production-path fixture; no new numerical oracle."
+  },
+  {
+    "file": "predictor_package.json",
+    "origin": "/home/delete/nirs4all/dag-ml/crates/dag-ml-core/tests/fixtures/artifact_facets/native_role/predictor_package.json",
+    "sha256": "66169d521d94d5f74361f144934828ded0851b0f63ccadec43d05d0568b8c4e9",
+    "purpose": "Unmodified DAG native RolePipeline production-path fixture; no new numerical oracle."
+  },
+  {
+    "file": "child_refit_v3.json",
+    "origin": "/home/delete/nirs4all/dag-ml/crates/dag-ml-core/tests/fixtures/artifact_facets/native_role/child_refit_v3.json",
+    "sha256": "e220512a80f8c5e8acc5698d62f46f99d41e7a6c62d1c9c8eb6bda43018bd25a",
+    "purpose": "Unmodified DAG native RolePipeline production-path fixture; no new numerical oracle."
+  }
+]

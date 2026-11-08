@@ -32,6 +32,7 @@ pub enum FormatsIoError {
     Format(nirs4all_formats_crate::Error),
     Serialization(serde_json::Error),
     Assembly(nirs4all_io_crate::core::SpecError),
+    Package(String),
     UnsupportedShape(String),
     Provider(String),
 }
@@ -50,6 +51,12 @@ impl fmt::Display for FormatsIoError {
             }
             Self::Assembly(error) => {
                 write!(formatter, "IO assembly refused Formats records: {error}")
+            }
+            Self::Package(detail) => {
+                write!(
+                    formatter,
+                    "IO package conversion refused assembled dataset: {detail}"
+                )
             }
             Self::UnsupportedShape(detail) => {
                 write!(
@@ -70,7 +77,7 @@ impl std::error::Error for FormatsIoError {
             Self::Format(error) => Some(error),
             Self::Serialization(error) => Some(error),
             Self::Assembly(error) => Some(error),
-            Self::UnsupportedShape(_) | Self::Provider(_) => None,
+            Self::Package(_) | Self::UnsupportedShape(_) | Self::Provider(_) => None,
         }
     }
 }
@@ -133,7 +140,7 @@ pub fn load_spectrum_dataset_package(
     }];
     let assembled = assemble_in_memory(&spec, &sources, &HashMap::new(), None)
         .map_err(FormatsIoError::Assembly)?;
-    let package = DatasetPackage::from_assembled(&assembled);
+    let package = DatasetPackage::from_assembled(&assembled).map_err(FormatsIoError::Package)?;
     if package.row_position_fallback.used {
         return Err(FormatsIoError::UnsupportedShape(format!(
             "stable sample identity is required ({})",

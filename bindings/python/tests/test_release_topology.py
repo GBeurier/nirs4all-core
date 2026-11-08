@@ -474,9 +474,9 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             "durability::tests::directory_metadata_can_be_flushed_after_publication",
             runs,
         )
-        self.assertIn("archive_v1_publishes_a_relative_target_without_cleanup_error", runs)
+        self.assertIn("n4a_file_publishes_a_relative_target_without_cleanup_error", runs)
         self.assertIn(
-            "v2_round_trips_exact_opaque_package_bytes_and_dual_dispatches",
+            "production_roundtrip_exact_bytes_hashes_and_borrowed_ranges",
             runs,
         )
         self.assertIn("cargo build --locked --release -p nirs4all --bin nirs4all-core-archive", runs)
@@ -572,10 +572,10 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         # Candidate minimums include native format3 / ABI 2.20 and the safe parser cohort.
         pinned_peers = {
             "@nirs4all/methods": ">=1.3.13 <2",
-            "dag-ml-wasm": ">=0.3.44",
+            "dag-ml-wasm": ">=0.4.0",
             "dag-ml-data-wasm": ">=0.2.16",
             "@nirs4all/formats-wasm": ">=0.2.14",
-            "@nirs4all/io-wasm": ">=0.2.14",
+            "@nirs4all/io-wasm": ">=0.3.0",
         }
         for peer in upstream_peers:
             self.assertEqual(package["peerDependencies"][peer], pinned_peers.get(peer, "*"))
@@ -588,7 +588,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             self.assertTrue(package["peerDependenciesMeta"][peer]["optional"])
             self.assertTrue(root_lock["peerDependenciesMeta"][peer]["optional"])
             self.assertEqual(package["devDependencies"][peer], version)
-        self.assertEqual(package["devDependencies"]["dag-ml-wasm"], "^0.3.44")
+        self.assertEqual(package["devDependencies"]["dag-ml-wasm"], "^0.4.0")
 
         typescript = lock["packages"]["node_modules/typescript"]
         self.assertEqual(typescript["version"], package["devDependencies"]["typescript"])
@@ -637,13 +637,13 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             any(dependency.startswith("nirs4all-datasets") for dependency in all_extra)
         )
         self.assertEqual(extras["datasets"], ["nirs4all-datasets>=0.3.17"])
-        self.assertEqual(extras["dag-ml"], ["dag-ml>=0.3.44,<0.4"])
+        self.assertEqual(extras["dag-ml"], ["dag-ml>=0.4.0,<0.5"])
         self.assertIn("nirs4all-methods>=1.3.13,<2", extras["methods"])
         self.assertIn("pls4all>=1.3.13,<2", extras["methods"])
         self.assertIn("scikit-learn>=1.3", extras["methods"])
         self.assertIn("nirs4all-formats>=0.2.14", all_extra)
-        self.assertIn("nirs4all-io>=0.2.14", all_extra)
-        self.assertIn("dag-ml>=0.3.44,<0.4", all_extra)
+        self.assertIn("nirs4all-io>=0.3.0", all_extra)
+        self.assertIn("dag-ml>=0.4.0,<0.5", all_extra)
         self.assertIn("nirs4all-methods>=1.3.13,<2", all_extra)
         self.assertIn("pls4all>=1.3.13,<2", all_extra)
         self.assertNotIn("nirs4all-methods>=1.0.5", extras["methods"])

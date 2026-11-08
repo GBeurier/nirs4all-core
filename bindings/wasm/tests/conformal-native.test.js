@@ -30,7 +30,7 @@ function cohort(prefix, observed = true) {
 async function assertIndependentPhysicalRefusals(model, record, truth, options) {
   const rows = record.dataset.sample_ids.length;
   const archive = await readPortableArchiveV2(model.archive);
-  const pkg = JSON.parse(new TextDecoder().decode(archive.members[archive.manifest.replay.portable_predictor_package.member_path]));
+  const pkg = JSON.parse(new TextDecoder().decode(archive.package));
   const trainingIds = pkg.effective_plan.fold_set.sample_ids;
   const repetitionOnly = structuredClone(record);
   repetitionOnly.dataset.repetition_ids = Array(rows).fill('rep:0');
@@ -242,7 +242,7 @@ test('public calibration joins nonlexical IDs and independently permuted truth n
     const details = await workflowReplay(workflow, calibration, options, true);
     const native = await loadArchiveV2Native();
     const archive = await readPortableArchiveV2(workflow.archive);
-    const source = new TextDecoder().decode(archive.members[archive.manifest.replay.training_artifacts.training_outcome.member_path]);
+    const source = new TextDecoder().decode(archive.trainingOutcome);
     const capture = truth => JSON.parse(native.calibrate_workflow_replay_json(source, details.replayJson,
       JSON.stringify(details.relations), JSON.stringify(truth), '[0.8,0.9]', '"error"'));
     const permuted = structuredClone(details.truth);
@@ -290,15 +290,70 @@ test('browser calibrates a CPU N4MM archive by frozen DAG replay and exports CPU
       return original.call(this, name, ...args);
     };
     try {
-      const calibrated = await calibrate(bytes, record, options);
+      const archive = await readPortableArchiveV2(bytes);
+      const pkg = JSON.parse(new TextDecoder().decode(archive.package));
+      const [requirement] = pkg.execution_bundle.data_requirements;
+      assert.equal(pkg.execution_bundle.data_requirements.length, 1);
+      let calibrationRelationFingerprint;
+      const calibrationDag = { ...dag,
+        attach_predict_cohort_to_envelope_json() { throw new Error('Conformal calibration must not claim external-test authority'); },
+        replay_training_package_json(packageJson, requestJson, envelopesJson, ...args) {
+          assert.equal(packageJson, new TextDecoder().decode(archive.package), 'Frozen package bytes must stay unchanged');
+          assert.equal(JSON.parse(requestJson).phase, 'PREDICT');
+          const envelope = JSON.parse(envelopesJson)[`${requirement.node_id}.${requirement.input_name}`];
+          assert.equal(envelope.schema_version, 1);
+          assert.equal(envelope.predict_cohort, null);
+          assert.equal(envelope.schema_fingerprint, requirement.schema_fingerprint);
+          assert.equal(envelope.plan_fingerprint, requirement.plan_fingerprint);
+          assert.equal(envelope.relation_fingerprint,
+            dag.sample_relation_set_fingerprint_json(JSON.stringify(envelope.coordinator_relations)));
+          assert.notEqual(envelope.relation_fingerprint, requirement.relation_fingerprint);
+          assert.match(envelope.data_content_fingerprint, /^[a-f0-9]{64}$/);
+          assert.match(envelope.target_content_fingerprint, /^[a-f0-9]{64}$/);
+          assert.deepEqual(envelope.coordinator_relations.records.map(row => row.sample_id), record.dataset.sample_ids);
+          calibrationRelationFingerprint = envelope.relation_fingerprint;
+          const invoke = args.at(-1);
+          let checkedProviderSelection = false;
+          args[args.length - 1] = (controllerId, taskJson, ...callbackArgs) => {
+            const task = JSON.parse(taskJson);
+            if (task.phase !== 'PREDICT') return invoke(controllerId, taskJson, ...callbackArgs);
+            const views = Object.entries(task.data_views).filter(([, view]) => view.partition === 'predict');
+            assert.equal(views.length, 1);
+            const [viewKey, view] = views[0];
+            assert.equal(view.sample_ids, null, 'V1 PREDICT leaves cohort materialization to the provider');
+            for (const invalidIds of [[], [record.dataset.sample_ids[0], record.dataset.sample_ids[0]]]) {
+              const invalid = structuredClone(task);
+              invalid.data_views[viewKey].sample_ids = invalidIds;
+              assert.throws(() => invoke(controllerId, JSON.stringify(invalid), ...callbackArgs),
+                /Native view needs unique nonempty sample IDs/);
+            }
+            const resultJson = invoke(controllerId, taskJson, ...callbackArgs);
+            assert.deepEqual(JSON.parse(resultJson).predictions[0].sample_ids, record.dataset.sample_ids);
+            checkedProviderSelection = true;
+            return resultJson;
+          };
+          const replayJson = dag.replay_training_package_json(packageJson, requestJson, envelopesJson, ...args);
+          assert.equal(checkedProviderSelection, true);
+          const [identity] = JSON.parse(replayJson).input_data_identities;
+          assert.equal(identity.relation_fingerprint, envelope.relation_fingerprint);
+          assert.equal(identity.data_content_fingerprint, envelope.data_content_fingerprint);
+          assert.equal(identity.target_content_fingerprint, envelope.target_content_fingerprint);
+          return replayJson;
+        },
+      };
+      const calibrated = await calibrate(bytes, record, { ...options, dagMl: calibrationDag });
+      assert.match(calibrationRelationFingerprint, /^[a-f0-9]{64}$/);
       assert.equal(calibrated.calibration.sample_ids.length, 12);
+      assert.equal(calibrated.calibration.context.calibration_cohort.role, 'calibration');
+      assert.deepEqual(calibrated.calibration.context.calibration_cohort.physical_sample_ids, record.dataset.sample_ids);
+      assert.equal(calibrated.calibration.context.training_influence_fingerprint, pkg.training_influence.manifest_fingerprint);
+      assert.equal(calibrated.calibration.context.source_training_outcome_fingerprint, pkg.training_outcome.outcome_fingerprint);
+      assert.equal(calibrated.calibration.context.relation_fingerprint, calibrationRelationFingerprint);
       const loaded = await loadCalibrated(exportCalibrated(calibrated), options);
       assert.deepEqual(loaded.calibration, calibrated.calibration);
       const result = await predictCalibrated(loaded, cohort('browser.predict.', false), options);
       assert.equal(result.execution, 'callback_free_methods_n4mm');
       const overlap = structuredClone(record);
-      const archive = await readPortableArchiveV2(bytes);
-      const pkg = JSON.parse(new TextDecoder().decode(archive.members[archive.manifest.replay.portable_predictor_package.member_path]));
       const ids = pkg.effective_plan.fold_set.sample_ids;
       overlap.dataset.sample_ids = ids; overlap.origin_ids = ids; overlap.dataset.sources[0].sample_ids = ids;
       await assert.rejects(calibrate(bytes, overlap, options), /overlap|influence/);

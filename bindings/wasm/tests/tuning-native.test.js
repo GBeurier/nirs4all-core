@@ -32,7 +32,7 @@ test('Node HPO retains completed trials, exports, reopens and predicts cold', { 
     const destination = await resumed.export(path.join(directory, 'export'));
     const loaded = await loadTuning(destination, { methodsLibrary });
     assertPublicSampleIndices(loaded);
-    const x = data.dataset.sources[0].array.values.slice(0, 3).map(row => row.map(Math.fround));
+    const x = data.dataset.sources[0].array.values.slice(0, 3);
     const replay = await loaded.predict(x, { sampleIds: ['cold:0', 'cold:1', 'cold:2'] });
     assert.deepEqual(replay.outputs[0].predictions[0].sample_ids, ['cold:0', 'cold:1', 'cold:2']);
     assert.ok(replay.lineage.every(line => line.phase === 'PREDICT'));

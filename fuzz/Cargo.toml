@@ -12,8 +12,8 @@ libfuzzer-sys = "0.4"
 nirs4all = { path = "../bindings/rust/nirs4all" }
 
 [[bin]]
-name = "archive_v2_bytes"
-path = "fuzz_targets/archive_v2_bytes.rs"
+name = "native_package_bytes"
+path = "fuzz_targets/native_package_bytes.rs"
 test = false
 doc = false
 bench = false

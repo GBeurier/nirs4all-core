@@ -1,10 +1,11 @@
+use nirs4all::n4a_native_package::load_native_predictor_package as load_archive_v2;
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::PathBuf;
 
 use nirs4all::dag_ml::RunId;
 use nirs4all::{
-    dense_regression_training_request, dense_regression_workflow_config, load_archive_v2,
+    dense_regression_training_request, dense_regression_workflow_config,
     load_spectrum_dataset_package, predict_methods_archive_v2_matrix,
     preflight_workflow_archive_path, run_dense_regression_workflow, DenseRegressionPreprocessing,
     DenseRegressionWorkflowRequest, MethodsArchiveMatrixPredictRequest,

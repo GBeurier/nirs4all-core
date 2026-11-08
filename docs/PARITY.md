@@ -49,13 +49,14 @@ paths are separate APIs and are not replaced by this convenience runner.
 
 Before any numeric gate runs, the public *surface* must be identical across
 bindings. `bindings/python/tests/test_cross_language_surface.py` proves, in pure
-Python by reading the binding sources, that the portable operator subset and the
-upstream registry (keys + role strings) are identical across the **four core-owned**
-bindings — Python, WASM, MATLAB/Octave, and Rust — plus the machine-readable
-`compat/upstreams.toml`. `bindings/python/tests/test_capability_matrix.py`
-additionally proves the per-language capability claims in
-`compat/capabilities.toml` are backed by real run symbols and parity gates (see
-[`CAPABILITIES.md`](CAPABILITIES.md)).
+Python by reading the binding sources, that the upstream registry (keys + role
+strings) is identical across the **four core-owned** bindings — Python, WASM,
+MATLAB/Octave, and Rust — plus the machine-readable `compat/upstreams.toml`.
+`bindings/python/tests/test_capability_matrix.py` additionally proves that the
+two native execution profiles in `compat/capabilities.toml` match the generated
+host data and the entrypoints and producers in the sources (see
+[`EXECUTION_PROFILES.md`](EXECUTION_PROFILES.md)). That registry is a metadata
+contract, not numerical parity.
 
 Because these gates need no Node/Octave/`cargo` toolchain, surface drift in any
 core-owned binding is caught in the required Python suite even on machines where the other
@@ -84,9 +85,9 @@ and every target binding match the full Python `nirs4all` result for the
 portable operator subset.
 
 External operators follow the same rule. A language binding can expose operator
-metadata before execution support exists, but an operator cannot be marked
-`execute-local`, `execute-remote`, or `parity-validated` until a fixture proves
-that the host-language adapter delegates to the same upstream behavior.
+metadata before execution support exists, but an operator is not claimed as
+executable until a fixture proves that the host-language adapter delegates to
+the same upstream behavior.
 
 ## Initial parity targets
 
@@ -120,7 +121,9 @@ MATLAB/Octave tests then execute the same fixture descriptors through their
 compare split indices, targets, RMSE, predictions, and selected sweep component
 within the declared tolerances. The WASM gate also reuses the serialized
 selected model through `predictPortablePipeline()` and checks that predictions
-on the held-out rows match the selected run output.
+on the held-out rows match the selected run output. These runner APIs are a
+temporary implementation kept for active callers; they are tracked for removal
+and are not a supported execution profile.
 
 The shared parser contract also has regression coverage for Savitzky-Golay
 defaults and explicit boundary modes. `mode` defaults to `interp` to match full

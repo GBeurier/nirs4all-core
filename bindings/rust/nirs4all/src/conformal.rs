@@ -4,20 +4,17 @@ use std::collections::BTreeMap;
 use std::path::Path;
 
 use dag_ml_core::{
-    build_archive_v2_native_portable_payloads,
     calibrate_attached_training_replay_with_derived_context, execute_attached_training_replay,
     ArtifactLoadMode, AttachedTrainingReplayInput, ConformalMultiTargetPolicy,
     ConformalSmallSamplePolicy, FittedArtifactMode, InMemoryArtifactStore, MethodsPlsController,
-    Phase, PortablePredictorPackage, RunId, RuntimeControllerRegistry, TrainingOutcome,
-    TrainingReplayRequest, TRAINING_REPLAY_REQUEST_SCHEMA_VERSION,
+    Phase, PortablePredictorPackage, RunId, RuntimeControllerRegistry, TrainingReplayRequest,
+    TRAINING_REPLAY_REQUEST_SCHEMA_VERSION,
 };
 use serde_json::{json, Value};
 
 use crate::io_training::{DatasetPackage, DatasetPackageMethodsProvider};
+use crate::n4a_native_package::LoadedNativePackage;
 use crate::native_methods_replay::configure_methods_runtime_for_source;
-use crate::{
-    load_archive_v2, write_archive_v2, ArchivePayload, ArchiveV2WriteRequest, LoadedArchiveV2,
-};
 
 /// Structured cohorts retain IO schema/physical identity; positional inputs
 /// explicitly supply only matrix columns and sample identities.
@@ -40,24 +37,29 @@ pub struct ResolvedUncertaintyCohort {
     pub dataset_package: Option<DatasetPackage>,
 }
 
-fn uncertainty_package(archive: &LoadedArchiveV2) -> Result<PortablePredictorPackage, String> {
-    let pkg = PortablePredictorPackage::from_json(
-        std::str::from_utf8(
-            archive
-                .portable_predictor_package()
-                .map_err(|e| e.to_string())?,
-        )
-        .map_err(|e| e.to_string())?,
-    )
-    .map_err(|e| e.to_string())?;
-    dag_ml_core::validate_archive_v2_portable_payloads(archive.manifest(), &pkg, archive.members())
-        .map_err(|e| e.to_string())?;
-    Ok(pkg)
+fn uncertainty_package(archive: &LoadedNativePackage) -> Result<PortablePredictorPackage, String> {
+    archive
+        .predictor_package()
+        .cloned()
+        .map_err(|e| e.to_string())
+}
+
+/// Shared record policy; normalization and numeric decoding remain IO-owned.
+pub(crate) fn validate_independent_record(normalized: &Value) -> Result<(), String> {
+    let raw = &normalized["dataset"];
+    if !raw["groups"].is_null()
+        || normalized["origin_ids"] != raw["sample_ids"]
+        || raw.get("independent_unit_ids").is_some()
+        || raw.get("repetition_ids").is_some()
+    {
+        return Err("uncertainty requires independent physical samples without groups, origin aliases or declared experimental units/repetitions".into());
+    }
+    Ok(())
 }
 
 /// Resolve one independent cohort before native uncertainty replay and sealing.
 pub fn resolve_uncertainty_cohort(
-    archive: &LoadedArchiveV2,
+    archive: &LoadedNativePackage,
     input: UncertaintyCohortInput<'_>,
 ) -> Result<ResolvedUncertaintyCohort, String> {
     let pkg = uncertainty_package(archive)?;
@@ -90,14 +92,8 @@ pub fn resolve_uncertainty_cohort(
                 return Err("uncertainty source differs from the frozen predictor".into());
             }
             let normalized = nirs4all_io_crate::core::public_dataset::normalize_dataset(record)?;
+            validate_independent_record(&normalized)?;
             let raw = &normalized["dataset"];
-            if !raw["groups"].is_null()
-                || normalized["origin_ids"] != raw["sample_ids"]
-                || raw.get("independent_unit_ids").is_some()
-                || raw.get("repetition_ids").is_some()
-            {
-                return Err("uncertainty requires independent physical samples without groups, origin aliases or declared experimental units/repetitions".into());
-            }
             let expected = pkg
                 .template
                 .campaign
@@ -212,28 +208,43 @@ pub struct CalibrateArchiveRequest<'a> {
 }
 
 pub fn calibrate_archive(input: CalibrateArchiveRequest<'_>) -> Result<Value, String> {
+    calibrate_archive_selected(input, None, crate::n4a::N4aMemoryBudget::host_allocator())
+}
+
+/// Select the declared calibration operation and authorize its working memory.
+pub fn calibrate_archive_selected(
+    input: CalibrateArchiveRequest<'_>,
+    entrypoint: Option<&str>,
+    budget: crate::n4a::N4aMemoryBudget,
+) -> Result<Value, String> {
     crate::workflow::preflight_workflow_archive_path(input.archive_path)?;
-    let archive = load_archive_v2(input.model_archive).map_err(|e| e.to_string())?;
-    let pkg = PortablePredictorPackage::from_json(
-        std::str::from_utf8(
-            archive
-                .portable_predictor_package()
-                .map_err(|e| e.to_string())?,
-        )
-        .map_err(|e| e.to_string())?,
+    let base = crate::n4a_file::open_n4a_file(input.model_archive, budget)
+        .map_err(|e| crate::n4a_native_package::native_package_transport_error(e).to_string())?;
+    calibrate_archive_from_file(input, &base, entrypoint, budget)
+}
+
+/// Keep the immutable source handle through closure validation and carry/write.
+pub fn calibrate_archive_from_file(
+    input: CalibrateArchiveRequest<'_>,
+    base: &crate::n4a_file::N4aFile,
+    entrypoint: Option<&str>,
+    budget: crate::n4a::N4aMemoryBudget,
+) -> Result<Value, String> {
+    let archive = crate::n4a_native_package::read_native_package_from_file(
+        base,
+        entrypoint,
+        "calibrate-external",
+        budget,
     )
     .map_err(|e| e.to_string())?;
-    dag_ml_core::validate_archive_v2_portable_payloads(archive.manifest(), &pkg, archive.members())
-        .map_err(|e| e.to_string())?;
-    let mut training = TrainingOutcome::from_json(
-        std::str::from_utf8(
-            archive
-                .member("dagml/training_outcome.json")
-                .map_err(|e| e.to_string())?,
-        )
-        .map_err(|e| e.to_string())?,
-    )
-    .map_err(|e| e.to_string())?;
+    let pkg = archive
+        .predictor_package()
+        .map_err(|e| e.to_string())?
+        .clone();
+    let mut training = archive
+        .training_outcome()
+        .map_err(|e| e.to_string())?
+        .clone();
     if training.outcome_fingerprint != pkg.training_outcome.outcome_fingerprint {
         return Err("training outcome differs from archived package".into());
     }
@@ -332,22 +343,14 @@ pub fn calibrate_archive(input: CalibrateArchiveRequest<'_>) -> Result<Value, St
             ArtifactLoadMode::NativePortable,
         )
         .map_err(|e| e.to_string())?;
-    let payloads = build_archive_v2_native_portable_payloads(
-        format!("archive:{}", input.run_id),
-        &training,
-        &package,
-    )
-    .map_err(|e| e.to_string())?;
-    let reference = write_archive_v2(
+    let reference = crate::n4a_native_package::write_calibrated_native_package_file(
         input.archive_path,
-        ArchiveV2WriteRequest {
-            manifest: payloads.manifest,
-            payloads: payloads
-                .members
-                .into_iter()
-                .map(|(path, bytes)| ArchivePayload { path, bytes })
-                .collect(),
-        },
+        base,
+        &archive,
+        &serde_json::to_vec(&training).map_err(|e| e.to_string())?,
+        &serde_json::to_vec(&package).map_err(|e| e.to_string())?,
+        &format!("archive:{}", input.run_id),
+        budget,
     )
     .map_err(|e| e.to_string())?;
     Ok(

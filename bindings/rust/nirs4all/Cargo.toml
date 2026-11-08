@@ -1,6 +1,6 @@
 [package]
 name = "nirs4all"
-version = "0.4.7"
+version = "0.5.0"
 edition.workspace = true
 rust-version = "1.88"
 license.workspace = true
@@ -17,7 +17,22 @@ include = [
     "LICENSES/CECILL-2.1.txt",
     "LICENSES/AGPL-3.0-or-later.txt",
     "src/**/*.rs",
+    "tests/n4a_container.rs",
+    "tests/n4a_owner_roundtrip.rs",
+    "tests/n4a_owned.rs",
+    "tests/n4a_owner_semantic.rs",
+    "tests/n4a_owner_native_predict.rs",
+    "tests/n4a_owner_calibrate.rs",
+    "tests/n4a_owner_portable.rs",
+    "tests/n4a_wasm_exchange.rs",
+    "tests/n4a_exchange.rs",
+    "tests/n4a_cli.rs",
+    "tests/n4a_unbounded.rs",
+    "tests/fixtures/n4a_native_actions_v1/**",
+    "tests/parity/fixtures/n4a_v1/**",
+    "tests/parity/fixtures/n4a_host_opaque_v1/**",
     "src/archive_v1_fixtures/**",
+    "src/archive_v3_fixtures/**",
     "tests/parity/fixtures/portable_kennard_stone_snv_pls.json",
     "tests/parity/fixtures/portable_kennard_stone_snv_pls.yaml",
     "tests/parity/fixtures/portable_methods_pipeline.json",
@@ -49,16 +64,18 @@ default = []
 datasets = []
 [dependencies]
 base64 = "0.23"
-dag_ml_crate = { package = "dag-ml", version = "=0.3.44" }
-dag_ml_core = { package = "dag-ml-core", version = "=0.3.44", features = ["methods-optimizer"] }
-dag_ml_results = { package = "dag-ml-results", version = "=0.3.44" }
+crc32fast = "1.5"
+dag_ml_crate = { package = "dag-ml", version = "=0.4.0" }
+dag_ml_core = { package = "dag-ml-core", version = "=0.4.0", features = ["methods-optimizer"] }
+dag_ml_results = { package = "dag-ml-results", version = "=0.4.0" }
 dag_ml_data_crate = { package = "dag-ml-data", version = "=0.2.16" }
 dag_ml_data_provider_crate = { package = "dag-ml-data-provider", version = "=0.2.16" }
 libloading = "0.8"
 n4m = { version = "=0.4.1", features = ["dynamic"], default-features = false }
-nirs4all_formats_crate = { package = "nirs4all-formats", version = "=0.2.14", default-features = false }
-nirs4all_io_crate = { package = "nirs4all-io", version = "=0.2.14" }
-nirs4all_io_dagml = { package = "nirs4all-io-dagml", version = "=0.2.14" }
+nirs4all_formats_crate = { package = "nirs4all-formats", version = "=0.2.15", default-features = false }
+nirs4all_io_crate = { package = "nirs4all-io", version = "=0.3.0" }
+nirs4all-io-core = "=0.3.0"
+nirs4all_io_dagml = { package = "nirs4all-io-dagml", version = "=0.3.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # Maintained API-compatible YAML implementation; avoids unmaintained unsafe-libyaml.

@@ -5,6 +5,7 @@ import {
   formats,
   importUpstream,
   inspectMethodsArchiveV2Predictors,
+  inspectN4aBytes,
   io,
   loadDagMlDataWasm,
   loadDagMlWasm,
@@ -22,7 +23,20 @@ import {
   methodsWasm,
   parseExecutionPlan,
   portableClassNames,
-  portableOperatorClasses,
+  predictN4aNative,
+  produceN4aNative,
+  retrainN4aNative,
+  openN4aContainer,
+  writeN4aStream,
+  type N4aChunkStream,
+  type N4aContainer,
+  type N4aPrediction,
+  type N4aRandomAccessSource,
+  type N4aSink,
+  type N4aProduction,
+  type N4aView,
+  executionProfiles,
+  type ExecutionProfiles,
   predictPortablePipeline,
   runPortablePipeline,
   upstream,
@@ -64,7 +78,8 @@ const firstUpstream: Upstream | null = upstream('methods');
 const localRegistry: Promise<unknown> = localImplementationRegistry();
 const proxy: UpstreamProxy = methods;
 const allProxyKeys: string[] = [formats.key, io.key, datasets.key, dagMl.key, dagMlData.key, proxy.key];
-const operatorClasses: readonly string[] = portableOperatorClasses;
+const profiles: ExecutionProfiles = executionProfiles();
+const profileIds: readonly ('native-workflow' | 'native-conformal' | 'native-n4a-canonical' | 'n4a-container')[] = profiles.profiles.map((item) => item.id);
 
 const split: PortableSplitResult = {
   kind: 'all',
@@ -130,13 +145,27 @@ const maybeLoadedMethods: unknown = methodsWasm();
 const inspectedPredictors: Promise<readonly NativePredictorDescriptorV1[]> =
   inspectMethodsArchiveV2Predictors(new Uint8Array());
 
+const n4aRecipe = {
+  steps: [
+    { method_id: 'preprocessing.scaling.standard_scale', role: 'transformer' as const },
+    { method_id: 'models.regularized.ridge', role: 'regressor' as const, params: { scale_x: false } },
+  ],
+  candidates: [{ alpha: 0.1 }, { alpha: 1 }],
+};
+const n4aProduced: Promise<N4aProduction> = produceN4aNative(new Uint8Array(), { sourceId: 'spectra', recipe: n4aRecipe });
+const n4aRetrained: Promise<N4aProduction> = retrainN4aNative(new Uint8Array(), new Uint8Array(), { embedTrainingRecord: false });
+const n4aInspected: Promise<N4aView> = inspectN4aBytes(new Uint8Array());
+const n4aPredicted: Promise<N4aPrediction> = predictN4aNative(new Uint8Array(), {
+  entrypoint: 'predict-external', sourceId: 'spectra', record: new Uint8Array(),
+});
+
 void classes;
 void plan;
 void upstreamList;
 void firstUpstream;
 void localRegistry;
 void allProxyKeys;
-void operatorClasses;
+void profileIds;
 void fittedPromise;
 void predictionPromise;
 void loaders;
@@ -144,6 +173,10 @@ void stackPromise;
 void dataIoPromise;
 void maybeLoadedMethods;
 void inspectedPredictors;
+void n4aProduced;
+void n4aRetrained;
+void n4aInspected;
+void n4aPredicted;
 
 async function roleRecipe(): Promise<void> {
   const fitted: N4mRolePipeline = await N4mRolePipeline.fit(
@@ -161,3 +194,29 @@ async function roleRecipe(): Promise<void> {
   void steps;
 }
 void roleRecipe;
+
+// Streaming `.n4a` storage: external random-access source, verified chunks, sink and budget.
+async function streamingStorage(): Promise<void> {
+  const source: N4aRandomAccessSource = {
+    size: 16n,
+    read: async (offset: bigint, length: bigint) => new Uint8Array(Number(length)).fill(Number(offset)),
+  };
+  const container: N4aContainer = await openN4aContainer(source, { memoryBudgetBytes: '1048576' });
+  const kind: 'bytes' | 'external' = container.kind;
+  const size: bigint = container.size;
+  const stream: N4aChunkStream | undefined = container.memberStream('host/model.bin');
+  if (stream !== undefined) {
+    const length: bigint = stream.byteLength;
+    for await (const chunk of stream) { const bytes: Uint8Array = chunk; void bytes; }
+    void length;
+  }
+  const whole: Uint8Array | undefined = await container.readMember('host/model.bin');
+  const sink: N4aSink = { write: (chunk: Uint8Array) => { void chunk; }, abort: (error: unknown) => { void error; } };
+  const { receipt } = await writeN4aStream('{}', [{ path: 'host/model.bin', source: new Blob([new Uint8Array(1)]) }], sink,
+    { base: container, memoryBudgetBytes: 4096n });
+  const total: number = receipt.byte_length;
+  const budgeted = await inspectN4aBytes(new Uint8Array(1), { memoryBudgetBytes: 1024 });
+  void kind; void size; void whole; void total; void budgeted;
+  container.close();
+}
+void streamingStorage;

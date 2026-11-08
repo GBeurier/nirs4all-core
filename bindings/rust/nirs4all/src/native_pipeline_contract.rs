@@ -1,23 +1,7 @@
 //! Pure product recipe/envelope contracts, reusable in CPU and WASM bindings.
-use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::BTreeMap;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct NativePipelineStep {
-    pub method_id: String,
-    pub role: String,
-    #[serde(default)]
-    pub params: BTreeMap<String, Value>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct NativePipelineRecipe {
-    pub steps: Vec<NativePipelineStep>,
-    pub candidates: Vec<BTreeMap<String, Value>>,
-}
+pub use dag_ml_core::{NativePipelineRecipe, NativePipelineStep};
 
 /// Validate the product envelope and its signed upstream package/outcome closure.
 pub fn validate_pipeline(record: &Value) -> Result<dag_ml_core::PortablePredictorPackage, String> {
@@ -273,6 +257,7 @@ fn validate_recipe_closure(record: &Value, recipe: &NativePipelineRecipe) -> Res
 mod tests {
     use super::*;
     use serde_json::json;
+    use std::collections::BTreeMap;
 
     fn fixture() -> (Value, NativePipelineRecipe) {
         let recipe = NativePipelineRecipe {

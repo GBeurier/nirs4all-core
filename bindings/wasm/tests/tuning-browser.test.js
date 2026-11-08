@@ -42,6 +42,9 @@ test('browser native HPO resumes without old fits and cold model replay never fi
       assert.equal(fits, 0, 'Invalid persistence must be rejected before the first native FIT');
     }
     const first = await tuneBrowser(data, { ...options, trials: 2, runId: 'run:browser:hpo:first' });
+    assert.equal(first.snapshot.schema, 'dagml.n4m.wasm-hpo.v2');
+    assert.equal(typeof first.snapshot.committed_json, 'string');
+    assert.equal(JSON.parse(first.snapshot.committed_json).trials.length, 2);
     assert.equal(fits, 5);
     const initialFitCalls = fits;
     fits = 0;
@@ -60,6 +63,7 @@ test('browser native HPO resumes without old fits and cold model replay never fi
     const continuousFitCalls = fits;
     assert.deepEqual(continuous.trials(), resumed.trials());
     const exported = await resumed.export(options); fs.writeFileSync(exportPath, JSON.stringify(exported));
+    assert.equal(exported.snapshot.committed_json, resumed.snapshot.committed_json);
     let coldFitCalls = 0;
     methods.RolePipeline.prototype.fit = () => { coldFitCalls++; throw new Error('Cold native tuning replay cannot fit'); };
     const loaded = await loadBrowserTuning(JSON.parse(fs.readFileSync(exportPath)), options);

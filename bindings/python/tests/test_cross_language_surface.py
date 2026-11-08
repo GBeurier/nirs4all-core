@@ -1,19 +1,16 @@
 """Static cross-language public-surface parity gate for the aggregate.
 
 The nirs4all-core aggregate public surface is declared once per language
-binding. Three invariants must hold for the aggregate to be truthful, and none
+binding. Two invariants must hold for the aggregate to be truthful, and none
 of them is otherwise checked when Node, Octave, or a Rust toolchain are
 unavailable (those runtime gates simply skip):
 
-1. The original portable operator subset is identical across Python,
-   MATLAB/Octave, and Rust. WASM contains that subset plus its separately
-   qualified local Methods controllers; their extra names are not presented as
-   cross-language support by the other facades.
-2. The upstream registry (keys and role strings) is identical across all four
+1. The upstream registry (keys and role strings) is identical across all four
    bindings and the machine-readable ``compat`` registry.
-3. Every binding exposes a thin facade or re-export for the upstream DAG-ML
+2. Every binding exposes a thin facade or re-export for the upstream DAG-ML
    process-local loss/metric registry.
 
+Native execution profiles are gated separately by ``test_capability_matrix.py``.
 These checks run in pure Python by reading the binding source files, so surface
 drift in *any* binding is caught in the required Python gate even on machines
 where Node, Octave, or ``cargo`` are unavailable. They complement (do not
@@ -45,7 +42,6 @@ WASM_PACKAGE = ROOT / "bindings/wasm/package.json"
 WASM_PACKAGE_LOCK = ROOT / "bindings/wasm/package-lock.json"
 WASM_NATIVE_CARGO = ROOT / "bindings/wasm-native/Cargo.toml"
 PYPROJECT = ROOT / "bindings/python/pyproject.toml"
-MATLAB_OPERATORS = ROOT / "bindings/matlab/+nirs4all/portableOperatorClasses.m"
 MATLAB_UPSTREAMS = ROOT / "bindings/matlab/+nirs4all/upstreams.m"
 MATLAB_LOCAL_REGISTRY = ROOT / "bindings/matlab/+nirs4all/localImplementationRegistry.m"
 MATLAB_README = ROOT / "bindings/matlab/README.md"
@@ -54,8 +50,6 @@ RUST_CARGO = ROOT / "bindings/rust/nirs4all/Cargo.toml"
 RUST_LIB = ROOT / "bindings/rust/nirs4all/src/lib.rs"
 COMPAT = ROOT / "compat/upstreams.toml"
 
-EXPECTED_OPERATOR_COUNT = 14
-EXPECTED_WASM_OPERATOR_COUNT = 37
 EXPECTED_UPSTREAM_COUNT = 6
 
 
@@ -70,14 +64,6 @@ def _bracketed(text: str, pattern: str) -> str:
     return match.group(1)
 
 
-def _wasm_operator_classes() -> list[str]:
-    block = _bracketed(
-        _read(WASM_INDEX),
-        r"portableOperatorClasses\s*=\s*Object\.freeze\(\[(.*?)\]\)",
-    )
-    return re.findall(r"'([^']+)'", block)
-
-
 def _wasm_upstreams() -> tuple[list[str], dict[str, str]]:
     block = _bracketed(
         _read(WASM_INDEX),
@@ -86,11 +72,6 @@ def _wasm_upstreams() -> tuple[list[str], dict[str, str]]:
     keys = re.findall(r"key:\s*'([^']+)'", block)
     roles = re.findall(r"role:\s*'([^']+)'", block)
     return keys, dict(zip(keys, roles))
-
-
-def _matlab_operator_classes() -> list[str]:
-    block = _bracketed(_read(MATLAB_OPERATORS), r"classes\s*=\s*\{(.*?)\};")
-    return re.findall(r"'([^']+)'", block)
 
 
 def _matlab_upstreams() -> tuple[list[str], dict[str, str]]:
@@ -108,14 +89,6 @@ def _matlab_upstream_packages() -> dict[str, str]:
         _bracketed(text, r"'package'\s*,\s*\{(.*?)\}"),
     )
     return dict(zip(keys, packages))
-
-
-def _rust_operator_classes() -> list[str]:
-    block = _bracketed(
-        _read(RUST_LIB),
-        r"PORTABLE_OPERATOR_CLASSES:\s*&\[&str\]\s*=\s*&\[(.*?)\];",
-    )
-    return re.findall(r'"([^"]+)"', block)
 
 
 def _rust_upstreams() -> tuple[list[str], dict[str, str]]:
@@ -194,61 +167,6 @@ class VersionMetadataParityTests(unittest.TestCase):
         )
         self.assertTrue(MATLAB_README.exists())
         self.assertIn("bindings/rust/nirs4all/Cargo.toml", _read(MATLAB_BUILDER))
-
-
-class PortableOperatorSubsetParityTests(unittest.TestCase):
-    def test_shared_operator_subset_and_wasm_extension(self) -> None:
-        python = set(n4core.PORTABLE_OPERATOR_CLASSES)
-        self.assertEqual(len(python), EXPECTED_OPERATOR_COUNT)
-
-        extractors = {
-            "matlab": _matlab_operator_classes,
-            "rust": _rust_operator_classes,
-        }
-        for label, extractor in extractors.items():
-            with self.subTest(binding=label):
-                classes = extractor()
-                # Guard against a silently-empty extraction masking real drift.
-                self.assertEqual(len(classes), EXPECTED_OPERATOR_COUNT, classes)
-                self.assertEqual(
-                    len(set(classes)),
-                    EXPECTED_OPERATOR_COUNT,
-                    f"duplicate {label} operator class",
-                )
-                self.assertEqual(python, set(classes))
-
-        wasm = _wasm_operator_classes()
-        self.assertEqual(len(wasm), EXPECTED_WASM_OPERATOR_COUNT, wasm)
-        self.assertEqual(len(set(wasm)), len(wasm), "duplicate wasm operator class")
-        self.assertTrue(python <= set(wasm), "WASM lost a shared portable operator")
-        self.assertEqual(
-            set(wasm) - python,
-            {
-                "n4m.MSC",
-                "nirs4all.operators.transforms.MSC",
-                "nirs4all.operators.transforms.MultiplicativeScatterCorrection",
-                "nirs4all.operators.transforms.nirs.MultiplicativeScatterCorrection",
-                "n4m.SPA",
-                "n4m.SPASelector",
-                "pls4all.sklearn.SPASelector",
-                "n4m.Selector",
-                "n4m.Ridge",
-                "n4m.RidgePLS",
-                "n4m.RobustPLS",
-                "n4m.CPPLS",
-                "n4m.SparseSIMPLS",
-                "n4m.ECR",
-                "n4m.ContinuumRegression",
-                "n4m.MIRPLS",
-                "n4m.FusedSparsePLS",
-                "n4m.BaggingPLS",
-                "n4m.BoostingPLS",
-                "n4m.RandomSubspacePLS",
-                "n4m.NPLS",
-                "n4m.MBPLS",
-                "n4m.GroupSparsePLS",
-            },
-        )
 
 
 class UpstreamRegistryParityTests(unittest.TestCase):

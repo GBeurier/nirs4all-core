@@ -50,19 +50,12 @@ pub fn dense_tuning_training_request(
     let checkpoint = input
         .checkpoint_archive
         .map(|path| {
-            let archive = crate::load_archive_v2(path).map_err(|error| error.to_string())?;
+            let archive = crate::n4a_native_package::load_native_predictor_package(path)
+                .map_err(|error| error.to_string())?;
             let bytes = archive
                 .portable_predictor_package()
                 .map_err(|error| error.to_string())?;
             let text = std::str::from_utf8(bytes).map_err(|error| error.to_string())?;
-            let package = dag_ml_core::PortablePredictorPackage::from_json(text)
-                .map_err(|error| error.to_string())?;
-            dag_ml_core::validate_archive_v2_portable_payloads(
-                archive.manifest(),
-                &package,
-                archive.members(),
-            )
-            .map_err(|error| error.to_string())?;
             Ok::<String, String>(text.to_owned())
         })
         .transpose()?;

@@ -37,62 +37,39 @@ The canonical source repository for core-owned bindings is `nirs4all-core`.
 Python publishes as `nirs4all-core`; its core-owned non-Python targets publish
 as `nirs4all`.
 
-The tuning, conformal and robustness artifacts currently produced by the full
-Python `nirs4all` package are explicitly not portable binding execution
-features in this aggregate yet. Bindings may surface them only as metadata or
-externally produced files:
+## Native conformal and workflow routes (current)
 
-- `conformal.calibrated_result` identifies a stored calibrated result produced
-  by full Python `nirs4all`. Its manifest row exposes
-  `optional_payload_fields = ["conformal_guarantee_status",
-  "calibration_replay_source", "tuning_calibration_source"]`; bindings may
-  transport or display the guarantee badge, calibration replay provenance, and
-  tuning calibration provenance, but must not refit, recalibrate, apply
-  intervals locally, replay calibration sources, or reinterpret tuning
-  provenance;
-- `robustness.summary` identifies the compact `summary.json` contract for
-  robustness dashboards/cards. Its manifest row exposes
-  `optional_payload_fields = ["conformal_guarantee_status", "spectral_replay"]`;
-  bindings may transport or display the guarantee badge and spectral replay
-  provenance metadata, but must not infer either from robustness rows or replay
-  spectra locally;
-- `tuning.summary` identifies the compact HPO summary contract for tuning
-  dashboards/cards. Its manifest row exposes
-  `optional_payload_fields = ["sampler", "pruner", "seed", "persistence",
-  "trials[*].diagnostics"]`; bindings may display this optimizer metadata, safe
-  persistence flags and compact scalar per-trial diagnostics when present, but
-  must not infer optimizer execution capability from the summary or require raw
-  optimizer storage URIs;
-- `tuning.ordered_search_space` identifies the ordered pre-execution search
-  space preview produced by full Python `inspect_tuning_space()`,
-  `NativeTuning.inspect_space()` or the `nirs4all tuning-space` CLI. Its
-  manifest row requires the registry entries `run.tuning.space` and
-  `run.tuning.force_params`; bindings may validate, transport or render the
-  ordered parameter paths and public decoded warm-start values, but must not
-  mutate pipelines, drive optimizers, reproduce Python TCV1 fingerprints
-  locally, or infer runtime HPO support from this metadata;
-- `keyword.registry` identifies the exported keyword/effect/value-schema
-  registry and grouped public discovery constants such as
-  `TUNING_OPTIMIZER_PERSISTENCE_KEYS`, `ROBUSTNESS_SCENARIO_KINDS`,
-  `ROBUSTNESS_SCENARIO_DISTRIBUTIONS`, `ROBUSTNESS_MODES` and
-  `ROBUSTNESS_EXECUTABLE_MODES` used by docs, forms and hosts. Its manifest row
-  exposes `published_constants = { ROBUSTNESS_SCENARIO_DISTRIBUTIONS =
-  ["normal", "uniform"] }`, so bindings and hosts can discover the accepted
-  robustness scenario distributions without parsing prose. It also exposes
-  `required_registry_entries` for the minimum entries that binding hosts must
-  preserve when mirroring the registry, including `run.tuning.space` as the
-  mapping/object tuning-space keyword, `run.tuning.force_params`,
-  `predict.coverage`, `predict.all_predictions`, robustness scenario fields,
-  `robustness.X`, `robustness.predictor` and `robustness.predictor_bundle` for
-  full Python explicit-X frozen-predictor spectral robustness replay.
+The supported contracts are the five execution profiles at version 1
+(`native-workflow@1`, `native-conformal@1`, `native-methods-package@1`,
+`native-n4a-canonical@1` and `n4a-container@1`); this section describes the
+workflow and conformal routes (see [`EXECUTION_PROFILES.md`](EXECUTION_PROFILES.md) and
+`compat/capabilities.toml`); no artifact manifest is published. A binding keeps
+every algorithm upstream: the supported conformal routes call the native DAG-ML
+implementation (directly, through the Core CLI, or in WASM) and never compute
+quantiles, intervals or coverage locally. What each `native-conformal@1` route
+actually carries today:
 
-Bindings must not implement their own split-conformal quantile, interval
-application, robustness perturbation, coverage metric, worst-slice logic, HPO
-trial replay, optimizer driver, search-space canonicalizer, or TCV1 fingerprint
-generator to make those rows look executable, and must not infer execution
-support from the keyword registry or ordered search-space contract alone.
-Promotion from metadata to execution requires upstream fixtures plus
-binding-specific parity gates.
+| Operation | Rust | Python | MATLAB/Octave | JS/WASM |
+| --- | --- | --- | --- | --- |
+| fit (return value) | `calibrate_archive` returns the Core wrapper JSON `nirs4all.calibrated.v1` (`calibration`, `calibration_replay`, `archive_sha256`, `model_archive`, `training_outcome`) | `CalibratedWorkflow(archive path, calibration)`, no schema id | struct with `schema` = `nirs4all.calibrated.v1`, `archive`, `calibration`, `native_json`, `cli` | `CalibratedWorkflow(archive bytes, calibration)`, no schema id |
+| fit/import (internal CLI response) | n/a | wrapper JSON (`conformal-calibrate` full wrapper; `conformal-load` only `schema` + `calibration`) | same CLI responses | none: no CLI |
+| import | not supported | reads the archive file, CLI validates it | reads the archive file, CLI validates it | reads archive bytes; DAG validates and `conformal_calibration` is read from the package |
+| export | not supported | copies the archive file | `copyfile` of the archive | returns the archive bytes |
+
+For `native-conformal@1`, import and export move a DAG-ML Package V2 (package
+`schema_version` 2) inside the neutral Core V1 container
+(`nirs4all.n4a.container.v1`), declared by the route `transport`
+`native-methods-package@1`, with the immutable base carried over; the wrapper
+JSON is unchanged, and the pre-V1 physical Archive V2 ZIP route is not current.
+The calibration lives in the DAG-ML-owned
+`PortablePredictorPackage.conformal_calibration` field. The native Methods
+Package profile (`native-methods-package@1`) carries DAG-ML Package V2/V3
+payloads in the same container, with Python, JavaScript/WASM and Rust entrypoints
+and none for MATLAB/Octave beyond `predictMultimodalArchive` and the generic
+`n4aInspect`; the container, Package schemas and Methods ABI are independent
+versions. R is an external federation through the CLI, not a Core runtime. Tuning, robustness and
+keyword-registry artifacts of the full Python `nirs4all` package are not
+published by this aggregate.
 
 ## Python
 
@@ -102,8 +79,9 @@ binding-specific parity gates.
   full brand-aligned aggregate facade (`import n4a`) over `nirs4all_core`.
   `nirs4all_core.__all__` advertises the complete aggregate contract, including
   execution helpers that delegate to upstream projects.
-- `read_portable_predictor_package_v2(path)` validates Archive V2 in Rust and
-  returns exact DAG-ML Package V2 bytes. It is not a Python ZIP parser, package
+- `read_portable_predictor_package_v2(source)` accepts a path, an `N4aFile` or
+  a `NativePackage`, validates the selected native closure of the Core V1
+  container in Rust and returns exact DAG-ML Package V2 bytes. It is not a Python ZIP parser, package
   decoder, artifact executor, or prediction API.
 - `inspect_methods_archive_v2_predictors(...)` content-attests libn4m, derives
   `NativePredictorDescriptorV1` from each complete N4MM member through the
@@ -150,6 +128,12 @@ binding-specific parity gates.
 - Keep `release_topology_manifest()` green against the package metadata before
   changing distribution names, facade imports, or the core execution boundary.
 
+Owner-neutral storage (`n4a-container@1`): `open_n4a_container` returns an
+immutable `N4aContainer` (validated once; `view`, `manifest_bytes`, `member`,
+`artifact_members`, `archive_bytes`) and `write_n4a_container(manifest_json,
+members, base=None)` writes or updates a container from opaque `bytes`. Python
+never deserializes a stored host payload; a refusal is a `ValueError`.
+
 ## Rust
 
 - Crate name: `nirs4all`.
@@ -175,6 +159,17 @@ binding-specific parity gates.
   replay/load V2 functions expose validated named multi-target presentations;
   Core supplies archive and predictor identity but does not recalibrate.
 
+Owner-neutral storage (`n4a-container@1`): `parse_n4a_manifest`,
+`write_n4a_bytes`, `write_n4a_update`, `OwnedN4a::{member, artifact_members,
+manifest_bytes, archive_bytes}` and `n4a_owner_portable::n4a_container_view`.
+File-backed routes are `n4a_file::{open_n4a_file, write_n4a_file, write_n4a_to}`,
+and `n4a_physical` exposes the sans-IO scanner and write plan for hosts that bring
+their own byte source. Each takes an optional `N4aMemoryBudget`; `.n4a` V1 content
+has no intrinsic cap. The archive command adds `n4a-write` and `n4a-read`; read
+writes numbered `member-000000.bin` files plus the exact `manifest.json` and a
+report that maps each archive path to its file, so archive paths are never OS
+paths. Every `n4a-*` command accepts `--memory-budget-bytes <decimal u64>`.
+
 ## JavaScript/WASM
 
 - npm package name: `nirs4all`.
@@ -185,9 +180,9 @@ binding-specific parity gates.
 - The portable KS/SNV/Savitzky-Golay/PLS subset executes with
   `runPortablePipeline()` and predicts from its serialized selected model with
   `predictPortablePipeline()`, both delegating to `@nirs4all/methods`.
-- `runtimeContracts` is the authoritative custom-host signal for this extra
-  serialized-model predict capability. Other bindings are parity-validated for
-  pipeline execution but do not expose this standalone replay-predict API yet.
+- `executionProfiles()` is the authoritative custom-host signal for the
+  supported native profiles; the portable runner above is temporary
+  implementation tracked for removal, not a supported profile.
 - `nirs4all-web` consumes this package; UI code does not live here.
 - Current upstream package candidates prefer the target scoped names
   `@nirs4all/formats-wasm`, `@nirs4all/io-wasm`,

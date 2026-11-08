@@ -1,0 +1,209 @@
+{
+  "schema": "nirs4all.n4a.container.v1",
+  "schema_version": 1,
+  "minimum_reader_version": 1,
+  "container_id": "container:host.opaque.update.v1",
+  "required_features": [],
+  "physical_profile": "zip-stored.v1",
+  "members": [
+    {
+      "path": "host/recipe.json",
+      "byte_length": 0,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "path": "host/data.csv",
+      "byte_length": 0,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "path": "host/model.bin",
+      "byte_length": 0,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "path": "host/scores.json",
+      "byte_length": 0,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "path": "host/results.json",
+      "byte_length": 0,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "recipe",
+      "kind": "recipe",
+      "owner": "host.example",
+      "content_type": {
+        "id": "host.example.recipe",
+        "version": 1
+      },
+      "identity": {
+        "owner": "host.example",
+        "schema": "host.example.recipe",
+        "schema_version": 1,
+        "fingerprint_profile": "sha256.raw.v1",
+        "fingerprint": "75faa8da760a9d07df203f01c32b3384dd943546399114077cc4360e52616a84"
+      },
+      "storage": {
+        "kind": "embedded",
+        "root_member": "host/recipe.json",
+        "member_paths": [
+          "host/recipe.json"
+        ]
+      },
+      "requirements": null
+    },
+    {
+      "id": "dataset",
+      "kind": "dataset",
+      "owner": "host.example",
+      "content_type": {
+        "id": "host.example.table.csv",
+        "version": 1
+      },
+      "identity": {
+        "owner": "host.example",
+        "schema": "host.example.table.csv",
+        "schema_version": 1,
+        "fingerprint_profile": "sha256.raw.v1",
+        "fingerprint": "6104bc228b2ce0ea728d327a0e54f441bf5ac86a15be9d816075a65d8a811353"
+      },
+      "storage": {
+        "kind": "embedded",
+        "root_member": "host/data.csv",
+        "member_paths": [
+          "host/data.csv"
+        ]
+      },
+      "requirements": null
+    },
+    {
+      "id": "model",
+      "kind": "model",
+      "owner": "host.example",
+      "content_type": {
+        "id": "host.example.model.opaque",
+        "version": 1
+      },
+      "identity": {
+        "owner": "host.example",
+        "schema": "host.example.model.opaque",
+        "schema_version": 1,
+        "fingerprint_profile": "sha256.raw.v1",
+        "fingerprint": "18fe71b20b2f60b344d54243bc09f64855ee1b36e237192cc6ffab03ed877afe"
+      },
+      "storage": {
+        "kind": "embedded",
+        "root_member": "host/model.bin",
+        "member_paths": [
+          "host/model.bin"
+        ]
+      },
+      "requirements": {
+        "artifact_id": "recipe"
+      }
+    },
+    {
+      "id": "scores",
+      "kind": "score",
+      "owner": "host.example",
+      "content_type": {
+        "id": "host.example.scores",
+        "version": 1
+      },
+      "identity": {
+        "owner": "host.example",
+        "schema": "host.example.scores",
+        "schema_version": 1,
+        "fingerprint_profile": "sha256.raw.v1",
+        "fingerprint": "f11e8dff40a65b395c4b33dcdd5467ef250d153d2e3ac444d85bd8b0e75faccd"
+      },
+      "storage": {
+        "kind": "embedded",
+        "root_member": "host/scores.json",
+        "member_paths": [
+          "host/scores.json"
+        ]
+      },
+      "requirements": null
+    },
+    {
+      "id": "results",
+      "kind": "result",
+      "owner": "host.example",
+      "content_type": {
+        "id": "host.example.results",
+        "version": 1
+      },
+      "identity": {
+        "owner": "host.example",
+        "schema": "host.example.results",
+        "schema_version": 1,
+        "fingerprint_profile": "sha256.raw.v1",
+        "fingerprint": "ff5ea7f9a67bac6f562807452f4c5c13d9c16fc2103ca6f719b82f2d4e778868"
+      },
+      "storage": {
+        "kind": "embedded",
+        "root_member": "host/results.json",
+        "member_paths": [
+          "host/results.json"
+        ]
+      },
+      "requirements": null
+    },
+    {
+      "id": "dataset-ref",
+      "kind": "dataset",
+      "owner": "host.example",
+      "content_type": {
+        "id": "host.example.table.csv",
+        "version": 1
+      },
+      "identity": {
+        "owner": "host.example",
+        "schema": "host.example.table.csv",
+        "schema_version": 1,
+        "fingerprint_profile": "sha256.raw.v1",
+        "fingerprint": "6104bc228b2ce0ea728d327a0e54f441bf5ac86a15be9d816075a65d8a811353"
+      },
+      "storage": {
+        "kind": "reference",
+        "root_sha256": "6104bc228b2ce0ea728d327a0e54f441bf5ac86a15be9d816075a65d8a811353"
+      },
+      "requirements": null
+    }
+  ],
+  "links": [
+    {
+      "id": "link-results-evaluate-model",
+      "owner": "host.example",
+      "relation": "evaluates",
+      "source_artifact": "results",
+      "target_artifact": "model"
+    },
+    {
+      "id": "link-dataset-of-model",
+      "owner": "host.example",
+      "relation": "dataset_of",
+      "source_artifact": "dataset",
+      "target_artifact": "model"
+    }
+  ],
+  "entrypoints": [
+    {
+      "id": "host-predict",
+      "owner": "host.example",
+      "operation": "host.predict",
+      "root_artifact": "model",
+      "input_artifacts": [
+        "dataset"
+      ],
+      "required_features": [],
+      "requirements": null
+    }
+  ]
+}

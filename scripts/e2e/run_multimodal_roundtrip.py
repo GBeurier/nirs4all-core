@@ -629,7 +629,6 @@ const payload = JSON.parse(readFileSync(datasetPath, 'utf8'));
 const portable = payload.portable_view;
 const manifest = n4a.capabilityManifest();
 const definition = n4a.loadPipelineDefinition(pipelineObject);
-const wasmRuntime = manifest.runtimeContracts.find((item) => item.surface === 'javascript_wasm');
 const dataset = {
   X: Float64Array.from(portable.X),
   y: Float64Array.from(portable.y),
@@ -657,7 +656,7 @@ actual.web_core_import = {
   aggregate: manifest.aggregate,
   capability_schema: manifest.schema,
   runtime_surfaces: manifest.runtimeSurfaces,
-  runtime_contract: wasmRuntime ?? null,
+  execution_profile_ids: manifest.executionProfiles.profiles.map((item) => item.id),
   pipeline_imported: true,
   loaded_pipeline_name: definition.name,
   original_pipeline_name: pipelineObject.name,
@@ -724,14 +723,6 @@ def _write_web_core_import_evidence(
     web = dict(wasm_payload.get("actual", {}).get("web_core_import") or {})
     comparison = dict(wasm_payload.get("comparison") or {})
     predict_roundtrip_abs_max = wasm_payload.get("predict_roundtrip_abs_max")
-    runtime_contract = dict(web.get("runtime_contract") or {})
-    serialized_model_predict_surfaces = [
-        item.get("surface")
-        for item in web.get("runtime_contracts", [])
-        if isinstance(item, dict) and item.get("serializedModelPredict") is True
-    ]
-    if not serialized_model_predict_surfaces and runtime_contract.get("serializedModelPredict") is True:
-        serialized_model_predict_surfaces = [str(runtime_contract.get("surface"))]
 
     expected_source_ids = [_source_id(source if isinstance(source, dict) else {}, index) for index, source in enumerate(dataset.get("sources") or [])]
     expected_source_slices = [
@@ -745,9 +736,7 @@ def _write_web_core_import_evidence(
         "backend_api_calls_zero": int(web.get("backend_api_calls", -1)) == 0,
         "capability_schema": web.get("capability_schema") == "nirs4all-core.capabilities.v1",
         "javascript_wasm_surface_declared": "javascript_wasm" in list(web.get("runtime_surfaces") or []),
-        "runtime_contract_predict_entrypoint": runtime_contract.get("predictEntrypoint") == "predictPortablePipeline",
-        "runtime_contract_pipeline_entrypoint": runtime_contract.get("pipelineEntrypoint") == "runPortablePipeline",
-        "serialized_model_predict_surface": serialized_model_predict_surfaces == ["javascript_wasm"],
+        "native_profiles_declared": list(web.get("execution_profile_ids") or []) == ["native-workflow", "native-conformal"],
         "pipeline_imported": web.get("pipeline_imported") is True,
         "pipeline_name_match": web.get("pipeline_name_match") is True and web.get("original_pipeline_name") == pipeline.get("name"),
         "run_entrypoint_is_function": web.get("run_entrypoint") == "function",
@@ -776,8 +765,7 @@ def _write_web_core_import_evidence(
         "backend_api_calls": int(web.get("backend_api_calls", -1)),
         "capability_schema": web.get("capability_schema"),
         "runtime_surfaces": list(web.get("runtime_surfaces") or []),
-        "runtime_contract": runtime_contract,
-        "serialized_model_predict_surfaces": serialized_model_predict_surfaces,
+        "execution_profile_ids": list(web.get("execution_profile_ids") or []),
         "pipeline_import": {
             "imported": web.get("pipeline_imported") is True,
             "loaded_pipeline_name": web.get("loaded_pipeline_name"),
