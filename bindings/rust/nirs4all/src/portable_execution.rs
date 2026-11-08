@@ -428,9 +428,13 @@ pub fn run(value: &Value, library: &Path) -> Result<Value, String> {
         .map_err(|e| e.to_string())?;
     let runtime = crate::native_methods_replay::configure_methods_runtime_for_source(library)
         .map_err(|e| e.to_string())?;
+    // The graph compiles live-resolved train augmentation nodes; the plan,
+    // canonical identities and the response keep the declared recipe.
+    let mut executable = admission.clone();
     if feature_graph {
-        dag::preflight_methods_feature_graph(&admission.recipe, &admission.candidates)
-            .map_err(|e| e.to_string())?;
+        executable.recipe =
+            dag::preflight_methods_feature_graph(&admission.recipe, &admission.candidates)
+                .map_err(|e| e.to_string())?;
     } else {
         for params in &admission.candidates {
             let mut selected =
@@ -511,7 +515,7 @@ pub fn run(value: &Value, library: &Path) -> Result<Value, String> {
     } else {
         registry(classification)?
     };
-    let compiled = dag::compile_portable_linear(&admission, binding, fold_set, &registry)
+    let compiled = dag::compile_portable_linear(&executable, binding, fold_set, &registry)
         .map_err(|e| e.to_string())?;
     let plan = dag::build_execution_plan(
         "plan:portable",
@@ -945,6 +949,61 @@ mod tests {
                 let error = run(&json!({"schema_version":1,"definition":[{"model":{"class":"n4m.PLS"}}],"dataset":dataset}), Path::new("/missing/native/library")).unwrap_err();
                 assert!(error.contains(&expected), "{error}");
             }
+        }
+    }
+    #[test]
+    fn augmentation_and_fit_input_plans_are_pure_graph_plans_with_declared_entries() {
+        let augmentation = json!({"train_augmentation":{"class":"n4m.NativeXAugmentation",
+            "params":{"kind":"band_perturb","values":[2.0, 3, 6, 0.9, 1.1, -0.01, 0.01],"seed":42.0}}});
+        let result = plan(
+            &json!({"schema_version":1,"definition":[{"class":"n4m.KennardStone"},
+            augmentation,{"class":"n4m.SNV"},
+            {"model":{"class":"n4m.PLS"},"param":"n_components","_range_":[1,3,1]}]}),
+        )
+        .unwrap();
+        assert_eq!(result["profile"], dag::PORTABLE_FEATURE_PROFILE);
+        assert_eq!(result["owner_profile"], "feature_graph.v1");
+        assert_eq!(result["mode"], "single_holdout");
+        // Unresolved and complete: no method id, names or library lookup.
+        assert_eq!(
+            result["recipe"][0],
+            json!({"train_augmentation":{"class":"n4m.NativeXAugmentation",
+            "params":{"kind":"band_perturb","values":[2.0, 3, 6, 0.9, 1.1, -0.01, 0.01],"seed":42}}})
+        );
+        assert_eq!(result["preprocessing"][0], result["recipe"][0]);
+        assert_eq!(result["candidates"].as_array().unwrap().len(), 3);
+        let mbpls = plan(&json!({"schema_version":1,"definition":[{"class":"n4m.SNV"},
+            {"model":{"class":"n4m.MBPLS","params":{"block_sizes":[10, 18]}},"param":"n_components","_range_":[1,2,1]}]}))
+        .unwrap();
+        assert_eq!(mbpls["profile"], dag::PORTABLE_FEATURE_PROFILE);
+        assert_eq!(mbpls["mode"], "training");
+        assert_eq!(
+            mbpls["recipe"][1]["params"]["fit_inputs_v1"],
+            json!({"blocks":[10, 18]})
+        );
+        assert_eq!(
+            mbpls["candidates"],
+            json!([{"n_components":1,"fit_inputs_v1":{"blocks":[10, 18]}},
+                {"n_components":2,"fit_inputs_v1":{"blocks":[10, 18]}}])
+        );
+        // Residual combinations are refused before any dataset or native load.
+        for (definition, expected) in [
+            (
+                json!([augmentation, {"model":{"class":"n4m.SparsePLSDA"}}]),
+                "train augmentation + classification",
+            ),
+            (
+                json!([augmentation, {"branch":[[{"class":"n4m.SNV"}],[{"class":"n4m.MSC"}]]},
+                    {"merge":"features"}, {"model":{"class":"n4m.PLS"}}]),
+                "train augmentation + feature_branch",
+            ),
+        ] {
+            let error = run(
+                &json!({"schema_version":1,"definition":definition,"dataset":{"X":[[1.0],[2.0]],"y":[1.0,2.0]}}),
+                Path::new("/missing/native/library"),
+            )
+            .unwrap_err();
+            assert!(error.contains(expected), "{expected}: {error}");
         }
     }
     #[test]
