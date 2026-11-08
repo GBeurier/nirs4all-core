@@ -619,3 +619,321 @@ fn semantic_only_child() {
     assert_no_native();
     println!("semantic process: no libn4m mapping before or after");
 }
+
+/// Preserve an already fitted, genuine DMD S != C package for the two WASM readers.
+#[test]
+#[ignore = "Root-only producer: requires NIRS4ALL_CORE_RELINK_INPUT and a fresh NIRS4ALL_CORE_RELINK_OUTPUT"]
+fn produce_real_dmd_initial_refit_facets() {
+    use dag_ml_core::artifact_facets::{build_initial_refit_artifact_facets, ArtifactFacetStorage};
+    use dag_ml_core::InitialFullRefitPackage;
+
+    let input = std::env::var_os("NIRS4ALL_CORE_RELINK_INPUT")
+        .expect("NIRS4ALL_CORE_RELINK_INPUT must name the preserved run02 package");
+    let output = std::env::var_os("NIRS4ALL_CORE_RELINK_OUTPUT")
+        .expect("NIRS4ALL_CORE_RELINK_OUTPUT must name a fresh external directory");
+    let output = Path::new(&output);
+    assert!(output.is_absolute(), "producer output must be absolute");
+    let parent = output.parent().unwrap().canonicalize().unwrap();
+    let repository = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .ancestors()
+        .nth(3)
+        .unwrap()
+        .canonicalize()
+        .unwrap();
+    assert!(
+        !parent.starts_with(&repository),
+        "no generated containers in Core"
+    );
+    assert!(!output.exists(), "preserve any prior producer output");
+
+    let original = std::fs::read(&input).unwrap();
+    let original_sha256 = format!("{:x}", Sha256::digest(&original));
+    assert_eq!(
+        original_sha256,
+        "20552dc6779a742f8cddc02a13cf7c3c14056144054fc516a461a4c1def3a918"
+    );
+    let package = InitialFullRefitPackage::from_json(std::str::from_utf8(&original).unwrap())
+        .unwrap_or_else(|error| panic!("STOP: unsupported/refused package: {error}"));
+    let source_s = package
+        .training_envelope
+        .relation_fingerprint
+        .as_deref()
+        .unwrap();
+    let canonical_c = package.training_relations.fingerprint().unwrap();
+    assert_eq!(
+        source_s,
+        "2395c9d0ee44f21670136244ec9fcd4aac321755d83b67e2575d5176b234a257"
+    );
+    assert_eq!(
+        canonical_c,
+        "10404fec25008afabeff39ca5e7ba036bff93eecbcf0a4635bcbdf9ed93b8179"
+    );
+    assert_ne!(source_s, canonical_c);
+    assert_eq!(package.training_sample_ids.len(), 28);
+    let ordered_ids = serde_json::to_value(&package.training_sample_ids).unwrap();
+    assert_eq!(
+        ordered_ids,
+        serde_json::json!([
+            "p3", "p20", "p12", "p27", "p8", "p30", "p15", "p25", "p33", "p37", "p0", "p17", "p6",
+            "p10", "p23", "p28", "p26", "p29", "p11", "p31", "p4", "p14", "p32", "p13", "p39",
+            "p22", "p35", "p1"
+        ])
+    );
+
+    let export = build_initial_refit_artifact_facets(&package)
+        .unwrap_or_else(|error| panic!("STOP: unsupported/refused export: {error}"));
+    // Transfer only neutral owner descriptors, never the process-local proof context.
+    let mut fixture = Fixture {
+        manifest: N4aManifest {
+            schema: N4A_SCHEMA.into(),
+            schema_version: 1,
+            minimum_reader_version: 1,
+            container_id: "container:core-relink-real-dmd-initial-refit".into(),
+            required_features: vec![],
+            physical_profile: N4A_PHYSICAL_PROFILE.into(),
+            members: vec![],
+            artifacts: serde_json::from_value(
+                serde_json::to_value(&export.graph.artifacts).unwrap(),
+            )
+            .unwrap_or_else(|error| panic!("STOP: refused descriptor transfer: {error}")),
+            links: serde_json::from_value(serde_json::to_value(&export.graph.links).unwrap())
+                .unwrap_or_else(|error| panic!("STOP: refused link transfer: {error}")),
+            entrypoints: vec![],
+        },
+        members: export.members.clone(),
+    };
+    assert_eq!(
+        serde_json::to_value(&fixture.manifest.artifacts).unwrap(),
+        serde_json::to_value(&export.graph.artifacts).unwrap()
+    );
+    assert_eq!(
+        serde_json::to_value(&fixture.manifest.links).unwrap(),
+        serde_json::to_value(&export.graph.links).unwrap()
+    );
+    assert_eq!(fixture.members, export.members);
+    let (root_path, mut raw_paths) = match &fixture
+        .manifest
+        .artifacts
+        .iter()
+        .find(|artifact| artifact.id == "full_refit")
+        .unwrap()
+        .storage
+    {
+        N4aStorage::Embedded {
+            root_member,
+            member_paths,
+        } => (
+            root_member.clone(),
+            member_paths
+                .iter()
+                .filter(|path| *path != root_member)
+                .cloned()
+                .collect::<Vec<_>>(),
+        ),
+        _ => panic!("STOP: owner full_refit is not embedded"),
+    };
+    assert_eq!(root_path, "dagml/full_refit.json");
+    let root_bytes = fixture.members[&root_path].clone();
+    let root_text = std::str::from_utf8(&root_bytes).unwrap();
+    let root_sha256 = format!("{:x}", Sha256::digest(&root_bytes));
+    let root_package = InitialFullRefitPackage::from_json(root_text)
+        .unwrap_or_else(|error| panic!("STOP: owner root refused: {error}"));
+    assert_eq!(
+        root_package, package,
+        "owner reserialization preserves the complete parsed package"
+    );
+    for id in ["model", "run"] {
+        let artifact = export
+            .graph
+            .artifacts
+            .iter()
+            .find(|artifact| artifact.id == id)
+            .unwrap();
+        assert!(matches!(&artifact.storage,
+            ArtifactFacetStorage::Reference { root_sha256: Some(value) } if value == &root_sha256));
+    }
+
+    let facets = fixture.bytes();
+    let container = open_n4a_bytes(&facets, N4aMemoryBudget::default()).unwrap();
+    assert_eq!(container.metadata().manifest(), &fixture.manifest);
+    for (path, bytes) in &export.members {
+        assert_eq!(container.member(path).unwrap().bytes, bytes.as_slice());
+    }
+    let inspection = inspect_n4a_semantics(&container)
+        .unwrap_or_else(|error| panic!("STOP: native semantic inspection refused: {error}"));
+    assert_eq!(inspection.artifacts.len(), 4);
+    assert!(matches!(
+        content(&inspection, "recipe"),
+        OwnerContentInspection::Validated { .. }
+    ));
+    assert!(matches!(
+        content(&inspection, "model"),
+        OwnerContentInspection::Unresolved
+    ));
+    assert!(matches!(
+        content(&inspection, "run"),
+        OwnerContentInspection::Unresolved
+    ));
+    let state_members = match content(&inspection, "full_refit") {
+        OwnerContentInspection::Validated {
+            state_members,
+            model_states,
+        } => {
+            assert!(
+                !model_states.is_empty(),
+                "initial-refit model records must be reported"
+            );
+            state_members.clone()
+        }
+        other => panic!("STOP: full_refit content is not validated: {other:?}"),
+    };
+    let mut actual_paths = state_members
+        .iter()
+        .map(|state| state.member_path.clone())
+        .collect::<Vec<_>>();
+    raw_paths.sort();
+    actual_paths.sort();
+    assert_eq!(actual_paths, raw_paths);
+    assert_eq!(state_members.len(), package.raw_artifact_payloads.len());
+    for state in &state_members {
+        let raw = package
+            .raw_artifact_payloads
+            .get(&state.artifact_id)
+            .unwrap();
+        assert_eq!(
+            container.member(&state.member_path).unwrap().bytes,
+            raw.as_slice()
+        );
+        assert_eq!(state.sha256, format!("{:x}", Sha256::digest(raw)));
+        assert_eq!(state.byte_length, raw.len() as u64);
+    }
+    let expected_links = [
+        (
+            "recipe_of",
+            "recipe",
+            "full_refit",
+            FacetSemanticStatus::Validated,
+        ),
+        (
+            "recipe_of",
+            "recipe",
+            "model",
+            FacetSemanticStatus::Unverified,
+        ),
+        (
+            "recipe_of",
+            "recipe",
+            "run",
+            FacetSemanticStatus::Unverified,
+        ),
+        (
+            "produced_by",
+            "full_refit",
+            "run",
+            FacetSemanticStatus::Unverified,
+        ),
+        (
+            "produced_by",
+            "model",
+            "run",
+            FacetSemanticStatus::Unverified,
+        ),
+    ];
+    assert_eq!(fixture.manifest.links.len(), expected_links.len());
+    assert_eq!(inspection.links.len(), expected_links.len());
+    for (relation, source, target, status) in &expected_links {
+        let links = fixture
+            .manifest
+            .links
+            .iter()
+            .filter(|link| {
+                link.relation == *relation
+                    && link.source_artifact == *source
+                    && link.target_artifact == *target
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(links.len(), 1);
+        let reports = inspection
+            .links
+            .iter()
+            .filter(|link| link.link_id == links[0].id)
+            .collect::<Vec<_>>();
+        assert_eq!(reports.len(), 1);
+        assert_eq!(&reports[0].verdict.status, status);
+        if *status == FacetSemanticStatus::Unverified {
+            assert!(reports[0]
+                .verdict
+                .reason
+                .contains("owner bytes/proof are unresolved"));
+        }
+    }
+    assert!(inspection.opaque_link_ids.is_empty());
+    assert!(inspection.entrypoints.is_empty());
+    let manifest = fixture.manifest.clone();
+
+    // One byte-local S tamper. Only physical inventory is regenerated by Fixture::bytes.
+    let tamper_s = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+    assert_ne!(tamper_s, source_s);
+    assert_ne!(tamper_s, canonical_c);
+    let envelope_start = root_text.find("\"training_envelope\":").unwrap();
+    let key = format!("\"relation_fingerprint\":\"{source_s}\"");
+    let offset = envelope_start
+        + root_text[envelope_start..].find(&key).unwrap()
+        + "\"relation_fingerprint\":\"".len();
+    let mut tampered_root = root_text.to_owned();
+    tampered_root.replace_range(offset..offset + source_s.len(), tamper_s);
+    let original_value: serde_json::Value = serde_json::from_slice(&root_bytes).unwrap();
+    let mut only_s_changed = original_value.clone();
+    only_s_changed["training_envelope"]["relation_fingerprint"] = serde_json::json!(tamper_s);
+    assert_eq!(
+        serde_json::from_str::<serde_json::Value>(&tampered_root).unwrap(),
+        only_s_changed
+    );
+    assert_eq!(root_bytes.len(), tampered_root.len());
+    fixture
+        .members
+        .insert(root_path.clone(), tampered_root.into_bytes());
+    let tamper = fixture.bytes();
+    let tampered_container = open_n4a_bytes(&tamper, N4aMemoryBudget::default()).unwrap();
+    let refusal = inspect_n4a_semantics(&tampered_container)
+        .expect_err("the physically valid S tamper must refuse semantically")
+        .to_string();
+    assert!(
+        refusal.contains("package fingerprint"),
+        "unexpected refusal; STOP: {refusal}"
+    );
+    let receipt = serde_json::json!({
+        "source_path": Path::new(&input),
+        "source_sha256": original_sha256,
+        "owner_root_member": root_path,
+        "owner_root_sha256": root_sha256,
+        "encoding_note": "Owner reserialization; source and root encodings may differ. Complete parsed packages and exact fitted-state bytes were compared.",
+        "source_and_root_bytes_equal": original == root_bytes,
+        "package_id": package.package_id,
+        "package_fingerprint": package.package_fingerprint,
+        "ordered_training_ids": ordered_ids,
+        "source_relation_key_s": source_s,
+        "canonical_relation_key_c": canonical_c,
+        "full_refit_state_members": state_members,
+        "native_links": inspection.links,
+        "manifest": manifest,
+        "facets_sha256": format!("{:x}", Sha256::digest(&facets)),
+        "tamper_sha256": format!("{:x}", Sha256::digest(&tamper)),
+        "tamper_relation_key_s": tamper_s,
+        "tamper_refusal_detail": refusal,
+        "tamper_scope": "Single training_envelope S value changed; owner fingerprints unchanged; only physical inventory recalculated.",
+        "semantic_scope": "Two embedded contents validated, two references unresolved, one link validated, four unverified; no executable admission or native-state validation.",
+    });
+    // All semantic checks precede publication of this isolated producer fixture.
+    std::fs::create_dir(output).unwrap();
+    std::fs::write(output.join("source-package.json"), &original).unwrap();
+    std::fs::write(output.join("facets.n4a"), &facets).unwrap();
+    std::fs::write(output.join("tamper-s.n4a"), &tamper).unwrap();
+    std::fs::write(
+        output.join("receipt.json"),
+        serde_json::to_vec_pretty(&receipt).unwrap(),
+    )
+    .unwrap();
+    println!("real DMD facet producer: {}", output.display());
+    println!("{}", serde_json::to_string(&receipt).unwrap());
+}
