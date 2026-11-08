@@ -211,13 +211,69 @@ fn stale_influence_entry_is_checked_by_owner_closure_after_rehash() {
 
 #[test]
 fn c1_static_owner_authority_rejects_unrelated_coordinator_and_circular_string() {
-    let source = seal(&trained(|_| {}));
+    let outcome = trained(|_| {});
+    let source = seal(&outcome);
     let bytes = serde_json::to_vec(&data::record("external", 12, false, true)).unwrap();
     let prepared = prepare(&source, &request(&bytes), true).unwrap();
     let package = prepared.snapshot.context.owner_proofs[&prepared.root_id]
         .predictor_package()
         .unwrap();
     let requirement = &package.execution_bundle.data_requirements[0];
+    let training = recover_native_pipeline_training_relations(&outcome, package).unwrap();
+    let canonical_training = training.fingerprint().unwrap();
+    assert_eq!(
+        prepared.receipt.envelope.relation_fingerprint,
+        requirement.relation_fingerprint
+    );
+    assert_eq!(
+        prepared.receipt.envelope.coordinator_relations.as_ref(),
+        Some(&training)
+    );
+    assert_ne!(
+        canonical_training,
+        prepared.relations.fingerprint().unwrap()
+    );
+    prepared
+        .receipt
+        .envelope
+        .validate_external_test_training_authority(
+            requirement.relation_fingerprint.as_deref(),
+            Some(canonical_training.as_str()),
+            package.effective_plan.fold_set.as_ref(),
+        )
+        .unwrap();
+
+    // Keep S and all sample/fold/group/origin identities; only the retained
+    // record weight changes. Independent C must still reject the rewritten set.
+    let mut changed = prepared.receipt.envelope.clone();
+    let records = &mut changed.coordinator_relations.as_mut().unwrap().records;
+    let old_weight = records[0].sample_influence_weight;
+    records[0].sample_influence_weight = if old_weight == Some(0.5) {
+        Some(0.25)
+    } else {
+        Some(0.5)
+    };
+    changed.validate().unwrap();
+    assert_ne!(
+        changed
+            .coordinator_relations
+            .as_ref()
+            .unwrap()
+            .fingerprint()
+            .unwrap(),
+        canonical_training
+    );
+    let error = changed
+        .validate_external_test_training_authority(
+            requirement.relation_fingerprint.as_deref(),
+            Some(canonical_training.as_str()),
+            package.effective_plan.fold_set.as_ref(),
+        )
+        .unwrap_err();
+    assert!(error
+        .to_string()
+        .contains("training relations do not match owner authority"));
+
     for own_string in [false, true] {
         let mut envelope = prepared.receipt.envelope.clone();
         envelope.coordinator_relations = Some(prepared.relations.clone());
@@ -227,6 +283,7 @@ fn c1_static_owner_authority_rejects_unrelated_coordinator_and_circular_string()
         assert!(envelope
             .validate_external_test_training_authority(
                 requirement.relation_fingerprint.as_deref(),
+                Some(canonical_training.as_str()),
                 package.effective_plan.fold_set.as_ref()
             )
             .is_err());

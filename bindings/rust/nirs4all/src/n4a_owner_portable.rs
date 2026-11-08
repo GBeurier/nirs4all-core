@@ -935,11 +935,17 @@ pub(crate) fn prepare_action(
     }
     .derive()?;
     let coordinator = training_relations.as_ref().unwrap_or(&relations);
+    let canonical_relation_fingerprint = coordinator.fingerprint()?;
     let envelope = ExternalDataPlanEnvelope {
         schema_version: 2,
         schema_fingerprint: requirement.schema_fingerprint.clone(),
         plan_fingerprint: requirement.plan_fingerprint.clone(),
-        relation_fingerprint: Some(coordinator.fingerprint()?),
+        relation_fingerprint: if training_relations.is_some() {
+            // Calibration keeps S from the sealed requirement; C is separate.
+            requirement.relation_fingerprint.clone()
+        } else {
+            Some(canonical_relation_fingerprint.clone())
+        },
         data_content_fingerprint: Some(physical.data_content_fingerprint),
         target_content_fingerprint: target_fingerprint,
         coordinator_relations: Some(coordinator.clone()),
@@ -947,10 +953,11 @@ pub(crate) fn prepare_action(
     };
     envelope.validate()?;
     if let Some(training) = &training_relations {
-        // Explicit static owner call, before runtime and before requirement
-        // overwrite in replay. Requires the separately accepted owner overlay.
+        // S comes from the sealed requirement. C comes from the independently
+        // recovered training records above, never the incoming calibration cohort.
         envelope.validate_external_test_training_authority(
             requirement.relation_fingerprint.as_deref(),
+            Some(canonical_relation_fingerprint.as_str()),
             package.effective_plan.fold_set.as_ref(),
         )?;
         package
