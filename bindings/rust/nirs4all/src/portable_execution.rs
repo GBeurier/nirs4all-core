@@ -29,6 +29,7 @@ fn request(value: &Value) -> Result<Request, String> {
             p != dag::PORTABLE_LINEAR_PROFILE
                 && p != dag::PORTABLE_CLASSIFICATION_PROFILE
                 && p != dag::PORTABLE_FEATURE_PROFILE
+                && p != dag::PORTABLE_FEATURE_CLASSIFICATION_PROFILE
         })
     {
         return Err("unsupported portable request schema/profile".into());
@@ -393,13 +394,23 @@ fn class_ids(values: &[f64]) -> Vec<i64> {
 pub fn run(value: &Value, library: &Path) -> Result<Value, String> {
     let request = request(value)?;
     let admission = admit(&request)?;
-    let classification = admission.profile == dag::PORTABLE_CLASSIFICATION_PROFILE;
-    let feature_graph = admission.profile == dag::PORTABLE_FEATURE_PROFILE;
-    let (record, identity_kind, axis, row_annotations) = record(
-        request.dataset.as_ref().ok_or("run requires dataset")?,
-        &request.source_id,
-        classification,
-    )?;
+    let classification = matches!(
+        admission.profile.as_str(),
+        dag::PORTABLE_CLASSIFICATION_PROFILE | dag::PORTABLE_FEATURE_CLASSIFICATION_PROFILE
+    );
+    let feature_graph = matches!(
+        admission.profile.as_str(),
+        dag::PORTABLE_FEATURE_PROFILE | dag::PORTABLE_FEATURE_CLASSIFICATION_PROFILE
+    );
+    let dataset = request.dataset.as_ref().ok_or("run requires dataset")?;
+    if feature_graph && classification && dataset.get("schema").is_some() {
+        return Err(format!(
+            "{} refuses record-backed datasets until Core carries IO y_categorical class labels",
+            dag::PORTABLE_FEATURE_CLASSIFICATION_PROFILE
+        ));
+    }
+    let (record, identity_kind, axis, row_annotations) =
+        record(dataset, &request.source_id, classification)?;
     let ids = cohort(&record, classification)?;
     let provider = if classification {
         let package = nirs4all_io_crate::core::public_dataset::matrix_dataset_package(
@@ -432,9 +443,12 @@ pub fn run(value: &Value, library: &Path) -> Result<Value, String> {
     // canonical identities and the response keep the declared recipe.
     let mut executable = admission.clone();
     if feature_graph {
-        executable.recipe =
-            dag::preflight_methods_feature_graph(&admission.recipe, &admission.candidates)
-                .map_err(|e| e.to_string())?;
+        executable.recipe = dag::preflight_methods_feature_graph_for(
+            &admission.profile,
+            &admission.recipe,
+            &admission.candidates,
+        )
+        .map_err(|e| e.to_string())?;
     } else {
         for params in &admission.candidates {
             let mut selected =
@@ -549,7 +563,21 @@ pub fn run(value: &Value, library: &Path) -> Result<Value, String> {
     let metric = if classification { "accuracy" } else { "rmse" };
     let mut unseen = Vec::new();
     let (owner, selected_ordinal) = if admission.splitter.is_some() {
-        let bank = if feature_graph {
+        let bank = if feature_graph && classification {
+            dag::execute_single_holdout_graph_classification_bank(
+                &plan,
+                &dag::ClassificationBankRequest {
+                    schema_version: 1,
+                    profile: dag::SINGLE_HOLDOUT_GRAPH_CLASSIFICATION_BANK_PROFILE.into(),
+                    failure_group_dimension: "chain".into(),
+                    target_node: target,
+                },
+                &run_id,
+                admission.root_seed,
+                &controllers,
+                &scoped_provider,
+            )
+        } else if feature_graph {
             dag::execute_single_holdout_graph_bank(
                 &plan,
                 &dag::SingleHoldoutBankRequest {
@@ -637,7 +665,23 @@ pub fn run(value: &Value, library: &Path) -> Result<Value, String> {
             ordinal,
         )
     } else {
-        let bank = if feature_graph {
+        let bank = if feature_graph && classification {
+            dag::execute_training_graph_classification_bank(
+                &plan,
+                &dag::ClassificationBankRequest {
+                    schema_version: 1,
+                    profile: dag::TRAINING_GRAPH_CLASSIFICATION_BANK_PROFILE.into(),
+                    failure_group_dimension: "chain".into(),
+                    target_node: target,
+                },
+                envelope,
+                &sample_ids,
+                &run_id,
+                admission.root_seed,
+                &controllers,
+                &scoped_provider,
+            )
+        } else if feature_graph {
             dag::execute_training_graph_bank(
                 &plan,
                 &dag::TrainingBankRequest {
@@ -920,6 +964,61 @@ mod tests {
         }
     }
     #[test]
+    fn feature_classification_explicit_profile_is_admitted_without_fit_and_stays_strict() {
+        for prefix in [
+            json!([
+            {"branch":{"z_msc":[{"class":"n4m.MSC"}],"a_snv":[{"class":"n4m.SNV"}]}},
+            {"merge":"features"}]),
+            json!([
+                {"train_augmentation":{"class":"n4m.NativeXAugmentation",
+                    "params":{"kind":"gaussian_noise","values":[0.02],"seed":7}}}
+            ]),
+        ] {
+            let mut definition = prefix.as_array().unwrap().clone();
+            definition
+                .push(json!({"model":{"class":"n4m.SparsePLSDA","params":{"n_components":2}}}));
+            let request = json!({"schema_version":1,"profile":dag::PORTABLE_FEATURE_CLASSIFICATION_PROFILE,"definition":definition});
+            let explicit = plan(&request).unwrap();
+            assert_eq!(
+                explicit["profile"],
+                dag::PORTABLE_FEATURE_CLASSIFICATION_PROFILE
+            );
+            assert_eq!(explicit["owner_profile"], "feature_graph.v1");
+            let mut implicit = request.clone();
+            implicit.as_object_mut().unwrap().remove("profile");
+            assert_eq!(explicit, plan(&implicit).unwrap());
+            for profile in [
+                dag::PORTABLE_FEATURE_PROFILE,
+                dag::PORTABLE_CLASSIFICATION_PROFILE,
+                dag::PORTABLE_LINEAR_PROFILE,
+            ] {
+                let mut conflicting = request.clone();
+                conflicting["profile"] = json!(profile);
+                assert!(plan(&conflicting)
+                    .unwrap_err()
+                    .contains("disagrees with the definition"));
+            }
+            for (key, value, expected) in [
+                (
+                    "schema_version",
+                    json!(2),
+                    "unsupported portable request schema/profile",
+                ),
+                (
+                    "profile",
+                    json!("portable_feature_classification.v99"),
+                    "unsupported portable request schema/profile",
+                ),
+                ("unexpected", json!(true), "unknown field"),
+            ] {
+                let mut invalid = request.clone();
+                invalid[key] = value;
+                assert!(plan(&invalid).unwrap_err().contains(expected));
+            }
+        }
+    }
+
+    #[test]
     fn dense_row_evidence_keeps_opaque_objects_lists_and_input_order() {
         let input = json!({"X":[[1.0,2.0],[3.0,4.0]],"y":[1.0,2.0],"sample_ids":["z","a"],
             "metadata":[{"groups":["opaque"],"nested":[[],{}]},[]],
@@ -986,25 +1085,18 @@ mod tests {
             json!([{"n_components":1,"fit_inputs_v1":{"blocks":[10, 18]}},
                 {"n_components":2,"fit_inputs_v1":{"blocks":[10, 18]}}])
         );
-        // Residual combinations are refused before any dataset or native load.
-        for (definition, expected) in [
-            (
-                json!([augmentation, {"model":{"class":"n4m.SparsePLSDA"}}]),
-                "train augmentation + classification",
-            ),
-            (
-                json!([augmentation, {"branch":[[{"class":"n4m.SNV"}],[{"class":"n4m.MSC"}]]},
+        // The remaining unsupported combination is refused before native load.
+        let (definition, expected) = (
+            json!([augmentation, {"branch":[[{"class":"n4m.SNV"}],[{"class":"n4m.MSC"}]]},
                     {"merge":"features"}, {"model":{"class":"n4m.PLS"}}]),
-                "train augmentation + feature_branch",
-            ),
-        ] {
-            let error = run(
-                &json!({"schema_version":1,"definition":definition,"dataset":{"X":[[1.0],[2.0]],"y":[1.0,2.0]}}),
-                Path::new("/missing/native/library"),
-            )
-            .unwrap_err();
-            assert!(error.contains(expected), "{expected}: {error}");
-        }
+            "train augmentation + feature_branch",
+        );
+        let error = run(
+            &json!({"schema_version":1,"definition":definition,"dataset":{"X":[[1.0],[2.0]],"y":[1.0,2.0]}}),
+            Path::new("/missing/native/library"),
+        )
+        .unwrap_err();
+        assert!(error.contains(expected), "{expected}: {error}");
     }
     #[test]
     fn sparse_pls_da_plan_derives_classification_and_checks_declared_profiles() {
