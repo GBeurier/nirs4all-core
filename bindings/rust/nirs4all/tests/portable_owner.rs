@@ -442,3 +442,338 @@ fn nofit_plan_keeps_non_alphabetical_object_branch_insertion_order() {
         "fitted compact/export/session surface must refuse this graph profile"
     );
 }
+
+/// Row-major rows of the flat oracle matrix, in the given order.
+fn pick_rows(data: &Value, indexes: &[usize]) -> Vec<f64> {
+    let cols = data["cols"].as_u64().unwrap() as usize;
+    let x = data["X"].as_array().unwrap();
+    indexes
+        .iter()
+        .flat_map(|row| (0..cols).map(move |col| x[row * cols + col].as_f64().unwrap()))
+        .collect()
+}
+
+fn indexes(value: &Value) -> Vec<usize> {
+    value
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|i| i.as_u64().unwrap() as usize)
+        .collect()
+}
+
+fn params(
+    context: &n4m::Context,
+    method: &str,
+    named: &[(&str, n4m::roles::ParamValue)],
+) -> n4m::roles::Params {
+    let mut params = n4m::roles::Params::new(context, method).unwrap();
+    for (name, value) in named {
+        params.set(name, value).unwrap();
+    }
+    params
+}
+
+/// One direct Methods augmenter procedure run on row-major fit rows.
+fn augment(
+    context: &n4m::Context,
+    method: &str,
+    named: &[(&str, n4m::roles::ParamValue)],
+    x: &[f64],
+    cols: usize,
+) -> Vec<f64> {
+    let params = params(context, method, named);
+    let x = n4m::MatrixRef::row_major(x, x.len() / cols, cols).unwrap();
+    n4m::roles::run_procedure(
+        context,
+        method,
+        Some(&params),
+        &n4m::roles::FitInputs::new(x),
+    )
+    .unwrap()
+    .double_matrix("X")
+    .unwrap()
+    .data
+}
+
+/// Fit SNV then the model on `fit_x`, predict `eval_x` through the same fitted
+/// SNV state. `blocks` / `groups` attach per-column fit inputs to the model
+/// fit only.
+#[allow(clippy::too_many_arguments)]
+fn snv_then_model(
+    context: &n4m::Context,
+    fit_x: &[f64],
+    fit_y: &[f64],
+    eval_x: &[f64],
+    cols: usize,
+    model: &str,
+    named: &[(&str, n4m::roles::ParamValue)],
+    blocks: Option<&[i64]>,
+    groups: Option<&[i64]>,
+) -> Vec<f64> {
+    use n4m::roles::{Estimator, FitInputs};
+    fn view(x: &[f64], cols: usize) -> n4m::MatrixRef<'_> {
+        n4m::MatrixRef::row_major(x, x.len() / cols, cols).unwrap()
+    }
+    let mut snv = Estimator::new(context, "preprocessing.scatter.snv", None).unwrap();
+    snv.fit(context, &FitInputs::new(view(fit_x, cols)))
+        .unwrap();
+    let fit = snv.transform(context, view(fit_x, cols)).unwrap();
+    let eval = snv.transform(context, view(eval_x, cols)).unwrap();
+    let params = params(context, model, named);
+    let mut estimator = Estimator::new(context, model, Some(&params)).unwrap();
+    let y = n4m::MatrixRef::row_major(fit_y, fit_y.len(), 1).unwrap();
+    let mut inputs = FitInputs::new(fit.as_ref()).y(y);
+    if let Some(blocks) = blocks {
+        inputs = inputs.blocks(blocks);
+    }
+    if let Some(groups) = groups {
+        inputs = inputs.feature_groups(groups);
+    }
+    estimator.fit(context, &inputs).unwrap();
+    estimator.predict(context, eval.as_ref()).unwrap().data
+}
+
+fn assert_close(actual: &Value, expected: &[f64], label: &str) {
+    let actual = actual
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| v.as_f64().unwrap())
+        .collect::<Vec<_>>();
+    assert_eq!(actual.len(), expected.len(), "{label}");
+    for (a, e) in actual.iter().zip(expected) {
+        assert!((a - e).abs() <= 1e-10, "{label}: {a} vs {e}");
+    }
+}
+
+fn pls(k: i64) -> Vec<(&'static str, n4m::roles::ParamValue)> {
+    use n4m::roles::ParamValue::{Bool, Enum, Int};
+    vec![
+        ("n_components", Int(k)),
+        ("solver", Enum("simpls".into())),
+        ("center_x", Bool(true)),
+        ("scale_x", Bool(false)),
+        ("center_y", Bool(true)),
+        ("scale_y", Bool(false)),
+    ]
+}
+
+#[test]
+fn native_train_augmentation_fits_fit_rows_only_and_scores_raw_rows_in_both_modes() {
+    use n4m::roles::ParamValue::{Double, Int};
+    let library = library();
+    let data = oracle()["dataset"].clone();
+    let cols = data["cols"].as_u64().unwrap() as usize;
+    let y = data["y"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| v.as_f64().unwrap())
+        .collect::<Vec<_>>();
+    let declared = |kind: &str, values: Value, seed: Value| {
+        json!({"train_augmentation":{"class":"n4m.NativeXAugmentation",
+            "params":{"kind":kind,"values":values,"seed":seed}}})
+    };
+    // R wire doubles; band_perturb mixes int and double positions.
+    let noise = declared("gaussian_noise", json!([0.02]), json!(7.0));
+    let band = declared(
+        "band_perturb",
+        json!([2.0, 3, 6, 0.9, 1.1, -0.01, 0.01]),
+        json!(42.0),
+    );
+    for holdout in [true, false] {
+        let mut pipeline = Vec::new();
+        if holdout {
+            pipeline.push(json!({"class":"n4m.KennardStone","params":{"test_size":0.3}}));
+        }
+        pipeline.extend([
+            noise.clone(),
+            band.clone(),
+            json!({"class":"n4m.SNV"}),
+            json!({"model":{"class":"n4m.PLS","params":{"scale":false}},"param":"n_components","_range_":[1,3,1]}),
+        ]);
+        let result = nirs4all::portable_execution::run(
+            &json!({"schema_version":1,"definition":{"pipeline":pipeline},"dataset":data}),
+            &library,
+        )
+        .unwrap();
+        assert_eq!(result["profile"], "portable_feature_regression.v1");
+        assert_eq!(
+            result["owner"]["profile"],
+            if holdout {
+                "single_resampled_holdout_graph_bank.v1"
+            } else {
+                "training_graph_bank.v1"
+            }
+        );
+        // The canonical identity keeps the declared, unresolved entries.
+        let recipe = &result["owner"]["evidence"]["variants"][0]["identity"]["recipe"];
+        assert_eq!(
+            recipe[0],
+            declared("gaussian_noise", json!([0.02]), json!(7))
+        );
+        assert_eq!(
+            recipe[1],
+            declared(
+                "band_perturb",
+                json!([2.0, 3, 6, 0.9, 1.1, -0.01, 0.01]),
+                json!(42)
+            )
+        );
+        assert_eq!(result["preprocessing"][1], recipe[1]);
+        // Direct reference on the fit rows in their split order: procedures in
+        // declared order with their own recipe seeds, then SNV and PLS fitted
+        // on the augmented rows and evaluated on raw rows.
+        let train = indexes(&result["split"]["trainIndices"]);
+        let test = indexes(&result["split"]["testIndices"]);
+        let fit_x = pick_rows(&data, &train);
+        let fit_y = train.iter().map(|i| y[*i]).collect::<Vec<_>>();
+        let eval_x = pick_rows(&data, &test);
+        let context = n4m::Context::new().unwrap();
+        let noisy = augment(
+            &context,
+            "augmentation.noise.gaussian_noise",
+            &[("sigma", Double(0.02)), ("seed", Int(7))],
+            &fit_x,
+            cols,
+        );
+        let augmented = augment(
+            &context,
+            "augmentation.spectral.band_perturb",
+            &[
+                ("n_bands", Int(2)),
+                ("bw_lo", Int(3)),
+                ("bw_hi", Int(6)),
+                ("gain_lo", Double(0.9)),
+                ("gain_hi", Double(1.1)),
+                ("offset_lo", Double(-0.01)),
+                ("offset_hi", Double(0.01)),
+                ("seed", Int(42)),
+            ],
+            &noisy,
+            cols,
+        );
+        assert_ne!(augmented, fit_x, "augmentation must act on the fit rows");
+        for (variant, k) in result["variants"].as_array().unwrap().iter().zip(1..) {
+            assert_eq!(variant["n_components"], k);
+            let expected = snv_then_model(
+                &context,
+                &augmented,
+                &fit_y,
+                &eval_x,
+                cols,
+                "models.pls.pls_regression",
+                &pls(k),
+                None,
+                None,
+            );
+            assert_close(
+                &variant["predictions"],
+                &expected,
+                &format!("holdout={holdout} k={k}: fit on augmented rows, evaluate raw rows"),
+            );
+        }
+    }
+}
+
+#[test]
+fn native_terminal_fit_inputs_reach_mbpls_and_group_sparse_and_methods_owns_width() {
+    use n4m::roles::ParamValue::{Double, Int};
+    let library = library();
+    let data = oracle()["dataset"].clone();
+    let cols = data["cols"].as_u64().unwrap() as usize;
+    assert_eq!(cols, 28);
+    let y = data["y"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| v.as_f64().unwrap())
+        .collect::<Vec<_>>();
+    let run = |pipeline: Value| {
+        nirs4all::portable_execution::run(
+            &json!({"schema_version":1,"definition":{"pipeline":pipeline},"dataset":data}),
+            &library,
+        )
+    };
+    // Training mode MBPLS with two declared blocks over the SNV output.
+    let blocks = [10_i64, 18];
+    let result = run(json!([{"class":"n4m.SNV"},
+        {"model":{"class":"n4m.MBPLS","params":{"block_sizes":[10.0, 18],"n_components":2}}}]))
+    .unwrap();
+    assert_eq!(result["owner"]["profile"], "training_graph_bank.v1");
+    assert_eq!(
+        result["owner"]["evidence"]["variants"][0]["identity"]["recipe"][1]["params"]
+            ["fit_inputs_v1"],
+        json!({"blocks":[10, 18]})
+    );
+    let all = (0..data["rows"].as_u64().unwrap() as usize).collect::<Vec<_>>();
+    let x = pick_rows(&data, &all);
+    let context = n4m::Context::new().unwrap();
+    let expected = snv_then_model(
+        &context,
+        &x,
+        &y,
+        &x,
+        cols,
+        "models.multiblock.mb_pls",
+        &[("n_components", Int(2))],
+        Some(&blocks),
+        None,
+    );
+    assert_close(
+        &result["selected"]["predictions"],
+        &expected,
+        "MBPLS blocks",
+    );
+    // Kennard-Stone GroupSparsePLS with four feature groups of seven columns.
+    let groups = (0..28).map(|c| c / 7).collect::<Vec<i64>>();
+    let result = run(json!([{"class":"n4m.KennardStone","params":{"test_size":0.3}},{"class":"n4m.SNV"},
+        {"model":{"class":"n4m.GroupSparsePLS","params":{"group_assignment":groups,"group_lambda":0.2,"n_components":2}}}]))
+    .unwrap();
+    assert_eq!(
+        result["owner"]["profile"],
+        "single_resampled_holdout_graph_bank.v1"
+    );
+    let train = indexes(&result["split"]["trainIndices"]);
+    let test = indexes(&result["split"]["testIndices"]);
+    let expected = snv_then_model(
+        &context,
+        &pick_rows(&data, &train),
+        &train.iter().map(|i| y[*i]).collect::<Vec<_>>(),
+        &pick_rows(&data, &test),
+        cols,
+        "models.sparse.group_sparse_pls",
+        &[("n_components", Int(2)), ("group_lambda", Double(0.2))],
+        None,
+        Some(&groups),
+    );
+    assert_close(
+        &result["selected"]["predictions"],
+        &expected,
+        "GroupSparsePLS feature groups",
+    );
+    // Methods alone checks the actual terminal width: SPA keeps 6 columns.
+    let selected = |blocks: Value| {
+        json!([{"class":"n4m.KennardStone","params":{"test_size":0.3}},
+            {"class":"n4m.Selector","params":{"method":"spa_select","n_components":6,"method_params":{"top_k":6}}},
+            {"model":{"class":"n4m.MBPLS","params":{"block_sizes":blocks,"n_components":2}}}])
+    };
+    assert!(run(selected(json!([3, 3]))).is_ok());
+    for (pipeline, name) in [
+        (selected(json!([10, 18])), "blocks"),
+        (
+            json!([{"class":"n4m.KennardStone","params":{"test_size":0.3}},
+                {"model":{"class":"n4m.GroupSparsePLS","params":{"group_assignment":[0, 1]}}}]),
+            "feature_groups",
+        ),
+    ] {
+        let error = run(pipeline).unwrap_err();
+        assert!(
+            error.contains("portable candidate chain refused"),
+            "{error}"
+        );
+        assert!(error.contains("incompatible length"), "{error}");
+        assert!(error.contains(name), "{error}");
+    }
+}
