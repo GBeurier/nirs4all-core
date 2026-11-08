@@ -1,0 +1,69 @@
+{
+  "schema": "nirs4all.n4a.host_opaque_fixture_expected.v1",
+  "status": "recorded_from_real_core_cli_create_and_update",
+  "container": {
+    "byte_length": 5729,
+    "container_sha256": "a798fec2e71115c4ae269dfb4b94150f3b8371d6aeb09ec62e7b4d1fd82a6c32",
+    "manifest_sha256": "db36e0f96f8c8f3ca17a3a492d8cb11952dda1a4d0e1a30ad0588dc846b838a7"
+  },
+  "members": [
+    {
+      "path": "host/recipe.json",
+      "byte_length": 71,
+      "sha256": "75faa8da760a9d07df203f01c32b3384dd943546399114077cc4360e52616a84"
+    },
+    {
+      "path": "host/data.csv",
+      "byte_length": 57,
+      "sha256": "6104bc228b2ce0ea728d327a0e54f441bf5ac86a15be9d816075a65d8a811353"
+    },
+    {
+      "path": "host/model.bin",
+      "byte_length": 42,
+      "sha256": "de90851006c9d68cd40731d9fda3892380c3330e1a749c4364948ae3c9265c40"
+    },
+    {
+      "path": "host/foreign-model.bin",
+      "byte_length": 18,
+      "sha256": "a3d1fbf351cc3c3677af9090a996b2e4ca71a5cfd29d62a594aaefc96e586d36"
+    },
+    {
+      "path": "host/scores.json",
+      "byte_length": 46,
+      "sha256": "f11e8dff40a65b395c4b33dcdd5467ef250d153d2e3ac444d85bd8b0e75faccd"
+    },
+    {
+      "path": "host/results.json",
+      "byte_length": 44,
+      "sha256": "ff5ea7f9a67bac6f562807452f4c5c13d9c16fc2103ca6f719b82f2d4e778868"
+    }
+  ],
+  "update": {
+    "container": {
+      "byte_length": 4870,
+      "container_sha256": "08a33beb5457aa43aadacb5f83935f85e83cd62d986058e450241c88ae5eab19",
+      "manifest_sha256": "5e88dfd3d96a4f000fd80f51afaf957cc7c655e9d93d4cab191602bbbbba09fd"
+    },
+    "replaced": [
+      {
+        "path": "host/model.bin",
+        "byte_length": 47,
+        "sha256": "18fe71b20b2f60b344d54243bc09f64855ee1b36e237192cc6ffab03ed877afe"
+      }
+    ],
+    "retained_from_base": [
+      "host/recipe.json",
+      "host/data.csv",
+      "host/scores.json",
+      "host/results.json"
+    ],
+    "deleted": [
+      "host/foreign-model.bin"
+    ]
+  },
+  "refusals": {
+    "entrypoint_id": "host-predict",
+    "unknown_member": "host/absent.bin",
+    "undeclared_replacement": "host/undeclared.bin"
+  }
+}

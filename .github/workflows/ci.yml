@@ -110,11 +110,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.0
       - uses: dtolnay/rust-toolchain@stable
-      - name: Exercise the Windows directory flush and both atomic writers
+      - name: Exercise the Windows directory flush and neutral V1 atomic publication
         run: |
           cargo test --locked -p nirs4all durability::tests::directory_metadata_can_be_flushed_after_publication
-          cargo test --locked -p nirs4all archive_v1_publishes_a_relative_target_without_cleanup_error
-          cargo test --locked -p nirs4all v2_round_trips_exact_opaque_package_bytes_and_dual_dispatches
+          cargo test --locked -p nirs4all n4a_file_publishes_a_relative_target_without_cleanup_error
+          cargo test --locked -p nirs4all production_roundtrip_exact_bytes_hashes_and_borrowed_ranges
       - name: Build the Windows workflow CLI for local qualification
         run: cargo build --locked --release -p nirs4all --bin nirs4all-core-archive
       - uses: actions/upload-artifact@v7.0.1

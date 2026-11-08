@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "purpose": "Frozen real old V2/V3 transport bytes for Core V1 UnsupportedFormat/refusal-order tests; no runtime compatibility reader",
+  "files": [
+    {
+      "path": "v2.n4a",
+      "sha256": "d89f4a9fa7586ee85b8d186611c4d5caf91bcf58ed270d145972d98d5cbc54bd",
+      "byte_length": 68665,
+      "physical_schema": "nirs4all.archive_workspace.v2",
+      "source_capture": "baseline-artifacts/package3/parent.n4a",
+      "kind": "genuine historical physical transport; synthetic task data; not fabricated model bytes"
+    },
+    {
+      "path": "v3.n4a",
+      "sha256": "40438bd5c2653f50b7d99b60b5003b951c4f207d9cca62090f627e429bc7b9ae",
+      "byte_length": 55758,
+      "physical_schema": "nirs4all.archive_workspace.v3",
+      "source_capture": "baseline-artifacts/package3/child.n4a",
+      "kind": "genuine historical physical transport; synthetic task data; not fabricated model bytes"
+    }
+  ],
+  "source_baselines_manifest_sha256": "ae88f5d3a445200db52852223b5c0f4f79080f5ba8961c250822d34f027ccdf9",
+  "producer_core_wheel_sha256": "20220264d4cf56c0e7bd20f2c4300687ee5f17b219a76628240972ea58da9227",
+  "capture_commands": [
+    {
+      "label": "baseline-native-package3",
+      "argv": [
+        "/home/delete/nirs4all/nirs4all/.venv/bin/python",
+        "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase2-native-container-cutover/run_in_cohort.py",
+        "baseline-native-package3",
+        "/dev/shm/n4io-coherent-qualification-20261105/core-stage-d-target/native-container-pool/runtime/baseline-cwd",
+        "--",
+        "env",
+        "-u",
+        "N4A_ENGINE",
+        "PYTHONPATH=/run/user/1000/nirs4all-native-container-baseline-20261107/dag-python:/dev/shm/n4io-coherent-qualification-20261105/core-stage-d-target/sdk-host-pool/python-stage:/home/delete/nirs4all/nirs4all",
+        "NIRS4ALL_REQUIRE_NATIVE_ARCHIVE_V2=1",
+        "NIRS4ALL_CORE_LIVE_METHODS_LIBRARY=/run/user/1000/n4m-eh-q7-20261105/native-final-default/cpp/src/libn4m.so.2.20.0",
+        "N4M_LIBRARY_PATH=/run/user/1000/n4m-eh-q7-20261105/native-final-default/cpp/src/libn4m.so.2.20.0",
+        "N4M_LIB_PATH=/run/user/1000/n4m-eh-q7-20261105/native-final-default/cpp/src/libn4m.so.2.20.0",
+        "/home/delete/nirs4all/nirs4all/.venv/bin/python",
+        "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase2-native-container-cutover/baseline-tests/native_refit_baseline.py",
+        "/dev/shm/n4io-coherent-qualification-20261105/core-stage-d-target/native-container-pool/runtime/baseline-refit-artifacts"
+      ],
+      "command_record_sha256": "9c1bbb185b40281ab5b4319e4f927f6db3e89e03f7c954731edb347eff7cd803",
+      "exit": 1
+    },
+    {
+      "label": "baseline-native-package3-complete",
+      "argv": [
+        "/home/delete/nirs4all/nirs4all/.venv/bin/python",
+        "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase2-native-container-cutover/run_in_cohort.py",
+        "baseline-native-package3-complete",
+        "/dev/shm/n4io-coherent-qualification-20261105/core-stage-d-target/native-container-pool/runtime/baseline-cwd",
+        "--",
+        "env",
+        "-u",
+        "N4A_ENGINE",
+        "PYTHONPATH=/run/user/1000/nirs4all-native-container-baseline-20261107/dag-python:/dev/shm/n4io-coherent-qualification-20261105/core-stage-d-target/sdk-host-pool/python-stage:/home/delete/nirs4all/nirs4all",
+        "NIRS4ALL_REQUIRE_NATIVE_ARCHIVE_V2=1",
+        "NIRS4ALL_CORE_LIVE_METHODS_LIBRARY=/run/user/1000/n4m-eh-q7-20261105/native-final-default/cpp/src/libn4m.so.2.20.0",
+        "N4M_LIBRARY_PATH=/run/user/1000/n4m-eh-q7-20261105/native-final-default/cpp/src/libn4m.so.2.20.0",
+        "N4M_LIB_PATH=/run/user/1000/n4m-eh-q7-20261105/native-final-default/cpp/src/libn4m.so.2.20.0",
+        "/home/delete/nirs4all/nirs4all/.venv/bin/python",
+        "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase2-native-container-cutover/baseline-tests/complete_native_refit_baseline.py",
+        "/dev/shm/n4io-coherent-qualification-20261105/core-stage-d-target/native-container-pool/runtime/baseline-refit-artifacts"
+      ],
+      "command_record_sha256": "23b442004ef8e5314751a0909d0270f2a70ee929e0e3b742212e8c57634f07e9",
+      "exit": 0
+    }
+  ],
+  "capture_note": "Original Package3 command completed scientific parent/child/no-fit/scoreless/ID and 1e-12 oracle assertions, then harness write_text(bytes) failed. The recorded continuation persisted and reverified original parent/child bytes without repeated native fit, exit0.",
+  "reuse_note": "Copied exact already-preserved baseline bytes; no writer/model fit/runtime regeneration in this preservation step. Historical zero DOS dates remain unchanged.",
+  "fixture_data": "Public synthetic task data; no private user inputs or credentials.",
+  "qualification_limit": "Historical physical-format refusal fixture only; not a new scientific/native-import qualification or universal old-format reader."
+}

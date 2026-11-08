@@ -6,8 +6,10 @@ The public documentation starts at [index.md](index.md).
 | --- | --- |
 | Installation and first pipeline | [Installation](installation.md), [Getting started](getting_started.md) |
 | Ownership and host contracts | [Architecture](ARCHITECTURE.md), [Bindings](BINDINGS.md), [Capabilities](CAPABILITIES.md) |
+| Native execution profile definitions | [Execution profiles](EXECUTION_PROFILES.md) |
 | Names and supported operators | [Naming](NAMING.md), [Operators](OPERATORS.md) |
 | Dependency compatibility and parity | [Compatibility](COMPATIBILITY.md), [Parity](PARITY.md) |
+| n4a exchange, versioning and archive boundaries | [n4a compatibility](N4A_COMPATIBILITY.md) |
 | Release process | [Release](RELEASE.md), [Publishing](PUBLISHING.md) |
 
 Private development notes, migration checklists, and audit records belong in

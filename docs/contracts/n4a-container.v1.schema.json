@@ -1,0 +1,384 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nirs4all.org/contracts/n4a-container.v1.schema.json",
+  "title": "Canonical n4a V1 transport manifest",
+  "description": "Structural contract. Core additionally checks UTF-8 byte budgets, NFC, unique IDs/paths, ownership, identity owner equality and reference closure. Scientific content and identity algorithms belong to owners. Manifest structural integers require unsigned decimal JSON integer tokens (no sign, fraction or exponent), with existing u32/u64 ranges, supported-version values and selected budgets still enforced. The Rust reader is authoritative: JSON Schema integer/const accepts 1.0 and 1e0 by design and cannot express numeric lexemes or fully validate storage bytes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "minimum_reader_version",
+    "container_id",
+    "required_features",
+    "physical_profile",
+    "members",
+    "artifacts",
+    "links",
+    "entrypoints"
+  ],
+  "properties": {
+    "schema": {
+      "const": "nirs4all.n4a.container.v1"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "minimum_reader_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "container_id": {
+      "$ref": "#/$defs/id"
+    },
+    "required_features": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/id"
+      },
+      "uniqueItems": true
+    },
+    "physical_profile": {
+      "const": "zip-stored.v1"
+    },
+    "members": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/member"
+      },
+      "minItems": 1
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/artifact"
+      },
+      "minItems": 1,
+      "contains": {
+        "type": "object",
+        "required": [
+          "storage"
+        ],
+        "properties": {
+          "storage": {
+            "type": "object",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "const": "embedded"
+              }
+            }
+          }
+        }
+      }
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/link"
+      }
+    },
+    "entrypoints": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/entrypoint"
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "allOf": [
+        {
+          "pattern": "\\S"
+        },
+        {
+          "not": {
+            "pattern": "[\\u0000-\\u001f\\u007f-\\u009f]"
+          }
+        }
+      ]
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "allOf": [
+        {
+          "not": {
+            "pattern": "(^/|\\\\|[\\u0000-\\u001f\\u007f-\\u009f]|(^|/)(\\.|\\.\\.)?(/|$)|(^|/)[A-Za-z]:)"
+          }
+        },
+        {
+          "not": {
+            "const": "manifest.json"
+          }
+        }
+      ],
+      "description": "NFC relative UTF-8 path; at most 512 UTF-8 bytes (transport check). Case-sensitive; never an OS extraction path.",
+      "x-maxUtf8Bytes": 512,
+      "x-normalization": "NFC"
+    },
+    "content_type": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4294967295
+        }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "owner",
+        "schema",
+        "schema_version",
+        "fingerprint_profile",
+        "fingerprint"
+      ],
+      "properties": {
+        "owner": {
+          "$ref": "#/$defs/id"
+        },
+        "schema": {
+          "$ref": "#/$defs/id"
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4294967295
+        },
+        "fingerprint_profile": {
+          "$ref": "#/$defs/id"
+        },
+        "fingerprint": {
+          "$ref": "#/$defs/id"
+        }
+      }
+    },
+    "requirements": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "artifact_id"
+          ],
+          "properties": {
+            "artifact_id": {
+              "$ref": "#/$defs/id"
+            }
+          }
+        }
+      ]
+    },
+    "member": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "byte_length",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/path"
+        },
+        "byte_length": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "storage": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "root_member",
+            "member_paths"
+          ],
+          "properties": {
+            "kind": {
+              "const": "embedded"
+            },
+            "root_member": {
+              "$ref": "#/$defs/path"
+            },
+            "member_paths": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/path"
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "reference"
+            },
+            "root_sha256": {
+              "$ref": "#/$defs/sha256"
+            }
+          }
+        }
+      ]
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "owner",
+        "content_type",
+        "identity",
+        "storage",
+        "requirements"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "recipe",
+            "dataset",
+            "model",
+            "run",
+            "result",
+            "score",
+            "prediction",
+            "residual",
+            "training_evidence",
+            "full_refit",
+            "provenance",
+            "attachment"
+          ]
+        },
+        "owner": {
+          "$ref": "#/$defs/id"
+        },
+        "content_type": {
+          "$ref": "#/$defs/content_type"
+        },
+        "identity": {
+          "$ref": "#/$defs/identity"
+        },
+        "storage": {
+          "$ref": "#/$defs/storage"
+        },
+        "requirements": {
+          "$ref": "#/$defs/requirements"
+        }
+      }
+    },
+    "link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "owner",
+        "relation",
+        "source_artifact",
+        "target_artifact"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "owner": {
+          "$ref": "#/$defs/id"
+        },
+        "relation": {
+          "$ref": "#/$defs/id"
+        },
+        "source_artifact": {
+          "$ref": "#/$defs/id"
+        },
+        "target_artifact": {
+          "$ref": "#/$defs/id"
+        }
+      }
+    },
+    "entrypoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "owner",
+        "operation",
+        "root_artifact",
+        "input_artifacts",
+        "required_features",
+        "requirements"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "owner": {
+          "$ref": "#/$defs/id"
+        },
+        "operation": {
+          "$ref": "#/$defs/id"
+        },
+        "root_artifact": {
+          "$ref": "#/$defs/id"
+        },
+        "input_artifacts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "required_features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "requirements": {
+          "$ref": "#/$defs/requirements"
+        }
+      }
+    }
+  }
+}

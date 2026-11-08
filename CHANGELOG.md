@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.0 - Unreleased
+
+- Replace the public physical Archive V1/V2/V3 builders/readers with native
+  package admission and the Core V1 container. Owner predictor/refit schemas,
+  Methods fitted-state formats and recipe versions remain unchanged.
+- Target DAG-ML 0.4.0, IO 0.3.0 and Formats 0.2.15 in the native aggregate.
+  Host Formats integrations retain their >=0.2.14 floor. Keep Data 0.2.16,
+  Rust n4m 0.4.1, host Methods 1.3.13 and Methods ABI 2.20 unchanged.
+- Require IO >=0.3.0 and DAG-ML >=0.4.0,<0.5 in Python extras; update
+  Core-owned npm floors without making optional upstreams mandatory.
+- Qualification, registry lock resolution and publication remain separate gates.
+
 ## 0.4.7
 
 - Compile the Rust and Python-native aggregate with the published DAG-ML

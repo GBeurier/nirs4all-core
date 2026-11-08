@@ -3,10 +3,10 @@ use dag_ml_core::{ConformalSmallSamplePolicy, RunId};
 use nirs4all::conformal::{
     calibrate_archive, resolve_uncertainty_cohort, CalibrateArchiveRequest, UncertaintyCohortInput,
 };
+use nirs4all::n4a_native_package::load_native_predictor_package as load_archive_v2;
 use nirs4all::robustness::{robustness_archive, FrozenRobustnessRequest};
 use nirs4all::{
-    load_archive_v2, predict_methods_archive_v2_matrix_conformal_presentation_v2,
-    run_dense_regression_workflow, write_archive_v2, ArchivePayload, ArchiveV2WriteRequest,
+    predict_methods_archive_v2_matrix_conformal_presentation_v2, run_dense_regression_workflow,
     DenseRegressionPreprocessing, DenseRegressionWorkflowRequest,
     MethodsArchiveMatrixPredictRequest,
 };
@@ -64,33 +64,73 @@ fn native_frozen_archive_calibrates_replays_intervals_and_gaussian_audits() {
         run_id: "run:rust:conformal:train",
     })
     .unwrap();
-    let original = load_archive_v2(&model).unwrap();
-    let corrupted = directory.path().join("rehashed-corrupted-model.n4a");
-    let payloads = original
-        .members()
-        .iter()
-        .map(|(path, bytes)| {
-            let mut bytes = bytes.clone();
-            if path.ends_with(".n4mm") {
-                *bytes.last_mut().unwrap() ^= 1;
-            }
-            ArchivePayload {
-                path: path.clone(),
-                bytes,
-            }
-        })
-        .collect();
-    write_archive_v2(
-        &corrupted,
-        ArchiveV2WriteRequest {
-            manifest: original.manifest().clone(),
-            payloads,
-        },
+    // A calibration update must preserve unrelated opaque bytes, identity,
+    // links and entrypoints, including unknown features on an unrelated entry.
+    let bytes = std::fs::read(&model).unwrap();
+    let base = nirs4all::n4a::open_n4a_bytes(&bytes, Default::default()).unwrap();
+    let mut manifest = base.manifest().clone();
+    let foreign: nirs4all::n4a::N4aArtifact = serde_json::from_value(json!({
+        "id":"foreign", "kind":"attachment", "owner":"foreign-owner",
+        "content_type":{"id":"foreign.bytes","version":1},
+        "identity":{"owner":"foreign-owner","schema":"foreign.bytes","schema_version":1,
+            "fingerprint_profile":"foreign.identity","fingerprint":"keep:identity"},
+        "storage":{"kind":"embedded","root_member":"foreign/data.bin","member_paths":["foreign/data.bin"]},
+        "requirements":null
+    })).unwrap();
+    let foreign_entry: nirs4all::n4a::N4aEntrypoint = serde_json::from_value(json!({
+        "id":"foreign-view", "owner":"foreign-owner", "operation":"foreign-op",
+        "root_artifact":"foreign", "input_artifacts":[], "required_features":["future.foreign@4"], "requirements":null
+    })).unwrap();
+    let foreign_link = nirs4all::n4a::N4aLink {
+        id: "foreign-link".into(),
+        owner: "foreign-owner".into(),
+        relation: "opaque_relation".into(),
+        source_artifact: "foreign".into(),
+        target_artifact: "foreign".into(),
+    };
+    manifest.artifacts.push(foreign.clone());
+    manifest.entrypoints.push(foreign_entry.clone());
+    manifest.links.push(foreign_link.clone());
+    manifest.members.push(nirs4all::n4a::N4aMember {
+        path: "foreign/data.bin".into(),
+        byte_length: 4,
+        sha256: format!("{:x}", Sha256::digest(b"\xffraw")),
+    });
+    let (_, mixed_bytes) = nirs4all::n4a::write_n4a_update(
+        &base,
+        manifest,
+        vec![nirs4all::n4a::N4aMemberInput {
+            path: "foreign/data.bin",
+            bytes: b"\xffraw",
+        }],
+        Default::default(),
     )
     .unwrap();
-    // The container has valid newly derived raw hashes; semantic closure must
-    // still refuse model bytes that differ from the signed native package.
-    load_archive_v2(&corrupted).unwrap();
+    std::fs::write(&model, &mixed_bytes).unwrap();
+    let original = load_archive_v2(&model).unwrap();
+    let corrupted = directory.path().join("rehashed-corrupted-model.n4a");
+    let mut members = original.members().clone();
+    let state = &original.closure().state_members()[0];
+    *members
+        .get_mut(&state.member_path)
+        .unwrap()
+        .last_mut()
+        .unwrap() ^= 1;
+    // Generic storage accepts freshly derived hashes. The selected scientific
+    // reader must still reject state differing from the package's owner proof.
+    let mixed = nirs4all::n4a::open_n4a_bytes(&mixed_bytes, Default::default()).unwrap();
+    let (_, bytes) = nirs4all::n4a::write_n4a_update(
+        &mixed,
+        original.manifest().clone(),
+        members
+            .iter()
+            .map(|(path, bytes)| nirs4all::n4a::N4aMemberInput { path, bytes })
+            .collect(),
+        Default::default(),
+    )
+    .unwrap();
+    std::fs::write(&corrupted, bytes).unwrap();
+    assert!(load_archive_v2(&corrupted).is_err());
     let refused = calibrate_archive(CalibrateArchiveRequest {
         model_archive: &corrupted,
         calibration_record: &heldout,
@@ -102,7 +142,7 @@ fn native_frozen_archive_calibrates_replays_intervals_and_gaussian_audits() {
         small_sample_policy: ConformalSmallSamplePolicy::Error,
     })
     .unwrap_err();
-    assert!(refused.contains("semantic closure"), "{refused}");
+    assert!(refused.contains("closure"), "{refused}");
     let refused_audit = robustness_archive(FrozenRobustnessRequest {
         archive_path: &corrupted,
         methods_library_path: &library,
@@ -129,10 +169,7 @@ fn native_frozen_archive_calibrates_replays_intervals_and_gaussian_audits() {
         ],
     })
     .unwrap_err();
-    assert!(
-        refused_audit.contains("semantic closure"),
-        "{refused_audit}"
-    );
+    assert!(refused_audit.contains("closure"), "{refused_audit}");
     let calibrated = directory.path().join("calibrated.n4a");
     let mut aliases = heldout.clone();
     aliases["origin_ids"] = json!(vec!["train.00"; 12]);
@@ -173,6 +210,47 @@ fn native_frozen_archive_calibrates_replays_intervals_and_gaussian_audits() {
     );
     std::fs::remove_file(model).unwrap();
     let archive = load_archive_v2(&calibrated).unwrap();
+    let calibrated_file =
+        nirs4all::n4a_file::open_n4a_file(&calibrated, Default::default()).unwrap();
+    assert_eq!(
+        calibrated_file
+            .read_member("foreign/data.bin", Default::default())
+            .unwrap(),
+        b"\xffraw"
+    );
+    assert!(archive.manifest().artifacts.contains(&foreign));
+    assert!(archive.manifest().links.contains(&foreign_link));
+    assert!(archive.manifest().entrypoints.contains(&foreign_entry));
+    // A retained foreign reference to a replaced root must refuse instead of
+    // silently changing the identity its fixed ID resolves to.
+    let base = nirs4all::n4a::open_n4a_bytes(&mixed_bytes, Default::default()).unwrap();
+    let mut manifest = base.manifest().clone();
+    manifest.links.push(nirs4all::n4a::N4aLink {
+        id: "retained-model-reference".into(),
+        owner: "foreign-owner".into(),
+        relation: "opaque_reference".into(),
+        source_artifact: "foreign".into(),
+        target_artifact: "model".into(),
+    });
+    let (_, pinned_bytes) =
+        nirs4all::n4a::write_n4a_update(&base, manifest, vec![], Default::default()).unwrap();
+    let pinned = nirs4all::n4a::open_n4a_bytes(&pinned_bytes, Default::default()).unwrap();
+    let before = nirs4all::n4a_native_package::read_native_package_for_operation(
+        &pinned,
+        None,
+        "calibrate-external",
+        Default::default(),
+    )
+    .unwrap();
+    let error = nirs4all::n4a_native_package::calibration_update(
+        &pinned,
+        &before,
+        archive.training_outcome_bytes().unwrap(),
+        archive.portable_predictor_package().unwrap(),
+        "refused:rebind",
+    )
+    .unwrap_err();
+    assert!(error.to_string().contains("retained link"), "{error}");
     let independent = fixture("test.");
     let resolved = resolve_uncertainty_cohort(
         &archive,

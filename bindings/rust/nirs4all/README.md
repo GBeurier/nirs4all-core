@@ -88,3 +88,19 @@ checkouts for artifacts.
 option. The complete license texts shipped in this crate are
 [`LICENSES/CECILL-2.1.txt`](LICENSES/CECILL-2.1.txt) and
 [`LICENSES/AGPL-3.0-or-later.txt`](LICENSES/AGPL-3.0-or-later.txt).
+
+## Owner-neutral `.n4a` exchange
+
+`n4a::parse_n4a_manifest`, `n4a::write_n4a_bytes` and `n4a::write_n4a_update`
+build a canonical container from caller manifest bytes and opaque member bytes
+(an update reuses the bytes of an immutable base for every declared member that
+is not replaced). `OwnedN4a::{member, artifact_members, manifest_bytes,
+archive_bytes}` read it back after one validation, and
+`n4a_owner_portable::n4a_container_view` reports readability while leaving
+`executability` as `not_evaluated`. `n4a_file::open_n4a_file` keeps only metadata
+in memory and verifies the bytes of every read, and `n4a_file::write_n4a_file`
+streams known sources; `.n4a` V1 content has no intrinsic cap, only an optional
+`N4aMemoryBudget` for working memory. The archive command adds `n4a-write` and
+`n4a-read` (numbered `member-000000.bin` files plus the exact `manifest.json`;
+archive paths are never OS paths). Core never interprets, deserializes or
+executes a stored host payload.

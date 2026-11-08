@@ -1,11 +1,9 @@
 //! Frozen audit transport over Methods perturbations and DAG-ML report semantics.
 use crate::conformal::{resolve_uncertainty_cohort, UncertaintyCohortInput};
 use crate::native_methods_replay::configure_methods_runtime_for_source;
-use crate::{
-    load_archive_v2, predict_methods_archive_v2_matrix, MethodsArchiveMatrixPredictRequest,
-};
+use crate::{predict_methods_archive_v2_matrix, MethodsArchiveMatrixPredictRequest};
 use dag_ml_core::public_robustness::{frozen_robustness_report, FrozenRobustnessScenario};
-use dag_ml_core::{ConformalCalibrationTruth, PortablePredictorPackage, RunId, SampleId};
+use dag_ml_core::{ConformalCalibrationTruth, RunId, SampleId};
 use n4m::roles::{run_procedure, FitInputs, Params};
 use n4m::{Context, MatrixRef};
 use serde_json::Value;
@@ -25,22 +23,23 @@ pub struct FrozenRobustnessRequest<'a> {
 }
 
 pub fn robustness_archive(input: FrozenRobustnessRequest<'_>) -> Result<Value, String> {
-    let archive = load_archive_v2(input.archive_path).map_err(|e| e.to_string())?;
-    let package = PortablePredictorPackage::from_json(
-        std::str::from_utf8(
-            archive
-                .portable_predictor_package()
-                .map_err(|e| e.to_string())?,
-        )
-        .map_err(|e| e.to_string())?,
-    )
-    .map_err(|e| e.to_string())?;
-    dag_ml_core::validate_archive_v2_portable_payloads(
-        archive.manifest(),
-        &package,
-        archive.members(),
-    )
-    .map_err(|e| e.to_string())?;
+    let archive = crate::n4a_native_package::load_native_predictor_package(input.archive_path)
+        .map_err(|e| e.to_string())?;
+    robustness_archive_loaded(input, &archive)
+}
+
+/// Reuse the selected closure and its storage receipt for every perturbation.
+pub fn robustness_archive_loaded(
+    input: FrozenRobustnessRequest<'_>,
+    archive: &crate::n4a_native_package::LoadedNativePackage,
+) -> Result<Value, String> {
+    archive
+        .require_operation("predict-external")
+        .map_err(|e| e.to_string())?;
+    let package = archive
+        .predictor_package()
+        .map_err(|e| e.to_string())?
+        .clone();
     let [binding] = package.output_bindings.as_slice() else {
         return Err("one robustness output required".into());
     };
@@ -63,7 +62,7 @@ pub fn robustness_archive(input: FrozenRobustnessRequest<'_>) -> Result<Value, S
             sample_ids: &input.sample_ids,
         }
     };
-    let cohort = resolve_uncertainty_cohort(&archive, cohort_input)?;
+    let cohort = resolve_uncertainty_cohort(archive, cohort_input)?;
     let ids = cohort
         .sample_ids
         .iter()
@@ -117,7 +116,7 @@ pub fn robustness_archive(input: FrozenRobustnessRequest<'_>) -> Result<Value, S
         };
         replays.push(
             predict(
-                &archive,
+                archive,
                 MethodsArchiveMatrixPredictRequest {
                     sample_ids: cohort.sample_ids.clone(),
                     x: shifted,

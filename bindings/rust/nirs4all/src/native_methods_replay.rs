@@ -9,27 +9,30 @@ use std::fmt;
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
-use std::sync::{Mutex, OnceLock};
+use std::sync::{Arc, Mutex, OnceLock};
 
 use dag_ml_core::training::PredictionSource;
 use dag_ml_core::{
     build_conformal_presentation_v1, build_conformal_presentation_v2,
     deserialize_external_contract, execute_loaded_methods_portable_refit_replay_v3,
     execute_loaded_methods_predictor_replay, inspect_methods_native_predictor_descriptor_v1,
-    methods_n4mm_abi_requirement, methods_pls_predict_feature_content_fingerprint,
-    ConformalPresentationV1, ConformalPresentationV2, ExternalDataPlanEnvelope, MethodsPlsDataset,
-    MethodsPlsMatrix, MethodsPortablePredictorReplayInput, MethodsPortableRefitReplayInputV3,
-    MethodsRuntime, NativePredictorDescriptorV1, ObservationId, Phase, PortablePredictorPackage,
-    PortableRefitPackageV3, PortableRefitReplayOutcomeV3, PredictionKind, PredictionPartition,
-    RunId, RuntimeControllerRegistry, SampleId, SampleRelation, SampleRelationSet,
-    TrainingReplayOutcome, TrainingReplayRequest, EXTERNAL_DATA_PLAN_ENVELOPE_SCHEMA_VERSION_V1,
+    methods_pls_predict_feature_content_fingerprint, ConformalPresentationV1,
+    ConformalPresentationV2, ExternalDataPlanEnvelope, MethodsPlsDataset, MethodsPlsMatrix,
+    MethodsPortablePredictorReplayInput, MethodsPortableRefitReplayInputV3, MethodsRuntime,
+    NativePredictorDescriptorV1, ObservationId, Phase, PortablePredictorPackage,
+    PortableRefitReplayOutcomeV3, PredictionKind, PredictionPartition, RunId,
+    RuntimeControllerRegistry, SampleId, SampleRelation, SampleRelationSet, TrainingReplayOutcome,
+    TrainingReplayRequest, EXTERNAL_DATA_PLAN_ENVELOPE_SCHEMA_VERSION_V1,
     TRAINING_REPLAY_REQUEST_SCHEMA_VERSION,
 };
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use tempfile::TempDir;
 
-use crate::{load_archive_v2, load_archive_v3, LoadedArchiveV2, LoadedArchiveV3};
+use crate::n4a_native_package::{
+    load_native_predictor_package as load_archive_v2, load_native_refit_package as load_archive_v3,
+    LoadedNativePackage,
+};
 
 /// Typed current-cohort input accepted by the callback-free DAG-ML replay.
 pub struct MethodsArchivePredictRequest {
@@ -93,6 +96,7 @@ pub(crate) struct MethodsArchiveMatrixPredictComposition {
 }
 
 const MAX_ATTESTED_METHODS_LIBRARY_BYTES: u64 = 64 * 1024 * 1024;
+#[cfg(test)]
 const CORE_METHODS_ABI_MAJOR: u64 = 2;
 // This is the upstream binding's admitted ABI, not a guessed libn4m version.
 // Its dynamic-library negotiation still runs against the attested snapshot.
@@ -105,11 +109,32 @@ struct AttestedMethodsLibrary {
     bytes: Vec<u8>,
 }
 
+/// Retain the actual owner runtime error across process-identity retries. Older
+/// transports render its Display text; native actions retain its source chain.
+#[derive(Clone, Debug)]
+struct SharedMethodsAbiError(Arc<dyn std::error::Error + Send + Sync>);
+impl fmt::Display for SharedMethodsAbiError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(&self.0, f)
+    }
+}
+impl std::error::Error for SharedMethodsAbiError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(self.0.as_ref())
+    }
+}
+#[cfg(test)]
+impl From<&str> for SharedMethodsAbiError {
+    fn from(value: &str) -> Self {
+        Self(Arc::new(replay_error(value)))
+    }
+}
+
 struct ConfiguredMethodsLibrary {
     source_canonical_path: PathBuf,
     sha256: String,
     snapshot_path: PathBuf,
-    abi_error: Option<String>,
+    abi_error: Option<SharedMethodsAbiError>,
     _snapshot_directory: TempDir,
 }
 
@@ -474,23 +499,38 @@ fn configure_attested_methods_library(
 fn configure_methods_library_identity(
     attested: AttestedMethodsLibrary,
 ) -> Result<PathBuf, NativeMethodsReplayError> {
+    configure_methods_library_identity_typed(attested).map_err(replay_error)
+}
+
+fn configure_methods_library_identity_typed(
+    attested: AttestedMethodsLibrary,
+) -> dag_ml_core::artifact_facets::FacetResult<PathBuf> {
+    use dag_ml_core::artifact_facets::FacetRefusal;
+    let unavailable = |source: NativeMethodsReplayError| FacetRefusal::RuntimeUnavailable {
+        source: Box::new(source),
+    };
     let lock = CONFIGURED_METHODS_LIBRARY.get_or_init(|| Mutex::new(None));
     let mut configured = lock
         .lock()
-        .map_err(|_| replay_error("libn4m process identity lock is poisoned"))?;
+        .map_err(|_| unavailable(replay_error("libn4m process identity lock is poisoned")))?;
     if let Some(existing) = configured.as_ref() {
-        return ensure_same_configured_methods_library(existing, &attested);
+        // Check source identity before replaying a cached ABI failure.
+        if let Some(error) = &existing.abi_error {
+            if existing.source_canonical_path == attested.source_canonical_path
+                && existing.sha256 == attested.sha256
+            {
+                return Err(FacetRefusal::RuntimeUnavailable {
+                    source: Box::new(error.clone()),
+                });
+            }
+        }
+        return ensure_same_configured_methods_library(existing, &attested).map_err(unavailable);
     }
-
-    let (snapshot_directory, snapshot_path) = write_attested_methods_snapshot(&attested)?;
-    // DAG-ML's configure opens the snapshot through the n4m instance it links
-    // and creates a native context, which is the authoritative ABI preflight.
+    let (snapshot_directory, snapshot_path) =
+        write_attested_methods_snapshot(&attested).map_err(unavailable)?;
     let abi_error = MethodsRuntime::configure(&snapshot_path)
         .err()
-        .map(|error| format!("cannot configure the attested Methods runtime: {error}"));
-    // Core's candidate n4m 0.4.1 instance serves the same attested
-    // snapshot. An older libn4m still replays Archive V2 but cannot load the
-    // role-pipeline symbols; role recipes then report the unconfigured runtime.
+        .map(|source| SharedMethodsAbiError(Arc::new(source)));
     if abi_error.is_none() {
         let _ = n4m::configure_library(&snapshot_path);
     }
@@ -501,10 +541,10 @@ fn configure_methods_library_identity(
         abi_error: abi_error.clone(),
         _snapshot_directory: snapshot_directory,
     });
-    if let Some(error) = abi_error {
-        return Err(replay_error(format!(
-            "the attested libn4m failed Methods ABI verification: {error}"
-        )));
+    if let Some(source) = abi_error {
+        return Err(FacetRefusal::RuntimeUnavailable {
+            source: Box::new(source),
+        });
     }
     Ok(snapshot_path)
 }
@@ -524,6 +564,35 @@ pub(crate) fn configure_methods_runtime_for_source(
         replay_error(format!(
             "cannot open the process-attested Methods runtime: {error}"
         ))
+    })
+}
+
+/// Configure the existing process-attested snapshot against an explicit digest.
+/// Native owner actions call this only after static admission has succeeded.
+/// Keeping the original error typed lets that action distinguish an unavailable
+/// runtime from an owner or operation refusal without changing older routes.
+pub(crate) fn configure_attested_methods_runtime(
+    path: &Path,
+    expected_sha256: &str,
+) -> dag_ml_core::artifact_facets::FacetResult<MethodsRuntime> {
+    use dag_ml_core::artifact_facets::FacetRefusal;
+    if expected_sha256.len() != 64
+        || !expected_sha256
+            .bytes()
+            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+    {
+        return Err(FacetRefusal::InvalidPayload {
+            detail: "libn4m SHA-256 must be 64 lowercase hexadecimal characters".into(),
+        });
+    }
+    let attested = attest_methods_library(path, expected_sha256).map_err(|source| {
+        FacetRefusal::RuntimeUnavailable {
+            source: Box::new(source),
+        }
+    })?;
+    let snapshot_path = configure_methods_library_identity_typed(attested)?;
+    MethodsRuntime::configure(&snapshot_path).map_err(|source| FacetRefusal::RuntimeUnavailable {
+        source: Box::new(source),
     })
 }
 
@@ -550,7 +619,7 @@ pub fn preflight_methods_archive_v2_library(
 /// readable: their descriptor is derived from the native bytes here. A newer
 /// embedded descriptor is accepted only when it exactly matches that result.
 pub fn inspect_methods_archive_v2_predictors(
-    archive: &LoadedArchiveV2,
+    archive: &LoadedNativePackage,
     methods_library_path: impl AsRef<Path>,
     methods_library_sha256: &str,
 ) -> Result<Vec<NativePredictorDescriptorV1>, NativeMethodsReplayError> {
@@ -560,73 +629,31 @@ pub fn inspect_methods_archive_v2_predictors(
 }
 
 fn inspect_package_native_predictors(
-    archive: &LoadedArchiveV2,
+    archive: &LoadedNativePackage,
     package: &PortablePredictorPackage,
 ) -> Result<Vec<NativePredictorDescriptorV1>, NativeMethodsReplayError> {
-    require_configured_archive_methods_abi(archive.manifest(), "Archive V2")?;
-    let mut declarations = archive
-        .methods_n4mm_artifacts()
-        .map_err(|error| {
-            replay_error(format!(
-                "Core Archive V2 N4MM declaration read failed: {error}"
-            ))
-        })?
-        .into_iter()
-        .map(|declaration| (declaration.artifact_id().to_owned(), declaration))
-        .collect::<BTreeMap<_, _>>();
+    require_configured_archive_methods_abi(archive, "Archive V2")?;
     let mut descriptors = Vec::new();
-
     for record in &package.execution_bundle.refit_artifacts {
         let artifact = &record.artifact;
         if artifact.kind != "n4m_model" {
             continue;
         }
-        let declaration = declarations.remove(artifact.id.as_str()).ok_or_else(|| {
-            replay_error(format!(
-                "Core Archive V2 has no N4MM declaration for DAG-ML artifact `{}`",
-                artifact.id
-            ))
-        })?;
-        let (artifact_abi_major, artifact_abi_min_minor) = methods_n4mm_abi_requirement(artifact)
-            .map_err(|error| {
-            replay_error(format!(
-                "DAG-ML refused Archive V2 predictor ABI for `{}`: {error}",
-                artifact.id
-            ))
-        })?;
+        let bytes = archive
+            .state_member(artifact.id.as_str())
+            .map_err(replay_error)?;
         if artifact.backend != Some(dag_ml_core::ArtifactBackend::Raw)
-            || artifact.uri.as_deref() != Some(declaration.member_path())
-            || artifact_abi_major != CORE_METHODS_ABI_MAJOR as u32
-            || artifact_abi_min_minor != declaration.abi_min_minor()
+            || package
+                .execution_bundle
+                .raw_artifact_payloads
+                .get(&artifact.id)
+                .map(Vec::as_slice)
+                != Some(bytes)
         {
-            return Err(replay_error(format!(
-                "Core Archive V2 N4MM declaration does not match DAG-ML artifact `{}`",
-                artifact.id
-            )));
+            return Err(replay_error(
+                "native predictor differs from owner-validated physical state",
+            ));
         }
-        let bytes = archive.member(declaration.member_path()).map_err(|error| {
-            replay_error(format!(
-                "Core Archive V2 N4MM member `{}` read failed: {error}",
-                declaration.member_path()
-            ))
-        })?;
-        let embedded = package
-            .execution_bundle
-            .raw_artifact_payloads
-            .get(&artifact.id)
-            .ok_or_else(|| {
-                replay_error(format!(
-                    "DAG-ML package has no detached N4MM bytes for `{}`",
-                    artifact.id
-                ))
-            })?;
-        if embedded.as_slice() != bytes {
-            return Err(replay_error(format!(
-                "DAG-ML N4MM bytes differ from the inventoried Archive V2 member for `{}`",
-                artifact.id
-            )));
-        }
-
         let derived =
             inspect_methods_native_predictor_descriptor_v1(&artifact.controller_id, bytes)
                 .map_err(|error| {
@@ -635,12 +662,6 @@ fn inspect_package_native_predictors(
                         artifact.id
                     ))
                 })?;
-        if derived.format_version != declaration.format_version() {
-            return Err(replay_error(format!(
-                "Core Archive V2 N4MM declaration format does not match inspected artifact `{}`",
-                artifact.id
-            )));
-        }
         if artifact
             .native_predictor_descriptor
             .as_ref()
@@ -651,13 +672,11 @@ fn inspect_package_native_predictors(
                 artifact.id
             )));
         }
-        if declaration.format_version() >= 2
+        if derived.format_version >= 2
             && artifact
                 .native_predictor_descriptor
                 .as_ref()
-                .is_none_or(|embedded| {
-                    declaration.format_version() == 2 && embedded.pipeline.is_none()
-                })
+                .is_none_or(|embedded| derived.format_version == 2 && embedded.pipeline.is_none())
         {
             return Err(replay_error(format!(
                 "Core Archive V2 modern N4MM `{}` requires its content-bound embedded descriptor",
@@ -667,7 +686,7 @@ fn inspect_package_native_predictors(
         descriptors.push(derived);
     }
 
-    if descriptors.is_empty() || !declarations.is_empty() {
+    if descriptors.is_empty() {
         return Err(replay_error(
             "Archive V2 N4MM declarations do not exactly cover DAG-ML refit predictors",
         ));
@@ -961,13 +980,13 @@ fn parse_json_request(
 /// inventory drift and untrusted members are refused by Core before DAG-ML sees
 /// package bytes. No Python callback, model handle or estimator is accepted.
 pub fn replay_methods_archive_v2(
-    archive: &LoadedArchiveV2,
+    archive: &LoadedNativePackage,
     input: MethodsArchivePredictRequest,
 ) -> Result<TrainingReplayOutcome, NativeMethodsReplayError> {
     let package = load_v2_predictor_package(archive)?;
     validate_methods_replay_inputs(&input.request, &input.data_envelopes, &input.methods_inputs)?;
     configure_methods_runtime_for_source(&input.methods_library_path)?;
-    require_configured_archive_methods_abi(archive.manifest(), "Archive V2")?;
+    require_configured_archive_methods_abi(archive, "Archive V2")?;
     replay_methods_predictor_package(&package, input)
 }
 
@@ -979,7 +998,7 @@ pub fn replay_methods_archive_v2(
 /// runtime only after package, binding, target, identity and matrix validation.
 /// It never fits, refits, calls Python or selects a fallback implementation.
 pub fn predict_methods_archive_v2_matrix(
-    archive: &LoadedArchiveV2,
+    archive: &LoadedNativePackage,
     input: MethodsArchiveMatrixPredictRequest,
 ) -> Result<TrainingReplayOutcome, NativeMethodsReplayError> {
     let package = load_v2_predictor_package(archive)?;
@@ -993,7 +1012,7 @@ pub fn predict_methods_archive_v2_matrix(
     let snapshot_path =
         configure_attested_methods_library(&input.methods_library_path, &expected_library_sha256)?;
     inspect_package_native_predictors(archive, &package)?;
-    require_configured_archive_methods_abi(archive.manifest(), "Archive V2")?;
+    require_configured_archive_methods_abi(archive, "Archive V2")?;
     let mut input = input;
     input.methods_library_path = snapshot_path;
     let outcome = replay_methods_predictor_package(&package, input)?;
@@ -1010,16 +1029,10 @@ pub fn predict_methods_archive_v2_matrix(
 /// RolePipeline artifacts are hydrated and inspected by the native DAG controller;
 /// they are distinct from the legacy N4MM matrix-profile artifacts.
 pub fn predict_tuning_archive_v2_matrix(
-    archive: &LoadedArchiveV2,
+    archive: &LoadedNativePackage,
     input: MethodsArchiveMatrixPredictRequest,
 ) -> Result<TrainingReplayOutcome, NativeMethodsReplayError> {
     let package = load_v2_predictor_package(archive)?;
-    dag_ml_core::validate_archive_v2_portable_payloads(
-        archive.manifest(),
-        &package,
-        archive.members(),
-    )
-    .map_err(|error| replay_error(format!("DAG-ML refused tuning archive closure: {error}")))?;
     if package.execution_bundle.methods_hpo_resume_state.is_none()
         || package.template.graph.nodes.len() != 1
         || package.template.graph.nodes[0].params.get("native_profile")
@@ -1049,7 +1062,7 @@ pub fn predict_tuning_archive_v2_matrix(
     } = compose_methods_archive_matrix_predict(&package, input)?;
     let snapshot_path =
         configure_attested_methods_library(&input.methods_library_path, &expected_library_sha256)?;
-    require_configured_archive_methods_abi(archive.manifest(), "Archive V2")?;
+    require_configured_archive_methods_abi(archive, "Archive V2")?;
     let mut input = input;
     input.methods_library_path = snapshot_path;
     let outcome = replay_methods_predictor_package(&package, input)?;
@@ -1065,7 +1078,7 @@ pub fn predict_tuning_archive_v2_matrix(
 /// Replay RolePipeline calibration through the scalar presentation supported
 /// by DAG-ML, retaining its native interval block and validated replay closure.
 pub(crate) fn predict_tuning_archive_v2_calibrated(
-    archive: &LoadedArchiveV2,
+    archive: &LoadedNativePackage,
     input: MethodsArchiveMatrixPredictRequest,
 ) -> Result<serde_json::Value, NativeMethodsReplayError> {
     let package = load_v2_predictor_package(archive)?;
@@ -1086,7 +1099,7 @@ pub(crate) fn predict_tuning_archive_v2_calibrated(
 /// descriptors inspected from the inventoried N4MM bytes; it does not
 /// calculate or reshape intervals.
 pub fn predict_methods_archive_v2_matrix_conformal_presentation_v2(
-    archive: &LoadedArchiveV2,
+    archive: &LoadedNativePackage,
     input: MethodsArchiveMatrixPredictRequest,
 ) -> Result<ConformalPresentationV2, NativeMethodsReplayError> {
     let package = load_v2_predictor_package(archive)?;
@@ -1101,7 +1114,7 @@ pub fn predict_methods_archive_v2_matrix_conformal_presentation_v2(
     let snapshot_path =
         configure_attested_methods_library(&input.methods_library_path, &expected_library_sha256)?;
     let native_predictors = inspect_package_native_predictors(archive, &package)?;
-    require_configured_archive_methods_abi(archive.manifest(), "Archive V2")?;
+    require_configured_archive_methods_abi(archive, "Archive V2")?;
     let mut input = input;
     input.methods_library_path = snapshot_path;
     let outcome = replay_methods_predictor_package(&package, input)?;
@@ -1130,7 +1143,7 @@ pub fn predict_methods_archive_v2_matrix_conformal_presentation_v2(
 /// The returned JSON is DAG-ML's validated replay outcome. Host bindings do
 /// not compose replay envelopes, choose controllers or post-process values.
 pub fn predict_methods_archive_v2_matrix_json(
-    archive: &LoadedArchiveV2,
+    archive: &LoadedNativePackage,
     input_json: &str,
 ) -> Result<String, NativeMethodsReplayError> {
     let input = parse_contract::<MethodsArchiveMatrixPredictJsonRequest>(
@@ -1141,6 +1154,39 @@ pub fn predict_methods_archive_v2_matrix_json(
         replay_error(format!("DAG-ML rejected matrix prediction run_id: {error}"))
     })?;
     let outcome = predict_methods_archive_v2_matrix(
+        archive,
+        MethodsArchiveMatrixPredictRequest {
+            sample_ids: input.sample_ids,
+            x: input.x,
+            expected_target_names: input.expected_target_names,
+            methods_library_path: input.methods_library_path,
+            methods_library_sha256: input.methods_library_sha256,
+            request_id: input.request_id,
+            outcome_id: input.outcome_id,
+            run_id,
+            warnings: input.warnings,
+            diagnostics: input.diagnostics,
+        },
+    )?;
+    serde_json::to_string(&outcome).map_err(|error| {
+        replay_error(format!(
+            "cannot serialize Archive V2 matrix prediction outcome: {error}"
+        ))
+    })
+}
+
+pub fn predict_tuning_archive_v2_matrix_json(
+    archive: &LoadedNativePackage,
+    input_json: &str,
+) -> Result<String, NativeMethodsReplayError> {
+    let input = parse_contract::<MethodsArchiveMatrixPredictJsonRequest>(
+        input_json,
+        "Archive V2 matrix prediction request",
+    )?;
+    let run_id = RunId::new(&input.run_id).map_err(|error| {
+        replay_error(format!("DAG-ML rejected matrix prediction run_id: {error}"))
+    })?;
+    let outcome = predict_tuning_archive_v2_matrix(
         archive,
         MethodsArchiveMatrixPredictRequest {
             sample_ids: input.sample_ids,
@@ -1194,7 +1240,7 @@ pub fn inspect_methods_archive_v2_predictors_json(
 /// binding, sample-order and interval closure before returning the projection;
 /// Core neither calculates an interval nor selects a target.
 pub fn replay_methods_archive_v2_conformal_presentation_v1(
-    archive: &LoadedArchiveV2,
+    archive: &LoadedNativePackage,
     input: MethodsArchivePredictRequest,
 ) -> Result<ConformalPresentationV1, NativeMethodsReplayError> {
     let package = load_v2_predictor_package(archive)?;
@@ -1210,7 +1256,7 @@ pub fn replay_methods_archive_v2_conformal_presentation_v1(
 /// Replay an integrity-checked Archive V2 and project the complete persisted
 /// multi-target conformal result. V1 remains unchanged for scalar consumers.
 pub fn replay_methods_archive_v2_conformal_presentation_v2(
-    archive: &LoadedArchiveV2,
+    archive: &LoadedNativePackage,
     input: MethodsArchivePredictRequest,
 ) -> Result<ConformalPresentationV2, NativeMethodsReplayError> {
     let package = load_v2_predictor_package(archive)?;
@@ -1234,7 +1280,7 @@ pub fn replay_methods_archive_v2_conformal_presentation_v2(
 /// Parse persisted presentation JSON only in the presence of its exact
 /// integrity-checked archive and byte-attested Methods library.
 pub fn load_methods_archive_v2_conformal_presentation_v2(
-    archive: &LoadedArchiveV2,
+    archive: &LoadedNativePackage,
     presentation_json: &str,
     methods_library_path: impl AsRef<Path>,
     methods_library_sha256: &str,
@@ -1272,20 +1318,12 @@ fn require_conformal_archive_identity(
 }
 
 fn load_v2_predictor_package(
-    archive: &LoadedArchiveV2,
+    archive: &LoadedNativePackage,
 ) -> Result<PortablePredictorPackage, NativeMethodsReplayError> {
-    let package_bytes = archive.portable_predictor_package().map_err(|error| {
-        NativeMethodsReplayError(format!("Core Archive V2 package read failed: {error}"))
-    })?;
-    let package_json = std::str::from_utf8(package_bytes).map_err(|error| {
-        NativeMethodsReplayError(format!(
-            "Core Archive V2 package is not UTF-8 JSON: {error}"
-        ))
-    })?;
-    let package = PortablePredictorPackage::from_json(package_json).map_err(|error| {
-        NativeMethodsReplayError(format!("DAG-ML rejected Core Archive V2 package: {error}"))
-    })?;
-    Ok(package)
+    archive
+        .require_operation("predict-external")
+        .map_err(replay_error)?;
+    archive.predictor_package().cloned().map_err(replay_error)
 }
 
 /// Refuse a payload before native import when its manifest requires a newer
@@ -1296,15 +1334,31 @@ fn load_v2_predictor_package(
 /// `abi_min_minor` from the actual payload capability (for example, 3 for an
 /// imported-linear N4MM) rather than from the host runtime version.
 fn require_configured_archive_methods_abi(
-    manifest: &serde_json::Value,
+    archive: &LoadedNativePackage,
     archive_label: &str,
 ) -> Result<(), NativeMethodsReplayError> {
-    let (major, minor, _) = n4m::runtime_abi_version().map_err(|error| {
-        replay_error(format!(
-            "cannot query attested Methods runtime ABI: {error}"
-        ))
-    })?;
-    require_archive_methods_abi_for_runtime(manifest, archive_label, major.into(), minor.into())
+    let (major, minor, _) = n4m::runtime_abi_version().map_err(replay_error)?;
+    require_native_methods_abi_for_runtime(
+        archive.methods_requirements(),
+        archive_label,
+        major,
+        minor,
+    )
+}
+
+fn require_native_methods_abi_for_runtime(
+    requirements: &[dag_ml_core::NativeMethodsRequirement],
+    label: &str,
+    major: u32,
+    minor: u32,
+) -> Result<(), NativeMethodsReplayError> {
+    for required in requirements {
+        if required.abi_major != major || minor < required.abi_min_minor {
+            return Err(replay_error(format!("{label} artifact `{}` requires Methods ABI {}.{}; runtime provides {major}.{minor}",
+                required.artifact_id, required.abi_major, required.abi_min_minor)));
+        }
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -1320,6 +1374,7 @@ fn require_archive_methods_abi(
     )
 }
 
+#[cfg(test)]
 fn require_archive_methods_abi_for_runtime(
     manifest: &serde_json::Value,
     archive_label: &str,
@@ -1460,25 +1515,18 @@ pub(crate) fn replay_methods_predictor_package(
 /// point validates the complete package then registers a fresh Methods runtime
 /// for this invocation, so no process-local N4MM handle can survive the call.
 pub fn replay_methods_archive_v3(
-    archive: &LoadedArchiveV3,
+    archive: &LoadedNativePackage,
     input: MethodsArchiveRefitRequestV3,
 ) -> Result<PortableRefitReplayOutcomeV3, NativeMethodsReplayError> {
-    let package_bytes = archive.portable_refit_package().map_err(|error| {
-        NativeMethodsReplayError(format!("Core Archive V3 package read failed: {error}"))
-    })?;
-    let package_json = std::str::from_utf8(package_bytes).map_err(|error| {
-        NativeMethodsReplayError(format!(
-            "Core Archive V3 package is not UTF-8 JSON: {error}"
-        ))
-    })?;
-    let package = PortableRefitPackageV3::from_json(package_json).map_err(|error| {
-        NativeMethodsReplayError(format!("DAG-ML rejected Core Archive V3 package: {error}"))
-    })?;
+    archive
+        .require_operation("predict-external")
+        .map_err(replay_error)?;
+    let package = archive.refit_package().map_err(replay_error)?;
     validate_methods_replay_inputs(&input.request, &input.data_envelopes, &input.methods_inputs)?;
     let runtime = configure_methods_runtime_for_source(&input.methods_library_path)?;
-    require_configured_archive_methods_abi(archive.manifest(), "Archive V3")?;
+    require_configured_archive_methods_abi(archive, "Archive V3")?;
     execute_loaded_methods_portable_refit_replay_v3(MethodsPortableRefitReplayInputV3 {
-        package: &package,
+        package,
         request: &input.request,
         data_envelopes: &input.data_envelopes,
         methods_inputs: &input.methods_inputs,
@@ -1503,8 +1551,15 @@ pub fn replay_methods_archive_v2_json(
 ) -> Result<String, NativeMethodsReplayError> {
     let archive = load_archive_v2(archive_path)
         .map_err(|error| replay_error(format!("Core Archive V2 validation refused: {error}")))?;
+    replay_methods_archive_v2_loaded_json(&archive, input)
+}
+
+pub fn replay_methods_archive_v2_loaded_json(
+    archive: &LoadedNativePackage,
+    input: MethodsArchiveReplayJsonRequest,
+) -> Result<String, NativeMethodsReplayError> {
     let input = parse_json_request(input)?;
-    let outcome = replay_methods_archive_v2(&archive, input)?;
+    let outcome = replay_methods_archive_v2(archive, input)?;
     serde_json::to_string(&outcome).map_err(|error| {
         replay_error(format!(
             "cannot serialize DAG-ML V2 replay outcome: {error}"
@@ -1520,8 +1575,15 @@ pub fn replay_methods_archive_v2_conformal_presentation_v1_json(
 ) -> Result<String, NativeMethodsReplayError> {
     let archive = load_archive_v2(archive_path)
         .map_err(|error| replay_error(format!("Core Archive V2 validation refused: {error}")))?;
+    replay_methods_archive_v2_conformal_presentation_v1_loaded_json(&archive, input)
+}
+
+pub fn replay_methods_archive_v2_conformal_presentation_v1_loaded_json(
+    archive: &LoadedNativePackage,
+    input: MethodsArchiveReplayJsonRequest,
+) -> Result<String, NativeMethodsReplayError> {
     let input = parse_json_request(input)?;
-    let presentation = replay_methods_archive_v2_conformal_presentation_v1(&archive, input)?;
+    let presentation = replay_methods_archive_v2_conformal_presentation_v1(archive, input)?;
     serde_json::to_string(&presentation).map_err(|error| {
         replay_error(format!(
             "cannot serialize DAG-ML V2 conformal presentation: {error}"
@@ -1537,8 +1599,15 @@ pub fn replay_methods_archive_v2_conformal_presentation_v2_json(
 ) -> Result<String, NativeMethodsReplayError> {
     let archive = load_archive_v2(archive_path)
         .map_err(|error| replay_error(format!("Core Archive V2 validation refused: {error}")))?;
+    replay_methods_archive_v2_conformal_presentation_v2_loaded_json(&archive, input)
+}
+
+pub fn replay_methods_archive_v2_conformal_presentation_v2_loaded_json(
+    archive: &LoadedNativePackage,
+    input: MethodsArchiveReplayJsonRequest,
+) -> Result<String, NativeMethodsReplayError> {
     let input = parse_json_request(input)?;
-    let presentation = replay_methods_archive_v2_conformal_presentation_v2(&archive, input)?;
+    let presentation = replay_methods_archive_v2_conformal_presentation_v2(archive, input)?;
     serde_json::to_string(&presentation).map_err(|error| {
         replay_error(format!(
             "cannot serialize DAG-ML V2 conformal presentation V2: {error}"
@@ -1557,9 +1626,16 @@ pub fn replay_methods_archive_v3_json(
 ) -> Result<String, NativeMethodsReplayError> {
     let archive = load_archive_v3(archive_path)
         .map_err(|error| replay_error(format!("Core Archive V3 validation refused: {error}")))?;
+    replay_methods_archive_v3_loaded_json(&archive, input)
+}
+
+pub fn replay_methods_archive_v3_loaded_json(
+    archive: &LoadedNativePackage,
+    input: MethodsArchiveReplayJsonRequest,
+) -> Result<String, NativeMethodsReplayError> {
     let input = parse_json_request(input)?;
     let outcome = replay_methods_archive_v3(
-        &archive,
+        archive,
         MethodsArchiveRefitRequestV3 {
             request: input.request,
             data_envelopes: input.data_envelopes,
@@ -1582,6 +1658,27 @@ pub fn replay_methods_archive_v3_json(
 #[cfg(test)]
 mod json_tests {
     use super::*;
+
+    #[test]
+    fn selected_owner_abi_requirements_refuse_before_native_import() {
+        let requirements = vec![dag_ml_core::NativeMethodsRequirement {
+            artifact_id: dag_ml_core::ArtifactId::new("artifact:typed-abi").unwrap(),
+            artifact_kind: "n4m_model".into(),
+            abi_major: 2,
+            abi_min_minor: 20,
+        }];
+        require_native_methods_abi_for_runtime(&requirements, "selected package", 2, 20).unwrap();
+        assert!(
+            require_native_methods_abi_for_runtime(&requirements, "selected package", 2, 19)
+                .unwrap_err()
+                .to_string()
+                .contains("artifact:typed-abi")
+        );
+        assert!(
+            require_native_methods_abi_for_runtime(&requirements, "selected package", 3, 20)
+                .is_err()
+        );
+    }
 
     #[test]
     fn predict_contract_refuses_targets_and_refit_without_a_native_library() {

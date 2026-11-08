@@ -1,6 +1,9 @@
 function result = predictMultimodalArchive(path, value, options)
 %PREDICTMULTIMODALARCHIVE Native .n4a replay on a target-free IO dataset.
 % IO assembles the cohort; DAG signs and schedules; Methods hydrates/predicts.
+% The archive is a Core N4a V1 container with a native package root. OPTIONS may
+% hold 'entrypoint' (forwarded as --entrypoint; Core otherwise resolves the
+% unique matching entrypoint or refuses). archive_sha256 is the full-file hash.
 if nargin < 3, options = struct(); end
 coreCli = option(options, 'core_cli', 'NIRS4ALL_CORE_CLI', 'nirs4all-core-archive');
 dagCli = option(options, 'dag_cli', 'NIRS4ALL_DAG_CLI', 'dag-ml-cli');
@@ -14,7 +17,9 @@ directory = tempname(); mkdir(directory);
 cleanup = onCleanup(@() rmdir(directory, 's')); %#ok<NASGU>
 input = fullfile(directory, 'dataset.json'); writeText(input, ds.toJSON());
 preparedPath = fullfile(directory, 'prepared.json'); nativeDir = fullfile(directory, 'native-inputs');
-invoke({coreCli, 'multimodal-replay-inputs', '--archive', path, '--input', input, '--output', preparedPath, '--workdir', nativeDir});
+entry = {};
+if isfield(options, 'entrypoint') && ~isempty(options.entrypoint), entry = {'--entrypoint', options.entrypoint}; end
+invoke([{coreCli, 'multimodal-replay-inputs', '--archive', path}, entry, {'--input', input, '--output', preparedPath, '--workdir', nativeDir}]);
 prepared = jsondecode(fileread(preparedPath));
 config = fullfile(nativeDir, 'config.json');
 adapter = fullfile(directory, 'run-octave-adapter');
@@ -24,12 +29,12 @@ text = sprintf('#!/bin/sh\nif [ "$1" = "--describe" ]; then printf ''%%s\\n'' %s
     quote(describe), quote(config), quote(octave), quote(evalText));
 writeText(adapter, text); invoke({'chmod', '0755', adapter});
 output = fullfile(directory, 'outcome.json');
-invoke({coreCli, 'replay-process', '--archive', path, '--expected-archive-sha256', prepared.archive_sha256, ...
+invoke([{coreCli, 'replay-process', '--archive', path, '--expected-archive-sha256', prepared.archive_sha256}, entry, {...
     '--dag-cli', dagCli, '--request', fullfile(nativeDir, 'request.json'), ...
     '--envelopes', fullfile(nativeDir, 'envelopes.json'), ...
     '--trusted-controllers', fullfile(nativeDir, 'trusted-controllers.json'), ...
     '--adapter', adapter, '--output', output, '--outcome-id', 'outcome:public.octave.multimodal', ...
-    '--run-id', 'run:public.octave.multimodal', '--process-timeout-ms', '60000'});
+    '--run-id', 'run:public.octave.multimodal', '--process-timeout-ms', '60000'}]);
 outcome = jsondecode(fileread(output));
 if numel(outcome.outputs) ~= 1 || numel(outcome.outputs.predictions) ~= 1
     error('nirs4all:RawReplay', 'One complete native sample prediction required');

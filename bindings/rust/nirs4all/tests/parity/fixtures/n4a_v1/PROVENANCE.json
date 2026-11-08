@@ -1,0 +1,298 @@
+{
+  "schema": "nirs4all.n4a.owner-fixture-provenance.v1",
+  "description": "Actual IO-normalized float32 toy data, current direct DAG native training/facet export and canonical storage with separate-process state replay",
+  "source_heads": {
+    "nirs4all-core": "1dffd9f4472551cc09ad9d99ed9d40814bd003cc",
+    "dag-ml": "963abc4531789d6483e9d60d8d2e30549fc5ca9e",
+    "nirs4all-io": "e67f0588b054c4d35e786306e139dfc92c9cf74b",
+    "dag-ml-data": "bbddf63671a689a2afd51e97cb631b09db96af77",
+    "nirs4all-methods": "6a6ba8cf5e4930953d2fc10c80748547805fc87d",
+    "nirs4all-formats": "98d3daca831b54ba618d93ec50c8183578c4d1fd"
+  },
+  "compiled_source_sha256": {
+    "nirs4all-core/bindings/rust/nirs4all/src/archive_codec.rs": "40c8f7be8c3888a7b72f62e1daa0e79452c66045a36615d5ec000e740ef32ec9",
+    "nirs4all-core/bindings/rust/nirs4all/src/archive_command.rs": "f1fdcc73c6308079005eab62c157800a9b47dc5b3f81105c6f9fcf759e8a610a",
+    "nirs4all-core/bindings/rust/nirs4all/src/archive_storage.rs": "21e76a27ae12671fa34cda65f58379eed01805a161a247d6b9d5ab521c5cb0a0",
+    "nirs4all-core/bindings/rust/nirs4all/src/archive_v1.rs": "8a1a5af7958f3567c3f81476dbee469b84c8d9b4bb6b1481fdf0e51891ec0c6b",
+    "nirs4all-core/bindings/rust/nirs4all/src/archive_v2.rs": "63eb41cfb550bee0d3f6a19f0aa69fe325f0ac1bef576dcd891e47d8a5e5cc1c",
+    "nirs4all-core/bindings/rust/nirs4all/src/archive_v3.rs": "c0899c79e829e4ab6df3ba724c294c842128d85c130dc5ad74ca5b0c3de30d73",
+    "nirs4all-core/bindings/rust/nirs4all/src/archive_view.rs": "f09a1001d12f3aa4f6af4f4e8c02fe584339cbaf0d6906a33ab5897aeb1b5088",
+    "nirs4all-core/bindings/rust/nirs4all/src/bin/nirs4all-core-archive.rs": "9fce5ffdfeac850445622e58845f539a0d7a0b2bf51fdb62dfd5b2b68925f59d",
+    "nirs4all-core/bindings/rust/nirs4all/src/capability_profiles_data.rs": "a79fc8316e5a3530ffdda515ce9be177845ee8c422cae704eea641861e8da5e9",
+    "nirs4all-core/bindings/rust/nirs4all/src/conformal.rs": "e16a5f3f2535119f3c645fc55ea09cd434031a086b3c83417557fa606f9db9fe",
+    "nirs4all-core/bindings/rust/nirs4all/src/conformal_json.rs": "003b20d77d90cd0d49cde5ff3cbafdb4883719840a3732208a73baebda967776",
+    "nirs4all-core/bindings/rust/nirs4all/src/durability.rs": "d4dc011a8268b7b9216f633d288c23a90808dc9a587a0997adfe8a18abca35be",
+    "nirs4all-core/bindings/rust/nirs4all/src/format3_qualification.rs": "7c9c96ad4c2d97d5ed81ad9321f8633fa11180bd62f31584aa38dea744f6e0c8",
+    "nirs4all-core/bindings/rust/nirs4all/src/formats_io.rs": "d0ae25fcb33cfb401394d6eebeee8b27df6afdd1d641a8f0ba0b67d29295fdf3",
+    "nirs4all-core/bindings/rust/nirs4all/src/generation.rs": "24f55553af4de979ee0fd65763b9f422e58c86385e47590cd015161c5d011cde",
+    "nirs4all-core/bindings/rust/nirs4all/src/io_training.rs": "5d8221768a5a9ea06fcd08814833a67763b1b76f4cbb827fc80cd836c819d50d",
+    "nirs4all-core/bindings/rust/nirs4all/src/lib.rs": "b758818db3e8f0034d9bf47a60f4ace837d4cfef44aecf534ce2b6cda1131206",
+    "nirs4all-core/bindings/rust/nirs4all/src/multimodal_workflow.rs": "6b97e5937ec2d4073055752d64e5ad630ecde2b07668a7dfeeb94b4ed6e7c91f",
+    "nirs4all-core/bindings/rust/nirs4all/src/n4a.rs": "4a1a377e117a65642907630f4453ba13e05667930b60e9da7ed6875df966d551",
+    "nirs4all-core/bindings/rust/nirs4all/src/n4m_roles.rs": "11493f92b767d51330cce08a183a66b10ed53dfbb3c7576fda7c729e0a16884e",
+    "nirs4all-core/bindings/rust/nirs4all/src/native_methods_replay.rs": "cfa08e31a10fa5d751e7ce50b9f3f7009dbb57a893219eb68d17c8afbcd9a931",
+    "nirs4all-core/bindings/rust/nirs4all/src/native_pipeline_contract.rs": "ff8a2c2801672201b96690e636d886430818f718e3c693cd52ac3d3c41b856f8",
+    "nirs4all-core/bindings/rust/nirs4all/src/pipeline_workflow.rs": "6e66a0ecd801e79f0b0ab171ee855d0522275b5cb0e012634653d88ef3f6c414",
+    "nirs4all-core/bindings/rust/nirs4all/src/portable_session.rs": "376d94df8e588e0170bec51b1f63cacf7d2056ce75de191812daf82adc1f5196",
+    "nirs4all-core/bindings/rust/nirs4all/src/publication.rs": "3aaa956e0df6ad96df7522537dfe387b6b359a48f3787374739b3b14bfeef52b",
+    "nirs4all-core/bindings/rust/nirs4all/src/result_projection.rs": "4cb8446e0b1f1b84fee9508c0fe713f0e682ad58fcdc9830f9a1d08bb0ca71bb",
+    "nirs4all-core/bindings/rust/nirs4all/src/results.rs": "964e2103293b665a5f12e25f750784ec3fd4f3cbd2fbf40aa7a65ce468c51d58",
+    "nirs4all-core/bindings/rust/nirs4all/src/robustness.rs": "0c8e0fbb28801777843ffa06d08599b3329649ed38358f8169eafc7787bcda7b",
+    "nirs4all-core/bindings/rust/nirs4all/src/robustness_json.rs": "ba06e2710bad3ec27661ac3d43c76ff1afc6bc8b00a3d5c12aa4bae7f6042c1b",
+    "nirs4all-core/bindings/rust/nirs4all/src/test_fixture.rs": "68e3fd2f730da4adb7a705d2c55507ef4092e4b3aa840bba6e364bc66d052be4",
+    "nirs4all-core/bindings/rust/nirs4all/src/tuning.rs": "62100a3aa99195ae8d75463264d131464a52913b7ae0dfad221286e9ec42fa5d",
+    "nirs4all-core/bindings/rust/nirs4all/src/workflow.rs": "f3763bdeaf870181c2bd539b8abdf9c5f37922a51a68f1900f4fdaa1a0074369",
+    "nirs4all-core/Cargo.toml": "d3593455f0f5d3dd6d0c800b899890e486e0def9e4cbcdc8b2d9cbdb6a3b63cf",
+    "nirs4all-core/Cargo.lock": "847c62537c349e62d24e403491948aaeca3e17a2c4604726370b926ac8abbc04",
+    "nirs4all-core/bindings/rust/nirs4all/Cargo.toml": "332563bedb19fcd1710876d4d5f6b43d906e6af1832be1bc86151179de8a0bed",
+    "nirs4all-core/bindings/rust/nirs4all/build.rs": "c86b43d87bf6ec7da0bf04daa00018571fa58b8d7829da62bfc32ad5e8ce9600",
+    "dag-ml/crates/dag-ml-core/src/aggregation.rs": "35e5c34cb78407a08f591babcb950deb2b39d61ad6cc09342d8bd180a1ebdac3",
+    "dag-ml/crates/dag-ml-core/src/archive_workspace.rs": "7b72517579812950a3b4f32b65245fb5858d024c7ff9373a8506aa95eb823bae",
+    "dag-ml/crates/dag-ml-core/src/artifact_facets.rs": "12a2f9c943d0e92b66a50b563d98f9e78844966d0253d9c29dd99ae13b8edbd7",
+    "dag-ml/crates/dag-ml-core/src/bundle.rs": "48ce9fef371ec4bfecca1aa180b30bc7071cf990145dcbbde456e52b66812087",
+    "dag-ml/crates/dag-ml-core/src/campaign.rs": "3fa5bb61d5c78c4d55eb4ef79f3e88dda6aa3c5787922fdae71640625852ac94",
+    "dag-ml/crates/dag-ml-core/src/canonical.rs": "c379021770873a0dc6cd4f6e9da9dfbd062334c719d3013ece228417976a41e1",
+    "dag-ml/crates/dag-ml-core/src/chain_effect.rs": "5237eab2a543db6a5fc264f690ee2bbc471c875d37a38c1ceb26c36248f44890",
+    "dag-ml/crates/dag-ml-core/src/conformal.rs": "f4e13cede82dc49d3a3c468c3509d1c3d96c625a7eb15a9baec53a561c74cdcc",
+    "dag-ml/crates/dag-ml-core/src/conformal_runtime.rs": "cd2216e8010d726644378b22454b1c9b24cb2ea8685a73bbe394cc8877934cb8",
+    "dag-ml/crates/dag-ml-core/src/controller.rs": "97fab07e6b24f8b9aee23cab3c16f54b9d24b47d84c55c0c530a5dbf51373e35",
+    "dag-ml/crates/dag-ml-core/src/controller_adapter.rs": "19898cecca9f75d1f5dcc8d6a97f2d42d8557a500303c93e558a37268e768546",
+    "dag-ml/crates/dag-ml-core/src/controller_registry.rs": "ce9f8e1bbe9b3daa3fc0927d7f71ba5c91e027f53fbe03ea5c8bb18cd6324c00",
+    "dag-ml/crates/dag-ml-core/src/criteria.rs": "fe11ed0e1c503078bb20924efbaf3960955c52db8c16d3fb725969b1afe20f14",
+    "dag-ml/crates/dag-ml-core/src/data.rs": "e9ba49592aae30282a419e57db862095b30d569ddab0fadc6d22c8e82a2645e8",
+    "dag-ml/crates/dag-ml-core/src/dsl/alias.rs": "2b4297fa1d0d6b994c280154c33981b9be604fab8d770cd6814a49104f2c07fd",
+    "dag-ml/crates/dag-ml-core/src/dsl/compat.rs": "fd14f0b3d69643dad3aaf8020281aad4994e2bf622cd0d74a852457071b9a0b3",
+    "dag-ml/crates/dag-ml-core/src/dsl/compat_helpers.rs": "a5f4d34f29333ab76ede15bd1f7d6ef7252a298b049f423068793adba818d5ce",
+    "dag-ml/crates/dag-ml-core/src/dsl/compiler.rs": "230b1c01164299eea26053f0ce6e46c5039ad9b97e63420cc0c29ff7c97ad6b7",
+    "dag-ml/crates/dag-ml-core/src/dsl/fanout.rs": "aeb2a905c9a50ddfe45d4821966c8ded66c12088deecc086e77d30522796d936",
+    "dag-ml/crates/dag-ml-core/src/dsl/generation.rs": "1ba94a20c11afe17dd12bd53dccd9d6a15ddd23f23942d9a1cd5c7e9d87879e5",
+    "dag-ml/crates/dag-ml-core/src/dsl/mod.rs": "66fb07ca782cccb51189c8ec5be95342b5f979714041f2708aa17f6d57d31eb4",
+    "dag-ml/crates/dag-ml-core/src/dsl/named_nd_tests.rs": "a0191edd0429c7315831b58605a0a2b14a4a89e9c867fe9b27b0fd5ca470a2f8",
+    "dag-ml/crates/dag-ml-core/src/dsl/tests.rs": "982a485205b64bb5991a2164790783581ae33681d17e7d8e4ce5f72371287e9d",
+    "dag-ml/crates/dag-ml-core/src/dsl/types.rs": "ce3674a15e58d4c5499ceee0c095e5d749decdd4c0ae336dcbea57f853010f05",
+    "dag-ml/crates/dag-ml-core/src/error.rs": "6190e5099fc9d545d75e548877840395e067603b4b0a2b4a56044a5c7aa9f910",
+    "dag-ml/crates/dag-ml-core/src/fold.rs": "37615382ebfe8f4da3bf08109b25312ab738f6fc9264cd5d9e5bcda5f60bacb6",
+    "dag-ml/crates/dag-ml-core/src/generation.rs": "205d13d44c557012009f70450ed59a7bd4f4664b5a2ec0ccf773fa4ff0515e16",
+    "dag-ml/crates/dag-ml-core/src/graph.rs": "dfbdbff6653fc6b3f0af380e1a4054a83d9a4ed949cc54f60ee4be7bac545094",
+    "dag-ml/crates/dag-ml-core/src/hpo.rs": "bac4241f944fb17a414fbc4675f248923d9a6e96913e64b8fce322410ea68f16",
+    "dag-ml/crates/dag-ml-core/src/ids.rs": "be6db93243a1b49f16fbeece86bc21d01ff34ac5c667638761471da242970d9d",
+    "dag-ml/crates/dag-ml-core/src/implementation_registry.rs": "18deea64abd45483d33fff346bb3797e3b9fac85d7059b8d20b1b108724174a2",
+    "dag-ml/crates/dag-ml-core/src/initial_refit.rs": "bce50addc10b46f5554fbd4dca0fc54688b2ebdfe360ca058ba76bed1d267cb9",
+    "dag-ml/crates/dag-ml-core/src/lib.rs": "7edf1f84ad6dc11f06ec2be9467b2b35e127b7883096306f3a412a6514d55bc3",
+    "dag-ml/crates/dag-ml-core/src/methods_classification.rs": "ab925ab4a33bf7770522483a739992782d4fe919f4fad68302250ca9b4431010",
+    "dag-ml/crates/dag-ml-core/src/methods_classification_archive.rs": "5153dba703e7a3e035c928b349c9b4ac24e57b0deddb69d3b3662501c03b1ba4",
+    "dag-ml/crates/dag-ml-core/src/methods_classification_state.rs": "62f014a229a95ed8c3394f43d6468f789f8846a12af29b3c6914f0e3cf98f451",
+    "dag-ml/crates/dag-ml-core/src/methods_classification_tests.rs": "cd31659502835aa9c9c900f686f5d467749d9e96a5b0f1029e85cbeb8759c690",
+    "dag-ml/crates/dag-ml-core/src/methods_estimator.rs": "bc07a4974f6462fa38c5bb258e3a2838886f300ed74e151ac6854e6f2e1a0584",
+    "dag-ml/crates/dag-ml-core/src/methods_fold_hpo.rs": "a3867aa087592745a89544d3069cff6a12e23634efeb868ac79179af58744511",
+    "dag-ml/crates/dag-ml-core/src/methods_multimodal.rs": "2a4fb83f6da12e2313071e5d8edc3a8b462d154935d65f58b31d141d2660f561",
+    "dag-ml/crates/dag-ml-core/src/methods_phase_controls.rs": "d1c9ff63763e2188362792b3dac8f5d340ae926dcaf532b8341aedc7b72c539a",
+    "dag-ml/crates/dag-ml-core/src/methods_role_pipeline.rs": "2154a042c287c2a6ef5fe93bd5eed1b153aa0b95464fbfd36e66ed97eb274038",
+    "dag-ml/crates/dag-ml-core/src/metric_provider.rs": "c4c6e9561647b430465fe2d147b997c340685ff6b8acc7fbec0333cb63324fae",
+    "dag-ml/crates/dag-ml-core/src/metrics.rs": "fcbd0e8f478197c736ad7100411f6da232924ced9b0fcef4ccb2f1a5b1a76597",
+    "dag-ml/crates/dag-ml-core/src/multimodal_replay_inputs.rs": "c536ddad0871d5c5d81c5251c2c45d91f8fbf1730f83360607030f358a4b385c",
+    "dag-ml/crates/dag-ml-core/src/n4m_roles.rs": "af7ca90ca994c85ac5c97e0232239f965387825a117bde607cdfd577523fcbed",
+    "dag-ml/crates/dag-ml-core/src/nested_selection.rs": "2b2c12a4f111ebb8a9d8e3e0bae865b388705fa9fb282326a077fa4c0681ce38",
+    "dag-ml/crates/dag-ml-core/src/observability.rs": "262565a24113f16d4471365b7f4849a1a5693282391608bc3bb4e823e0b5b2ee",
+    "dag-ml/crates/dag-ml-core/src/oof.rs": "3bd055be96ccfce3291811cdec59765f9929c67c61d42c598e27cecc495d5b80",
+    "dag-ml/crates/dag-ml-core/src/phase.rs": "e65433e29903bd0c2a7a8af45ec1f3f6e62549810e36f444aefe7bad4804c45d",
+    "dag-ml/crates/dag-ml-core/src/plan.rs": "376f1a7740b542f2bc9b117100c1ebd86eda57c2385e4825160f33a51981bc6c",
+    "dag-ml/crates/dag-ml-core/src/plan_named_nd_tests.rs": "feb6f991d01414b5a48236153bc596e77ea717884993774712308879f68ddc69",
+    "dag-ml/crates/dag-ml-core/src/policy.rs": "192b785a318f53ad02206476b6d08def827266952d1f2f32b620d2d95ac056dc",
+    "dag-ml/crates/dag-ml-core/src/provenance.rs": "c9a312487cc40387f99301e36da0bfda95357dcc319cc61bb56bc3f098092ee8",
+    "dag-ml/crates/dag-ml-core/src/public_robustness.rs": "62db71dbb3936b63487d1bbf4f9ee6dda627587533443e9048738e582cc1d8a7",
+    "dag-ml/crates/dag-ml-core/src/python_torch_profile.rs": "8feda18d9fd7c20556f2904d4082b4a01e8d0e8f1dbf9b2911aa1301c8cc44da",
+    "dag-ml/crates/dag-ml-core/src/relation.rs": "fbb1ebedc46c48330c967bbf7a0db660e094488075738d4a81933eca352f30d0",
+    "dag-ml/crates/dag-ml-core/src/replay.rs": "4a7e3cdbdd1c63cfc4bc411eebd1dd219a7cff3b2bc835ec2e5e531f52f00af9",
+    "dag-ml/crates/dag-ml-core/src/residual.rs": "3f336a124b7143c9493d3d25a4fa6b65929c2a4782e08bf883f666fc0f772f7d",
+    "dag-ml/crates/dag-ml-core/src/rng.rs": "b4b14404a9b1684bc8e3d408e38c95fb59753a36001ec0546cba03eeef41fd43",
+    "dag-ml/crates/dag-ml-core/src/runtime/artifact.rs": "3d07776f5fa073191064a0ee2304e81405b7130af5ce35aecb15c7de41cbc421",
+    "dag-ml/crates/dag-ml-core/src/runtime/data_provider_bootstrap.rs": "eeb3d947f4959888d10121f8438da513108d57b515a7f7d822ca79b62e649b59",
+    "dag-ml/crates/dag-ml-core/src/runtime/dataview.rs": "5b5cbb418c97f7cf8b9a553f6fa4e370b75f82ee595d9527c0468fd05dd7f124",
+    "dag-ml/crates/dag-ml-core/src/runtime/host_hpo.rs": "75dba8683514adb1ea0bd3ef112fc2aa7ea4572b8d9bbd9a040d6e2d606a9115",
+    "dag-ml/crates/dag-ml-core/src/runtime/host_hpo_structural.rs": "1d4ac9145c6584ecf06dc5f97acbafcafdfd93c27633110d2254b707dc56a8ce",
+    "dag-ml/crates/dag-ml-core/src/runtime/host_hpo_topology.rs": "cdc452b46884b602f5e2709c58efee1e2a66d323dfc2c51b3e80de37ea3fffb1",
+    "dag-ml/crates/dag-ml-core/src/runtime/merge.rs": "a6411ca6df7afae3a003c6468be1db6c0fd3583130a9a0c3e96089869abf8c9d",
+    "dag-ml/crates/dag-ml-core/src/runtime/methods_replay.rs": "f3695a84819fcaee9ecf0c973d0b6729ac691a400f0dcb8fc297077b399b3f2d",
+    "dag-ml/crates/dag-ml-core/src/runtime/mod.rs": "39c939c3e9d5587e31168a75c32a743eff319de6f94dca007e33c1cc7b4b70c0",
+    "dag-ml/crates/dag-ml-core/src/runtime/oof.rs": "88fed4d34838774e7222e8ba6219a4d685427bb9261114f8d55312864714723e",
+    "dag-ml/crates/dag-ml-core/src/runtime/prediction_store.rs": "1fefb956552e896bc65d24f7a5b90d3f81960198bbee27252db55a5b8581d852",
+    "dag-ml/crates/dag-ml-core/src/runtime/scheduler.rs": "9e6a09f6dea760a616055382ff5c68eb0ec3b78f30da0b02ebee0d3606906ebc",
+    "dag-ml/crates/dag-ml-core/src/runtime/scoring.rs": "20f29a0af724b0f171ea32c97b4aa92e75ab3df447a523af4f8a3cf8d4d6b7fc",
+    "dag-ml/crates/dag-ml-core/src/runtime/stacking.rs": "37fbfac9f6739cf5b0377f68ec139d66e7e34bde7d424f5096697dc1e32cca36",
+    "dag-ml/crates/dag-ml-core/src/runtime/task.rs": "fcb943af9cd663f277d647acf72dd72a3a704696c84727afd9ebe9e6caead374",
+    "dag-ml/crates/dag-ml-core/src/runtime/tests/structural_source_subsets/tests.rs": "321338e46031d51cbdb49989464985174b9691eaa1beab41fd373c2a017cf7aa",
+    "dag-ml/crates/dag-ml-core/src/runtime/tests.rs": "df4aae4e43f06d6e19972b8e3d4489474179b0cef67c12bf2313cd1540c85418",
+    "dag-ml/crates/dag-ml-core/src/selection.rs": "90b9fe9280d727e5a1876d41fc4735ffb95fc9bb8e177f6bfad352e47ee6138b",
+    "dag-ml/crates/dag-ml-core/src/source_alignment.rs": "cf7b2af62f211c818fa4aecb897555b5badde0642163fa8e6969b36f2c9741b2",
+    "dag-ml/crates/dag-ml-core/src/stable_json.rs": "d2567f6b13d0566bed20065aba399a3629d6be53f03ed9d15169ff04091199d6",
+    "dag-ml/crates/dag-ml-core/src/target_domain.rs": "0fdafbbe948b869f10112f34cbc7210b624d069caaa47f40c8ac8e726fa0767e",
+    "dag-ml/crates/dag-ml-core/src/terminal_prediction.rs": "eb55efe9e7852b8698633bdcd799e18d8bcd19085eaa6d9e7b4e485dfb139f88",
+    "dag-ml/crates/dag-ml-core/src/training.rs": "3fe1cd17a94abf88dfdb707e7e6e1e9bb357d5023b39dc07659c2e68ece211e9",
+    "dag-ml/crates/dag-ml-core/src/training_runtime.rs": "687a2b9a62fa202155ec6b19add7f960ead3e4f1d2a1878cb4b44624b9dbb226",
+    "dag-ml/Cargo.toml": "b83b11c6141adab9735deaa9fb76679e5bc6eefd973e3a0126fcd122c4a8c127",
+    "dag-ml/Cargo.lock": "649f1152e7391cc59a82dd4ea3135b8b5f6307ab2591c4d895e6798934fc8a66",
+    "dag-ml/crates/dag-ml-core/Cargo.toml": "f1065a122048d1c37253381fd9363b2fcf061ba6c0541d2d6b9b8e46bd6a9547",
+    "dag-ml/crates/dag-ml/src/lib.rs": "c24245ecad3be1167ff4f42dccb3e30a5cfd39952dc530c66d86a0f57c63689e",
+    "dag-ml/crates/dag-ml/Cargo.toml": "98ff42bfe8ef438bfaa1300c27a0cd1afe5fa10c33a159a5c940cd5890276733",
+    "dag-ml/crates/dag-ml-results/src/lib.rs": "bac4d1013eec853db5088c66d9b17abf4a3a74565433ca9b01ba9c153a829936",
+    "dag-ml/crates/dag-ml-results/Cargo.toml": "b28bc29da3e06cd01574b4e7475911ea3999531bbce23a4c3a5182dc83397acc"
+  },
+  "owner_contract_sha256": {
+    "nirs4all-core/docs/contracts/n4a-container.v1.schema.json": "a0500be49e96dbce654f444137fca807b6e2eba21930561c44cf6f535d057183",
+    "dag-ml/docs/contracts/artifact_facets.v1.schema.json": "107fa250aa1f3c474a862f0fd394aa8aae3737e64caa6ca4719af9eae06f7782"
+  },
+  "dag_post_livepack_working_tree_fingerprint": "992af31ba183d7ffd8094d7f4ccf3f83162f0dac497ad06a2d105f2679b4c1f2",
+  "methods_runtime": {
+    "abi": "2.20",
+    "sha256": "05ae1a2e82491439f0e71ada0ea500ed79d03af227a11c4a2dbb317a99558529"
+  },
+  "qualification": {
+    "rust": "1.88.0",
+    "receipt_sha256": "444662075a3462dfe4060f5f7aab74f5a2fd3388ab9107d9f061fcc4b51c669b",
+    "run_id": "final-cohort-03",
+    "harness_sha256": "024fb38f692f566ce74109ea20b9e7eb13d5064ec3c80128364f83f752e0b126",
+    "lock_sha256": "1a6073e12632b34fa9dc87442c9af76973a917d1333ff0e229c68d4e35b70fce",
+    "config_sha256": "39b2e3f19afc768ca6649bf01b63b99dca42f5277353ce485f6d4bb3e8fda6a9",
+    "binary_sha256": "98bde28fc617d4491fe29cd351c639bd3021febca107f0efdb5016b66a86ea78",
+    "driver_sha256": "318b935c50ce5f76e18a92e262ce2b395a6a602efa5801e1a3452d2eb35371ae",
+    "producer_pid": 560933,
+    "fresh_replay_pid": 560934
+  },
+  "dataset": {
+    "identity_profile": "sha256.raw.v1",
+    "meaning": "Byte identity only; no logical content or row-order invariance claim",
+    "execution_storage": "float32",
+    "dataset_of": "unverified"
+  },
+  "score": {
+    "evaluates": "unverified",
+    "original_evidence": "Actual two-fold OOF score/outcome bytes are never rewritten by Core"
+  },
+  "recipe": "Actual compiled GraphSpec; no original DSL identity equivalence claimed",
+  "prediction_scope": "in_sample_prediction; native state roundtrip only; targets absent; no generalization score",
+  "boundaries": "Core transport tests never fit, regenerate owner payloads, use old archive assemblers or require unreleased DAG dependencies",
+  "supersedes": {
+    "prior_provenance_sha256": "391b911bb9d307e8f0ebc665dc0d1d900d78bbd314b865c3e1207b6f46e5d4ec",
+    "prior_qualification_receipt_sha256": "8d0aa436edab26b36e00cdb9a057fe22255995fb01f469b45ae7861249c8ec35",
+    "raw_payload_multiset_unchanged": true
+  },
+  "generation_evidence": "Workspace _implementation/2026-11-03-ecosystem-consolidation/phase2a-c-qualification/runs/final-cohort-03 contains exact receipts, inputs and commands; no source patch is product configuration",
+  "files": {
+    "recipe/manifest.json": {
+      "bytes": 6247,
+      "sha256": "9ffddaf02571d391f4a77dace56b7c7fa9005d323607db59497413228f080bb3"
+    },
+    "recipe/dagml/recipe.json": {
+      "bytes": 712,
+      "sha256": "2045a1fc66fc32309fa279164ec588704592c70e04f5cfaf78ecef120ce2b016"
+    },
+    "dataset/manifest.json": {
+      "bytes": 6243,
+      "sha256": "2918a1cfd855c7891efd2c748255fc06ee36ba4d39a5965b6a1d9358de2cb2f4"
+    },
+    "dataset/io/dataset.json": {
+      "bytes": 1345,
+      "sha256": "c1b77d1c1c558996599740c686e1e7976bf54a38f80b942cb7ea16e8afdd77e1"
+    },
+    "model/manifest.json": {
+      "bytes": 6660,
+      "sha256": "6b20fceef6183dbfec5bcdf4afdc1fe8e60c831b421adca116610b5c04894470"
+    },
+    "model/dagml/facets/9372c470eeadd5ecd9c3c74c2b3cb633f8e2f2fad799250a0f70d652b6b825e4/states/2c61f3f1424edc1a73f627c9da90973613a8241ead432513090a2a253a4b8cb9.bin": {
+      "bytes": 396,
+      "sha256": "2c61f3f1424edc1a73f627c9da90973613a8241ead432513090a2a253a4b8cb9"
+    },
+    "model/dagml/model.json": {
+      "bytes": 21147,
+      "sha256": "174a71adbee3ba0e7394753d688953632400cb95447a9efe0c4acd23b2bedf66"
+    },
+    "result/manifest.json": {
+      "bytes": 6249,
+      "sha256": "35a87ddeb6f6e07d3e183fc0a08cb88192ced5093b2ca3c11c58518b6b663ba6"
+    },
+    "result/dagml/result.json": {
+      "bytes": 24171,
+      "sha256": "2432c306fed49f79e81d97f9d04c06a3e78fc47c5a1b022984c612808f042869"
+    },
+    "score/manifest.json": {
+      "bytes": 6244,
+      "sha256": "dda91337112f5bd16fb7ebe33c2a38545dcec5873ee14604b61b81ca41b3b275"
+    },
+    "score/dagml/score.json": {
+      "bytes": 2542,
+      "sha256": "d8c5973880835d51664990ca33d23613790ac45147cad293e01c94270a6c219b"
+    },
+    "combined/manifest.json": {
+      "bytes": 7599,
+      "sha256": "4b2cd88270436433955fc9ba8f4851934c4079f534452cdc0c195d6aa5bafa4d"
+    },
+    "combined/dagml/facets/9372c470eeadd5ecd9c3c74c2b3cb633f8e2f2fad799250a0f70d652b6b825e4/states/2c61f3f1424edc1a73f627c9da90973613a8241ead432513090a2a253a4b8cb9.bin": {
+      "bytes": 396,
+      "sha256": "2c61f3f1424edc1a73f627c9da90973613a8241ead432513090a2a253a4b8cb9"
+    },
+    "combined/dagml/model.json": {
+      "bytes": 21147,
+      "sha256": "174a71adbee3ba0e7394753d688953632400cb95447a9efe0c4acd23b2bedf66"
+    },
+    "combined/dagml/plan.json": {
+      "bytes": 7206,
+      "sha256": "8e7a0328b55ac72570b7ac487540cb08f96888f39fa7147e19f5e5a28d3678cd"
+    },
+    "combined/dagml/prediction.json": {
+      "bytes": 73,
+      "sha256": "b7d8a97a1320b97aec951ecb2114b9df2fdaa3e2a6bbac4a9acfc1b192de798f"
+    },
+    "combined/dagml/recipe.json": {
+      "bytes": 712,
+      "sha256": "2045a1fc66fc32309fa279164ec588704592c70e04f5cfaf78ecef120ce2b016"
+    },
+    "combined/dagml/result.json": {
+      "bytes": 24171,
+      "sha256": "2432c306fed49f79e81d97f9d04c06a3e78fc47c5a1b022984c612808f042869"
+    },
+    "combined/dagml/run.json": {
+      "bytes": 5944,
+      "sha256": "aaa61001e69ad36e2d563659e24d6354048519498f895ca879ef2f2379c18aa9"
+    },
+    "combined/dagml/score.json": {
+      "bytes": 2542,
+      "sha256": "d8c5973880835d51664990ca33d23613790ac45147cad293e01c94270a6c219b"
+    },
+    "combined/io/dataset.json": {
+      "bytes": 1345,
+      "sha256": "c1b77d1c1c558996599740c686e1e7976bf54a38f80b942cb7ea16e8afdd77e1"
+    }
+  },
+  "containers": {
+    "recipe": {
+      "bytes": 7193,
+      "sha256": "da75b3ed1ff0bf0bc5ea41d185dcb6e98d6eeb2e9e51b9fbf1e85bb48fbabe4d"
+    },
+    "dataset": {
+      "bytes": 7818,
+      "sha256": "1a4ae562fbfc74323a4914ac8df58f150b9500a078d7f112bfa90d3021068002"
+    },
+    "model": {
+      "bytes": 28817,
+      "sha256": "5f7d348b387a5257815dfb4fcb62197434cf729c1a7a445f9c748e912ac21d17"
+    },
+    "result": {
+      "bytes": 30654,
+      "sha256": "88d328946759cb736a0f665b7e07443e59c8894d53b093262d777579b2b1bc14"
+    },
+    "score": {
+      "bytes": 9018,
+      "sha256": "bd349e1538d0b0696a4ab6536b8b7e2c5e2a1ef78391918360eb561199523403"
+    },
+    "combined": {
+      "bytes": 72511,
+      "sha256": "d59c1cae7515f846f282010af6819fe3c70ee379b6e692cf3c46d151ec098cb0"
+    }
+  },
+  "publication_input_sha256": {
+    "publish_cohort.py": "eccaa55b5a1acf3ed89e6caecdee888799dc68a9d1bf3a11a5c70b08c2c8ff1b",
+    "publish_fixture.py": "dbc09c1fed7b33f5c12dd9bd31ed3ad9ba9ef1f81698d1a09f3dfad6e6ba46be",
+    "qualify.py": "931e5301de59ca863010cae4b3cf1a0c42077713e539c47d46d8135534d03079"
+  }
+}

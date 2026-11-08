@@ -5,21 +5,24 @@ use std::fs;
 use std::path::Path;
 
 use dag_ml_core::{
-    build_archive_v3_native_refit_payloads, build_portable_refit_package_v3,
-    derive_portable_full_refit_target_plan, execute_portable_full_refit, ArtifactLoadMode,
-    BundleId, FittedArtifactMode, PortableFullRefitExecutionInput, PortableRefitPackageV3,
-    PortableRefitPackageV3BuildInput, PortableRefitRecipe, RunId, RuntimeControllerRegistry,
-    TrainingInfluenceManifest,
+    build_portable_refit_package_v3, derive_portable_full_refit_target_plan,
+    execute_portable_full_refit, ArtifactLoadMode, BundleId, FittedArtifactMode,
+    PortableFullRefitExecutionInput, PortableRefitPackageV3, PortableRefitPackageV3BuildInput,
+    PortableRefitRecipe, RunId, RuntimeControllerRegistry, TrainingInfluenceManifest,
 };
 use serde_json::json;
 use sha2::{Digest, Sha256};
 
 use crate::{
-    canonical_pls_training_request, load_archive_v2, load_archive_v3,
-    load_spectrum_dataset_package, load_spectrum_methods_provider,
-    predict_methods_archive_v2_matrix, train_dataset_package_methods_archive_v2, write_archive_v3,
-    ArchiveV3WriteRequest, CanonicalPlsProfile, DatasetPackageMethodsArchiveV2Request,
-    MethodsArchiveMatrixPredictRequest,
+    canonical_pls_training_request, load_spectrum_dataset_package, load_spectrum_methods_provider,
+    predict_methods_archive_v2_matrix, train_dataset_package_methods_archive_v2,
+    CanonicalPlsProfile, DatasetPackageMethodsArchiveV2Request, MethodsArchiveMatrixPredictRequest,
+};
+
+use crate::n4a::N4aMemoryBudget;
+use crate::n4a_native_package::{
+    load_native_predictor_package as load_archive_v2, load_native_refit_package as load_archive_v3,
+    write_native_package_file,
 };
 
 fn spectrum(path: &Path, offset: f64) {
@@ -111,13 +114,13 @@ fn live_format_three_v2_v3_native_roundtrip_and_replay() {
         assert_eq!(descriptor.pipeline.is_some(), name == "pipeline");
         assert_eq!(record.artifact.abi_min_minor, Some(20));
         let archive = load_archive_v2(&archive_path).unwrap();
-        let declaration = &archive.methods_n4mm_artifacts().unwrap()[0];
-        assert_eq!(
-            (declaration.format_version(), declaration.abi_min_minor()),
-            (3, 20)
-        );
+        assert_eq!(archive.methods_requirements()[0].abi_min_minor, 20);
+        assert_eq!(archive.manifest().schema_version, 1);
         let native = &trained.training.execution_bundle.raw_artifact_payloads[&record.artifact.id];
-        assert_eq!(archive.member(declaration.member_path()).unwrap(), native);
+        assert_eq!(
+            archive.state_member(record.artifact.id.as_str()).unwrap(),
+            native
+        );
         let inspected = crate::inspect_methods_archive_v2_predictors(
             &archive,
             &library,
@@ -220,20 +223,13 @@ fn live_format_three_v2_v3_native_roundtrip_and_replay() {
             execution: &execution,
         })
         .unwrap();
-        let payloads =
-            build_archive_v3_native_refit_payloads(format!("archive:format3.{name}.child"), &child)
-                .unwrap();
         let path = directory.join(format!("format3-{name}-v3.n4a"));
-        write_archive_v3(
+        write_native_package_file(
             &path,
-            ArchiveV3WriteRequest {
-                manifest: payloads.manifest,
-                payloads: payloads
-                    .members
-                    .into_iter()
-                    .map(|(path, bytes)| crate::ArchivePayload { path, bytes })
-                    .collect(),
-            },
+            None,
+            &serde_json::to_vec(&child).unwrap(),
+            &format!("archive:format3.{name}.child"),
+            N4aMemoryBudget::default(),
         )
         .unwrap();
         let loaded = load_archive_v3(&path).unwrap();
@@ -306,9 +302,7 @@ fn live_format_three_v2_v3_native_roundtrip_and_replay() {
                 (3, Some(20))
             );
             assert_eq!(
-                loaded
-                    .member(record.artifact.uri.as_deref().unwrap())
-                    .unwrap(),
+                loaded.state_member(record.artifact.id.as_str()).unwrap(),
                 bytes
             );
             assert_ne!(

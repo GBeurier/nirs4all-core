@@ -1,18 +1,47 @@
 //! Product recipes compose the live native Methods catalog into DAG nodes.
 //! Numerics, execution, leakage validation and portable state belong upstream.
+//! DAG assembles the request; this module supplies the native manifests.
 use std::collections::BTreeMap;
 use std::path::Path;
 
-use dag_ml_core::{DataBinding, NodeId, Phase, TrainingDataIdentity, TrainingRequest};
+use dag_ml_core::artifact_facets::{build_training_artifact_facets, ArtifactFacetExport};
+use dag_ml_core::{ControllerManifest, PortablePredictorPackage, TrainingOutcome, TrainingRequest};
 use serde_json::{json, Value};
 
+pub use crate::n4a_owner_portable::NativePipelineProducerError;
 pub use crate::native_pipeline_contract::{
     validate_pipeline, NativePipelineRecipe, NativePipelineStep,
 };
 
-use crate::io_training::{CanonicalPlsProfile, DatasetPackage, DatasetPackageMethodsProvider};
+use crate::io_training::{DatasetPackage, DatasetPackageMethodsProvider};
+use crate::n4a_owner_portable::{
+    canonical_export_training_request, check_training_retention, native_linear_facts,
+};
 
-/// Construct a signed, catalog-resolved training request for a linear native
+/// Complete native producer output before container composition. DAG builds
+/// every scientific facet/link and retains the exact fitted-state payloads.
+pub struct NativePipelineTrainingExport {
+    pub dataset: DatasetPackage,
+    pub request: TrainingRequest,
+    pub training: TrainingOutcome,
+    pub package: PortablePredictorPackage,
+    pub facets: ArtifactFacetExport,
+}
+
+/// Live native catalog manifests, as the DAG request assembler requires them.
+fn native_controller_manifests(library: &Path) -> Result<Vec<ControllerManifest>, String> {
+    let runtime = crate::native_methods_replay::configure_methods_runtime_for_source(library)
+        .map_err(|e| e.to_string())?;
+    let specs = dag_ml_core::methods_estimator_host_controller_specs(&runtime)
+        .map_err(|e| e.to_string())?;
+    specs
+        .iter()
+        .map(|s| s.derive())
+        .collect::<dag_ml_core::Result<Vec<_>>>()
+        .map_err(|e| e.to_string())
+}
+
+/// Construct a fingerprint-bound, catalog-resolved training request for a linear native
 /// pipeline. Each fitted transform executes separately inside every CV fold.
 pub fn native_pipeline_training_request(
     dataset: &DatasetPackage,
@@ -20,240 +49,87 @@ pub fn native_pipeline_training_request(
     recipe: &NativePipelineRecipe,
     library: &Path,
 ) -> Result<TrainingRequest, String> {
-    if recipe.steps.is_empty()
-        || recipe.steps.len() > 32
-        || recipe.candidates.is_empty()
-        || recipe.candidates.len() > 32
-    {
-        return Err(
-            "native pipeline requires 1..32 steps and 1..32 candidate parameter maps".into(),
-        );
-    }
-    let classification = recipe
-        .steps
-        .last()
-        .is_some_and(|step| step.role == "classifier");
-    let provider =
-        DatasetPackageMethodsProvider::for_product_pipeline(dataset, source_id, classification)?;
-    let base = crate::io_training::base_regression_training_request(
-        &provider,
-        CanonicalPlsProfile::Raw,
-        true,
+    let facts = native_linear_facts(dataset, source_id, recipe)?;
+    let manifests = native_controller_manifests(library)?;
+    dag_ml_core::native_pipeline_training_request(&facts, recipe, &manifests)
+}
+
+/// Prepare the canonical single-source CV producer using IO's public record
+/// projection. This separate path never changes the legacy transport request.
+/// The returned package is the same package whose provider attests training.
+pub fn native_pipeline_export_training_request(
+    dataset_record: &Value,
+    source_id: &str,
+    recipe: &NativePipelineRecipe,
+    library: &Path,
+) -> Result<(DatasetPackage, TrainingRequest), String> {
+    canonical_export_training_request(dataset_record, source_id, recipe, |dataset| {
+        native_pipeline_training_request(dataset, source_id, recipe, library)
+    })
+}
+
+/// Train through the existing DAG/Methods execution and build its complete
+/// owner facet closure. Container entrypoints and IO anchors are composed by
+/// the native action module; this function does not invent dataset links.
+pub fn train_native_pipeline_for_export(
+    dataset_record: &Value,
+    source_id: &str,
+    recipe: &NativePipelineRecipe,
+    library: &Path,
+    run_id: &str,
+) -> Result<NativePipelineTrainingExport, NativePipelineProducerError> {
+    let (dataset, request) =
+        native_pipeline_export_training_request(dataset_record, source_id, recipe, library)
+            .map_err(NativePipelineProducerError::Training)?;
+    let (training, package) =
+        execute_pipeline_training(&dataset, source_id, recipe, library, run_id, &request)
+            .map_err(NativePipelineProducerError::Training)?;
+    check_training_retention(&request, &training, &package)?;
+    let facets = build_training_artifact_facets(&training, &package)
+        .map_err(NativePipelineProducerError::Owner)?;
+    Ok(NativePipelineTrainingExport {
+        dataset,
+        request,
+        training,
+        package,
+        facets,
+    })
+}
+
+fn execute_pipeline_training(
+    dataset: &DatasetPackage,
+    source_id: &str,
+    recipe: &NativePipelineRecipe,
+    library: &Path,
+    run_id: &str,
+    request: &TrainingRequest,
+) -> Result<(TrainingOutcome, PortablePredictorPackage), String> {
+    let provider = DatasetPackageMethodsProvider::for_product_pipeline(
+        dataset,
+        source_id,
+        recipe
+            .steps
+            .last()
+            .is_some_and(|step| step.role == "classifier"),
     )?;
-    let runtime = crate::native_methods_replay::configure_methods_runtime_for_source(library)
+    let mut artifacts = dag_ml_core::InMemoryArtifactStore::new();
+    let training = crate::io_training::execute_dataset_package_methods_training(
+        &provider,
+        request,
+        &format!("outcome:{run_id}"),
+        dag_ml_core::RunId::new(run_id).map_err(|e| e.to_string())?,
+        dag_ml_core::BundleId::new(format!("bundle:{run_id}")).map_err(|e| e.to_string())?,
+        library,
+        &mut artifacts,
+    )?;
+    let package = training
+        .to_portable_predictor_package(
+            format!("package:{run_id}"),
+            dag_ml_core::FittedArtifactMode::PortableRequired,
+            dag_ml_core::ArtifactLoadMode::NativePortable,
+        )
         .map_err(|e| e.to_string())?;
-    let specs = dag_ml_core::methods_estimator_host_controller_specs(&runtime)
-        .map_err(|e| e.to_string())?;
-    let mut manifests = specs
-        .iter()
-        .map(|s| s.derive())
-        .collect::<dag_ml_core::Result<Vec<_>>>()
-        .map_err(|e| e.to_string())?;
-    manifests.sort_by(|a, b| a.controller_id.cmp(&b.controller_id));
-    let mut request = serde_json::to_value(base).map_err(|e| e.to_string())?;
-    let mut nodes = Vec::new();
-    let mut edges = Vec::new();
-    let mut ids = Vec::new();
-    for (index, step) in recipe.steps.iter().enumerate() {
-        let final_step = index + 1 == recipe.steps.len();
-        let kind = match (step.role.as_str(), final_step) {
-            ("transformer" | "selector", false) => "transform",
-            ("regressor" | "classifier", true) => "model",
-            _ => return Err(
-                "pipeline requires transformer/selector steps followed by one regressor/classifier"
-                    .into(),
-            ),
-        };
-        if step.method_id.trim().is_empty()
-            || step.params.contains_key("method_id")
-            || step.params.contains_key("unsafe_flags")
-        {
-            return Err(
-                "method_id and unsafe_flags cannot be overridden by user parameters".into(),
-            );
-        }
-        let id = if final_step {
-            "model:pls".to_string()
-        } else {
-            format!("transform:{index}")
-        };
-        NodeId::new(&id).map_err(|e| e.to_string())?;
-        let mut params = step.params.clone();
-        params.insert("method_id".into(), json!(step.method_id));
-        nodes.push(json!({"id":id,"kind":kind,"operator":format!("n4m:{}",step.method_id),"params":params,
-            "ports":{"inputs":[{"name":"x","kind":"data","representation":"tabular_numeric","cardinality":"one","description":""}],
-            "outputs":[{"name":if final_step {"oof"} else {"x_out"},"kind":if final_step {"prediction"} else {"data"},"representation":if final_step {Value::Null} else {json!("tabular_numeric")},"cardinality":"one","description":""}]},"metadata":{},"seed_label":null}));
-        if let Some(previous) = ids.last() {
-            edges.push(json!({"source":{"node_id":previous,"port_name":"x_out"},"target":{"node_id":id,"port_name":"x"},
-                "contract":{"kind":"data","representation":"tabular_numeric","requires_oof":false,"requires_fold_alignment":true,"propagates_lineage":true}}));
-        }
-        ids.push(id);
-    }
-    request["campaign"]["metadata"]["native_pipeline_target_names"] =
-        request["options"]["outputs"][0]["target_names"].clone();
-    if let Some(index) = recipe
-        .steps
-        .last()
-        .and_then(|step| step.params.get("native_target_index"))
-    {
-        let index = index
-            .as_u64()
-            .and_then(|value| usize::try_from(value).ok())
-            .ok_or("native_target_index requires addressable nonnegative integer")?;
-        for key in ["target_names", "target_units", "class_labels"] {
-            let values = request["options"]["outputs"][0][key]
-                .as_array()
-                .ok_or("Invalid native output target schema")?;
-            let value = values
-                .get(index)
-                .ok_or("native_target_index exceeds declared targets")?
-                .clone();
-            request["options"]["outputs"][0][key] = json!([value]);
-        }
-    }
-    if classification {
-        if request["options"]["outputs"][0]["target_names"]
-            .as_array()
-            .is_none_or(|names| names.len() != 1)
-        {
-            return Err("native classification requires exactly one target".into());
-        }
-        request["options"]["outputs"][0]["prediction_kind"] = json!("class_label");
-        request["options"]["selection"]["metric"] =
-            json!({"name":"balanced_accuracy","objective":"maximize"});
-    }
-    request["graph"]["nodes"] = json!(nodes);
-    request["graph"]["edges"] = json!(edges);
-    request["controller_manifests"] = json!(manifests);
-    // Only the first node reads raw IO buffers; subsequent nodes consume their
-    // upstream native identity-keyed feature handles.
-    let mut binding = request["campaign"]["data_bindings"]["model:pls"][0].clone();
-    binding["node_id"] = json!(ids[0]);
-    request["campaign"]["data_bindings"] = json!({ids[0].clone():[binding]});
-    let shape = request["campaign"]["shape_plans"]["model:pls"].clone();
-    let mut shapes = serde_json::Map::new();
-    for id in &ids {
-        let mut declaration = shape.clone();
-        declaration["node_id"] = json!(id);
-        shapes.insert(id.clone(), declaration);
-    }
-    request["campaign"]["shape_plans"] = Value::Object(shapes);
-    let typed_binding: DataBinding =
-        serde_json::from_value(request["campaign"]["data_bindings"][&ids[0]][0].clone())
-            .map_err(|e| e.to_string())?;
-    request["data_identities"] = json!([TrainingDataIdentity::from_binding_envelope(
-        &typed_binding,
-        provider.external_envelope()
-    )
-    .map_err(|e| e.to_string())?]);
-    let sample_ids: Vec<String> = dataset
-        .audits
-        .iter()
-        .find_map(|audit| audit.get("input_sample_ids"))
-        .map(|value| serde_json::from_value(value.clone()).map_err(|e| e.to_string()))
-        .transpose()?
-        .unwrap_or_else(|| {
-            provider
-                .relations()
-                .records
-                .iter()
-                .map(|r| r.sample_id.to_string())
-                .collect()
-        });
-    let groups: BTreeMap<String, String> = provider
-        .relations()
-        .records
-        .iter()
-        .map(|r| {
-            (
-                r.sample_id.to_string(),
-                r.group_id
-                    .as_ref()
-                    .map(|g| g.to_string())
-                    .unwrap_or_else(|| r.sample_id.to_string()),
-            )
-        })
-        .collect();
-    let dependent = groups
-        .values()
-        .collect::<std::collections::BTreeSet<_>>()
-        .len()
-        != groups.len()
-        || provider
-            .relations()
-            .records
-            .iter()
-            .any(|r| r.origin_sample_id.is_some());
-    if dependent && dataset.folds.is_empty() {
-        return Err("dependent/grouped samples require explicit leakage-safe fold_ids".into());
-    }
-    if !dataset.folds.is_empty() {
-        if dataset.folds.len() < 2 {
-            return Err("at least two declared CV folds required".into());
-        }
-        let fold_set = json!({"id":"native:declared-folds","sample_ids":sample_ids,
-            "sample_groups":if dependent {json!(groups)} else {json!({})},
-            "folds":dataset.folds.iter().enumerate().map(|(i,(train,validation))|{
-                let select = |indexes:&Vec<i64>| -> Result<Vec<String>,String> {
-                    indexes.iter().map(|index| usize::try_from(*index).ok().and_then(|position|sample_ids.get(position)).cloned().ok_or("declared fold index outside native training cohort".into())).collect()
-                };
-                Ok(json!({"fold_id":format!("native.fold.{i}"),"train_sample_ids":select(train)?,"validation_sample_ids":select(validation)?,"metadata":{}}))
-            }).collect::<Result<Vec<_>,String>>()?});
-        request["campaign"]["split_invocation"]["fold_set"] = fold_set;
-        request["campaign"]["split_invocation"]["id"] = json!("native:declared-folds");
-    }
-    if dependent {
-        request["campaign"]["leakage_policy"]["split_unit"] = json!("group");
-        request["campaign"]["leakage_policy"]["require_group_ids"] = json!(true);
-        request["campaign"]["split_invocation"]["leakage_policy"] =
-            request["campaign"]["leakage_policy"].clone();
-    }
-    request["campaign"]["metadata"]["native_pipeline_recipe"] = json!(recipe);
-    request["campaign"]["metadata"]["input_sample_ids"] = json!(provider
-        .relations()
-        .records
-        .iter()
-        .map(|r| r.sample_id.to_string())
-        .collect::<Vec<_>>());
-    for candidate in &recipe.candidates {
-        if candidate.contains_key("method_id")
-            || candidate.contains_key("unsafe_flags")
-            || candidate.contains_key("native_target_index")
-        {
-            return Err("candidate parameters cannot override method identity or safety".into());
-        }
-    }
-    request["campaign"]["generation"] = json!({"strategy":"cartesian","max_variants":recipe.candidates.len(),
-        "dimensions":[{"name":"native_model_params","choices":recipe.candidates.iter().enumerate().map(|(i,params)|json!({
-            "label":format!("candidate_{i}"),"value":i,"param_overrides":if params.is_empty() {vec![]} else {vec![json!({"node_id":"model:pls","params":params})]},"active_subsequence":null})).collect::<Vec<_>>()}]});
-    let mut request: TrainingRequest =
-        serde_json::from_value(request).map_err(|e| e.to_string())?;
-    request.request_fingerprint = request.compute_fingerprint().map_err(|e| e.to_string())?;
-    request.validate().map_err(|e| e.to_string())?;
-    let projected = request.project().map_err(|e| e.to_string())?;
-    for (id, step) in ids.iter().zip(&recipe.steps) {
-        let node_id = NodeId::new(id).map_err(|e| e.to_string())?;
-        let expected = format!("controller:n4m.{}", step.role);
-        if projected
-            .plan
-            .node_plans
-            .get(&node_id)
-            .is_none_or(|node| node.controller_id.as_str() != expected)
-        {
-            return Err(format!(
-                "native catalog role differs from declared role for {id}"
-            ));
-        }
-    }
-    if projected
-        .plan
-        .node_plans
-        .values()
-        .any(|node| !node.supported_phases.contains(&Phase::Refit))
-    {
-        return Err("every native pipeline step must support portable full refit".into());
-    }
-    Ok(request)
+    Ok((training, package))
 }
 
 /// Train a portable native pipeline with CV/OOF selection and full refit.
@@ -295,31 +171,8 @@ pub(crate) fn run_pipeline_with_contract(
         request.request_fingerprint = request.compute_fingerprint().map_err(|e| e.to_string())?;
         request.validate().map_err(|e| e.to_string())?;
     }
-    let provider = DatasetPackageMethodsProvider::for_product_pipeline(
-        &dataset,
-        source_id,
-        recipe
-            .steps
-            .last()
-            .is_some_and(|step| step.role == "classifier"),
-    )?;
-    let mut artifacts = dag_ml_core::InMemoryArtifactStore::new();
-    let training = crate::io_training::execute_dataset_package_methods_training(
-        &provider,
-        &request,
-        &format!("outcome:{run_id}"),
-        dag_ml_core::RunId::new(run_id).map_err(|e| e.to_string())?,
-        dag_ml_core::BundleId::new(format!("bundle:{run_id}")).map_err(|e| e.to_string())?,
-        library,
-        &mut artifacts,
-    )?;
-    let package = training
-        .to_portable_predictor_package(
-            format!("package:{run_id}"),
-            dag_ml_core::FittedArtifactMode::PortableRequired,
-            dag_ml_core::ArtifactLoadMode::NativePortable,
-        )
-        .map_err(|e| e.to_string())?;
+    let (training, package) =
+        execute_pipeline_training(&dataset, source_id, &recipe, library, run_id, &request)?;
     Ok(
         json!({"schema":"nirs4all.native-pipeline.v1","schema_version":1,
         "config":{"source_id":source_id,"pipeline":recipe},"training_outcome":training,"package":package}),
@@ -378,3 +231,7 @@ pub fn predict_pipeline(record: &Value, library: &Path, run_id: &str) -> Result<
             .map_err(|e| e.to_string())?;
     serde_json::to_value(replay).map_err(|e| e.to_string())
 }
+
+#[cfg(test)]
+#[path = "../tests/fixtures/n4a_native_actions_v1/request_transition.rs"]
+mod request_transition;

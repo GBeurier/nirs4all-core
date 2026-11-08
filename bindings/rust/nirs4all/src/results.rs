@@ -186,28 +186,13 @@ pub fn open_experiment_results(path: impl AsRef<Path>) -> Result<ExperimentResul
         if Some(model_hash.as_str()) != model["sha256"].as_str() {
             return Err(invalid("experiment model archive hash mismatch"));
         }
-        let archive = crate::load_archive_v2(&model_path).map_err(|error| error.to_string())?;
-        let package_text = std::str::from_utf8(
-            archive
-                .portable_predictor_package()
-                .map_err(|error| error.to_string())?,
-        )
-        .map_err(|error| error.to_string())?;
-        let package = dag_ml_core::PortablePredictorPackage::from_json(package_text)
+        let archive = crate::n4a_native_package::load_native_predictor_package(&model_path)
             .map_err(|error| error.to_string())?;
-        dag_ml_core::validate_archive_v2_portable_payloads(
-            archive.manifest(),
-            &package,
-            archive.members(),
-        )
-        .map_err(|error| error.to_string())?;
-        let outcome_text = std::str::from_utf8(
-            archive
-                .member("dagml/training_outcome.json")
-                .map_err(|error| error.to_string())?,
-        )
-        .map_err(|error| error.to_string())?;
-        let outcome = dag_ml_core::TrainingOutcome::from_json(outcome_text)
+        let package = archive
+            .predictor_package()
+            .map_err(|error| error.to_string())?;
+        let outcome = archive
+            .training_outcome()
             .map_err(|error| error.to_string())?;
         if outcome.run_id.as_str() != run_id
             || outcome.selected_variant_id.as_str() != winner_variant_id
@@ -232,7 +217,7 @@ pub fn open_experiment_results(path: impl AsRef<Path>) -> Result<ExperimentResul
             .iter()
             .map(|row| serde_json::to_value(row).map_err(|error| error.to_string()))
             .collect::<Result<_, _>>()?;
-        crate::result_projection::validate_training_predictions(&outcome, &rows)?;
+        crate::result_projection::validate_training_predictions(outcome, &rows)?;
         Some(model_path)
     };
     Ok(ExperimentResults {

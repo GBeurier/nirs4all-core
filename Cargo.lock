@@ -1034,9 +1034,10 @@ dependencies = [
 
 [[package]]
 name = "nirs4all"
-version = "0.4.7"
+version = "0.5.0"
 dependencies = [
  "base64",
+ "crc32fast",
  "dag-ml",
  "dag-ml-core",
  "dag-ml-data",
@@ -1057,7 +1058,7 @@ dependencies = [
 
 [[package]]
 name = "nirs4all-core-python-native"
-version = "0.4.7"
+version = "0.5.0"
 dependencies = [
  "nirs4all",
  "pyo3",
@@ -1067,8 +1068,9 @@ dependencies = [
 
 [[package]]
 name = "nirs4all-core-wasm-native"
-version = "0.4.7"
+version = "0.5.0"
 dependencies = [
+ "crc32fast",
  "dag-ml-core",
  "serde",
  "serde_json",

@@ -104,7 +104,7 @@ jobs:
             assert hasattr(nirs4all_core, 'predict_methods_archive_v2_matrix');
             assert hasattr(n4a, 'predict_methods_archive_v2_matrix');
             assert hasattr(nirs4all_core, 'read_portable_predictor_package_v2');
-            assert hasattr(nirs4all_core, 'write_archive_v2_from_native_payloads')"
+            assert hasattr(nirs4all_core, 'write_native_predictor_package')"
         run: |
           python -m pip install --upgrade pip cibuildwheel
           cibuildwheel --output-dir dist bindings/python

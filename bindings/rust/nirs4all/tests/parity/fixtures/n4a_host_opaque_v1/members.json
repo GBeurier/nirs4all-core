@@ -1,0 +1,26 @@
+[
+  {
+    "path": "host/recipe.json",
+    "file": "members/recipe.json"
+  },
+  {
+    "path": "host/data.csv",
+    "file": "members/data.csv"
+  },
+  {
+    "path": "host/model.bin",
+    "file": "members/model.bin"
+  },
+  {
+    "path": "host/foreign-model.bin",
+    "file": "members/foreign-model.bin"
+  },
+  {
+    "path": "host/scores.json",
+    "file": "members/scores.json"
+  },
+  {
+    "path": "host/results.json",
+    "file": "members/results.json"
+  }
+]

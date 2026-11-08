@@ -16,26 +16,80 @@ An additive import facade is available for governed topology work:
 
 ## Native archive bridge
 
-`nirs4all_core.read_portable_predictor_package_v2(path)` invokes the embedded
-Rust Archive V2 reader and returns the exact validated DAG-ML Package V2 bytes.
-It does not parse ZIP members in Python, deserialize the package, or execute a
-prediction. Pass the returned bytes to DAG-ML's typed package/replay surface;
-the aggregate remains only the container and integrity boundary.
+`open_native_package(path, *, entrypoint=None, operation="predict-external",
+memory_budget_bytes=None)` retains the selected Rust proof for Package2/3.
+Readers and replay adapters accept a path, retained `N4aFile` or `NativePackage`.
+`read_archive_v2_payloads` returns the exact package/outcome bytes, selected
+verified member map and neutral Core V1 manifest/view; logical package URIs are
+not physical member paths. Core validates the selected DAG scientific closure,
+while runtime controller trust and execution remain explicit owner operations.
 
-`read_archive_v2_payloads(path)` returns the native-validated `manifest` and
-exact opaque `members` (a path-to-bytes mapping). Archive V2 also transports
-the explicitly declared RAW Methods RolePipeline family: signed DAG-ML
-packages retain every captured N4ME state, binding and controller trust
-requirement in SHA-addressed `artifacts/<sha256>.json` members. Existing N4MM
-archives retain their original profile and declarations.
+`write_native_predictor_package(path, outcome_bytes, package_bytes,
+container_id=...)` and `write_native_refit_package(path, package_bytes,
+container_id=...)` publish new Core V1 containers from exact DAG root bytes.
+They preserve all supported native state families and refuse replacing an
+existing destination. Package3 child storage invents neither parent evidence nor
+scores. Calibration uses the immutable-base native operation and retains
+unrelated content. There is no old physical writer or runtime conversion path.
 
-Storage validation does not authorize a controller or interpret the models.
-Pass this inventory to DAG-ML's `validate_archive_v2_portable_payloads` before
-using its replay driver, with explicit trusted manifests and a signed current
-cohort. The full Python SDK exposes `write_portable_predictor_archive_v2`,
-`read_portable_predictor_archive_v2` and `replay_portable_predictor_archive_v2`
-for that composition. This adds portable transport, not N-D encoders or a
-generalization of the existing callback-free N4MM replay functions.
+## Owner-neutral `.n4a` exchange
+
+Core puts no content-size cap on a `.n4a`. The only bound is the optional
+`memory_budget_bytes=` of a call: the working memory you authorize for Core's
+own allocations, never the payload that stays on disk. `None` (the default)
+means only the allocator and the host constrain the call; it is not a claim
+about machine RAM, and on an overcommitting Linux host a hard guarantee needs an
+explicit budget or cgroup/ulimit limits. A budget below the 4096-byte streaming
+chunk is refused. Allocations made by IO, DAG and Methods inside a native action
+are outside this budget. Every refusal (budget, corruption, changed file) is a
+`ValueError`.
+
+Two handles, one validated Core index, no Python ZIP code:
+
+- **File-backed (large archives).** `open_n4a_file(path, *, memory_budget_bytes=None)`
+  verifies the whole file in one sequential pass and keeps only the index in
+  memory. The returned `N4aFile` has `view()`, `manifest_bytes()`,
+  `artifact_member_paths(id)`, `member(path)`, `open_member(path)`,
+  `copy_member_to(path, dest)`, `copy_archive_to(dest)` and `close()` (it is a
+  context manager). `open_member` returns a non-seekable binary stream with
+  `read`/`readinto`, so `io.BufferedReader(stream)` works. Nothing is trusted from
+  the open: the file is not locked, so each read hashes the bytes it actually
+  returns and compares them with the receipt. The call that would deliver a
+  member's last byte raises `ValueError` and withholds those bytes if the file
+  changed or shrank; bytes delivered earlier are unverified, and a stream
+  abandoned early has verified nothing (`stream.verified`). `copy_*_to` write
+  into any binary file-like object as they verify, so on `ValueError` the
+  destination holds unverified bytes and must be discarded.
+- **In memory.** `open_n4a_container(archive, *, memory_budget_bytes=None)`
+  validates caller bytes once and returns an immutable `N4aContainer` with
+  `view()`, `manifest_bytes()`, `member(path)`, `artifact_members(id)` and
+  `archive_bytes()`. It keeps one copy of `archive`. Whoever asks for `bytes`
+  (`member`, `member` on a file handle, `archive_bytes`, the writer's result)
+  pays that materialization, which is admitted against the budget and allocated
+  fallibly; use streams or `write_n4a_file` to avoid it.
+
+Writers: `write_n4a_container(manifest_json, members, base=None)` returns the
+new container as `bytes`. `write_n4a_file(destination, manifest_json, members,
+*, base=None)` streams straight to disk: a member is `(archive_path, bytes)` or
+`(archive_path, os.PathLike)`, a path member is read by Core twice (digest and
+write passes, never held in memory) and a source that changes between the passes
+is refused. `destination` is staged and published without replacing anything,
+and the result holds the `container_sha256`, `manifest_sha256` and `byte_length`
+computed while writing. With `base` (an `N4aFile` or `N4aContainer`, never
+modified) the members are replacements and every declared member that is not
+replaced keeps its bytes from the base; omitting a member from the manifest
+deletes it. Manifests are exact JSON text and Core derives every size and
+SHA-256, so placeholders are accepted. A duplicate or undeclared member is
+refused by Core and refusals are `ValueError`.
+
+Members are `bytes` and are never deserialized: a stored host model (including a
+pickle) is only exchanged, and `view()["executability"]` is always
+`"not_evaluated"`. Reading is not execution; running a host model is an explicit
+action of its owner or the SDK outside Core. `inspect_n4a_bytes` keeps refusing
+anything but a closed native-produced model, and its view (like the native
+produce and retrain views) has exactly three keys: `manifest`, `receipt` and
+`training`. Native actions stay RAM-materialized and accept the same
+`memory_budget_bytes=`.
 
 ## Archive V3 host view
 
@@ -134,6 +188,6 @@ integer equal to the native width, a column name holding NUL, and a
 `class_names` table that is not a non-empty list of unique strings or finite
 numbers labelling every fitted class id (index = id); missing or non-finite
 labels are refused at fit. `recipe` is a copy of the recipe the states attest,
-which is also the one exported. Core 0.4.7's Methods extra requires
+which is also the one exported. Core 0.5.0's Methods extra requires
 `nirs4all-methods` 1.3.13 or later (ABI 2.20). The role envelope's native format
 remains compatible with ABI 2.14.

@@ -14,18 +14,33 @@ use std::ptr;
 use libloading::{Library, Symbol};
 use serde_json::Value;
 
+mod archive_codec;
 pub mod archive_command;
-mod archive_v1;
-pub(crate) mod archive_v2;
-mod archive_v3;
+mod archive_storage;
 mod archive_view;
+mod capability_profiles_data;
 pub mod conformal;
 pub mod conformal_json;
 mod durability;
 mod formats_io;
 pub mod generation;
 mod io_training;
+pub mod n4a_owner_native;
+pub use n4a_owner_native::{
+    calibrate_n4a_native, parse_native_recipe_json, predict_n4a_native, produce_n4a_native,
+    produce_n4a_native_with_view, read_n4a_training_view, retrain_n4a_native, N4aTrainingView,
+    NativeActionError, NativeActionReceipt, NativeActionRequest, NativeCalibration,
+    NativeCalibrationOptions, NativeInput, NativePrediction, NativeProduceRequest,
+    NativeProduction, NativeRetrainRequest, NativeRuntime, NativeSchemaPolicy,
+};
 pub mod multimodal_workflow;
+pub mod n4a;
+pub mod n4a_file;
+pub mod n4a_native_package;
+pub use n4a_native_package::{LoadedNativePackage, NativePackageReference};
+pub mod n4a_owner;
+pub mod n4a_owner_portable;
+pub mod n4a_physical;
 mod n4m_roles;
 mod native_methods_replay;
 pub mod native_pipeline_contract;
@@ -40,24 +55,8 @@ pub mod robustness_json;
 mod test_fixture;
 pub mod tuning;
 mod workflow;
-pub use archive_v1::{
-    load_archive_v1, write_archive_v1, ArchivePayload, ArchiveReference, ArchiveStoreError,
-    ArchiveV1WriteRequest, LoadedArchiveV1,
-};
-pub use archive_v2::{
-    load_archive, load_archive_v2, load_archive_v2_bytes, write_archive_v2, write_archive_v2_bytes,
-    ArchiveV2MethodsArtifact, ArchiveV2Reference, ArchiveV2WriteRequest, LoadedArchive,
-    LoadedArchiveV2,
-};
-pub use archive_v3::{
-    load_archive_v3, write_archive_v3, ArchiveV3Reference, ArchiveV3WriteRequest, LoadedArchiveV3,
-};
-pub use archive_view::{
-    archive_v2_view, archive_v3_view, archive_view, ArchivePayloadView,
-    ArchiveReplayExecutionStatus, ArchiveReplayView, ArchiveV3MethodsView, ArchiveV3N4meView,
-    ArchiveV3N4mmView, ArchiveV3ReplayView, ArchiveV3RolePipelineView, ArchiveV3View, ArchiveView,
-    ArchiveViewError,
-};
+pub use archive_storage::ArchiveStoreError;
+pub use archive_view::{native_package_view, ArchiveViewError};
 pub use dag_ml_core::NativePredictorDescriptorV1;
 pub use formats_io::{
     load_spectrum_dataset_package, load_spectrum_methods_provider, FormatsIoError,
@@ -79,15 +78,18 @@ pub use native_methods_replay::{
     load_methods_archive_v2_conformal_presentation_v2, predict_methods_archive_v2_matrix,
     predict_methods_archive_v2_matrix_conformal_presentation_v2,
     predict_methods_archive_v2_matrix_json, predict_tuning_archive_v2_matrix,
-    preflight_methods_archive_v2_library, replay_methods_archive_v2,
-    replay_methods_archive_v2_conformal_presentation_v1,
+    predict_tuning_archive_v2_matrix_json, preflight_methods_archive_v2_library,
+    replay_methods_archive_v2, replay_methods_archive_v2_conformal_presentation_v1,
     replay_methods_archive_v2_conformal_presentation_v1_json,
+    replay_methods_archive_v2_conformal_presentation_v1_loaded_json,
     replay_methods_archive_v2_conformal_presentation_v2,
-    replay_methods_archive_v2_conformal_presentation_v2_json, replay_methods_archive_v2_json,
+    replay_methods_archive_v2_conformal_presentation_v2_json,
+    replay_methods_archive_v2_conformal_presentation_v2_loaded_json,
+    replay_methods_archive_v2_json, replay_methods_archive_v2_loaded_json,
     replay_methods_archive_v3, replay_methods_archive_v3_json,
-    MethodsArchiveMatrixPredictJsonRequest, MethodsArchiveMatrixPredictRequest,
-    MethodsArchivePredictRequest, MethodsArchiveRefitRequestV3, MethodsArchiveReplayJsonRequest,
-    NativeMethodsReplayError,
+    replay_methods_archive_v3_loaded_json, MethodsArchiveMatrixPredictJsonRequest,
+    MethodsArchiveMatrixPredictRequest, MethodsArchivePredictRequest, MethodsArchiveRefitRequestV3,
+    MethodsArchiveReplayJsonRequest, NativeMethodsReplayError,
 };
 pub use portable_session::{
     PortableSession, PortableSessionError, PortableSessionState, PORTABLE_SESSION_EXPORT_SCHEMA,
@@ -140,7 +142,9 @@ pub const UPSTREAMS: &[Upstream] = &[
     },
 ];
 
-pub const PORTABLE_OPERATOR_CLASSES: &[&str] = &[
+// Private runner constant: the temporary portable runner/compiler still validates
+// against it until its callers migrate to owner APIs. It is not a capability claim.
+const PORTABLE_OPERATOR_CLASSES: &[&str] = &[
     "nirs4all.operators.splitters.KennardStoneSplitter",
     "nirs4all.operators.splitters.splitters.KennardStoneSplitter",
     "n4m.KennardStone",
@@ -155,144 +159,6 @@ pub const PORTABLE_OPERATOR_CLASSES: &[&str] = &[
     "sklearn.cross_decomposition._pls.PLSRegression",
     "n4m.PLS",
     "n4m.PLSRegression",
-];
-
-pub const RUNTIME_SURFACES: &[&str] = &["python", "javascript_wasm", "rust", "matlab_octave"];
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct RuntimeContract {
-    pub surface: &'static str,
-    pub pipeline_execution: &'static str,
-    pub pipeline_entrypoint: &'static str,
-    pub serialized_model_predict: bool,
-    pub predict_entrypoint: Option<&'static str>,
-}
-
-pub const RUNTIME_CONTRACTS: &[RuntimeContract] = &[
-    RuntimeContract {
-        surface: "python",
-        pipeline_execution: "parity-validated",
-        pipeline_entrypoint: "run_portable_pipeline",
-        serialized_model_predict: false,
-        predict_entrypoint: None,
-    },
-    RuntimeContract {
-        surface: "javascript_wasm",
-        pipeline_execution: "parity-validated",
-        pipeline_entrypoint: "runPortablePipeline",
-        serialized_model_predict: true,
-        predict_entrypoint: Some("predictPortablePipeline"),
-    },
-    RuntimeContract {
-        surface: "rust",
-        pipeline_execution: "parity-validated",
-        pipeline_entrypoint: "run_portable_pipeline_with_library",
-        serialized_model_predict: true,
-        predict_entrypoint: Some("predict_exported_portable_model_with_library"),
-    },
-    RuntimeContract {
-        surface: "matlab_octave",
-        pipeline_execution: "parity-validated",
-        pipeline_entrypoint: "runPortablePipeline",
-        serialized_model_predict: false,
-        predict_entrypoint: None,
-    },
-];
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ArtifactContract {
-    pub id: &'static str,
-    pub schema: &'static str,
-    pub producer: &'static str,
-    pub python_surface: &'static str,
-    pub portable_claim: &'static str,
-    pub optional_payload_fields: &'static [&'static str],
-    pub required_registry_entries: &'static [&'static str],
-    pub published_constants: &'static [(&'static str, &'static [&'static str])],
-}
-
-pub const REQUIRED_KEYWORD_REGISTRY_ENTRIES: &[&str] = &[
-    "run.tuning",
-    "run.tuning.engine",
-    "run.tuning.space",
-    "run.tuning.force_params",
-    "run.tuning.score_data",
-    "run.tuning.score_data.conformal_calibration",
-    "predict.coverage",
-    "predict.all_predictions",
-    "robustness.scenarios.kind",
-    "robustness.scenarios.severity",
-    "robustness.scenarios.distribution",
-    "robustness.X",
-    "robustness.predictor",
-    "robustness.predictor_bundle",
-];
-
-pub const ROBUSTNESS_SCENARIO_DISTRIBUTIONS: &[&str] = &["normal", "uniform"];
-
-pub const PUBLISHED_KEYWORD_CONSTANTS: &[(&str, &[&str])] = &[(
-    "ROBUSTNESS_SCENARIO_DISTRIBUTIONS",
-    ROBUSTNESS_SCENARIO_DISTRIBUTIONS,
-)];
-
-pub const ARTIFACT_CONTRACTS: &[ArtifactContract] = &[
-    ArtifactContract {
-        id: "conformal.calibrated_result",
-        schema: "nirs4all.dagml.conformal_store.v1",
-        producer: "full-python-nirs4all",
-        python_surface:
-            "nirs4all.calibrate / nirs4all.predict_calibrated / nirs4all.load_calibrated_result",
-        portable_claim: "not-exposed-in-nirs4all-core",
-        optional_payload_fields: &[
-            "conformal_guarantee_status",
-            "calibration_replay_source",
-            "tuning_calibration_source",
-        ],
-        required_registry_entries: &[],
-        published_constants: &[],
-    },
-    ArtifactContract {
-        id: "robustness.summary",
-        schema: "https://nirs4all.org/schemas/robustness-summary/v1",
-        producer: "full-python-nirs4all",
-        python_surface:
-            "nirs4all.RobustnessReport.summary_artifact / nirs4all.robustness_summary_schema_json",
-        portable_claim: "summary-json-contract-only",
-        optional_payload_fields: &["conformal_guarantee_status", "spectral_replay"],
-        required_registry_entries: &[],
-        published_constants: &[],
-    },
-    ArtifactContract {
-        id: "tuning.summary",
-        schema: "https://nirs4all.org/schemas/tuning-summary/v1",
-        producer: "full-python-nirs4all",
-        python_surface: "nirs4all.TuningResult.summary_artifact / nirs4all.tuning_summary_schema_json",
-        portable_claim: "summary-json-contract-only",
-        optional_payload_fields: &["sampler", "pruner", "seed", "persistence", "trials[*].diagnostics"],
-        required_registry_entries: &[],
-        published_constants: &[],
-    },
-    ArtifactContract {
-        id: "tuning.ordered_search_space",
-        schema: "https://nirs4all.org/schemas/tuning-ordered-search-space/v1",
-        producer: "full-python-nirs4all",
-        python_surface: "nirs4all.inspect_tuning_space / nirs4all.NativeTuning.inspect_space / nirs4all.tuning_space_schema_json / nirs4all CLI tuning-space",
-        portable_claim: "search-space-json-contract-only",
-        optional_payload_fields: &[],
-        required_registry_entries: &["run.tuning.space", "run.tuning.force_params"],
-        published_constants: &[],
-    },
-    ArtifactContract {
-        id: "keyword.registry",
-        schema: "nirs4all.keyword_registry.v1",
-        producer: "full-python-nirs4all",
-        python_surface:
-            "nirs4all.get_keyword_registry / nirs4all.keyword_registry_json / nirs4all.keyword_registry_schema_json / nirs4all.TUNING_OPTIMIZER_PERSISTENCE_KEYS / nirs4all.ROBUSTNESS_SCENARIO_KINDS / nirs4all.ROBUSTNESS_STOCHASTIC_SCENARIO_KINDS / nirs4all.ROBUSTNESS_SCENARIO_DISTRIBUTIONS / nirs4all.ROBUSTNESS_MODES / nirs4all.ROBUSTNESS_EXECUTABLE_MODES",
-        portable_claim: "registry-json-contract-only",
-        optional_payload_fields: &[],
-        required_registry_entries: REQUIRED_KEYWORD_REGISTRY_ENTRIES,
-        published_constants: PUBLISHED_KEYWORD_CONSTANTS,
-    },
 ];
 
 const KENNARD_STONE_CLASSES: &[&str] = &[
@@ -321,195 +187,22 @@ const PLS_CLASSES: &[&str] = &[
     "n4m.PLSRegression",
 ];
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ControllerPorts {
-    pub inputs: &'static [&'static str],
-    pub outputs: &'static [&'static str],
-}
+pub const RUNTIME_SURFACES: &[&str] = &["python", "javascript_wasm", "rust", "matlab_octave"];
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ControllerCapability {
-    pub id: &'static str,
-    pub kind: &'static str,
-    pub domain: &'static str,
-    pub label: &'static str,
-    pub operator_classes: &'static [&'static str],
-    pub ports: ControllerPorts,
-    pub parameters: &'static [&'static str],
-    pub runtime_level: &'static str,
-    pub execution_path: &'static str,
-    pub composes: &'static [&'static str],
-}
-
-pub const CONTROLLER_CAPABILITIES: &[ControllerCapability] = &[
-    ControllerCapability {
-        id: "split.kennard_stone",
-        kind: "splitter",
-        domain: "methods",
-        label: "Kennard-Stone split",
-        operator_classes: KENNARD_STONE_CLASSES,
-        ports: ControllerPorts {
-            inputs: &["X"],
-            outputs: &["train_indices", "test_indices"],
-        },
-        parameters: &["test_size"],
-        runtime_level: "parity-validated",
-        execution_path: "portable_pipeline",
-        composes: &[],
-    },
-    ControllerCapability {
-        id: "preprocess.snv",
-        kind: "transform",
-        domain: "methods",
-        label: "Standard normal variate",
-        operator_classes: SNV_CLASSES,
-        ports: ControllerPorts {
-            inputs: &["X"],
-            outputs: &["X_transformed"],
-        },
-        parameters: &[],
-        runtime_level: "parity-validated",
-        execution_path: "portable_pipeline",
-        composes: &[],
-    },
-    ControllerCapability {
-        id: "preprocess.savgol",
-        kind: "transform",
-        domain: "methods",
-        label: "Savitzky-Golay",
-        operator_classes: SAVGOL_CLASSES,
-        ports: ControllerPorts {
-            inputs: &["X"],
-            outputs: &["X_transformed"],
-        },
-        parameters: &["window_length", "polyorder", "deriv", "mode", "cval"],
-        runtime_level: "parity-validated",
-        execution_path: "portable_pipeline",
-        composes: &[],
-    },
-    ControllerCapability {
-        id: "model.pls_regression",
-        kind: "model",
-        domain: "methods",
-        label: "PLS regression",
-        operator_classes: PLS_CLASSES,
-        ports: ControllerPorts {
-            inputs: &["X", "y"],
-            outputs: &["predictions", "model"],
-        },
-        parameters: &["n_components", "_range_"],
-        runtime_level: "parity-validated",
-        execution_path: "portable_pipeline",
-        composes: &[],
-    },
-    ControllerCapability {
-        id: "pipeline.portable_methods",
-        kind: "pipeline",
-        domain: "methods",
-        label: "Portable methods pipeline",
-        operator_classes: &[],
-        ports: ControllerPorts {
-            inputs: &["pipeline", "dataset"],
-            outputs: &["execution_result", "predictions", "model"],
-        },
-        parameters: &[],
-        runtime_level: "parity-validated",
-        execution_path: "run_portable_pipeline",
-        composes: &[
-            "split.kennard_stone",
-            "preprocess.snv",
-            "preprocess.savgol",
-            "model.pls_regression",
-        ],
-    },
-];
-
-pub fn runtime_contracts() -> Value {
-    let contracts: Vec<Value> = RUNTIME_CONTRACTS
-        .iter()
-        .map(|item| {
-            serde_json::json!({
-                "surface": item.surface,
-                "pipeline_execution": item.pipeline_execution,
-                "pipeline_entrypoint": item.pipeline_entrypoint,
-                "serialized_model_predict": item.serialized_model_predict,
-                "predict_entrypoint": item.predict_entrypoint,
-            })
-        })
-        .collect();
-    Value::Array(contracts)
-}
-
-pub fn artifact_contracts() -> Value {
-    let contracts: Vec<Value> = ARTIFACT_CONTRACTS
-        .iter()
-        .map(|item| {
-            let mut row = serde_json::json!({
-                "id": item.id,
-                "schema": item.schema,
-                "producer": item.producer,
-                "consumer_level": runtime_level_map("metadata"),
-                "python_surface": item.python_surface,
-                "portable_claim": item.portable_claim,
-                "optional_payload_fields": item.optional_payload_fields,
-                "required_registry_entries": item.required_registry_entries,
-            });
-            if !item.published_constants.is_empty() {
-                row["published_constants"] = published_constants_map(item.published_constants);
-            }
-            row
-        })
-        .collect();
-    Value::Array(contracts)
-}
-
-fn published_constants_map(constants: &[(&'static str, &'static [&'static str])]) -> Value {
-    let mut map = serde_json::Map::new();
-    for (key, values) in constants {
-        map.insert((*key).to_string(), serde_json::json!(values));
-    }
-    Value::Object(map)
+/// Versioned native execution profiles and the external R federation record,
+/// parsed from the data generated from `compat/capabilities.toml`.
+pub fn execution_profiles() -> Value {
+    serde_json::from_str(capability_profiles_data::EXECUTION_PROFILES_JSON)
+        .expect("generated execution profiles are valid JSON")
 }
 
 pub fn capability_manifest() -> Value {
-    let controllers: Vec<Value> = CONTROLLER_CAPABILITIES
-        .iter()
-        .map(|item| {
-            serde_json::json!({
-                "id": item.id,
-                "kind": item.kind,
-                "domain": item.domain,
-                "label": item.label,
-                "operator_classes": item.operator_classes,
-                "ports": {
-                    "inputs": item.ports.inputs,
-                    "outputs": item.ports.outputs,
-                },
-                "parameters": item.parameters,
-                "runtime": runtime_level_map(item.runtime_level),
-                "execution_path": item.execution_path,
-                "composes": item.composes,
-            })
-        })
-        .collect();
-
     serde_json::json!({
         "schema": "nirs4all-core.capabilities.v1",
         "aggregate": "nirs4all-core",
         "runtime_surfaces": RUNTIME_SURFACES,
-        "runtime_contracts": runtime_contracts(),
-        "artifact_contracts": artifact_contracts(),
-        "portable_operator_classes": PORTABLE_OPERATOR_CLASSES,
-        "controllers": controllers,
+        "execution_profiles": execution_profiles(),
     })
-}
-
-fn runtime_level_map(level: &str) -> Value {
-    let mut runtime = serde_json::Map::new();
-    for surface in RUNTIME_SURFACES {
-        runtime.insert((*surface).to_string(), Value::String(level.to_string()));
-    }
-    Value::Object(runtime)
 }
 
 pub fn upstream(key: &str) -> Option<&'static Upstream> {
@@ -2086,171 +1779,382 @@ mod tests {
         assert_eq!(registry.len(), 2);
     }
 
+    fn generated_profiles_fixture() -> Value {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../../tests/parity/expected/capability_profiles.json");
+        let text = std::fs::read_to_string(&path)
+            .unwrap_or_else(|error| panic!("generated profile fixture {path:?}: {error}"));
+        serde_json::from_str(&text).expect("fixture is valid JSON")
+    }
+
+    fn profile<'a>(profiles: &'a Value, id: &str) -> &'a Value {
+        profiles["profiles"]
+            .as_array()
+            .expect("profiles array")
+            .iter()
+            .find(|item| item["id"] == id)
+            .unwrap_or_else(|| panic!("profile {id} is declared"))
+    }
+
+    const SURFACES: [&str; 4] = ["python", "javascript_wasm", "rust", "matlab_octave"];
+    const OPERATIONS: [&str; 12] = [
+        "compile",
+        "fit",
+        "predict",
+        "import",
+        "export",
+        "produce",
+        "inspect",
+        "calibrate",
+        "retrain",
+        "read",
+        "write",
+        "update",
+    ];
+    const METHODS_PACKAGE: &str = "native-methods-package";
+    const CANONICAL: &str = "native-n4a-canonical";
+    const STORAGE: &str = "n4a-container";
+    const METHODS_PACKAGE_SURFACES: [&str; 3] = ["python", "javascript_wasm", "rust"];
+
+    fn expected_surfaces(profile_id: &str) -> &'static [&'static str] {
+        if profile_id == METHODS_PACKAGE {
+            &METHODS_PACKAGE_SURFACES
+        } else {
+            &SURFACES
+        }
+    }
+
+    /// Exact operation declaration; statuses follow `SURFACES` order.
+    fn expected_statuses(profile_id: &str, operation: &str) -> [&'static str; 4] {
+        const S: &str = "supported";
+        const U: &str = "unsupported";
+        match (profile_id, operation) {
+            // Owner-neutral storage executes nothing: only inspect, read, write and update exist.
+            (STORAGE, "inspect" | "read" | "write" | "update") => [S, S, S, S],
+            (STORAGE, _) => [U, U, U, U],
+            // Canonical V1 `.n4a`: only its own actions are declared; calibration is Rust-only.
+            (CANONICAL, "compile" | "fit" | "import" | "export" | "read" | "write" | "update") => {
+                [U, U, U, U]
+            }
+            (CANONICAL, "predict" | "produce" | "inspect" | "retrain") => [S, S, S, S],
+            (CANONICAL, "calibrate") => [U, U, S, U],
+            // Methods Package V2/V3 in the neutral Core V1 container: import, export and predict on
+            // Python, JavaScript/WASM and Rust; MATLAB/Octave declares no entrypoint here.
+            (METHODS_PACKAGE, "import" | "export" | "predict") => [S, S, S, U],
+            (METHODS_PACKAGE, _) => [U, U, U, U],
+            // The envelope and Archive V2 profiles declare the canonical and storage actions unsupported.
+            (_, "produce" | "inspect" | "calibrate" | "retrain" | "read" | "write" | "update") => {
+                [U, U, U, U]
+            }
+            ("native-workflow", "compile") => [U, U, S, U],
+            ("native-conformal", "compile") => [U, U, U, U],
+            (_, "import") | (_, "export") => [S, S, U, S],
+            (_, "fit") | (_, "predict") => [S, S, S, S],
+            other => panic!("unexpected profile/operation {other:?}"),
+        }
+    }
+
     #[test]
-    fn exposes_custom_host_capability_manifest() {
-        let ids: Vec<_> = CONTROLLER_CAPABILITIES.iter().map(|item| item.id).collect();
+    fn execution_profiles_equal_the_generated_owner_fixture() {
+        let profiles = execution_profiles();
+        assert_eq!(profiles, generated_profiles_fixture());
+        assert_eq!(profiles["schema"], "nirs4all-core.execution-profiles.v1");
+        assert_eq!(profiles["version"], 1);
+        assert_eq!(profiles["runtime_surfaces"], serde_json::json!(SURFACES));
         assert_eq!(
-            ids,
-            vec![
-                "split.kennard_stone",
-                "preprocess.snv",
-                "preprocess.savgol",
-                "model.pls_regression",
-                "pipeline.portable_methods"
-            ]
+            profiles["runtime_surfaces"],
+            serde_json::json!(RUNTIME_SURFACES)
         );
 
-        let covered: Vec<_> = CONTROLLER_CAPABILITIES
-            .iter()
-            .flat_map(|item| item.operator_classes.iter().copied())
-            .collect();
-        assert_eq!(covered, PORTABLE_OPERATOR_CLASSES);
-
         let manifest = capability_manifest();
+        let mut keys: Vec<_> = manifest.as_object().unwrap().keys().cloned().collect();
+        keys.sort();
+        assert_eq!(
+            keys,
+            vec![
+                "aggregate",
+                "execution_profiles",
+                "runtime_surfaces",
+                "schema"
+            ]
+        );
         assert_eq!(manifest["schema"], "nirs4all-core.capabilities.v1");
         assert_eq!(
             manifest["runtime_surfaces"],
             serde_json::json!(RUNTIME_SURFACES)
         );
+        assert_eq!(manifest["execution_profiles"], profiles);
+    }
+
+    #[test]
+    fn execution_profiles_are_independent_copies() {
+        let mut first = execution_profiles();
+        first["profiles"][0]["operations"]["fit"]["rust"]["status"] =
+            Value::String("unsupported".into());
+        first["profiles"][1]["content_types"][0]["schema"] = Value::String("mutated".into());
+        first.as_object_mut().unwrap().remove("external_federation");
+        assert_eq!(execution_profiles(), generated_profiles_fixture());
+    }
+
+    #[test]
+    fn exactly_the_native_profiles_are_supported_with_exact_operations() {
+        let profiles = execution_profiles();
+        let ids: Vec<&str> = profiles["profiles"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|item| item["id"].as_str().unwrap())
+            .collect();
         assert_eq!(
-            manifest["runtime_contracts"],
+            ids,
+            vec![
+                "native-workflow",
+                "native-conformal",
+                METHODS_PACKAGE,
+                CANONICAL,
+                STORAGE
+            ]
+        );
+
+        for id in &ids {
+            let profile = profile(&profiles, id);
+            assert_eq!(profile["version"], 1);
+            assert_eq!(
+                profile["surfaces"],
+                serde_json::json!(expected_surfaces(id))
+            );
+            let operations = profile["operations"].as_object().unwrap();
+            assert_eq!(operations.keys().collect::<Vec<_>>(), OPERATIONS.to_vec());
+            for operation in OPERATIONS {
+                let cells = operations[operation].as_object().unwrap();
+                assert_eq!(cells.keys().collect::<Vec<_>>(), SURFACES.to_vec());
+                let statuses: Vec<&str> = SURFACES
+                    .iter()
+                    .map(|surface| cells[*surface]["status"].as_str().unwrap())
+                    .collect();
+                assert_eq!(
+                    statuses,
+                    expected_statuses(id, operation),
+                    "{id}.{operation}"
+                );
+                for surface in SURFACES {
+                    let cell = &cells[surface];
+                    if cell["status"] == "unsupported" {
+                        assert!(!cell["reason"].as_str().unwrap().is_empty());
+                        assert!(cell.get("entrypoints").is_none());
+                    } else {
+                        assert!(!cell["entrypoints"].as_array().unwrap().is_empty());
+                        assert!(cell.get("reason").is_none());
+                    }
+                }
+            }
+        }
+
+        for id in &ids {
+            let requirements = profile(&profiles, id)["runtime_requirements"]
+                .as_object()
+                .unwrap();
+            // The Methods Package profile declares no MATLAB/Octave entrypoint, hence no requirement.
+            let expected_requirements = expected_surfaces(id).to_vec();
+            assert_eq!(
+                requirements.keys().collect::<Vec<_>>(),
+                expected_requirements
+            );
+            let rust = requirements["rust"].to_string();
+            assert!(rust.contains("no CLI"), "{rust}");
+            let browser = requirements["javascript_wasm"].to_string();
+            assert!(
+                browser.contains("WASM builds")
+                    && browser.contains("no native library path and no CLI")
+            );
+        }
+        assert_eq!(
+            profile(&profiles, "native-workflow")["content_types"],
+            serde_json::json!([{
+                "schema": "nirs4all.native-pipeline.v1",
+                "owner": "nirs4all-core",
+                "carried_in": "native pipeline JSON envelope"
+            }])
+        );
+        assert_eq!(
+            profile(&profiles, "native-conformal")["content_types"],
+            serde_json::json!([{
+                "schema": "nirs4all.calibrated.v1",
+                "owner": "nirs4all-core",
+                "carried_in": "Core calibration wrapper JSON, only on the content_routes that name this schema: the Rust calibrate_archive return value, the CLI fit/load responses and the MATLAB struct. The JS/WASM host object and the Python host object carry no schema id; import/export transfer the current native archive V2"
+            }])
+        );
+
+        assert_eq!(
+            profile(&profiles, CANONICAL)["content_types"],
             serde_json::json!([
                 {
-                    "surface": "python",
-                    "pipeline_execution": "parity-validated",
-                    "pipeline_entrypoint": "run_portable_pipeline",
-                    "serialized_model_predict": false,
-                    "predict_entrypoint": null
+                    "schema": "nirs4all.n4a.container.v1",
+                    "owner": "nirs4all-core",
+                    "carried_in": "raw canonical n4a archive bytes (physical profile zip-stored.v1); the owner artifacts and metadata inside stay authoritative and hosts never re-encode them"
                 },
                 {
-                    "surface": "javascript_wasm",
-                    "pipeline_execution": "parity-validated",
-                    "pipeline_entrypoint": "runPortablePipeline",
-                    "serialized_model_predict": true,
-                    "predict_entrypoint": "predictPortablePipeline"
-                },
-                {
-                    "surface": "rust",
-                    "pipeline_execution": "parity-validated",
-                    "pipeline_entrypoint": "run_portable_pipeline_with_library",
-                    "serialized_model_predict": true,
-                    "predict_entrypoint": "predict_exported_portable_model_with_library"
-                },
-                {
-                    "surface": "matlab_octave",
-                    "pipeline_execution": "parity-validated",
-                    "pipeline_entrypoint": "runPortablePipeline",
-                    "serialized_model_predict": false,
-                    "predict_entrypoint": null
+                    "schema": "nirs4all.dataset.v1",
+                    "owner": "nirs4all-io",
+                    "carried_in": "the exact IO dataset record JSON bytes passed unchanged to produce, retrain and predict; only this JSON record route is described here, not general ingestion"
                 }
             ])
         );
         assert_eq!(
-            manifest["artifact_contracts"],
-            serde_json::json!([
-                {
-                    "id": "conformal.calibrated_result",
-                    "schema": "nirs4all.dagml.conformal_store.v1",
-                    "producer": "full-python-nirs4all",
-                    "consumer_level": {
-                        "python": "metadata",
-                        "javascript_wasm": "metadata",
-                        "rust": "metadata",
-                        "matlab_octave": "metadata"
-                    },
-                    "python_surface": "nirs4all.calibrate / nirs4all.predict_calibrated / nirs4all.load_calibrated_result",
-                    "portable_claim": "not-exposed-in-nirs4all-core",
-                    "optional_payload_fields": [
-                        "conformal_guarantee_status",
-                        "calibration_replay_source",
-                        "tuning_calibration_source"
-                    ],
-                    "required_registry_entries": []
-                },
-                {
-                    "id": "robustness.summary",
-                    "schema": "https://nirs4all.org/schemas/robustness-summary/v1",
-                    "producer": "full-python-nirs4all",
-                    "consumer_level": {
-                        "python": "metadata",
-                        "javascript_wasm": "metadata",
-                        "rust": "metadata",
-                        "matlab_octave": "metadata"
-                    },
-                    "python_surface": "nirs4all.RobustnessReport.summary_artifact / nirs4all.robustness_summary_schema_json",
-                    "portable_claim": "summary-json-contract-only",
-                    "optional_payload_fields": ["conformal_guarantee_status", "spectral_replay"],
-                    "required_registry_entries": []
-                },
-                {
-                    "id": "tuning.summary",
-                    "schema": "https://nirs4all.org/schemas/tuning-summary/v1",
-                    "producer": "full-python-nirs4all",
-                    "consumer_level": {
-                        "python": "metadata",
-                        "javascript_wasm": "metadata",
-                        "rust": "metadata",
-                        "matlab_octave": "metadata"
-                    },
-                    "python_surface": "nirs4all.TuningResult.summary_artifact / nirs4all.tuning_summary_schema_json",
-                    "portable_claim": "summary-json-contract-only",
-                    "optional_payload_fields": ["sampler", "pruner", "seed", "persistence", "trials[*].diagnostics"],
-                    "required_registry_entries": []
-                },
-                {
-                    "id": "tuning.ordered_search_space",
-                    "schema": "https://nirs4all.org/schemas/tuning-ordered-search-space/v1",
-                    "producer": "full-python-nirs4all",
-                    "consumer_level": {
-                        "python": "metadata",
-                        "javascript_wasm": "metadata",
-                        "rust": "metadata",
-                        "matlab_octave": "metadata"
-                    },
-                    "python_surface": "nirs4all.inspect_tuning_space / nirs4all.NativeTuning.inspect_space / nirs4all.tuning_space_schema_json / nirs4all CLI tuning-space",
-                    "portable_claim": "search-space-json-contract-only",
-                    "optional_payload_fields": [],
-                    "required_registry_entries": ["run.tuning.space", "run.tuning.force_params"]
-                },
-                {
-                    "id": "keyword.registry",
-                    "schema": "nirs4all.keyword_registry.v1",
-                    "producer": "full-python-nirs4all",
-                    "consumer_level": {
-                        "python": "metadata",
-                        "javascript_wasm": "metadata",
-                        "rust": "metadata",
-                        "matlab_octave": "metadata"
-                    },
-                    "python_surface": "nirs4all.get_keyword_registry / nirs4all.keyword_registry_json / nirs4all.keyword_registry_schema_json / nirs4all.TUNING_OPTIMIZER_PERSISTENCE_KEYS / nirs4all.ROBUSTNESS_SCENARIO_KINDS / nirs4all.ROBUSTNESS_STOCHASTIC_SCENARIO_KINDS / nirs4all.ROBUSTNESS_SCENARIO_DISTRIBUTIONS / nirs4all.ROBUSTNESS_MODES / nirs4all.ROBUSTNESS_EXECUTABLE_MODES",
-                    "portable_claim": "registry-json-contract-only",
-                    "optional_payload_fields": [],
-                    "published_constants": {
-                        "ROBUSTNESS_SCENARIO_DISTRIBUTIONS": ["normal", "uniform"]
-                    },
-                    "required_registry_entries": [
-                        "run.tuning",
-                        "run.tuning.engine",
-                        "run.tuning.space",
-                        "run.tuning.force_params",
-                        "run.tuning.score_data",
-                        "run.tuning.score_data.conformal_calibration",
-                        "predict.coverage",
-                        "predict.all_predictions",
-                        "robustness.scenarios.kind",
-                        "robustness.scenarios.severity",
-                        "robustness.scenarios.distribution",
-                        "robustness.X",
-                        "robustness.predictor",
-                        "robustness.predictor_bundle"
-                    ]
-                }
-            ])
+            profile(&profiles, METHODS_PACKAGE)["content_types"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|item| item["schema"].as_str().unwrap())
+                .collect::<Vec<_>>(),
+            vec![
+                "dagml.portable_predictor_package",
+                "dagml.portable_refit_package"
+            ]
         );
-        assert_eq!(manifest["controllers"].as_array().unwrap().len(), 5);
+        assert!(profile(&profiles, METHODS_PACKAGE)["content_routes"]
+            .as_array()
+            .unwrap()
+            .is_empty());
+        assert!(profile(&profiles, CANONICAL)["content_routes"]
+            .as_array()
+            .unwrap()
+            .is_empty());
+        assert!(profile(&profiles, STORAGE)["content_routes"]
+            .as_array()
+            .unwrap()
+            .is_empty());
+        let storage_limits = profile(&profiles, STORAGE)["limits"].to_string();
+        assert!(
+            storage_limits.contains("Readable never implies executable")
+                && storage_limits.contains("not parity")
+        );
+        let routes = profile(&profiles, "native-conformal")["content_routes"]
+            .as_array()
+            .unwrap();
+        assert_eq!(routes.len(), 21);
+        assert!(profile(&profiles, "native-workflow")["content_routes"]
+            .as_array()
+            .unwrap()
+            .is_empty());
+        for route in routes {
+            if route["surface"] == "javascript_wasm" || route["route"] == "archive_transfer" {
+                assert!(route.get("schema").is_none(), "{route}");
+            }
+        }
+        let text = capability_manifest().to_string();
+        for retired in [
+            "legacy",
+            "wasm-methods-extension",
+            "portable_pipeline",
+            "runtime_contract",
+            "parity-validated",
+            "conformal_store",
+        ] {
+            assert!(!text.contains(retired), "retired term {retired} reachable");
+        }
+    }
+
+    #[test]
+    fn rust_entrypoints_named_by_the_profiles_resolve_in_source() {
+        let profiles = execution_profiles();
+        let mut checked = 0;
+        for profile in profiles["profiles"].as_array().unwrap() {
+            for operation in OPERATIONS {
+                let cell = &profile["operations"][operation]["rust"];
+                if cell["status"] != "supported" {
+                    continue;
+                }
+                for entry in cell["entrypoints"].as_array().unwrap() {
+                    let source = entry["source"].as_str().unwrap();
+                    assert!(
+                        source.starts_with("bindings/rust/nirs4all/src/"),
+                        "{source}"
+                    );
+                    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                        .join("../../..")
+                        .join(source);
+                    let text = std::fs::read_to_string(&path).unwrap();
+                    let symbol = entry["symbol"].as_str().unwrap();
+                    assert!(
+                        text.contains(&format!("pub fn {symbol}")),
+                        "{symbol} in {source}"
+                    );
+                    checked += 1;
+                }
+            }
+        }
+        // workflow: compile, fit, predict; conformal: fit, predict; methods package: predict,
+        // import, export; canonical: produce, inspect, predict, calibrate, retrain;
+        // storage: inspect, read, write, update. Every declared Rust source entry is checked above.
+        assert_eq!(checked, 17);
+    }
+
+    #[test]
+    fn canonical_profile_declares_real_actions_without_aliases() {
+        let profiles = execution_profiles();
+        let canonical = profile(&profiles, CANONICAL);
+        let mut symbols = Vec::new();
+        for operation in OPERATIONS {
+            let cell = &canonical["operations"][operation]["rust"];
+            if cell["status"] == "supported" {
+                for entry in cell["entrypoints"].as_array().unwrap() {
+                    symbols.push((operation, entry["symbol"].as_str().unwrap().to_string()));
+                }
+            }
+        }
         assert_eq!(
-            manifest["controllers"][0]["runtime"]["rust"],
-            "parity-validated"
+            symbols,
+            vec![
+                ("predict", "predict_n4a_native".to_string()),
+                ("produce", "produce_n4a_native".to_string()),
+                ("inspect", "inspect_n4a_view_json".to_string()),
+                ("calibrate", "calibrate_n4a_native".to_string()),
+                ("retrain", "retrain_n4a_native".to_string()),
+            ]
+        );
+        // Source support is not qualification; the profile says so itself.
+        let limits = canonical["limits"].to_string();
+        assert!(
+            limits.contains("not parity") && limits.contains("Inspect is not executable admission")
+        );
+        for other in ["native-workflow", "native-conformal", METHODS_PACKAGE] {
+            for operation in ["produce", "inspect", "calibrate", "retrain"] {
+                assert!(
+                    profile(&profiles, other)["operations"][operation]
+                        .as_object()
+                        .unwrap()
+                        .values()
+                        .all(|cell| cell["status"] == "unsupported"),
+                    "{other}.{operation}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn r_is_federated_externally_and_never_a_core_runtime_surface() {
+        let profiles = execution_profiles();
+        assert!(!RUNTIME_SURFACES.contains(&"r"));
+        assert!(!profiles["runtime_surfaces"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|item| item == "r"));
+        let federation = profiles["external_federation"].as_array().unwrap();
+        assert_eq!(federation.len(), 1);
+        assert_eq!(federation[0]["surface"], "r");
+        assert_eq!(federation[0]["core_runtime_surface"], false);
+        assert_eq!(federation[0]["status"], "externally-federated");
+        assert_eq!(
+            federation[0]["profiles"],
+            serde_json::json!([
+                "native-workflow",
+                "native-conformal",
+                METHODS_PACKAGE,
+                CANONICAL,
+                STORAGE
+            ])
         );
     }
 

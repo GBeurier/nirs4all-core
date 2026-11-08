@@ -1,10 +1,11 @@
+use nirs4all::n4a_native_package::load_native_predictor_package as load_archive_v2;
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
 use nirs4all::dag_ml::{BundleId, RunId};
 use nirs4all::{
-    canonical_pls_training_request, formats, load_archive_v2, load_spectrum_dataset_package,
+    canonical_pls_training_request, formats, load_spectrum_dataset_package,
     load_spectrum_methods_provider, predict_methods_archive_v2_matrix,
     preflight_methods_archive_v2_library, train_dataset_package_methods_archive_v2,
     CanonicalPlsProfile, DatasetPackageMethodsArchiveV2Request, FormatsIoError,

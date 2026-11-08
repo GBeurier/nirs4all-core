@@ -78,28 +78,18 @@ def _check_winner(view: dict[str, Any], winner_variant_id: str) -> None:
 
 
 def _check_archive(path: Path, view: dict[str, Any], run_id: str, winner_variant_id: str) -> None:
-    from dag_ml import (
-        PortablePredictorPackage,
-        TrainingOutcome,
-        validate_archive_v2_portable_payloads,
-    )
+    from dag_ml import PortablePredictorPackage, TrainingOutcome
 
     from ._archive import read_archive_v2_payloads
 
     _regular_file(path)
+    # Core validated the selected native closure; it returns the exact root and
+    # evidence bytes (an absent training outcome is refused by Core).
     inventory = read_archive_v2_payloads(path)
-    members = inventory["members"]
-    package_bytes = members.get("dagml/portable_predictor_package.json")
-    outcome_bytes = members.get("dagml/training_outcome.json")
-    if package_bytes is None or outcome_bytes is None:
-        raise ValueError("Core archive lacks native predictor or training outcome")
-    # DAG-ML, rather than this facade, validates the signed package/outcome semantics.
-    package_contract = PortablePredictorPackage(package_bytes.decode("utf-8"))
-    package = package_contract.to_dict()
+    package_bytes = inventory["package"]
+    outcome_bytes = inventory["training_outcome"]
+    package = PortablePredictorPackage(package_bytes.decode("utf-8")).to_dict()
     outcome = TrainingOutcome(outcome_bytes.decode("utf-8")).to_dict()
-    # Keep the exact package JSON at the semantic gate. Python float
-    # reserialization can change the archive's native transport closure.
-    validate_archive_v2_portable_payloads(inventory["manifest"], package_contract, members)
     if outcome.get("run_id") != run_id or outcome.get("selected_variant_id") != winner_variant_id:
         raise ValueError("Core archive training outcome disagrees with experiment run or winner")
     if package.get("training_outcome", {}).get("outcome_fingerprint") != outcome.get("outcome_fingerprint"):

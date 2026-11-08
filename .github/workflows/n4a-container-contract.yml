@@ -1,0 +1,26 @@
+name: n4a container contract
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  schema-instance:
+    name: Committed manifests validated against the n4a V1 schema (shape only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.0
+      - uses: actions/setup-python@v6.3.0
+        with:
+          python-version: "3.11"
+      - name: Contract validator dependencies
+        run: python -m pip install -r scripts/requirements-contracts.txt
+      - name: n4a container schema-instance gate
+        run: python scripts/validate_n4a_container_contract.py
+      - name: n4a container regression tests
+        run: python -m unittest discover -s tests -p test_n4a_container_contract.py -v
