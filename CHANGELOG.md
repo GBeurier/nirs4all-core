@@ -2,6 +2,7 @@
 
 ## 0.5.0 - Unreleased
 
+- Replace Rust portable-session export v1/v2 with `nirs4all-core.portable-session.v1` and explicit preprocessing ownership; replace public `PORTABLE_SESSION_EXPORT_SCHEMA`/`PORTABLE_SESSION_EXPORT_SCHEMA_V2` with `PORTABLE_SESSION_SCHEMA`, refuse retired tags before native loading, and remove intrinsic session/model size ceilings.
 - Replace the public physical Archive V1/V2/V3 builders/readers with native
   package admission and the Core V1 container. Owner predictor/refit schemas,
   Methods fitted-state formats and recipe versions remain unchanged.

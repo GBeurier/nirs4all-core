@@ -25,14 +25,30 @@ fn default_source() -> String {
 fn request(value: &Value) -> Result<Request, String> {
     let request: Request = serde_json::from_value(value.clone()).map_err(|e| e.to_string())?;
     if request.schema_version != 1
-        || request
-            .profile
-            .as_deref()
-            .is_some_and(|p| p != dag::PORTABLE_LINEAR_PROFILE)
+        || request.profile.as_deref().is_some_and(|p| {
+            p != dag::PORTABLE_LINEAR_PROFILE
+                && p != dag::PORTABLE_CLASSIFICATION_PROFILE
+                && p != dag::PORTABLE_FEATURE_PROFILE
+        })
     {
         return Err("unsupported portable request schema/profile".into());
     }
     Ok(request)
+}
+
+/// The owner derives the profile from the declared terminal model; an
+/// explicit request profile must agree with it.
+fn admit(request: &Request) -> Result<dag::PortableLinearAdmission, String> {
+    let admission = dag::admit_portable_pipeline(&request.definition).map_err(|e| e.to_string())?;
+    if let Some(profile) = &request.profile {
+        if profile != &admission.profile {
+            return Err(format!(
+                "declared profile {profile} disagrees with the definition's {}",
+                admission.profile
+            ));
+        }
+    }
+    Ok(admission)
 }
 
 /// Pure owner admission. No native library, data materialization, import or fit.
@@ -41,10 +57,7 @@ pub fn plan(value: &Value) -> Result<Value, String> {
     if request.dataset.is_some() {
         return Err("portable-pipeline-plan forbids dataset; inspection never executes".into());
     }
-    serde_json::to_value(
-        dag::admit_portable_linear(&request.definition).map_err(|e| e.to_string())?,
-    )
-    .map_err(|e| e.to_string())
+    serde_json::to_value(admit(&request)?).map_err(|e| e.to_string())
 }
 
 /// Marshals a dense host matrix to IO's existing public record. Validation and
@@ -52,7 +65,14 @@ pub fn plan(value: &Value) -> Result<Value, String> {
 fn record(
     value: &Value,
     source: &str,
+    classification: bool,
 ) -> Result<(Value, String, Value, BTreeMap<String, Value>), String> {
+    if value.get("schema").is_some() && classification {
+        return Err(format!(
+            "{} refuses record-backed datasets until Core carries IO y_categorical class labels",
+            dag::PORTABLE_CLASSIFICATION_PROFILE
+        ));
+    }
     if value.get("schema").is_some() {
         let normalized = nirs4all_io_crate::core::public_dataset::normalize_dataset(value)?;
         let raw = &normalized["dataset"];
@@ -138,6 +158,15 @@ fn record(
     if y.len() != rows {
         return Err("X/y row counts disagree".into());
     }
+    if classification {
+        // Integral class ids only; the host keeps its label domain and lookup.
+        for (row, cell) in y.iter_mut().enumerate() {
+            let id = cell.as_i64().filter(|id| *id >= 0).ok_or_else(|| {
+                format!("dataset.y[{row}]: nonnegative integer class id required")
+            })?;
+            *cell = json!(id);
+        }
+    }
     let mut row_annotations = BTreeMap::new();
     for key in ["metadata", "provenance"] {
         if let Some(value) = object.get(key) {
@@ -189,8 +218,8 @@ fn record(
         "dataset":{"schema":"nirs4all.multimodal-dataset","schema_version":1,"name":"portable","sample_ids":ids,
         "sources":[{"name":source,"sample_ids":ids,"representation_id":"tabular_numeric","axes":["sample","feature"],"feature_names":null,
             "axis_units":{},"axis_coordinates":{},"array":{"dtype":"float64","shape":[rows,cols],"values":x}}],
-        "y":{"dtype":"float64","shape":[rows],"values":y},"groups":null,
-        "partitions":{"dtype":"<U5","shape":[rows],"values":vec!["train";rows]},"target_names":["y"],"task_type":"regression"}});
+        "y":{"dtype":if classification {"int64"} else {"float64"},"shape":[rows],"values":y},"groups":null,
+        "partitions":{"dtype":"<U5","shape":[rows],"values":vec!["train";rows]},"target_names":["y"],"task_type":if classification {"classification"} else {"regression"}}});
     Ok((
         nirs4all_io_crate::core::public_dataset::normalize_dataset(&raw)?,
         kind.into(),
@@ -199,11 +228,19 @@ fn record(
     ))
 }
 
-fn cohort(record: &Value) -> Result<Vec<String>, String> {
+fn cohort(record: &Value, classification: bool) -> Result<Vec<String>, String> {
     let raw = &record["dataset"];
-    if raw["task_type"] != "regression" || raw["y"]["shape"].as_array().is_none_or(|s| s.len() != 1)
-    {
-        return Err("portable profile requires one numeric regression target".into());
+    let task = if classification {
+        "classification"
+    } else {
+        "regression"
+    };
+    if raw["task_type"] != task || raw["y"]["shape"].as_array().is_none_or(|s| s.len() != 1) {
+        return Err(if classification {
+            "portable classification requires one integer class-id target".into()
+        } else {
+            "portable profile requires one numeric regression target".into()
+        });
     }
     for key in ["groups", "independent_unit_ids", "repetition_ids"] {
         if raw.get(key).is_some_and(|v| !v.is_null()) {
@@ -274,12 +311,16 @@ impl dag::RuntimeDataProvider for PortableProvider<'_> {
     }
 }
 
-fn registry() -> Result<dag::ControllerRegistry, String> {
-    let mut spec = dag::HostControllerSpec::new(
-        dag::PORTABLE_STEPS_CONTROLLER,
-        dag::PORTABLE_STEPS_VERSION,
-        dag::NodeKind::Model,
-    );
+fn registry(classification: bool) -> Result<dag::ControllerRegistry, String> {
+    let (id, version) = if classification {
+        (
+            dag::PORTABLE_CLASSIFIER_CONTROLLER,
+            dag::PORTABLE_CLASSIFIER_VERSION,
+        )
+    } else {
+        (dag::PORTABLE_STEPS_CONTROLLER, dag::PORTABLE_STEPS_VERSION)
+    };
+    let mut spec = dag::HostControllerSpec::new(id, version, dag::NodeKind::Model);
     spec.rng_policy = dag::RngPolicy::ExternallyDeterministic;
     spec.output_ports=Some(serde_json::from_value(json!([{"name":"oof","kind":"prediction","representation":null,"cardinality":"one","description":""}])).map_err(|e|e.to_string())?);
     let mut registry = dag::ControllerRegistry::new();
@@ -327,20 +368,58 @@ fn in_order(
     Ok((predicted, actual))
 }
 
+/// One owner variant entry. Regression keeps its historical shape; class ids
+/// cross as JSON integers with the native accuracy.
+fn variant_entry(
+    classification: bool,
+    identity: &dag::HoldoutVariantIdentity,
+    score: f64,
+    predictions: Vec<f64>,
+) -> Value {
+    if classification {
+        json!({"n_components":identity.n_components,"accuracy":score,"predictions":class_ids(&predictions),
+            "params":identity.params,"ordinal":identity.ordinal,"variant_id":identity.variant_id})
+    } else {
+        json!({"n_components":identity.n_components,"rmse":score,"predictions":predictions,
+            "params":identity.params,"ordinal":identity.ordinal,"variant_id":identity.variant_id})
+    }
+}
+
+fn class_ids(values: &[f64]) -> Vec<i64> {
+    values.iter().map(|value| *value as i64).collect()
+}
+
 /// Sole common owner executor for CLI/native extension and public Rust APIs.
 pub fn run(value: &Value, library: &Path) -> Result<Value, String> {
     let request = request(value)?;
-    let admission = dag::admit_portable_linear(&request.definition).map_err(|e| e.to_string())?;
+    let admission = admit(&request)?;
+    let classification = admission.profile == dag::PORTABLE_CLASSIFICATION_PROFILE;
+    let feature_graph = admission.profile == dag::PORTABLE_FEATURE_PROFILE;
     let (record, identity_kind, axis, row_annotations) = record(
         request.dataset.as_ref().ok_or("run requires dataset")?,
         &request.source_id,
+        classification,
     )?;
-    let ids = cohort(&record)?;
-    let package = nirs4all_io_crate::core::public_dataset::dense_dataset_package(
-        &record,
-        &request.source_id,
-    )?;
-    let provider = crate::DatasetPackageMethodsProvider::new(&package, &request.source_id)?;
+    let ids = cohort(&record, classification)?;
+    let provider = if classification {
+        let package = nirs4all_io_crate::core::public_dataset::matrix_dataset_package(
+            &record,
+            &request.source_id,
+        )?;
+        let provider = crate::DatasetPackageMethodsProvider::for_product_pipeline(
+            &package,
+            &request.source_id,
+            true,
+        )?;
+        provider.require_complete_targets()?;
+        provider
+    } else {
+        let package = nirs4all_io_crate::core::public_dataset::dense_dataset_package(
+            &record,
+            &request.source_id,
+        )?;
+        crate::DatasetPackageMethodsProvider::new(&package, &request.source_id)?
+    };
     let matrices = provider.training_matrices("portable:materialize", &ids)?;
     let sample_ids = ids
         .iter()
@@ -349,11 +428,22 @@ pub fn run(value: &Value, library: &Path) -> Result<Value, String> {
         .map_err(|e| e.to_string())?;
     let runtime = crate::native_methods_replay::configure_methods_runtime_for_source(library)
         .map_err(|e| e.to_string())?;
-    for params in &admission.candidates {
-        let mut selected = BTreeMap::from([("pipeline_steps_v1".into(), json!(admission.recipe))]);
-        selected.extend(params.clone());
-        let steps = dag::pipeline_steps_recipe(&selected).map_err(|e| e.to_string())?;
-        dag::preflight_pipeline_steps(&steps).map_err(|e| e.to_string())?;
+    if feature_graph {
+        dag::preflight_methods_feature_graph(&admission.recipe, &admission.candidates)
+            .map_err(|e| e.to_string())?;
+    } else {
+        for params in &admission.candidates {
+            let mut selected =
+                BTreeMap::from([("pipeline_steps_v1".into(), json!(admission.recipe))]);
+            selected.extend(params.clone());
+            let steps = dag::pipeline_steps_recipe(&selected).map_err(|e| e.to_string())?;
+            let terminal = if classification {
+                dag::PortableTerminal::Classifier
+            } else {
+                dag::PortableTerminal::Regressor
+            };
+            dag::preflight_pipeline_steps_for(&steps, terminal).map_err(|e| e.to_string())?;
+        }
     }
     let (train, test) = if let Some(splitter) = &admission.splitter {
         let context = n4m::Context::new().map_err(|e| e.to_string())?;
@@ -416,7 +506,11 @@ pub fn run(value: &Value, library: &Path) -> Result<Value, String> {
         "schema_fingerprint":envelope.schema_fingerprint,"plan_fingerprint":envelope.plan_fingerprint,"relation_fingerprint":envelope.relation_fingerprint,
         "output_representation":provider.provider.envelope().plan.output_representation,"feature_set_id":provider.provider.feature_set_id(),"source_ids":[request.source_id],"require_relations":true,
         "view_policy":{"fit_partition":"fold_train","predict_partition":"fold_validation","include_augmented_train":false,"include_augmented_validation":false,"include_excluded":false,"require_sample_ids":true},"metadata":{}})).map_err(|e|e.to_string())?;
-    let registry = registry()?;
+    let registry = if feature_graph {
+        dag::methods_estimator_controller_registry(&runtime).map_err(|e| e.to_string())?
+    } else {
+        registry(classification)?
+    };
     let compiled = dag::compile_portable_linear(&admission, binding, fold_set, &registry)
         .map_err(|e| e.to_string())?;
     let plan = dag::build_execution_plan(
@@ -427,11 +521,18 @@ pub fn run(value: &Value, library: &Path) -> Result<Value, String> {
     )
     .map_err(|e| e.to_string())?;
     let mut controllers = dag::RuntimeControllerRegistry::new();
-    controllers
-        .register(Box::new(
-            dag::MethodsNativeRegressionController::pipeline_steps_v1(runtime),
-        ))
-        .map_err(|e| e.to_string())?;
+    if feature_graph {
+        dag::register_methods_estimator_controllers(&mut controllers, runtime)
+            .map_err(|e| e.to_string())?;
+    } else {
+        controllers
+            .register(Box::new(if classification {
+                dag::MethodsNativeRegressionController::pipeline_steps_classifier(runtime)
+            } else {
+                dag::MethodsNativeRegressionController::pipeline_steps_v1(runtime)
+            }))
+            .map_err(|e| e.to_string())?;
+    }
     let run_id = dag::RunId::new("run:portable").map_err(|e| e.to_string())?;
     let target = dag::NodeId::new("model:portable").map_err(|e| e.to_string())?;
     let scoped_provider = PortableProvider {
@@ -441,21 +542,54 @@ pub fn run(value: &Value, library: &Path) -> Result<Value, String> {
     };
     let mut variants = Vec::new();
     let mut targets = None;
+    let metric = if classification { "accuracy" } else { "rmse" };
+    let mut unseen = Vec::new();
     let (owner, selected_ordinal) = if admission.splitter.is_some() {
-        let bank = dag::execute_single_holdout_bank(
-            &plan,
-            &dag::SingleHoldoutBankRequest {
-                schema_version: 1,
-                profile: dag::SINGLE_HOLDOUT_BANK_PROFILE.into(),
-                report_profile: dag::RegressionReportProfile::PopulationRmseRatiosV1,
-                failure_group_dimension: "chain".into(),
-                target_node: target,
-            },
-            &run_id,
-            admission.root_seed,
-            &controllers,
-            &scoped_provider,
-        )
+        let bank = if feature_graph {
+            dag::execute_single_holdout_graph_bank(
+                &plan,
+                &dag::SingleHoldoutBankRequest {
+                    schema_version: 1,
+                    profile: dag::SINGLE_HOLDOUT_GRAPH_BANK_PROFILE.into(),
+                    report_profile: dag::RegressionReportProfile::PopulationRmseRatiosV1,
+                    failure_group_dimension: "chain".into(),
+                    target_node: target,
+                },
+                &run_id,
+                admission.root_seed,
+                &controllers,
+                &scoped_provider,
+            )
+        } else if classification {
+            dag::execute_single_holdout_bank_v2(
+                &plan,
+                &dag::ClassificationBankRequest {
+                    schema_version: 1,
+                    profile: dag::SINGLE_HOLDOUT_BANK_V2_PROFILE.into(),
+                    failure_group_dimension: "chain".into(),
+                    target_node: target,
+                },
+                &run_id,
+                admission.root_seed,
+                &controllers,
+                &scoped_provider,
+            )
+        } else {
+            dag::execute_single_holdout_bank(
+                &plan,
+                &dag::SingleHoldoutBankRequest {
+                    schema_version: 1,
+                    profile: dag::SINGLE_HOLDOUT_BANK_PROFILE.into(),
+                    report_profile: dag::RegressionReportProfile::PopulationRmseRatiosV1,
+                    failure_group_dimension: "chain".into(),
+                    target_node: target,
+                },
+                &run_id,
+                admission.root_seed,
+                &controllers,
+                &scoped_provider,
+            )
+        }
         .map_err(|e| e.to_string())?;
         let winner = bank.selected.as_ref().ok_or_else(|| {
             format!(
@@ -479,8 +613,19 @@ pub fn run(value: &Value, library: &Path) -> Result<Value, String> {
                 &evaluation_ids,
             )?;
             targets = Some(truth);
-            variants.push(json!({"n_components":entry.identity.n_components,"rmse":entry.selection_report.as_ref().ok_or("owner score missing")?.metrics["rmse"],"predictions":pred,
-                "params":entry.identity.params,"ordinal":entry.identity.ordinal,"variant_id":entry.identity.variant_id}));
+            let score = entry
+                .selection_report
+                .as_ref()
+                .ok_or("owner score missing")?
+                .metrics[metric];
+            let mut variant = variant_entry(classification, &entry.identity, score, pred);
+            if let Some(blocks) = &entry.feature_blocks {
+                variant["feature_blocks"] = json!(blocks);
+            }
+            variants.push(variant);
+        }
+        if let Some(classes) = &bank.unseen_validation_classes {
+            unseen = classes.clone();
         }
         let ordinal = winner.identity.ordinal.clone();
         (
@@ -488,31 +633,85 @@ pub fn run(value: &Value, library: &Path) -> Result<Value, String> {
             ordinal,
         )
     } else {
-        let bank = dag::execute_training_bank(
-            &plan,
-            &dag::TrainingBankRequest {
-                schema_version: 1,
-                profile: dag::TRAINING_BANK_PROFILE.into(),
-                failure_group_dimension: "chain".into(),
-                target_node: target,
-            },
-            envelope,
-            &sample_ids,
-            &run_id,
-            admission.root_seed,
-            &controllers,
-            &scoped_provider,
-        )
+        let bank = if feature_graph {
+            dag::execute_training_graph_bank(
+                &plan,
+                &dag::TrainingBankRequest {
+                    schema_version: 1,
+                    profile: dag::TRAINING_GRAPH_BANK_PROFILE.into(),
+                    failure_group_dimension: "chain".into(),
+                    target_node: target,
+                },
+                envelope,
+                &sample_ids,
+                &run_id,
+                admission.root_seed,
+                &controllers,
+                &scoped_provider,
+            )
+        } else if classification {
+            dag::execute_training_bank_v2(
+                &plan,
+                &dag::ClassificationBankRequest {
+                    schema_version: 1,
+                    profile: dag::TRAINING_BANK_V2_PROFILE.into(),
+                    failure_group_dimension: "chain".into(),
+                    target_node: target,
+                },
+                envelope,
+                &sample_ids,
+                &run_id,
+                admission.root_seed,
+                &controllers,
+                &scoped_provider,
+            )
+        } else {
+            dag::execute_training_bank(
+                &plan,
+                &dag::TrainingBankRequest {
+                    schema_version: 1,
+                    profile: dag::TRAINING_BANK_PROFILE.into(),
+                    failure_group_dimension: "chain".into(),
+                    target_node: target,
+                },
+                envelope,
+                &sample_ids,
+                &run_id,
+                admission.root_seed,
+                &controllers,
+                &scoped_provider,
+            )
+        }
         .map_err(|e| e.to_string())?;
         for entry in &bank.variants {
             let (pred, truth) = in_order(&entry.predictions, &entry.targets, &evaluation_ids)?;
             targets = Some(truth);
-            variants.push(json!({"n_components":entry.identity.n_components,"rmse":entry.report.metrics["rmse"],"predictions":pred,"params":entry.identity.params,"ordinal":entry.identity.ordinal,"variant_id":entry.identity.variant_id}));
+            let mut variant = variant_entry(
+                classification,
+                &entry.identity,
+                entry.report.metrics[metric],
+                pred,
+            );
+            if let Some(blocks) = &entry.feature_blocks {
+                variant["feature_blocks"] = json!(blocks);
+            }
+            variants.push(variant);
+        }
+        if let Some(classes) = &bank.unseen_validation_classes {
+            unseen = classes.clone();
         }
         let ordinal = bank.selected.ordinal.clone();
-        // The evaluated winner package is native evidence, not an extra deployment fit.
+        // The shared training operation captures REFIT state internally. The
+        // graph profile offers evaluation only, so never publishes that package.
+        let mut evidence = serde_json::to_value(&bank).map_err(|e| e.to_string())?;
+        if feature_graph {
+            evidence
+                .as_object_mut()
+                .expect("training bank evidence")
+                .remove("selected_package");
+        }
         (
-            json!({"profile":bank.profile,"decision":bank.decision,"evidence":bank}),
+            json!({"profile":bank.profile,"decision":bank.decision,"evidence":evidence}),
             ordinal,
         )
     };
@@ -526,12 +725,19 @@ pub fn run(value: &Value, library: &Path) -> Result<Value, String> {
         .as_object_mut()
         .expect("identity evidence object")
         .extend(scoped_provider.row_annotations);
-    Ok(
-        json!({"schema_version":1,"profile":admission.profile,"owner_profile":admission.owner_profile,"mode":admission.mode,"name":admission.name,
+    let targets = targets.ok_or("native target evidence absent")?;
+    let mut result = json!({"schema_version":1,"profile":admission.profile,"owner_profile":admission.owner_profile,"mode":admission.mode,"name":admission.name,
         "rows":matrices.x.rows,"cols":matrices.x.cols,"split":{"kind":if admission.splitter.is_some(){"KennardStone"}else{"all"},"trainIndices":train,"testIndices":test},
-        "preprocessing":admission.preprocessing,"variants":variants,"selected":selected,"targets":targets.ok_or("native target evidence absent")?,"evaluation":admission.evaluation,
-        "identities":identities,"owner":owner}),
-    )
+        "preprocessing":admission.preprocessing,"variants":variants,"selected":selected,"targets":targets,"evaluation":admission.evaluation,
+        "identities":identities,"owner":owner});
+    if classification {
+        // Projection of the owner evidence: the selected classifier's fitted
+        // domain against all evaluated rows (validation fold, or all rows).
+        let object = result.as_object_mut().expect("owner result object");
+        object.insert("targets".into(), json!(class_ids(&targets)));
+        object.insert("unseen_validation_classes".into(), json!(unseen));
+    }
+    Ok(result)
 }
 
 pub(crate) fn legacy_result(value: &Value) -> Result<crate::PortablePipelineResult, String> {
@@ -661,17 +867,66 @@ mod tests {
         assert!(plan(&json!({"schema_version":1,"definition":[],"dataset":{}})).is_err());
     }
     #[test]
+    fn feature_graph_explicit_profile_is_admitted_without_fit_and_stays_strict() {
+        let request = json!({
+            "schema_version": 1,
+            "profile": dag::PORTABLE_FEATURE_PROFILE,
+            "definition": [
+                {"branch": [
+                    {"name": "z_msc", "steps": [{"class": "n4m.MSC"}]},
+                    {"name": "a_snv", "steps": [{"class": "n4m.SNV"}]}
+                ]},
+                {"merge": "features"},
+                {"model": {"class": "n4m.PLS", "params": {"n_components": 1}}}
+            ]
+        });
+        let explicit = plan(&request).unwrap();
+        assert_eq!(explicit["profile"], dag::PORTABLE_FEATURE_PROFILE);
+        assert_eq!(explicit["owner_profile"], "feature_graph.v1");
+        let mut implicit = request.clone();
+        implicit.as_object_mut().unwrap().remove("profile");
+        assert_eq!(explicit, plan(&implicit).unwrap());
+        for profile in [
+            dag::PORTABLE_LINEAR_PROFILE,
+            dag::PORTABLE_CLASSIFICATION_PROFILE,
+        ] {
+            let mut conflicting = request.clone();
+            conflicting["profile"] = json!(profile);
+            let error = plan(&conflicting).unwrap_err();
+            assert!(error.contains("disagrees with the definition"), "{error}");
+        }
+        for (key, value, expected) in [
+            (
+                "schema_version",
+                json!(2),
+                "unsupported portable request schema/profile",
+            ),
+            (
+                "profile",
+                json!("portable_feature_regression.v99"),
+                "unsupported portable request schema/profile",
+            ),
+            ("schema", json!("unknown"), "unknown field"),
+            ("unexpected", json!(true), "unknown field"),
+        ] {
+            let mut invalid = request.clone();
+            invalid[key] = value;
+            let error = plan(&invalid).unwrap_err();
+            assert!(error.contains(expected), "{error}");
+        }
+    }
+    #[test]
     fn dense_row_evidence_keeps_opaque_objects_lists_and_input_order() {
         let input = json!({"X":[[1.0,2.0],[3.0,4.0]],"y":[1.0,2.0],"sample_ids":["z","a"],
             "metadata":[{"groups":["opaque"],"nested":[[],{}]},[]],
             "provenance":[{},["source",{"rows":[2,1],"optional":null}]]});
-        let (normalized, kind, _, annotations) = record(&input, "spectra").unwrap();
+        let (normalized, kind, _, annotations) = record(&input, "spectra", false).unwrap();
         assert_eq!(kind, "declared");
-        assert_eq!(cohort(&normalized).unwrap(), vec!["z", "a"]);
+        assert_eq!(cohort(&normalized, false).unwrap(), vec!["z", "a"]);
         assert!(normalized["dataset"]["groups"].is_null());
         assert_eq!(annotations["metadata"], input["metadata"]);
         assert_eq!(annotations["provenance"], input["provenance"]);
-        let (_, _, _, absent) = record(&json!({"X":[[1.0]],"y":[1.0]}), "spectra").unwrap();
+        let (_, _, _, absent) = record(&json!({"X":[[1.0]],"y":[1.0]}), "spectra", false).unwrap();
         assert!(absent.is_empty());
     }
     #[test]
@@ -691,5 +946,90 @@ mod tests {
                 assert!(error.contains(&expected), "{error}");
             }
         }
+    }
+    #[test]
+    fn sparse_pls_da_plan_derives_classification_and_checks_declared_profiles() {
+        let definition = json!([{"class":"n4m.KennardStone"},
+            {"model":{"class":"n4m.SparsePLSDA","params":{"sparsity_lambda":0.2}},"param":"n_components","_range_":[1,2,1]}]);
+        let result = plan(&json!({"schema_version":1,"definition":definition})).unwrap();
+        assert_eq!(result["profile"], dag::PORTABLE_CLASSIFICATION_PROFILE);
+        assert_eq!(result["mode"], "single_holdout");
+        assert_eq!(
+            result["recipe"][0]["methodId"],
+            "models.sparse.sparse_pls_da"
+        );
+        assert_eq!(
+            result["candidates"],
+            json!([{"n_components":1,"sparsity_lambda":0.2},{"n_components":2,"sparsity_lambda":0.2}])
+        );
+        assert_eq!(
+            result["evaluation"],
+            json!({"scope":"selection_validation","independent_test":false})
+        );
+        let explicit = plan(&json!({"schema_version":1,"definition":definition,
+            "profile":dag::PORTABLE_CLASSIFICATION_PROFILE}))
+        .unwrap();
+        assert_eq!(explicit, result);
+        let error = plan(&json!({"schema_version":1,"definition":definition,
+            "profile":dag::PORTABLE_LINEAR_PROFILE}))
+        .unwrap_err();
+        assert!(error.contains("disagrees with the definition"), "{error}");
+        let regression = json!([{"model":{"class":"n4m.PLS"}}]);
+        assert!(plan(&json!({"schema_version":1,"definition":regression,
+            "profile":dag::PORTABLE_CLASSIFICATION_PROFILE}))
+        .is_err());
+    }
+    #[test]
+    fn classification_ids_and_records_are_refused_before_native_load() {
+        let definition = json!([{"model":{"class":"n4m.SparsePLSDA"}}]);
+        for (y, expected) in [
+            (
+                json!([0, 1.5]),
+                "dataset.y[1]: nonnegative integer class id required",
+            ),
+            (
+                json!([0, -1]),
+                "dataset.y[1]: nonnegative integer class id required",
+            ),
+            (
+                json!([[0], ["a"]]),
+                "dataset.y[1]: nonnegative integer class id required",
+            ),
+        ] {
+            let error = run(
+                &json!({"schema_version":1,"definition":definition,"dataset":{"X":[[1.0,2.0],[3.0,4.0]],"y":y}}),
+                Path::new("/missing/native/library"),
+            )
+            .unwrap_err();
+            assert!(error.contains(expected), "{error}");
+        }
+        let error = run(
+            &json!({"schema_version":1,"definition":definition,"dataset":{"schema":"nirs4all.dataset.v1"}}),
+            Path::new("/missing/native/library"),
+        )
+        .unwrap_err();
+        assert!(error.contains("refuses record-backed datasets"), "{error}");
+    }
+    #[test]
+    fn dense_classification_record_is_an_exact_int64_classification_package() {
+        let input = json!({"X":[[1.0,2.0],[3.0,4.0],[5.0,7.0]],"y":[[2],[0],[2]],"sample_ids":["c","a","b"]});
+        let (normalized, kind, _, _) = record(&input, "spectra", true).unwrap();
+        assert_eq!(kind, "declared");
+        assert_eq!(normalized["dataset"]["task_type"], "classification");
+        assert_eq!(normalized["dataset"]["y"]["dtype"], "int64");
+        assert_eq!(normalized["dataset"]["y"]["values"], json!([2, 0, 2]));
+        assert_eq!(cohort(&normalized, true).unwrap(), vec!["c", "a", "b"]);
+        assert!(
+            cohort(&normalized, false).is_err(),
+            "never a regression target"
+        );
+        let package =
+            nirs4all_io_crate::core::public_dataset::matrix_dataset_package(&normalized, "spectra")
+                .unwrap();
+        let provider =
+            crate::DatasetPackageMethodsProvider::for_product_pipeline(&package, "spectra", true)
+                .unwrap();
+        provider.require_complete_targets().unwrap();
+        assert!(crate::DatasetPackageMethodsProvider::new(&package, "spectra").is_err());
     }
 }

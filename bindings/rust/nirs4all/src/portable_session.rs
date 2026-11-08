@@ -15,11 +15,10 @@ use crate::{
     validate_portable_model_plan, PortableDataset, PortablePipelineResult,
 };
 
-pub const PORTABLE_SESSION_EXPORT_SCHEMA: &str = "nirs4all-core.portable-session-export.v1";
-pub const PORTABLE_SESSION_EXPORT_SCHEMA_V2: &str = "nirs4all-core.portable-session-export.v2";
+pub const PORTABLE_SESSION_SCHEMA: &str = "nirs4all-core.portable-session.v1";
+const CORE_EXTERNAL_PREPROCESSING_OWNER: &str = "core_external";
 const EMBEDDED_PREPROCESSING_OWNER: &str = "embedded_methods";
 const RAW_INPUT_DOMAIN: &str = "raw";
-const MAX_EXPORT_BYTES: u64 = 64 * 1024 * 1024;
 const MAX_TEMP_ATTEMPTS: u64 = 64;
 static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
@@ -102,20 +101,15 @@ impl PortableSession {
         library_path: impl AsRef<Path>,
     ) -> Result<Self, PortableSessionError> {
         let path = path.as_ref();
-        let file = File::open(path)?;
+        let mut file = File::open(path)?;
         let metadata = file.metadata()?;
-        if !metadata.is_file() || metadata.len() > MAX_EXPORT_BYTES {
+        if !metadata.is_file() {
             return Err(PortableSessionError::Format(
-                "session export must be a regular file no larger than 64 MiB".into(),
+                "session export must be a regular file".into(),
             ));
         }
         let mut bytes = Vec::with_capacity(metadata.len() as usize);
-        file.take(MAX_EXPORT_BYTES + 1).read_to_end(&mut bytes)?;
-        if bytes.len() as u64 > MAX_EXPORT_BYTES {
-            return Err(PortableSessionError::Format(
-                "session export exceeds 64 MiB".into(),
-            ));
-        }
+        file.read_to_end(&mut bytes)?;
         let export: Value = serde_json::from_slice(&bytes)
             .map_err(|e| PortableSessionError::Format(format!("invalid JSON: {e}")))?;
         validate_export(&export)?;
@@ -149,11 +143,6 @@ impl PortableSession {
         let path = path.as_ref();
         let bytes = serde_json::to_vec_pretty(&self.export)
             .map_err(|e| PortableSessionError::Format(e.to_string()))?;
-        if bytes.len() as u64 > MAX_EXPORT_BYTES {
-            return Err(PortableSessionError::Format(
-                "serialized session export exceeds 64 MiB".into(),
-            ));
-        }
         atomic_create(path, &bytes)
     }
     pub fn close(&mut self) {
@@ -269,9 +258,8 @@ fn export_from_result(
     descriptor: &dag_ml_core::NativePredictorDescriptorV1,
 ) -> Value {
     let definition = serde_json::to_string(&definition).expect("JSON definition");
-    let mut export = json!({"schema": PORTABLE_SESSION_EXPORT_SCHEMA, "definition": definition, "definition_sha256": sha256(definition.as_bytes()), "dataset_sha256": dataset_sha256(dataset), "selected_model_n4mm": model, "result": {"name": result.name, "rows": result.rows, "cols": result.cols, "selected": {"n_components": result.selected.n_components, "rmse": result.selected.rmse, "predictions": result.selected.predictions}, "targets": result.targets}});
+    let mut export = json!({"schema": PORTABLE_SESSION_SCHEMA, "preprocessing_owner": CORE_EXTERNAL_PREPROCESSING_OWNER, "definition": definition, "definition_sha256": sha256(definition.as_bytes()), "dataset_sha256": dataset_sha256(dataset), "selected_model_n4mm": model, "result": {"name": result.name, "rows": result.rows, "cols": result.cols, "selected": {"n_components": result.selected.n_components, "rmse": result.selected.rmse, "predictions": result.selected.predictions}, "targets": result.targets}});
     if let Some(pipeline) = &descriptor.pipeline {
-        export["schema"] = Value::String(PORTABLE_SESSION_EXPORT_SCHEMA_V2.to_string());
         export["preprocessing_owner"] = Value::String(EMBEDDED_PREPROCESSING_OWNER.to_string());
         export["input_domain"] = Value::String(RAW_INPUT_DOMAIN.to_string());
         export["pipeline_fingerprint_algorithm"] =
@@ -284,12 +272,26 @@ fn validate_export(export: &Value) -> Result<(), PortableSessionError> {
     let root = export
         .as_object()
         .ok_or_else(|| PortableSessionError::Format("export root must be an object".into()))?;
+    match root.get("schema").and_then(Value::as_str) {
+        Some(PORTABLE_SESSION_SCHEMA) => {}
+        Some(schema @ "nirs4all-core.portable-session-export.v1")
+        | Some(schema @ "nirs4all-core.portable-session-export.v2") => {
+            return Err(PortableSessionError::Format(format!(
+                "retired session schema {schema}; re-run to export"
+            )));
+        }
+        _ => {
+            return Err(PortableSessionError::Format(
+                "unsupported session schema".into(),
+            ));
+        }
+    }
     if !matches!(
-        root.get("schema").and_then(Value::as_str),
-        Some(PORTABLE_SESSION_EXPORT_SCHEMA | PORTABLE_SESSION_EXPORT_SCHEMA_V2)
+        root.get("preprocessing_owner").and_then(Value::as_str),
+        Some(CORE_EXTERNAL_PREPROCESSING_OWNER | EMBEDDED_PREPROCESSING_OWNER)
     ) {
         return Err(PortableSessionError::Format(
-            "unsupported session schema".into(),
+            "preprocessing_owner must be core_external or embedded_methods".into(),
         ));
     }
     let definition = root
@@ -321,13 +323,12 @@ fn validate_export(export: &Value) -> Result<(), PortableSessionError> {
             PortableSessionError::Format("selected_model_n4mm must be a byte array".into())
         })?;
     if model.is_empty()
-        || model.len() > MAX_EXPORT_BYTES as usize
         || model
             .iter()
             .any(|v| v.as_u64().filter(|n| *n <= 255).is_none())
     {
         return Err(PortableSessionError::Format(
-            "selected_model_n4mm must be a bounded byte array".into(),
+            "selected_model_n4mm must be a non-empty byte array".into(),
         ));
     }
     let result = root
@@ -361,25 +362,25 @@ fn validate_export_preprocessing_contract(
     let definition = root["definition"].as_str().expect("validated export");
     let plan = crate::parse_execution_plan_str(definition).map_err(PortableSessionError::Format)?;
     validate_portable_model_plan(&plan, descriptor).map_err(PortableSessionError::Format)?;
-    match (root["schema"].as_str(), descriptor.pipeline.as_ref()) {
-        (Some(PORTABLE_SESSION_EXPORT_SCHEMA), None) => {
+    match (
+        root["preprocessing_owner"].as_str(),
+        descriptor.pipeline.as_ref(),
+    ) {
+        (Some(CORE_EXTERNAL_PREPROCESSING_OWNER), None) => {
             for key in [
-                "preprocessing_owner",
                 "input_domain",
                 "pipeline_fingerprint_algorithm",
                 "pipeline_fingerprint",
             ] {
                 if root.contains_key(key) {
                     return Err(PortableSessionError::Format(format!(
-                        "historical session schema must not declare {key}"
+                        "core_external preprocessing must not declare {key}"
                     )));
                 }
             }
         }
-        (Some(PORTABLE_SESSION_EXPORT_SCHEMA_V2), Some(pipeline)) => {
-            if root.get("preprocessing_owner").and_then(Value::as_str)
-                != Some(EMBEDDED_PREPROCESSING_OWNER)
-                || root.get("input_domain").and_then(Value::as_str) != Some(RAW_INPUT_DOMAIN)
+        (Some(EMBEDDED_PREPROCESSING_OWNER), Some(pipeline)) => {
+            if root.get("input_domain").and_then(Value::as_str) != Some(RAW_INPUT_DOMAIN)
                 || root
                     .get("pipeline_fingerprint_algorithm")
                     .and_then(Value::as_str)
@@ -393,19 +394,19 @@ fn validate_export_preprocessing_contract(
                 ));
             }
         }
-        (Some(PORTABLE_SESSION_EXPORT_SCHEMA), Some(_)) => {
+        (Some(CORE_EXTERNAL_PREPROCESSING_OWNER), Some(_)) => {
             return Err(PortableSessionError::Format(
-                "historical session schema cannot contain embedded Methods preprocessing"
+                "core_external preprocessing cannot contain embedded Methods preprocessing"
                     .to_string(),
             ));
         }
-        (Some(PORTABLE_SESSION_EXPORT_SCHEMA_V2), None) => {
+        (Some(EMBEDDED_PREPROCESSING_OWNER), None) => {
             return Err(PortableSessionError::Format(
-                "session schema v2 requires content-inspected embedded Methods preprocessing"
+                "embedded_methods preprocessing requires content-inspected embedded Methods preprocessing"
                     .to_string(),
             ));
         }
-        _ => unreachable!("validated session schema"),
+        _ => unreachable!("validated preprocessing owner"),
     }
     Ok(())
 }
@@ -456,7 +457,7 @@ mod tests {
         }
         let mut session = PortableSession::run_with_library(input, &dataset, &lib).unwrap();
         let export = session.export().unwrap();
-        assert_eq!(export["schema"], PORTABLE_SESSION_EXPORT_SCHEMA_V2);
+        assert_eq!(export["schema"], PORTABLE_SESSION_SCHEMA);
         assert_eq!(export["preprocessing_owner"], EMBEDDED_PREPROCESSING_OWNER);
         assert_eq!(export["input_domain"], RAW_INPUT_DOMAIN);
         assert_eq!(export["pipeline_fingerprint"].as_str().unwrap().len(), 16);
@@ -483,7 +484,7 @@ mod tests {
     }
 
     #[test]
-    fn native_v1_session_keeps_external_preprocessing_compatibility() {
+    fn native_external_session_replays_declared_preprocessing() {
         let Ok(lib) = std::env::var("NIRS4ALL_METHODS_LIB") else {
             return;
         };
@@ -500,9 +501,11 @@ mod tests {
             x_test.extend_from_slice(&dataset.x[index * dataset.cols..(index + 1) * dataset.cols]);
         }
         let session = PortableSession::run_with_library(input, &dataset, &lib).unwrap();
+        let export = session.export().unwrap();
+        assert_eq!(export["schema"], PORTABLE_SESSION_SCHEMA);
         assert_eq!(
-            session.export().unwrap()["schema"],
-            PORTABLE_SESSION_EXPORT_SCHEMA
+            export["preprocessing_owner"],
+            CORE_EXTERNAL_PREPROCESSING_OWNER
         );
         crate::reset_portable_replay_call_counts();
         let actual = session
@@ -569,6 +572,103 @@ mod tests {
             Err(PortableSessionError::Format(_))
         ));
         fs::remove_file(tampered_path).unwrap();
+    }
+
+    #[test]
+    fn native_nondefault_snv_session_round_trip_preserves_parameters() {
+        let Ok(lib) = std::env::var("NIRS4ALL_METHODS_LIB") else {
+            return;
+        };
+        let oracle: Value = serde_json::from_str(include_str!(
+            "../tests/parity/expected/portable_python_oracle.json"
+        ))
+        .unwrap();
+        let dataset = PortableDataset::from_json_value(&oracle["dataset"]).unwrap();
+        let default_input =
+            include_str!("../tests/parity/fixtures/portable_kennard_stone_snv_pls.json");
+        let default_run =
+            crate::run_portable_pipeline_with_library(default_input, &dataset, &lib).unwrap();
+        let mut definition: Value = serde_json::from_str(default_input).unwrap();
+        definition["pipeline"][1]["params"] = json!({"with_std": false, "ddof": 1});
+        let input = serde_json::to_string(&definition).unwrap();
+        let run = crate::run_portable_pipeline_with_library(&input, &dataset, &lib).unwrap();
+        assert_eq!(run.split.test_indices, default_run.split.test_indices);
+        let expected = run.selected.predictions;
+        let mut x_test = Vec::new();
+        for index in run.split.test_indices {
+            x_test.extend_from_slice(&dataset.x[index * dataset.cols..(index + 1) * dataset.cols]);
+        }
+        let session = PortableSession::run_with_library(&input, &dataset, &lib).unwrap();
+        let export = session.export().unwrap();
+        assert_eq!(export["schema"], PORTABLE_SESSION_SCHEMA);
+        assert_eq!(
+            export["preprocessing_owner"],
+            CORE_EXTERNAL_PREPROCESSING_OWNER
+        );
+        let p = path();
+        session.save(&p).unwrap();
+        let loaded = PortableSession::load_with_library(&p, &lib).unwrap();
+        let actual = loaded
+            .predict(&x_test, expected.len(), dataset.cols)
+            .unwrap();
+        fs::remove_file(p).unwrap();
+        assert_eq!(actual.len(), expected.len());
+        assert!(actual
+            .iter()
+            .zip(&expected)
+            .all(|(actual, expected)| (actual - expected).abs() <= 1e-12));
+        assert_eq!(actual.len(), default_run.selected.predictions.len());
+        let default_difference = actual
+            .iter()
+            .zip(&default_run.selected.predictions)
+            .map(|(actual, default)| (actual - default).abs())
+            .fold(0.0_f64, f64::max);
+        assert!(default_difference > 1e-6);
+    }
+
+    #[test]
+    fn retired_session_tags_are_refused_before_native_loading() {
+        let definition = include_str!("../tests/parity/fixtures/portable_snv_pls.json");
+        for schema in [
+            "nirs4all-core.portable-session-export.v1",
+            "nirs4all-core.portable-session-export.v2",
+        ] {
+            let export = json!({
+                "schema": schema,
+                "preprocessing_owner": CORE_EXTERNAL_PREPROCESSING_OWNER,
+                "definition": definition,
+                "definition_sha256": sha256(definition.as_bytes()),
+                "dataset_sha256": "0".repeat(64),
+                "selected_model_n4mm": [0],
+                "result": {"name": "retired", "rows": 1, "cols": 1,
+                    "selected": {}, "targets": []}
+            });
+            let p = path();
+            fs::write(&p, serde_json::to_vec(&export).unwrap()).unwrap();
+            let result = PortableSession::load_with_library(&p, "/missing/native/library");
+            fs::remove_file(p).unwrap();
+            assert!(matches!(
+                result,
+                Err(PortableSessionError::Format(detail))
+                    if detail == format!("retired session schema {schema}; re-run to export")
+            ));
+        }
+    }
+
+    #[test]
+    fn export_over_64_mib_reaches_schema_validation_without_native_runtime() {
+        let p = path();
+        let mut bytes = vec![b' '; 64 * 1024 * 1024 + 2];
+        let object_start = bytes.len() - 2;
+        bytes[object_start..].copy_from_slice(b"{}");
+        fs::write(&p, &bytes).unwrap();
+        drop(bytes);
+        let result = PortableSession::load_with_library(&p, "/missing/native/library");
+        fs::remove_file(p).unwrap();
+        assert!(matches!(
+            result,
+            Err(PortableSessionError::Format(detail)) if detail == "unsupported session schema"
+        ));
     }
 
     #[test]
