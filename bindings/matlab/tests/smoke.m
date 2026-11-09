@@ -99,7 +99,7 @@ catch err
 end
 
 % Execution profiles: structural comparison with the TOML-generated fixture.
-% Exactly the native-workflow@1 and native-conformal@1 profiles are published.
+% Check all published profiles and the detailed workflow and conformal cells.
 expected_dir = fullfile(fileparts(mfilename('fullpath')), 'parity', 'expected');
 if exist(expected_dir, 'dir') ~= 7
     expected_dir = fullfile(fileparts(mfilename('fullpath')), '..', '..', '..', 'tests', 'parity', 'expected');
@@ -113,10 +113,16 @@ assert(strcmp(profiles.schema, 'nirs4all-core.execution-profiles.v1'));
 assert(profiles.version == 1);
 assert(isequal(profiles.runtime_surfaces(:)', {'python', 'javascript_wasm', 'rust', 'matlab_octave'}));
 profileList = profiles.profiles;
-expectedIds = {'native-workflow', 'native-conformal'};
-assert(numel(profileList) == 2);
+expectedIds = {'native-workflow', 'native-conformal', 'native-methods-package', ...
+    'native-n4a-canonical', 'n4a-container'};
+assert(numel(profileList) == numel(expectedIds));
+for profileIdx = 1:numel(expectedIds)
+    if iscell(profileList), item = profileList{profileIdx}; else, item = profileList(profileIdx); end
+    assert(strcmp(item.id, expectedIds{profileIdx}));
+end
 surfaces = {'python', 'javascript_wasm', 'rust', 'matlab_octave'};
 operations = {'compile', 'fit', 'predict', 'import', 'export'};
+allOperations = [operations, {'produce', 'inspect', 'calibrate', 'retrain', 'read', 'write', 'update'}];
 S = 'supported'; U = 'unsupported';
 expectedStatus = struct( ...
     'native_workflow', struct('compile', {{U, U, S, U}}, 'fit', {{S, S, S, S}}, 'predict', {{S, S, S, S}}, 'import', {{S, S, U, S}}, 'export', {{S, S, U, S}}), ...
@@ -127,7 +133,7 @@ for profileIdx = 1:2
     assert(strcmp(item.id, expectedIds{profileIdx}));
     assert(item.version == 1);
     assert(isequal(item.surfaces(:)', surfaces));
-    assert(isequal(fieldnames(item.operations)', operations));
+    assert(isequal(fieldnames(item.operations)', allOperations));
     for opIdx = 1:numel(operations)
         cells = item.operations.(operations{opIdx});
         assert(isequal(fieldnames(cells)', surfaces));
@@ -180,10 +186,10 @@ end
 % Every supported MATLAB entrypoint resolves to a real source file.
 repoRoot = fullfile(fileparts(mfilename('fullpath')), '..', '..', '..');
 if exist(fullfile(repoRoot, 'bindings', 'matlab', '+nirs4all'), 'dir') == 7
-    for profileIdx = 1:2
+    for profileIdx = 1:numel(profileList)
         if iscell(profileList), item = profileList{profileIdx}; else, item = profileList(profileIdx); end
-        for opIdx = 1:numel(operations)
-            entry = item.operations.(operations{opIdx}).matlab_octave;
+        for opIdx = 1:numel(allOperations)
+            entry = item.operations.(allOperations{opIdx}).matlab_octave;
             if strcmp(entry.status, 'supported')
                 entrypoints = entry.entrypoints;
                 for entryIdx = 1:numel(entrypoints)
