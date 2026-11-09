@@ -71,11 +71,11 @@ dag_ml_results = { package = "dag-ml-results", version = "=0.4.0" }
 dag_ml_data_crate = { package = "dag-ml-data", version = "=0.2.16" }
 dag_ml_data_provider_crate = { package = "dag-ml-data-provider", version = "=0.2.16" }
 libloading = "0.8"
-n4m = { version = "=0.4.1", features = ["dynamic"], default-features = false }
-nirs4all_formats_crate = { package = "nirs4all-formats", version = "=0.2.15", default-features = false }
-nirs4all_io_crate = { package = "nirs4all-io", version = "=0.3.0" }
-nirs4all-io-core = "=0.3.0"
-nirs4all_io_dagml = { package = "nirs4all-io-dagml", version = "=0.3.0" }
+n4m = { version = "=0.4.2", features = ["dynamic"], default-features = false }
+nirs4all_formats_crate = { package = "nirs4all-formats", version = "=0.2.16", default-features = false }
+nirs4all_io_crate = { package = "nirs4all-io", version = "=0.3.1" }
+nirs4all-io-core = "=0.3.1"
+nirs4all_io_dagml = { package = "nirs4all-io-dagml", version = "=0.3.1" }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 # Maintained API-compatible YAML implementation; avoids unmaintained unsafe-libyaml.

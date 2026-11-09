@@ -15,11 +15,14 @@ serde = { version = "1", features = ["derive"] }
 dag-ml-core = { version = "=0.4.0", default-features = false }
 dag_ml_data_crate = { package = "dag-ml-data", version = "=0.2.16" }
 dag_ml_data_provider_crate = { package = "dag-ml-data-provider", version = "=0.2.16" }
-nirs4all-io-core = "=0.3.0"
+nirs4all-io-core = "=0.3.1"
 # The default `cli` feature pulls the file-IO facade, which WASM cannot link.
-nirs4all_io_dagml = { package = "nirs4all-io-dagml", version = "=0.3.0", default-features = false }
+nirs4all_io_dagml = { package = "nirs4all-io-dagml", version = "=0.3.1", default-features = false }
 serde_json = { version = "1", features = ["preserve_order", "float_roundtrip"] }
 sha2 = "0.10"
 crc32fast = "1.5"
 unicode-normalization = "0.1"
 wasm-bindgen = "0.2"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tempfile = "3"

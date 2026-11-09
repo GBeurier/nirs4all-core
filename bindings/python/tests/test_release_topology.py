@@ -503,25 +503,24 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertIn("GITHUB_WORKFLOW_REF", preflight["run"])
         self.assertIn("environment=pypi", preflight["run"])
 
-    def test_public_releases_require_source_bound_local_parity(self) -> None:
-        verifier = "python scripts/verify_local_qualification.py --project core --receipt compat/local-qualification.json --root ."
+    def test_public_releases_retain_guards_without_historical_local_receipts(self) -> None:
         expected_jobs = {
-            "release-npm.yml": ("local-qualification", "build-and-publish"),
-            "release-matlab.yml": ("local-qualification", "matlab-package"),
-            "release-crates.yml": ("publish-crates", None),
-            "release-python.yml": ("publish-pypi", None),
-            "release-source.yml": ("source-release", None),
+            "release-npm.yml": "build-and-publish",
+            "release-matlab.yml": "matlab-package",
+            "release-crates.yml": "publish-crates",
+            "release-python.yml": "publish-pypi",
+            "release-source.yml": "source-release",
         }
-        for name, (guard_job, dependent_job) in expected_jobs.items():
+        for name, publisher in expected_jobs.items():
             with self.subTest(workflow=name):
                 workflow = _load_workflow_yaml(name)
-                guard = _step_by_name(workflow["jobs"][guard_job], "Verify source-bound local qualification")
-                self.assertEqual(guard["run"], verifier)
-                if dependent_job:
-                    self.assertEqual(workflow["jobs"][dependent_job]["needs"], guard_job)
-                self.assertNotIn("continue-on-error", _load_workflow(name))
-                self.assertNotIn("npm test --prefix bindings/wasm", _load_workflow(name))
-                self.assertNotIn("make test-matlab-parity", _load_workflow(name))
+                workflow_text = _load_workflow(name)
+                self.assertIn(publisher, workflow["jobs"])
+                self.assertNotIn("scripts/verify_local_qualification.py", workflow_text)
+                self.assertNotIn("compat/local-qualification.json", workflow_text)
+                self.assertNotIn("continue-on-error", workflow_text)
+                self.assertNotIn("npm test --prefix bindings/wasm", workflow_text)
+                self.assertNotIn("make test-matlab-parity", workflow_text)
         ci = _load_workflow_yaml("ci.yml")
         self.assertNotIn("strict-parity", ci["jobs"])
         self.assertNotIn("cargo test --workspace", _job_run_text(ci["jobs"]["rust"]))
@@ -529,10 +528,15 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         makefile = (ROOT / "Makefile").read_text()
         for target in ("test-rust-parity:", "test-python-parity:", "test-wasm-parity-strict:", "test-matlab-parity:", "test-cross-language-e2e:"):
             self.assertIn(target, makefile)
-        # Dry-run builds are permitted before the resulting Windows artifacts
-        # can be exercised locally; only publication consumes the receipt.
-        self.assertIn("inputs.publish", _step_by_name(_load_workflow_yaml("release-npm.yml")["jobs"]["local-qualification"], "Verify source-bound local qualification")["if"])
-        self.assertIn("github.event_name == 'push'", _step_by_name(_load_workflow_yaml("release-matlab.yml")["jobs"]["local-qualification"], "Verify source-bound local qualification")["if"])
+        npm = _load_workflow_yaml("release-npm.yml")["jobs"]
+        self.assertEqual(npm["build-and-publish"]["needs"], "release-preflight")
+        guard = _step_by_name(npm["release-preflight"], "Guard manual npm publication")
+        self.assertIn("inputs.publish", guard["if"])
+        self.assertIn("scripts/bump_version.sh --check", guard["run"])
+        self.assertIn("expected_version", guard["run"])
+        matlab = _load_workflow_yaml("release-matlab.yml")["jobs"]
+        self.assertNotIn("local-qualification", matlab)
+        self.assertNotIn("needs", matlab["matlab-package"])
 
     def test_wasm_package_locks_typechecked_optional_peers(self) -> None:
         package = _load_wasm_package()
@@ -569,13 +573,13 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertEqual(set(root_lock["peerDependencies"]), expected_peers)
         self.assertEqual(set(root_lock["peerDependenciesMeta"]), expected_peers)
         self.assertEqual(root_lock["license"], package["license"])
-        # Candidate minimums include native format3 / ABI 2.20 and the safe parser cohort.
+        # Candidate minimums include native format3 / ABI 2.22 and the safe parser cohort.
         pinned_peers = {
-            "@nirs4all/methods": ">=1.3.13 <2",
+            "@nirs4all/methods": ">=1.3.15 <2",
             "dag-ml-wasm": ">=0.4.0",
             "dag-ml-data-wasm": ">=0.2.16",
-            "@nirs4all/formats-wasm": ">=0.2.14",
-            "@nirs4all/io-wasm": ">=0.3.0",
+            "@nirs4all/formats-wasm": ">=0.2.16",
+            "@nirs4all/io-wasm": ">=0.3.1",
         }
         for peer in upstream_peers:
             self.assertEqual(package["peerDependencies"][peer], pinned_peers.get(peer, "*"))
@@ -600,8 +604,11 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertTrue(tsconfig["compilerOptions"]["strict"])
         consumer = (ROOT / "bindings/wasm/tests/types/consumer.ts").read_text()
         self.assertIn("from 'nirs4all'", consumer)
-        self.assertIn("runPortablePipeline", consumer)
-        self.assertIn("predictPortablePipeline", consumer)
+        self.assertIn("produceN4aNative", consumer)
+        self.assertIn("predictN4aNative", consumer)
+        self.assertIn("retrainN4aNative", consumer)
+        self.assertNotIn("runPortablePipeline", consumer)
+        self.assertNotIn("predictPortablePipeline", consumer)
 
     def test_optional_upstreams_are_explicit_and_match_python_extras(self) -> None:
         manifest = n4core.release_topology_manifest()
@@ -638,14 +645,14 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         )
         self.assertEqual(extras["datasets"], ["nirs4all-datasets>=0.3.17"])
         self.assertEqual(extras["dag-ml"], ["dag-ml>=0.4.0,<0.5"])
-        self.assertIn("nirs4all-methods>=1.3.13,<2", extras["methods"])
-        self.assertIn("pls4all>=1.3.13,<2", extras["methods"])
+        self.assertIn("nirs4all-methods>=1.3.15,<2", extras["methods"])
+        self.assertIn("pls4all>=1.3.15,<2", extras["methods"])
         self.assertIn("scikit-learn>=1.3", extras["methods"])
-        self.assertIn("nirs4all-formats>=0.2.14", all_extra)
-        self.assertIn("nirs4all-io>=0.3.0", all_extra)
+        self.assertIn("nirs4all-formats>=0.2.16", all_extra)
+        self.assertIn("nirs4all-io>=0.3.1", all_extra)
         self.assertIn("dag-ml>=0.4.0,<0.5", all_extra)
-        self.assertIn("nirs4all-methods>=1.3.13,<2", all_extra)
-        self.assertIn("pls4all>=1.3.13,<2", all_extra)
+        self.assertIn("nirs4all-methods>=1.3.15,<2", all_extra)
+        self.assertIn("pls4all>=1.3.15,<2", all_extra)
         self.assertNotIn("nirs4all-methods>=1.0.5", extras["methods"])
 
     def test_compat_registry_matches_release_topology_packages(self) -> None:
