@@ -409,6 +409,16 @@ fn class_ids(values: &[f64]) -> Vec<i64> {
     values.iter().map(|value| *value as i64).collect()
 }
 
+fn require_portable_methods_abi((major, minor): (u32, u32)) -> Result<(), String> {
+    let (required_major, required_minor) = dag::PORTABLE_RUN_METHODS_MIN_ABI;
+    if major != required_major || minor < required_minor {
+        return Err(format!(
+            "portable-pipeline-run requires Methods ABI {required_major}.{required_minor}; runtime provides {major}.{minor}"
+        ));
+    }
+    Ok(())
+}
+
 /// Sole common owner executor for CLI/native extension and public Rust APIs.
 pub fn run(value: &Value, library: &Path) -> Result<Value, String> {
     let request = request(value)?;
@@ -458,6 +468,7 @@ pub fn run(value: &Value, library: &Path) -> Result<Value, String> {
         .map_err(|e| e.to_string())?;
     let runtime = crate::native_methods_replay::configure_methods_runtime_for_source(library)
         .map_err(|e| e.to_string())?;
+    require_portable_methods_abi(runtime.abi_version())?;
     // The graph compiles live-resolved train augmentation nodes; the plan,
     // canonical identities and the response keep the declared recipe.
     let mut executable = admission.clone();
@@ -926,6 +937,14 @@ pub(crate) fn admission_plan(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn portable_methods_abi_floor_refuses_220_and_accepts_222() {
+        assert_eq!(
+            require_portable_methods_abi((2, 20)).unwrap_err(),
+            "portable-pipeline-run requires Methods ABI 2.22; runtime provides 2.20"
+        );
+        assert_eq!(require_portable_methods_abi((2, 22)), Ok(()));
+    }
     #[test]
     fn plan_needs_no_dataset_library_or_execution() {
         let result=plan(&json!({"schema_version":1,"definition":[{"model":{"class":"n4m.PLS","params":{"scale":false}}}]})).unwrap();
