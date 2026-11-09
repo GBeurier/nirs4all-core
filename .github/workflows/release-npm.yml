@@ -47,8 +47,8 @@ permissions:
   id-token: write   # npm provenance (OIDC)
 
 jobs:
-  local-qualification:
-    name: Verify local parity before publication
+  release-preflight:
+    name: Guard manual publication version
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.0
@@ -77,12 +77,9 @@ jobs:
             exit 1
           fi
 
-      - name: Verify source-bound local qualification
-        if: ${{ (github.event_name == 'push' && !contains(github.ref_name, '-')) || (github.event_name == 'workflow_dispatch' && inputs.publish) }}
-        run: python scripts/verify_local_qualification.py --project core --receipt compat/local-qualification.json --root .
 
   build-and-publish:
-    needs: local-qualification
+    needs: release-preflight
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.0

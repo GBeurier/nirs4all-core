@@ -2,6 +2,15 @@
 
 ## 0.5.0 - Unreleased
 
+- Retire the obsolete local-machine receipt as a mandatory prerequisite for
+  all five publication channels. Historical policy, receipt, verifier and logs
+  remain evidence for their original source/cohort. The release decision reuses
+  the accepted Core 108 / DAG 921 suites, targeted E1/F1 and class/graph,
+  augmentation/combination WORK evidence, and the bounded phase-6 installed
+  training/replay results. Hosted CI retains source, package, ABI and smoke
+  checks; it does not reproduce full science, Windows parity or performance.
+  Tag/version, immutable repair, artifact and authentication guards remain.
+
 - Replace Rust portable-session export v1/v2 with `nirs4all-core.portable-session.v1` and explicit preprocessing ownership; replace public `PORTABLE_SESSION_EXPORT_SCHEMA`/`PORTABLE_SESSION_EXPORT_SCHEMA_V2` with `PORTABLE_SESSION_SCHEMA`, refuse retired tags before native loading, and remove intrinsic session/model size ceilings.
 - Replace the public physical Archive V1/V2/V3 builders/readers with native
   package admission and the Core V1 container. Owner predictor/refit schemas,

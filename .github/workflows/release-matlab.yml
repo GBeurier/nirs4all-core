@@ -5,8 +5,8 @@
 # serves MATLAB and Octave. scripts/build-matlab-package.sh assembles it as
 # nirs4all-matlab-octave-<version>.zip (version read from the Rust-crate SoT).
 # It is attached to the GitHub Release so users can download it without cloning.
-# Release upload requires retained source-bound local parity on Linux/Windows.
-# GitHub builds the package; complete numerical parity runs locally.
+# Historical local receipts are retained separately from publication.
+# GitHub builds this source package; that is not full numerical parity.
 #
 # Naming: the package is `nirs4all` (there is no "full" nirs4all in MATLAB/
 # Octave, so this aggregate owns the `nirs4all` package here).
@@ -28,20 +28,7 @@ permissions:
   contents: write   # attach the asset to the Release
 
 jobs:
-  local-qualification:
-    name: Verify local parity before publication
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7.0.0
-      - uses: actions/setup-python@v6.3.0
-        with:
-          python-version: "3.11"
-      - name: Verify source-bound local qualification
-        if: ${{ github.event_name == 'push' && !contains(github.ref_name, '-') }}
-        run: python scripts/verify_local_qualification.py --project core --receipt compat/local-qualification.json --root .
-
   matlab-package:
-    needs: local-qualification
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v7.0.0
