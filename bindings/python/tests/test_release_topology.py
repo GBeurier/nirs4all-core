@@ -573,13 +573,13 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertEqual(set(root_lock["peerDependencies"]), expected_peers)
         self.assertEqual(set(root_lock["peerDependenciesMeta"]), expected_peers)
         self.assertEqual(root_lock["license"], package["license"])
-        # Candidate minimums include native format3 / ABI 2.22 and the safe parser cohort.
+        # Candidate minimums include native format3 / ABI 2.23 and the safe parser cohort.
         pinned_peers = {
-            "@nirs4all/methods": ">=1.3.15 <2",
-            "dag-ml-wasm": ">=0.4.0",
-            "dag-ml-data-wasm": ">=0.2.16",
-            "@nirs4all/formats-wasm": ">=0.2.16",
-            "@nirs4all/io-wasm": ">=0.3.1",
+            "@nirs4all/methods": ">=1.3.18 <2",
+            "dag-ml-wasm": ">=0.4.2",
+            "dag-ml-data-wasm": ">=0.2.17",
+            "@nirs4all/formats-wasm": ">=0.2.17",
+            "@nirs4all/io-wasm": ">=0.3.5",
         }
         for peer in upstream_peers:
             self.assertEqual(package["peerDependencies"][peer], pinned_peers.get(peer, "*"))
@@ -592,7 +592,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             self.assertTrue(package["peerDependenciesMeta"][peer]["optional"])
             self.assertTrue(root_lock["peerDependenciesMeta"][peer]["optional"])
             self.assertEqual(package["devDependencies"][peer], version)
-        self.assertEqual(package["devDependencies"]["dag-ml-wasm"], "^0.4.0")
+        self.assertEqual(package["devDependencies"]["dag-ml-wasm"], "^0.4.2")
 
         typescript = lock["packages"]["node_modules/typescript"]
         self.assertEqual(typescript["version"], package["devDependencies"]["typescript"])
@@ -643,16 +643,16 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertFalse(
             any(dependency.startswith("nirs4all-datasets") for dependency in all_extra)
         )
-        self.assertEqual(extras["datasets"], ["nirs4all-datasets>=0.3.17"])
-        self.assertEqual(extras["dag-ml"], ["dag-ml>=0.4.0,<0.5"])
-        self.assertIn("nirs4all-methods>=1.3.15,<2", extras["methods"])
-        self.assertIn("pls4all>=1.3.15,<2", extras["methods"])
+        self.assertEqual(extras["datasets"], ["nirs4all-datasets>=0.3.19"])
+        self.assertEqual(extras["dag-ml"], ["dag-ml>=0.4.2,<0.5"])
+        self.assertIn("nirs4all-methods>=1.3.18,<2", extras["methods"])
+        self.assertIn("pls4all>=1.3.18,<2", extras["methods"])
         self.assertIn("scikit-learn>=1.3", extras["methods"])
-        self.assertIn("nirs4all-formats>=0.2.16", all_extra)
-        self.assertIn("nirs4all-io>=0.3.1", all_extra)
-        self.assertIn("dag-ml>=0.4.0,<0.5", all_extra)
-        self.assertIn("nirs4all-methods>=1.3.15,<2", all_extra)
-        self.assertIn("pls4all>=1.3.15,<2", all_extra)
+        self.assertIn("nirs4all-formats>=0.2.17", all_extra)
+        self.assertIn("nirs4all-io>=0.3.5", all_extra)
+        self.assertIn("dag-ml>=0.4.2,<0.5", all_extra)
+        self.assertIn("nirs4all-methods>=1.3.18,<2", all_extra)
+        self.assertIn("pls4all>=1.3.18,<2", all_extra)
         self.assertNotIn("nirs4all-methods>=1.0.5", extras["methods"])
 
     def test_compat_registry_matches_release_topology_packages(self) -> None:

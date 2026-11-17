@@ -1,6 +1,21 @@
 # Changelog
 
-## 0.5.0 - Unreleased
+## 0.5.1
+
+- Compile the Rust, Python-native and WASM-native aggregate with the published
+  DAG-ML 0.4.2, Data 0.2.17, Formats 0.2.17 and IO 0.3.5 crates. IO 0.3.5
+  pins Formats 0.2.17 exactly, so the aggregate follows that Formats release.
+  The re-exported IO owner matches missing-value tokens case-insensitively,
+  selects a subset of target columns, and scopes missing-value removal to the
+  selected columns. Rust n4m stays 0.4.2: it negotiates Methods ABI 2.22 and
+  accepts later 2.x libraries, including Methods 1.3.18 (ABI 2.23).
+- Require DAG-ML 0.4.2, Data 0.2.17, Formats 0.2.17, IO 0.3.5 and Methods
+  1.3.18 in the optional Python and JavaScript host integrations, and Datasets
+  0.3.19 in the optional Python `datasets` extra.
+- Pin the release parity upstream refs to the published owner tags.
+- The `.n4a` container, owner schemas and byte contracts are unchanged.
+
+## 0.5.0
 
 - Retire the obsolete local-machine receipt as a mandatory prerequisite for
   all five publication channels. Historical policy, receipt, verifier and logs
