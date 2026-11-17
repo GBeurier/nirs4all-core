@@ -43,12 +43,12 @@ class NativePipelineTest(unittest.TestCase):
     def test_oof_selection_refit_fresh_replay_and_metadata_refusals(self):
         data = fixture()
         model = run_pipeline(data, recipe())
+        # IO keeps the declared float64 record values (f64-backed matrices since
+        # IO 0.3.0), so the independent scikit-learn oracle fits those exact values.
         x = np.asarray(
-            data["dataset"]["sources"][0]["array"]["values"], dtype=np.float32
-        ).astype(np.float64)
-        y = np.asarray(data["dataset"]["y"]["values"], dtype=np.float32).astype(
-            np.float64
+            data["dataset"]["sources"][0]["array"]["values"], dtype=np.float64
         )
+        y = np.asarray(data["dataset"]["y"]["values"], dtype=np.float64)
         positions = {sample: i for i, sample in enumerate(data["origin_ids"])}
         errors = []
         for alpha in [0.1, 1.0]:
@@ -149,11 +149,9 @@ class NativePipelineTest(unittest.TestCase):
             atol=2e-7,
         )
         full_x = np.asarray(
-            data["dataset"]["sources"][0]["array"]["values"], dtype=np.float32
-        ).astype(float)
-        full_y = np.asarray(data["dataset"]["y"]["values"], dtype=np.float32).astype(
-            float
+            data["dataset"]["sources"][0]["array"]["values"], dtype=np.float64
         )
+        full_y = np.asarray(data["dataset"]["y"]["values"], dtype=np.float64)
         positions = {sample: i for i, sample in enumerate(ids)}
         losses = []
         for alpha in [0.1, 1.0]:
@@ -207,8 +205,8 @@ class NativePipelineTest(unittest.TestCase):
         }
         model = run_pipeline(data, pipeline)
         x = np.asarray(
-            data["dataset"]["sources"][0]["array"]["values"], dtype=np.float32
-        ).astype(float)
+            data["dataset"]["sources"][0]["array"]["values"], dtype=np.float64
+        )
         dummy = np.eye(2)[labels]
         latent = PLSRegression(n_components=1, scale=False).fit(x, dummy)
         lda = LinearDiscriminantAnalysis().fit(latent.x_scores_, labels)
@@ -220,9 +218,31 @@ class NativePipelineTest(unittest.TestCase):
             replay["outputs"][0]["binding"]["prediction_kind"], "class_label"
         )
         self.assertEqual({item["phase"] for item in replay["lineage"]}, {"PREDICT"})
+        # Labels travel as exact int64: 2**24 + 1 has no float32 representation
+        # and must come back unchanged, on the same fitted decisions.
+        wide = copy.deepcopy(data)
+        wide["dataset"]["y"]["values"] = np.where(labels == 1, 2**24 + 1, 0).tolist()
+        wide_block = run_pipeline(wide, pipeline).predict(
+            x, sample_ids=data["origin_ids"]
+        )["outputs"][0]["predictions"][0]
+        np.testing.assert_array_equal(
+            np.asarray(wide_block["values"]).ravel(),
+            np.where(expected == 1, 2**24 + 1, 0),
+        )
+        # The precision guard remains at the exact bound: 2**53 - 1 is the last
+        # portable integer label, and anything beyond it is refused.
+        largest = copy.deepcopy(data)
+        largest["dataset"]["y"]["values"] = np.where(labels == 1, 2**53 - 1, 0).tolist()
+        largest_block = run_pipeline(largest, pipeline).predict(
+            x, sample_ids=data["origin_ids"]
+        )["outputs"][0]["predictions"][0]
+        self.assertEqual(
+            {int(value) for value in np.asarray(largest_block["values"]).ravel()},
+            {0, 2**53 - 1},
+        )
         bad = copy.deepcopy(data)
-        bad["dataset"]["y"]["values"][0] = 16777217
-        with self.assertRaisesRegex(RuntimeError, "exact float32"):
+        bad["dataset"]["y"]["values"][0] = 2**53
+        with self.assertRaisesRegex(ValueError, "exactly representable"):
             run_pipeline(bad, pipeline)
 
     def test_partial_targets_fit_observed_rows_preserve_oof_and_cold_replay(self):
