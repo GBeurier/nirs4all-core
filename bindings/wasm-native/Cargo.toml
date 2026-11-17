@@ -9,6 +9,9 @@ publish = false
 
 [lib]
 crate-type = ["cdylib", "rlib"]
+# Sources mounted from the `nirs4all` crate carry doctests written against that
+# crate name; they run there, not in this projection.
+doctest = false
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
