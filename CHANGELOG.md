@@ -17,6 +17,10 @@
   that the Methods manifest does not resolve, as the Rust and JavaScript
   loaders do. Other class names remain display data admitted or refused by the
   native owner at execution.
+- The `workflow-run` response reports the numeric storage IO selected for the
+  trained feature source (`float64` for a float64 record) instead of a fixed
+  `float32`, which had been wrong since IO 0.3.0 kept f64-backed matrices.
+  `workflow-load` no longer restates a storage it cannot read from the archive.
 - The `.n4a` container, owner schemas and byte contracts are unchanged.
 
 ## 0.5.0

@@ -30,11 +30,13 @@ class NativeWorkflowTest(unittest.TestCase):
         import numpy as np
         from sklearn.cross_decomposition import PLSRegression
         data = fixture()
-        x = np.asarray(data["dataset"]["sources"][0]["array"]["values"], dtype=np.float32)
-        y = np.asarray(data["dataset"]["y"]["values"], dtype=np.float32)
+        x = np.asarray(data["dataset"]["sources"][0]["array"]["values"], dtype=np.float64)
+        y = np.asarray(data["dataset"]["y"]["values"], dtype=np.float64)
         with tempfile.TemporaryDirectory() as directory:
             model = run(data, components=[1, 2], preprocessing="raw", archive=Path(directory) / "raw.n4a")
             self.assertEqual(model.config["preprocessing"], "raw")
+            # The response states the storage IO selected for the declared float64 record.
+            self.assertEqual(model.outcome["numeric_storage"], "float64")
             predictions = []
             for components in [1, 2]:
                 predicted = np.empty(len(y))
