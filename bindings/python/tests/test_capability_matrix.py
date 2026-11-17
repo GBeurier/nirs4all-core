@@ -807,7 +807,10 @@ class ExecutionProfileContentTests(unittest.TestCase):
         # Source support and qualification are stated separately, and inspect is not admission.
         limits = " ".join(canonical["limits"])
         self.assertIn("not parity", limits)
-        self.assertIn("pending", limits)
+        self.assertIn("Source support and qualification are stated separately", limits)
+        self.assertIn("Executed evidence is stated separately and names the actual profile, operation, artifact, build and platform", limits)
+        self.assertIn("it is never inferred for another host", limits)
+        self.assertIn("publication claims are not made here", limits)
         self.assertIn("Inspect is not executable admission", limits)
         self.assertIn("Raw canonical archive bytes and owner metadata remain authoritative", limits)
         for operation in ("compile", "fit", "import", "export"):
@@ -842,7 +845,9 @@ class ExecutionProfileContentTests(unittest.TestCase):
         limits = " ".join(storage["limits"])
         self.assertIn("Readable never implies executable", limits)
         self.assertIn("not parity", limits)
-        self.assertIn("pending", limits)
+        self.assertIn("Source support and qualification are stated separately", limits)
+        self.assertIn("Executed evidence is stated separately and names the actual host, operation, artifact and platform", limits)
+        self.assertIn("nothing here qualifies a host numerical model", limits)
         for operation in ("compile", "fit", "predict", "import", "export", "produce", "calibrate", "retrain"):
             for surface, cell in storage["operations"][operation].items():
                 self.assertEqual(cell["status"], U, f"{operation}.{surface}")
