@@ -59,9 +59,14 @@ jobs:
 
           manifest = tomllib.loads(Path("bindings/rust/nirs4all/Cargo.toml").read_text())
           requirement = manifest["dependencies"]["n4m"]["version"]
-          if not requirement.startswith("="):
-              raise SystemExit(f"n4m must remain exactly pinned, got {requirement!r}")
-          version = requirement.removeprefix("=")
+          # Owner crates are minor-level ranges; Cargo.lock selects the exact binding.
+          locked = [entry["version"] for entry in tomllib.loads(Path("Cargo.lock").read_text())["package"]
+                    if entry["name"] == "n4m"]
+          if len(locked) != 1:
+              raise SystemExit(f"exactly one locked n4m binding is required, got {locked!r}")
+          version = locked[0]
+          if not version.startswith(f"{requirement}."):
+              raise SystemExit(f"locked n4m {version} is outside the minor range {requirement!r}")
           upstreams = tomllib.loads(Path("compat/upstreams.toml").read_text())["upstream"]
           methods = [entry for entry in upstreams if entry["key"] == "methods"]
           if len(methods) != 1:
