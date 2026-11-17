@@ -19,6 +19,16 @@
   0.2.17, IO 0.3.5, Methods 1.3.18, Datasets 0.3.19), so later owner patches
   need no Core release. A topology test refuses requirements more precise than
   the minor.
+- Train records whose targets are observed on different rows again. IO 0.3.6
+  serves such a record as one scalar target per column with explicit
+  validity; the native provider reads it with
+  `PackageProvider::multi_target_block`, requires that validity to match the
+  record's target mask cell by cell, and stores unobserved cells only under a
+  false `y_validity_masks` bit, so DAG-ML fits each target on its own observed
+  training rows. Complete-target records keep their previous projection.
+  This needs IO 0.3.6, and multimodal classifier exports with current Methods
+  need DAG-ML 0.4.3 (`standard_scale` `ddof` state); the locked cohort moves
+  to both once they are published.
 - Pin the release parity upstream refs to the published owner tags.
 - Python `load_pipeline_definition` again refuses an `n4m:<method id>` token
   that the Methods manifest does not resolve, as the Rust and JavaScript

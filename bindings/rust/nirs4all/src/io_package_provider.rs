@@ -73,14 +73,17 @@ impl DatasetPackageMethodsProvider {
     }
 
     pub(crate) fn require_complete_targets(&self) -> Result<(), String> {
-        if self
-            .target_masks
-            .as_ref()
-            .is_some_and(|rows| rows.values().any(|row| row.contains(&false)))
-        {
+        if self.partial_target_masks().is_some() {
             return Err("Legacy complete-target workflow refuses partial target masks".into());
         }
         Ok(())
+    }
+
+    /// Native target masks of a record with at least one unobserved target cell.
+    fn partial_target_masks(&self) -> Option<&BTreeMap<String, Vec<bool>>> {
+        self.target_masks
+            .as_ref()
+            .filter(|rows| rows.values().any(|row| row.contains(&false)))
     }
 
     pub(crate) fn for_product_pipeline(
@@ -424,6 +427,48 @@ impl DatasetPackageMethodsProvider {
                 }
                 for cell in row {
                     values.push(finite_number(cell, "multi-target cell")?);
+                }
+            }
+            values
+        } else if let Some(masks) = self.partial_target_masks() {
+            // IO serves a partial record as one scalar target per column, with
+            // explicit per-target validity. An unobserved cell gets placeholder
+            // storage that is only valid under the matching false
+            // `y_validity_masks` bit; both must describe the same IO record.
+            let block = self
+                .provider
+                .multi_target_block(view_handle)
+                .map_err(|error| error.to_string())?;
+            if block.target_ids.as_slice() != target_ids
+                || target_ids.len() != target_names.len()
+                || block.values.len() != target_ids.len()
+                || block.validity_masks.len() != target_ids.len()
+            {
+                return Err(
+                    "Core IO provider multi-target block differs from the target columns"
+                        .to_string(),
+                );
+            }
+            validate_target_samples(sample_ids, &block.sample_ids)?;
+            let mut values = Vec::with_capacity(sample_ids.len() * target_names.len());
+            for (row, sample_id) in sample_ids.iter().enumerate() {
+                let observed = masks
+                    .get(sample_id.as_str())
+                    .ok_or("Native target mask missing sample identity")?;
+                for ((target_values, validity), &mask_bit) in
+                    block.values.iter().zip(&block.validity_masks).zip(observed)
+                {
+                    let valid = validity[row];
+                    if valid != mask_bit {
+                        return Err(format!(
+                            "Core IO provider target validity for sample `{sample_id}` disagrees with the native target mask"
+                        ));
+                    }
+                    values.push(if valid {
+                        finite_number(&target_values[row], "target cell")?
+                    } else {
+                        0.0
+                    });
                 }
             }
             values
