@@ -249,14 +249,15 @@ class NativePipelineTest(unittest.TestCase):
         data = fixture()
         data["schema"] = "nirs4all.dataset.v2"
         data["schema_version"] = 2
+        # IO materializes the record in float64, so the oracle reads it there.
         x = np.asarray(
-            data["dataset"]["sources"][0]["array"]["values"], dtype=np.float32
-        ).astype(float)
-        y = np.asarray(data["dataset"]["y"]["values"], dtype=np.float32).astype(float)
+            data["dataset"]["sources"][0]["array"]["values"], dtype=np.float64
+        )
+        y = np.asarray(data["dataset"]["y"]["values"], dtype=np.float64)
         observed = np.ones((12, 2), dtype=bool)
         observed[[2, 5, 8], 0] = False
         observed[[1, 6, 9], 1] = False
-        truth = np.column_stack([y, 2 * y + 1]).astype(np.float32).astype(float)
+        truth = np.column_stack([y, 2 * y + 1])
         data["dataset"]["y"] = {
             "dtype": "float64",
             "shape": [12, 2],
