@@ -106,3 +106,35 @@ Pre-release tags build/attach but publish to no registry; `workflow_dispatch`
 runs every workflow in dry-run mode. The version source of truth is the Rust
 crate manifest, propagated by `scripts/bump_version.sh`. See
 [`PUBLISHING.md`](PUBLISHING.md).
+
+## Cross-repository version constraints
+
+nirs4all packages from different repositories depend on each other at **minor**
+granularity, never more precisely: Rust `"0.4"` (`>=0.4.0, <0.5.0`; `"1.3"` for
+1.x), Python `>=0.4,<0.5` (`>=1.3,<2` for 1.x), npm `^0.4.0` (`^1.3.0`), R
+`pkg (>= 0.4.0), pkg (< 0.5.0)`. Core's owner requirements follow it in
+`bindings/rust/nirs4all/Cargo.toml` and `bindings/wasm-native/Cargo.toml`
+(`dag-ml*` `"0.4"`, `dag-ml-data*` `"0.2"`, `n4m` `"0.4"`, `nirs4all-formats`
+`"0.2"`, `nirs4all-io*` `"0.3"`), the Python extras (`dag-ml>=0.4,<0.5`,
+`dag-ml-data>=0.2,<0.3`, `nirs4all-formats>=0.2,<0.3`, `nirs4all-io>=0.3,<0.4`,
+`nirs4all-datasets>=0.3,<0.4`, `nirs4all-methods`/`pls4all>=1.3,<2`) and the npm
+peers (`^0.2.0`, `^0.3.0`, `^0.4.0`, `^1.3.0`). Exact, reproducible versions live
+only in `Cargo.lock`, `bindings/wasm/package-lock.json`, the `compat/upstreams.toml`
+parity refs and the release order, so an owner patch (for example IO 0.3.6 or
+dag-ml 0.4.3) needs no Core release. The crates and bindings of this repository
+stay in lockstep through `scripts/bump_version.sh`.
+
+In return, a **patch** release of Core is backward compatible and changes no
+wire format, byte contract, persisted schema, `.n4a` container/inventory or
+payload semantics, native ABI or shared fixture; any such change needs at least
+a **minor** release (for 0.x, every minor is breaking). Native Methods libraries
+are accepted by the runtime ABI check, not by the package version: the
+current cohort is qualified with Methods 1.3.18 (ABI 2.23, N4MM format 3), and
+a library lacking a required ABI is refused at runtime. The full policy is
+`docs/contracts/release/VERSION_CONSTRAINTS.md` in `nirs4all-ecosystem`.
+
+Enforcement: `bindings/python/tests/test_release_topology.py` refuses an owner
+requirement more precise than the minor in the Rust, Python and npm manifests;
+`cargo --locked` and `npm ci` keep the exact cohort; `.n4a` container and
+inventory fixtures are checked by the Rust and binding suites. A guard that
+fails when a contract file changes without a minor bump is not automated yet.

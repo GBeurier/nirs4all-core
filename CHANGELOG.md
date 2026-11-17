@@ -9,9 +9,16 @@
   selects a subset of target columns, and scopes missing-value removal to the
   selected columns. Rust n4m stays 0.4.2: it negotiates Methods ABI 2.22 and
   accepts later 2.x libraries, including Methods 1.3.18 (ABI 2.23).
-- Require DAG-ML 0.4.2, Data 0.2.17, Formats 0.2.17, IO 0.3.5 and Methods
-  1.3.18 in the optional Python and JavaScript host integrations, and Datasets
-  0.3.19 in the optional Python `datasets` extra.
+- Depend on every owner at minor granularity instead of exact pins: Rust
+  `dag-ml*` "0.4", `dag-ml-data*` "0.2", `n4m` "0.4", `nirs4all-formats` "0.2",
+  `nirs4all-io*` "0.3"; Python extras `>=0.4,<0.5`-style ranges (Methods
+  `>=1.3,<2`, Datasets `>=0.3,<0.4`); npm owner peers and dev dependencies
+  `^0.x.0`/`^1.3.0` (the optional Datasets WASM peer moves from `*` to
+  `^0.3.0`). `Cargo.lock`, `bindings/wasm/package-lock.json` and the release
+  order keep the exact cohort above (DAG-ML 0.4.2, Data 0.2.17, Formats
+  0.2.17, IO 0.3.5, Methods 1.3.18, Datasets 0.3.19), so later owner patches
+  need no Core release. A topology test refuses requirements more precise than
+  the minor.
 - Pin the release parity upstream refs to the published owner tags.
 - Python `load_pipeline_definition` again refuses an `n4m:<method id>` token
   that the Methods manifest does not resolve, as the Rust and JavaScript
