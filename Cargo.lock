@@ -554,18 +554,18 @@ dependencies = [
 
 [[package]]
 name = "dag-ml"
-version = "0.4.2"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c63f4e3f4b22a751b3ea72b4b44eca33a4f8bb2289a224fb29f43406096e92df"
+checksum = "c397f62aebcfde54b7a4dc824bf56fd56b0ec884c3495658d2d01021d34685f2"
 dependencies = [
  "dag-ml-core",
 ]
 
 [[package]]
 name = "dag-ml-core"
-version = "0.4.2"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56ee391a52455434a2b0fb86c67340ca0885f942492d2c541b26a78e5ea7831e"
+checksum = "84504f2d231d526f1ccf7880cd5f1718a3e9a5e1d07b940be014d4316185f5d5"
 dependencies = [
  "indexmap",
  "n4m",
@@ -613,9 +613,9 @@ dependencies = [
 
 [[package]]
 name = "dag-ml-results"
-version = "0.4.2"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2266f74074aa34642b56e235e74fe49593e62ff6791c83666f350dc1740c80f"
+checksum = "7cbc6d90d52499206ab3e9fbafc1e1a8fe7766e1173d9faa3a4ccbf0e34074f5"
 dependencies = [
  "arrow-array",
  "arrow-schema",
@@ -1116,9 +1116,9 @@ dependencies = [
 
 [[package]]
 name = "nirs4all-io"
-version = "0.3.5"
+version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "251b4b78e65f3194ffacdbb46b2c08655296ec6da0aea56ee2136d9abf5605f5"
+checksum = "9dae65c8a224343bb716da64e8e305622c227a96d946f01c462939cc2d4c6e6a"
 dependencies = [
  "arrow-array",
  "arrow-schema",
@@ -1142,9 +1142,9 @@ dependencies = [
 
 [[package]]
 name = "nirs4all-io-core"
-version = "0.3.5"
+version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "566d9a44f29ae457efb16e0da8968bced41c00b957347e1e7c87efd5065aba78"
+checksum = "9fd9cfc9a72283a663c8fb3dcc2350dfbf830d94fa50efc9abd9a1f5659234a6"
 dependencies = [
  "csv",
  "indexmap",
@@ -1158,9 +1158,9 @@ dependencies = [
 
 [[package]]
 name = "nirs4all-io-dagml"
-version = "0.3.5"
+version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e02bb6e0c8582eb84759a81461974e65c01cb89f7baaea9f5dd0545c163a731"
+checksum = "28e5863d666250978f19dde101d3789f8794173b67bb8054497350f254fecddc"
 dependencies = [
  "anyhow",
  "clap",
