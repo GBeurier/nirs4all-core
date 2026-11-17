@@ -52,6 +52,7 @@
     "yaml": "^2.9.0"
   },
   "devDependencies": {
+    "@nirs4all/io-wasm": "^0.3.5",
     "@tensorflow/tfjs": "^3.21.0",
     "dag-ml-wasm": "^0.4.2",
     "ml": "^8.0.0",
