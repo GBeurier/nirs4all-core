@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 import os
-import struct
 import tempfile
 import unittest
 import zipfile
@@ -78,11 +77,10 @@ class TuningTest(unittest.TestCase):
         fitted = model.outcome["training_outcome"]["outputs"][0]["predictions"][0]
         values = dict(zip(fitted["sample_ids"], fitted["values"], strict=True))
         expected = [values[id] for id in self.data["dataset"]["sample_ids"][:3]]
-        for actual, reference in zip(predicted["outputs"][0]["predictions"][0]["values"], expected, strict=True):
-            self.assertAlmostEqual(actual[0], reference[0], places=6)
-        # The DatasetPackage training bridge declares canonical float32 storage.
-        canonical_x = [[struct.unpack("f", struct.pack("f", value))[0] for value in row] for row in x]
-        self.assertEqual(reopened.predict(canonical_x)["outputs"][0]["predictions"][0]["values"], expected)
+        # IO keeps the declared float64 record values (f64-backed matrices since IO 0.3.0),
+        # so a cold replay of the same rows returns the fitted values exactly.
+        self.assertEqual(predicted["outputs"][0]["predictions"][0]["values"], expected)
+        self.assertEqual(reopened.predict(x)["outputs"][0]["predictions"][0]["values"], expected)
         returned = reopened.trials()
         returned[0]["trial"]["parameters"] = {}
         self.assertNotEqual(reopened.trials()[0]["trial"]["parameters"], {})
@@ -96,7 +94,8 @@ class TuningTest(unittest.TestCase):
             changed = False
             for member in source.infolist():
                 payload = source.read(member.filename)
-                if not changed and member.filename.startswith("artifacts/"):
+                # Core V1 containers keep fitted Methods state under the DAG-ML facet.
+                if not changed and member.filename.startswith("dagml/facets/") and "/states/" in member.filename:
                     payload = payload[:-1] + bytes([payload[-1] ^ 1])
                     changed = True
                 target.writestr(member, payload)
