@@ -97,7 +97,9 @@ class N4mRoleRecipeTests(unittest.TestCase):
         self.assertEqual(n4core.load_pipeline_definition(recipe).pipeline, recipe["pipeline"])
         with self.assertRaisesRegex(ValueError, r"portable subset: n4m:not\.a\.method$"):
             n4core.load_pipeline_definition({"pipeline": ["n4m:not.a.method"]})
-        with self.assertRaisesRegex(ValueError, "N4mRolePipeline"):
+        # The portable plan is the native owner's admission; it refuses role tokens
+        # (fitted with N4mRolePipeline.fit_recipe) at the first non-object step.
+        with self.assertRaisesRegex(ValueError, r"\$\.pipeline\[1\]: object required"):
             n4core.parse_execution_plan(recipe)
 
         capabilities = {item["token"]: item for item in n4core.n4m_role_capabilities()}

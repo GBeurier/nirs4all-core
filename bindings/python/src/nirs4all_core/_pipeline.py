@@ -10,7 +10,7 @@ from typing import Any
 
 import yaml
 
-from ._n4m_roles import n4m_role_method_id
+from ._n4m_roles import n4m_role_method_id, resolves_n4m_role
 
 
 @dataclass(frozen=True)
@@ -63,6 +63,7 @@ def load_pipeline_definition(source: str | Path | dict[str, Any] | list[Any]) ->
         raise ValueError("Pipeline definition key 'pipeline' or 'steps' must contain a list of steps.")
 
     cleaned_pipeline = _strip_comments(pipeline)
+    _require_resolved_role_tokens(cleaned_pipeline)
 
     random_state = data.get("random_state")
     if isinstance(random_state, bool):
@@ -151,6 +152,25 @@ def _strip_comments(value: Any) -> Any:
 
 def _is_comment_step(value: Any) -> bool:
     return isinstance(value, dict) and set(value) == {"_comment"}
+
+
+def _require_resolved_role_tokens(pipeline: list[Any]) -> None:
+    """Refuse ``"n4m:<method id>"`` tokens the Methods manifest does not resolve.
+
+    Other class names are display data: their execution is admitted or refused
+    by the native owner, not by this decoder.
+    """
+
+    unresolved = [
+        name
+        for name in portable_class_names(pipeline)
+        if n4m_role_method_id(name) is not None and not resolves_n4m_role(name)
+    ]
+    if unresolved:
+        raise ValueError(
+            "Pipeline uses operators outside the current nirs4all-core portable subset: "
+            + ", ".join(dict.fromkeys(unresolved))
+        )
 
 
 def _collect_classes(value: Any, output: list[str]) -> None:

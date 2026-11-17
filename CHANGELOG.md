@@ -13,6 +13,10 @@
   1.3.18 in the optional Python and JavaScript host integrations, and Datasets
   0.3.19 in the optional Python `datasets` extra.
 - Pin the release parity upstream refs to the published owner tags.
+- Python `load_pipeline_definition` again refuses an `n4m:<method id>` token
+  that the Methods manifest does not resolve, as the Rust and JavaScript
+  loaders do. Other class names remain display data admitted or refused by the
+  native owner at execution.
 - The `.n4a` container, owner schemas and byte contracts are unchanged.
 
 ## 0.5.0
