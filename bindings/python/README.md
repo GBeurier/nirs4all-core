@@ -188,6 +188,6 @@ integer equal to the native width, a column name holding NUL, and a
 `class_names` table that is not a non-empty list of unique strings or finite
 numbers labelling every fitted class id (index = id); missing or non-finite
 labels are refused at fit. `recipe` is a copy of the recipe the states attest,
-which is also the one exported. Core 0.5.0's Methods extra requires
-`nirs4all-methods` 1.3.15 or later (ABI 2.22). The role envelope's native format
+which is also the one exported. Core 0.5.1's Methods extra requires
+`nirs4all-methods` 1.3.18 or later (ABI 2.23). The role envelope's native format
 remains compatible with ABI 2.14.

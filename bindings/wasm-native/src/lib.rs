@@ -18,6 +18,9 @@ use dag_ml_core::{
 use sha2::{Digest, Sha256};
 use wasm_bindgen::prelude::*;
 
+// The shared contract also re-exports recipe types for the native crate's
+// public API; this projection consumes only its validators.
+#[allow(unused_imports)]
 #[path = "../../rust/nirs4all/src/native_pipeline_contract.rs"]
 mod native_pipeline_contract;
 #[path = "../../rust/nirs4all/src/conformal_json.rs"]
@@ -919,6 +922,8 @@ pub struct N4aPredictPlan {
 #[wasm_bindgen]
 impl N4aPredictPlan {
     /// `record` is `undefined` for the stored input or exact external IO bytes.
+    // Positional JavaScript constructor; its public signature is the contract.
+    #[allow(clippy::too_many_arguments)]
     #[wasm_bindgen(constructor)]
     pub fn new(
         archive_bytes: &[u8],

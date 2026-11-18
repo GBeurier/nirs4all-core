@@ -1,6 +1,46 @@
 # Changelog
 
-## 0.5.0 - Unreleased
+## 0.5.1
+
+- Compile the Rust, Python-native and WASM-native aggregate with the published
+  DAG-ML 0.4.3, Data 0.2.17, Formats 0.2.17 and IO 0.3.6 crates (npm:
+  `dag-ml-wasm` 0.4.3, `@nirs4all/io-wasm` 0.3.6). IO now declares Formats
+  at minor granularity; Core's lock keeps Formats 0.2.17. The re-exported IO
+  owner matches missing-value tokens case-insensitively,
+  selects a subset of target columns, and scopes missing-value removal to the
+  selected columns. Rust n4m stays 0.4.2: it negotiates Methods ABI 2.22 and
+  accepts later 2.x libraries, including Methods 1.3.18 (ABI 2.23).
+- Depend on every owner at minor granularity instead of exact pins: Rust
+  `dag-ml*` "0.4", `dag-ml-data*` "0.2", `n4m` "0.4", `nirs4all-formats` "0.2",
+  `nirs4all-io*` "0.3"; Python extras `>=0.4,<0.5`-style ranges (Methods
+  `>=1.3,<2`, Datasets `>=0.3,<0.4`); npm owner peers and dev dependencies
+  `^0.x.0`/`^1.3.0` (the optional Datasets WASM peer moves from `*` to
+  `^0.3.0`). `Cargo.lock`, `bindings/wasm/package-lock.json` and the release
+  order keep the exact cohort above (DAG-ML 0.4.3, Data 0.2.17, Formats
+  0.2.17, IO 0.3.6, Methods 1.3.18, Datasets 0.3.19), so later owner patches
+  need no Core release. A topology test refuses requirements more precise than
+  the minor.
+- Train records whose targets are observed on different rows again. IO 0.3.6
+  serves such a record as one scalar target per column with explicit
+  validity; the native provider reads it with
+  `PackageProvider::multi_target_block`, requires that validity to match the
+  record's target mask cell by cell, and stores unobserved cells only under a
+  false `y_validity_masks` bit, so DAG-ML fits each target on its own observed
+  training rows. Complete-target records keep their previous projection.
+  This needs IO 0.3.6; multimodal classifier exports with current Methods
+  need DAG-ML 0.4.3, which accepts the `standard_scale` `ddof` state.
+- Pin the release parity upstream refs to the published owner tags.
+- Python `load_pipeline_definition` again refuses an `n4m:<method id>` token
+  that the Methods manifest does not resolve, as the Rust and JavaScript
+  loaders do. Other class names remain display data admitted or refused by the
+  native owner at execution.
+- The `workflow-run` response reports the numeric storage IO selected for the
+  trained feature source (`float64` for a float64 record) instead of a fixed
+  `float32`, which had been wrong since IO 0.3.0 kept f64-backed matrices.
+  `workflow-load` no longer restates a storage it cannot read from the archive.
+- The `.n4a` container, owner schemas and byte contracts are unchanged.
+
+## 0.5.0
 
 - Retire the obsolete local-machine receipt as a mandatory prerequisite for
   all five publication channels. Historical policy, receipt, verifier and logs

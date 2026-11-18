@@ -1,6 +1,6 @@
 [package]
 name = "nirs4all-core-wasm-native"
-version = "0.5.0"
+version = "0.5.1"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -9,15 +9,18 @@ publish = false
 
 [lib]
 crate-type = ["cdylib", "rlib"]
+# Sources mounted from the `nirs4all` crate carry doctests written against that
+# crate name; they run there, not in this projection.
+doctest = false
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
-dag-ml-core = { version = "=0.4.0", default-features = false }
-dag_ml_data_crate = { package = "dag-ml-data", version = "=0.2.16" }
-dag_ml_data_provider_crate = { package = "dag-ml-data-provider", version = "=0.2.16" }
-nirs4all-io-core = "=0.3.1"
+dag-ml-core = { version = "0.4", default-features = false }
+dag_ml_data_crate = { package = "dag-ml-data", version = "0.2" }
+dag_ml_data_provider_crate = { package = "dag-ml-data-provider", version = "0.2" }
+nirs4all-io-core = "0.3"
 # The default `cli` feature pulls the file-IO facade, which WASM cannot link.
-nirs4all_io_dagml = { package = "nirs4all-io-dagml", version = "=0.3.1", default-features = false }
+nirs4all_io_dagml = { package = "nirs4all-io-dagml", version = "0.3", default-features = false }
 serde_json = { version = "1", features = ["preserve_order", "float_roundtrip"] }
 sha2 = "0.10"
 crc32fast = "1.5"

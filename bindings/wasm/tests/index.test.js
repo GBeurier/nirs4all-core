@@ -221,8 +221,10 @@ test('local implementation registry rejects an old registry surface', async () =
 });
 
 test('public upstream loaders report the correct missing upstream', async () => {
+  // DAG-ML and IO are development dependencies of this package: their loaders
+  // must return the owner module. The other optional peers stay absent here.
   await assert.rejects(loadFormats, /upstream 'formats'.*@nirs4all\/formats-wasm/s);
-  await assert.rejects(loadIo, /upstream 'io'.*@nirs4all\/io-wasm/s);
+  assert.equal(typeof (await loadIo()).inferFiles, 'function');
   await assert.rejects(loadDatasets, /upstream 'datasets'.*@nirs4all\/datasets-wasm/s);
   await assert.rejects(loadMethods, /upstream 'methods'.*@nirs4all\/methods/s);
   assert.equal(typeof (await loadDagMl()).derive_controller_manifest_json, 'function');

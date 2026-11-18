@@ -573,13 +573,16 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertEqual(set(root_lock["peerDependencies"]), expected_peers)
         self.assertEqual(set(root_lock["peerDependenciesMeta"]), expected_peers)
         self.assertEqual(root_lock["license"], package["license"])
-        # Candidate minimums include native format3 / ABI 2.22 and the safe parser cohort.
+        # Cross-repository owners are minor-level ranges; the lock and the release
+        # order carry the exact cohort, and the Methods runtime ABI check refuses an
+        # older native library.
         pinned_peers = {
-            "@nirs4all/methods": ">=1.3.15 <2",
-            "dag-ml-wasm": ">=0.4.0",
-            "dag-ml-data-wasm": ">=0.2.16",
-            "@nirs4all/formats-wasm": ">=0.2.16",
-            "@nirs4all/io-wasm": ">=0.3.1",
+            "@nirs4all/methods": "^1.3.0",
+            "dag-ml-wasm": "^0.4.0",
+            "dag-ml-data-wasm": "^0.2.0",
+            "@nirs4all/formats-wasm": "^0.2.0",
+            "@nirs4all/io-wasm": "^0.3.0",
+            "@nirs4all/datasets-wasm": "^0.3.0",
         }
         for peer in upstream_peers:
             self.assertEqual(package["peerDependencies"][peer], pinned_peers.get(peer, "*"))
@@ -593,6 +596,8 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             self.assertTrue(root_lock["peerDependenciesMeta"][peer]["optional"])
             self.assertEqual(package["devDependencies"][peer], version)
         self.assertEqual(package["devDependencies"]["dag-ml-wasm"], "^0.4.0")
+        # The IO facade tests run the published owner module; it stays an optional peer for consumers.
+        self.assertEqual(package["devDependencies"]["@nirs4all/io-wasm"], "^0.3.0")
 
         typescript = lock["packages"]["node_modules/typescript"]
         self.assertEqual(typescript["version"], package["devDependencies"]["typescript"])
@@ -643,16 +648,17 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertFalse(
             any(dependency.startswith("nirs4all-datasets") for dependency in all_extra)
         )
-        self.assertEqual(extras["datasets"], ["nirs4all-datasets>=0.3.17"])
-        self.assertEqual(extras["dag-ml"], ["dag-ml>=0.4.0,<0.5"])
-        self.assertIn("nirs4all-methods>=1.3.15,<2", extras["methods"])
-        self.assertIn("pls4all>=1.3.15,<2", extras["methods"])
+        self.assertEqual(extras["datasets"], ["nirs4all-datasets>=0.3,<0.4"])
+        self.assertEqual(extras["dag-ml"], ["dag-ml>=0.4,<0.5"])
+        self.assertIn("nirs4all-methods>=1.3,<2", extras["methods"])
+        self.assertIn("pls4all>=1.3,<2", extras["methods"])
         self.assertIn("scikit-learn>=1.3", extras["methods"])
-        self.assertIn("nirs4all-formats>=0.2.16", all_extra)
-        self.assertIn("nirs4all-io>=0.3.1", all_extra)
-        self.assertIn("dag-ml>=0.4.0,<0.5", all_extra)
-        self.assertIn("nirs4all-methods>=1.3.15,<2", all_extra)
-        self.assertIn("pls4all>=1.3.15,<2", all_extra)
+        self.assertIn("nirs4all-formats>=0.2,<0.3", all_extra)
+        self.assertIn("nirs4all-io>=0.3,<0.4", all_extra)
+        self.assertIn("dag-ml>=0.4,<0.5", all_extra)
+        self.assertIn("dag-ml-data>=0.2,<0.3", all_extra)
+        self.assertIn("nirs4all-methods>=1.3,<2", all_extra)
+        self.assertIn("pls4all>=1.3,<2", all_extra)
         self.assertNotIn("nirs4all-methods>=1.0.5", extras["methods"])
 
     def test_compat_registry_matches_release_topology_packages(self) -> None:
@@ -721,3 +727,47 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CrossRepositoryRangeTests(unittest.TestCase):
+    """Owner dependencies use minor-level ranges; locks carry exact versions."""
+
+    OWNER_CRATES = {
+        "dag-ml", "dag-ml-core", "dag-ml-results", "dag-ml-data", "dag-ml-data-provider",
+        "n4m", "nirs4all-formats", "nirs4all-io", "nirs4all-io-core", "nirs4all-io-dagml",
+    }
+    OWNER_DISTRIBUTIONS = (
+        "dag-ml", "dag-ml-data", "nirs4all-formats", "nirs4all-io", "nirs4all-datasets",
+        "nirs4all-methods", "pls4all",
+    )
+    OWNER_NPM = (
+        "@nirs4all/methods", "@nirs4all/formats-wasm", "@nirs4all/io-wasm",
+        "@nirs4all/datasets-wasm", "dag-ml-wasm", "dag-ml-data-wasm",
+    )
+
+    def test_owner_requirements_are_minor_level_ranges(self) -> None:
+        import re
+
+        for manifest in ("bindings/rust/nirs4all/Cargo.toml", "bindings/wasm-native/Cargo.toml"):
+            dependencies = tomllib.loads((ROOT / manifest).read_text())["dependencies"]
+            for alias, spec in dependencies.items():
+                name = spec.get("package", alias) if isinstance(spec, dict) else alias
+                if name not in self.OWNER_CRATES:
+                    continue
+                version = spec["version"] if isinstance(spec, dict) else spec
+                with self.subTest(manifest=manifest, crate=name):
+                    self.assertRegex(version, r"^\d+\.\d+$")
+
+        extras = _load_pyproject()["project"]["optional-dependencies"]
+        for requirement in (item for values in extras.values() for item in values):
+            name = re.split(r"[<>=!~\[ ]", requirement, maxsplit=1)[0]
+            if name in self.OWNER_DISTRIBUTIONS:
+                with self.subTest(requirement=requirement):
+                    self.assertRegex(requirement[len(name):], r"^>=\d+\.\d+,<\d+(\.\d+)?$")
+
+        package = _load_wasm_package()
+        for section in ("dependencies", "devDependencies", "peerDependencies"):
+            for name, version in package.get(section, {}).items():
+                if name in self.OWNER_NPM:
+                    with self.subTest(section=section, package=name):
+                        self.assertRegex(version, r"^\^\d+\.\d+\.0$")

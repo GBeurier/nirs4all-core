@@ -1005,9 +1005,28 @@ fn workflow_load(values: &BTreeMap<String, OsString>) -> Result<()> {
             "winner_variant_id": outcome.selected_variant_id, "training_outcome": outcome,
             "model_archive": std::fs::canonicalize(path)?,
             "archive_id": view["archive_id"], "archive_sha256": view["archive_sha256"],
-            "config": config, "numeric_storage": "float32",
+            "config": config,
         }),
     )
+}
+
+/// Numeric storage the IO owner selected for the trained feature source.
+fn feature_numeric_storage(
+    dataset: &nirs4all_io_crate::core::materialize::DatasetPackage,
+    source_id: &str,
+) -> Result<&'static str> {
+    use nirs4all_io_crate::core::materialize::PayloadBlock;
+    dataset
+        .partitions
+        .values()
+        .flat_map(|partition| &partition.payloads)
+        .find_map(|(_, block)| match block {
+            PayloadBlock::FeatureMatrix(features) if features.source_id == source_id => {
+                Some(features.matrix.precision.dtype.dtype())
+            }
+            _ => None,
+        })
+        .ok_or_else(|| "IO dataset package has no feature matrix for the trained source".into())
 }
 
 fn training_result_view(values: &BTreeMap<String, OsString>) -> Result<()> {
@@ -1061,6 +1080,7 @@ fn workflow_run(values: &BTreeMap<String, OsString>) -> Result<()> {
     let dataset =
         nirs4all_io_crate::core::public_dataset::dense_dataset_package(&record, source_id)
             .map_err(|error| format!("IO dataset validation refused: {error}"))?;
+    let numeric_storage = feature_numeric_storage(&dataset, source_id)?;
     let library = std::fs::canonicalize(Path::new(required(values, "methods-library")?))?;
     let outcome = run_dense_regression_workflow(DenseRegressionWorkflowRequest {
         dataset: &dataset,
@@ -1092,7 +1112,7 @@ fn workflow_run(values: &BTreeMap<String, OsString>) -> Result<()> {
             "model_archive": destinations.archive, "archive_id": outcome.archive.archive_id(),
             "archive_sha256": outcome.archive.archive_sha256(), "native_results_dir": destinations.results,
             "config": config,
-            "numeric_storage": "float32",
+            "numeric_storage": numeric_storage,
         }),
     )?;
     published.committed = true;
