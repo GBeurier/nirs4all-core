@@ -210,11 +210,14 @@ See [`LICENSING.md`](LICENSING.md), [`LICENSES/`](LICENSES/), and [`THIRD_PARTY_
 
 ## Dependency cohort
 
-Core 0.5.1 targets DAG-ML 0.4.3, Data 0.2.17, Formats 0.2.17, IO 0.3.6
-and n4m Rust 0.4.2 crates with Rust 1.88. Qualification and publication of this
+Core 0.6.0 targets DAG-ML 0.5.0, Data 0.2.17, Formats 0.2.17, IO 0.3.6
+and n4m Rust 0.5.0 crates with Rust 1.88. Qualification and publication of this
 source cohort remain release gates. The Python and JavaScript hosts require
-Methods 1.3.18 (ABI 2.23); Rust native loading negotiates the n4m 0.4.2
-minimum, Methods ABI 2.22, and accepts later 2.x libraries. New PLS models use N4MM format 3, with an explicit ABI
+Methods 1.5.x (ABI 2.24 for the 1.5.0 candidate); Rust native loading
+requires Methods ABI >= 2.24 through n4m 0.5.0 and accepts compatible later
+2.x libraries. This cohort includes Methods 1.4's changed autoscaling of
+rounding-noise columns and exact-zero mirror-SG derivative endpoints; see
+the 0.6.0 changelog. New PLS models use N4MM format 3, with an explicit ABI
 minimum and an exact content-bound descriptor; embedded preprocessing remains
 attested by Methods. Historical format 1/2 archives keep their wire formats and
 integrity checks.

@@ -938,12 +938,13 @@ pub(crate) fn admission_plan(
 mod tests {
     use super::*;
     #[test]
-    fn portable_methods_abi_floor_refuses_220_and_accepts_222() {
+    fn portable_methods_abi_floor_refuses_223_and_accepts_224() {
         assert_eq!(
             require_portable_methods_abi((2, 20)).unwrap_err(),
-            "portable-pipeline-run requires Methods ABI 2.22; runtime provides 2.20"
+            "portable-pipeline-run requires Methods ABI 2.24; runtime provides 2.20"
         );
-        assert_eq!(require_portable_methods_abi((2, 22)), Ok(()));
+        assert!(require_portable_methods_abi((2, 23)).is_err());
+        assert_eq!(require_portable_methods_abi((2, 24)), Ok(()));
     }
     #[test]
     fn plan_needs_no_dataset_library_or_execution() {

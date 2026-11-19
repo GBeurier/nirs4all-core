@@ -97,9 +97,11 @@ def load_browser_tuning(record: dict[str, Any] | str | Path) -> BrowserTuningRes
                "metric": config["metric"], "seed": config["seed"], "startupTrials": 2}
     expected_contract = {"space": request["optimizer_descriptor"]["space"], "options": options,
                          "objective": contracts["objective"], "warmStart": None}
-    if snapshot["schema"] != "dagml.n4m.wasm-hpo.v1" or snapshot["contract"] != expected_contract or snapshot["prepared"] is not None:
+    if (snapshot["schema"] != "dagml.n4m.wasm-hpo.v2" or snapshot["contract"] != expected_contract
+            or snapshot["prepared_json"] is not None or not isinstance(snapshot["committed_json"], str)):
         raise ValueError("Browser optimizer snapshot contract mismatch")
-    verified = validate_host_hpo_snapshot(contracts["plan"], contracts["envelope"], request, snapshot["committed"])
+    # Preserve the exact owner journal for admission before decoding its history.
+    verified = validate_host_hpo_snapshot(contracts["plan"], contracts["envelope"], request, snapshot["committed_json"])
     if search != verified or search["selected_params"] != node["params"]:
         raise ValueError("Browser study history or selected predictor differs from native checkpoint")
     if any(package["training_envelope"][key] != contracts["envelope"][key]
@@ -118,7 +120,7 @@ def load_browser_tuning(record: dict[str, Any] | str | Path) -> BrowserTuningRes
                 raise ValueError("Methods optimizer configuration differs from native study")
             trials = optimizer.get_trials()
     # Trial snapshots own their decoded data after their native owner closes.
-    terminal = snapshot["committed"]["trials"]
+    terminal = json.loads(snapshot["committed_json"])["trials"]
     if len(trials) != len(terminal):
         raise ValueError("Methods optimizer history differs from native checkpoint")
     for index, (trial, recorded) in enumerate(zip(trials, terminal)):

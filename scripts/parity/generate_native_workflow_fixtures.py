@@ -60,15 +60,20 @@ def main():
     flags = dict(archive=root / "shared-calibrated.n4a", methods_library=args.methods_library)
     prediction = invoke("conformal-predict", {"x": x, "sample_ids": ids},
                         run_id="run:qualification:prediction", **flags)
-    report = invoke("robustness", {"x": x, "sample_ids": ids, "truth": [[v] for v in y],
+    audit_input = {"x": x, "sample_ids": ids, "truth": [[v] for v in y],
         "scenarios": [{"id": "observed", "kind": "observed", "severity": 0, "seed": 0},
-                      {"id": "gaussian", "kind": "spectral_noise", "severity": 0.01, "seed": 1}]},
+                      {"id": "gaussian", "kind": "spectral_noise", "severity": 0.01, "seed": 1}]}
+    report = invoke("robustness", audit_input,
         run_id="run:qualification:robustness", **flags)
+    uncalibrated_report = invoke("robustness", audit_input,
+        archive=root / "shared-model.n4a", methods_library=args.methods_library,
+        run_id="run:qualification:uncalibrated-robustness")
     current["dataset"]["y"] = None
     current["dataset"]["partitions"] = {"dtype": "<U7", "shape": [len(ids)], "values": ["predict"] * len(ids)}
     records = {"train": train, "dataset-calibration": calibration, "dataset-predict": current,
                "independent": {"x": x, "y": y, "sample_ids": ids},
-               "shared-prediction": prediction, "shared-robustness": report}
+               "shared-prediction": prediction, "shared-robustness": report,
+               "shared-uncalibrated-robustness": uncalibrated_report}
     for name, record in records.items():
         (root / f"{name}.json").write_text(json.dumps(record, allow_nan=False))
     invoke("experiment-save", input=root / "results", destination=root / "experiment",

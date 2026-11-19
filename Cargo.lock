@@ -554,18 +554,18 @@ dependencies = [
 
 [[package]]
 name = "dag-ml"
-version = "0.4.3"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c397f62aebcfde54b7a4dc824bf56fd56b0ec884c3495658d2d01021d34685f2"
+checksum = "827d41b15c8f3a914f80b501af09bb167932de9e8e6263e539949b7689d95123"
 dependencies = [
  "dag-ml-core",
 ]
 
 [[package]]
 name = "dag-ml-core"
-version = "0.4.3"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "84504f2d231d526f1ccf7880cd5f1718a3e9a5e1d07b940be014d4316185f5d5"
+checksum = "18bbc8e28f1ee9670dc3b017ffb95cd21487ab51391960c178f0cdbf25a77498"
 dependencies = [
  "indexmap",
  "n4m",
@@ -613,9 +613,9 @@ dependencies = [
 
 [[package]]
 name = "dag-ml-results"
-version = "0.4.3"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7cbc6d90d52499206ab3e9fbafc1e1a8fe7766e1173d9faa3a4ccbf0e34074f5"
+checksum = "a46092eae546204d5a781e117d26fa2bae3ccccc4bc41062c032cb9ae48d3196"
 dependencies = [
  "arrow-array",
  "arrow-schema",
@@ -1024,9 +1024,9 @@ checksum = "743fb55ba31b18fb1ecef6bdc9aa2743314978ac084044301a7eee33fb99a20d"
 
 [[package]]
 name = "n4m"
-version = "0.4.2"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dfb4564672f8d6c167d3e292d0eeed2e6029f97841efd966accbce4b724d48a8"
+checksum = "9ef0776a28102b3593a3bb5468aa96910bc6e1e10a0ef488ff174157794c3f5a"
 dependencies = [
  "cc",
  "libloading",
@@ -1034,7 +1034,7 @@ dependencies = [
 
 [[package]]
 name = "nirs4all"
-version = "0.5.2"
+version = "0.6.0"
 dependencies = [
  "base64",
  "crc32fast",
@@ -1059,7 +1059,7 @@ dependencies = [
 
 [[package]]
 name = "nirs4all-core-python-native"
-version = "0.5.2"
+version = "0.6.0"
 dependencies = [
  "nirs4all",
  "pyo3",
@@ -1069,7 +1069,7 @@ dependencies = [
 
 [[package]]
 name = "nirs4all-core-wasm-native"
-version = "0.5.2"
+version = "0.6.0"
 dependencies = [
  "crc32fast",
  "dag-ml-core",

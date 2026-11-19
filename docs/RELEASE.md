@@ -55,41 +55,34 @@ cargo package -p nirs4all
 MATLAB/Octave surfaces. R checks and CRAN/R-universe validation now run in
 `nirs4all-r` rather than this core repository.
 
-Complete scientific qualification runs locally on Linux/WSL and native Windows.
-Keep the full unit, native-versus-binding, full-SDK oracle, WASM/Octave and
-cross-language end-to-end commands above; moving them out of GitHub does not
-remove their release requirement. Native Windows coverage uses actual Windows
-artifacts, not a WSL ELF process. Licensed MATLAB and explicitly deferred
-platforms retain their existing separate scope.
+Run the owner and affected binding/parity checks for the candidate cohort and
+retain their actual commands, exits, dependency identities and limits. Native
+Windows coverage must use actual Windows artifacts; a WSL ELF process is Linux
+evidence. Current hosted workflows build Windows wheels and run their package
+smokes. A Windows package smoke does not establish full scientific parity.
 
-Before publication, retain direct process commands/exits, hardware/toolchain
-identities, logs/reports and the source/dependency/fixture/helper fingerprints
-for each mandatory gate. The reviewed policy is `qualification/policy.json`;
-`compat/local-qualification.json` references actual evidence under
-`qualification/`. Verify it with:
+Since Core 0.5.0, the historical machine-specific local receipt is no longer a
+publication prerequisite. `qualification/policy.json`,
+`compat/local-qualification.json`, their retained evidence and the verifier
+describe their original source/cohort. They remain available for historical
+inspection:
 
 ```bash
 python scripts/verify_local_qualification.py --project core --receipt compat/local-qualification.json --root .
 ```
 
-The verifier rejects stale scoped inputs, changed evidence, missing hosts/gates,
-unapproved skips and failed numerical observations. Historical results can be
-inherited only through their retained original input manifest and exact
-continuity evidence; the current Git SHA alone does not qualify old logs.
-
-GitHub builds packages and runs bounded package/platform smokes. Dry-run builds
-may precede local Windows qualification so their actual Windows artifacts can
-be tested locally. Every publication channel checks the complete source-bound
-local evidence before upload; no receipt is required merely to build a private
-candidate. Source-only workflow/documentation changes do not invalidate an
-unchanged numerical gate's reviewed input scope.
+The verifier rejects changed source scopes and stale evidence; it must not be
+made to relabel historical results as qualification of a new cohort. Current
+publication channels enforce their package, version, source and authentication
+guards and bounded platform smokes. Record scientific checks and any unexecuted
+platform or parity checks explicitly in each release's evidence.
 
 Run the complete Python suite with `python -m pytest bindings/python/tests`;
 `unittest discover` alone omits the native workspace and CLI function tests.
 Stage actual experiment/browser/native archive fixtures and the native runtime
-before the suite so required qualification cases execute rather than skip.
+before the suite so the affected native cases execute rather than skip.
 Windows JavaScript parity can use the complete `test:js` suite against the
-qualified WASM candidate produced by GitHub; building Rust on Windows locally
+WASM candidate produced by GitHub; building Rust on Windows locally
 is not required merely to execute that candidate.
 
 Every CI run uploads the build outputs as artifacts (`rust-crate`, `python-*`,
@@ -126,27 +119,25 @@ floor is allowed when a fix or feature from that patch is required; moving to a
 new minor is an explicit, tested consumer decision. Core's owner requirements are
 declared in
 `bindings/rust/nirs4all/Cargo.toml` and `bindings/wasm-native/Cargo.toml`
-(`dag-ml*` `"0.4"`, `dag-ml-data*` `"0.2"`, `n4m` `"0.4"`, `nirs4all-formats`
-`"0.2"`, `nirs4all-io*` `"0.3"`), the Python extras (`dag-ml>=0.4,<0.5`,
+(`dag-ml*` `"0.5"`, `dag-ml-data*` `"0.2"`, `n4m` `"0.5"`, `nirs4all-formats`
+`"0.2"`, `nirs4all-io*` `"0.3"`), the Python extras (`dag-ml>=0.5,<0.6`,
 `dag-ml-data>=0.2,<0.3`, `nirs4all-formats>=0.2,<0.3`, `nirs4all-io>=0.3,<0.4`,
-`nirs4all-datasets>=0.3,<0.4`, `nirs4all-methods`/`pls4all>=1.3,<2`) and the npm
-peers (`^0.2.0`, `^0.3.0`, `^0.4.0`, `^1.3.0`). The 1.x Methods ranges
-(`>=1.3,<2`, `^1.3.0`) predate this rule and are aligned to one series at the
-next Core release. Exact, reproducible versions live
+`nirs4all-datasets>=0.3,<0.4`, `nirs4all-methods`/`pls4all>=1.5.0,<1.6`) and the npm
+peers (`^0.2.0`, `^0.3.0`, `^0.5.0`, Methods `~1.5.0`). Exact, reproducible versions live
 only in `Cargo.lock`, `bindings/wasm/package-lock.json`, the `compat/upstreams.toml`
-parity refs and the release order, so an owner patch (for example IO 0.3.6 or
-dag-ml 0.4.3) needs no Core release. The crates and bindings of this repository
+parity refs and the release order, so an owner patch within its selected
+series (for example IO 0.3.6) needs no Core release. The crates and bindings of this repository
 stay in lockstep through `scripts/bump_version.sh`.
 
 Native Methods libraries
 are accepted by the runtime ABI check, not by the package version: the
-current cohort is qualified with Methods 1.3.18 (ABI 2.23, N4MM format 3), and
+current candidate cohort uses Methods 1.5.0 (ABI 2.24, N4MM format 3), and
 a library lacking a required ABI is refused at runtime. The full policy is
 `docs/contracts/release/VERSION_CONSTRAINTS.md` in `nirs4all-ecosystem`.
 
 Enforcement: `bindings/python/tests/test_release_topology.py` checks owner
-requirements in the Rust, Python and npm manifests (it still enforces the
-previous minor-only form and is updated with the range alignment);
+requirements in the Rust, Python and npm manifests, including a required patch
+floor inside one tested Python series and tilde ranges for 1.x npm owners;
 `cargo --locked` and `npm ci` keep the exact cohort; `.n4a` container and
 inventory fixtures are checked by the Rust and binding suites. A guard that
 fails when a contract file changes without a minor bump is not automated yet.

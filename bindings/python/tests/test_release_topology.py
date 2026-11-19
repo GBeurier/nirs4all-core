@@ -577,8 +577,8 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         # order carry the exact cohort, and the Methods runtime ABI check refuses an
         # older native library.
         pinned_peers = {
-            "@nirs4all/methods": "^1.3.0",
-            "dag-ml-wasm": "^0.4.0",
+            "@nirs4all/methods": "~1.5.0",
+            "dag-ml-wasm": "^0.5.0",
             "dag-ml-data-wasm": "^0.2.0",
             "@nirs4all/formats-wasm": "^0.2.0",
             "@nirs4all/io-wasm": "^0.3.0",
@@ -595,7 +595,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             self.assertTrue(package["peerDependenciesMeta"][peer]["optional"])
             self.assertTrue(root_lock["peerDependenciesMeta"][peer]["optional"])
             self.assertEqual(package["devDependencies"][peer], version)
-        self.assertEqual(package["devDependencies"]["dag-ml-wasm"], "^0.4.0")
+        self.assertEqual(package["devDependencies"]["dag-ml-wasm"], "^0.5.0")
         # The IO facade tests run the published owner module; it stays an optional peer for consumers.
         self.assertEqual(package["devDependencies"]["@nirs4all/io-wasm"], "^0.3.0")
 
@@ -649,16 +649,16 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             any(dependency.startswith("nirs4all-datasets") for dependency in all_extra)
         )
         self.assertEqual(extras["datasets"], ["nirs4all-datasets>=0.3,<0.4"])
-        self.assertEqual(extras["dag-ml"], ["dag-ml>=0.4,<0.5"])
-        self.assertIn("nirs4all-methods>=1.3,<2", extras["methods"])
-        self.assertIn("pls4all>=1.3,<2", extras["methods"])
+        self.assertEqual(extras["dag-ml"], ["dag-ml>=0.5,<0.6"])
+        self.assertIn("nirs4all-methods>=1.5.0,<1.6", extras["methods"])
+        self.assertIn("pls4all>=1.5.0,<1.6", extras["methods"])
         self.assertIn("scikit-learn>=1.3", extras["methods"])
         self.assertIn("nirs4all-formats>=0.2,<0.3", all_extra)
         self.assertIn("nirs4all-io>=0.3,<0.4", all_extra)
-        self.assertIn("dag-ml>=0.4,<0.5", all_extra)
+        self.assertIn("dag-ml>=0.5,<0.6", all_extra)
         self.assertIn("dag-ml-data>=0.2,<0.3", all_extra)
-        self.assertIn("nirs4all-methods>=1.3,<2", all_extra)
-        self.assertIn("pls4all>=1.3,<2", all_extra)
+        self.assertIn("nirs4all-methods>=1.5.0,<1.6", all_extra)
+        self.assertIn("pls4all>=1.5.0,<1.6", all_extra)
         self.assertNotIn("nirs4all-methods>=1.0.5", extras["methods"])
 
     def test_compat_registry_matches_release_topology_packages(self) -> None:
@@ -730,7 +730,7 @@ if __name__ == "__main__":
 
 
 class CrossRepositoryRangeTests(unittest.TestCase):
-    """Owner dependencies use minor-level ranges; locks carry exact versions."""
+    """Owner dependencies accept one tested series; locks carry exact versions."""
 
     OWNER_CRATES = {
         "dag-ml", "dag-ml-core", "dag-ml-results", "dag-ml-data", "dag-ml-data-provider",
@@ -763,11 +763,20 @@ class CrossRepositoryRangeTests(unittest.TestCase):
             name = re.split(r"[<>=!~\[ ]", requirement, maxsplit=1)[0]
             if name in self.OWNER_DISTRIBUTIONS:
                 with self.subTest(requirement=requirement):
-                    self.assertRegex(requirement[len(name):], r"^>=\d+\.\d+,<\d+(\.\d+)?$")
+                    bounds = re.fullmatch(
+                        r">=(\d+)\.(\d+)(?:\.\d+)?,<(\d+)\.(\d+)",
+                        requirement[len(name):],
+                    )
+                    self.assertIsNotNone(bounds)
+                    lower_major, lower_minor, upper_major, upper_minor = map(int, bounds.groups())
+                    self.assertEqual((upper_major, upper_minor), (lower_major, lower_minor + 1))
 
         package = _load_wasm_package()
         for section in ("dependencies", "devDependencies", "peerDependencies"):
             for name, version in package.get(section, {}).items():
                 if name in self.OWNER_NPM:
                     with self.subTest(section=section, package=name):
-                        self.assertRegex(version, r"^\^\d+\.\d+\.0$")
+                        if version.startswith("~"):
+                            self.assertRegex(version, r"^~[1-9]\d*\.\d+\.\d+$")
+                        else:
+                            self.assertRegex(version, r"^\^0\.\d+\.0$")

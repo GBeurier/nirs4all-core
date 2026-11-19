@@ -134,7 +134,7 @@ def test_workspace_rejects_unlisted_live_wal_and_changed_export_index(tmp_path):
 
 
 @pytest.mark.skipif(not BROWSER, reason="real browser-produced package required")
-@pytest.mark.parametrize("mutation", ["selected", "score", "coupled_metric", "checkpoint_score", "optimizer_bytes"])
+@pytest.mark.parametrize("mutation", ["selected", "score", "coupled_metric", "checkpoint_score", "snapshot_version", "prepared_journal", "optimizer_bytes"])
 def test_browser_loader_rejects_forged_provenance(mutation):
     source = json.loads(Path(BROWSER).read_text())["record"]
     if mutation == "selected":
@@ -144,7 +144,13 @@ def test_browser_loader_rejects_forged_provenance(mutation):
     elif mutation == "coupled_metric":
         source["config"]["metric"] = source["contracts"]["request"]["metric"] = "mae"
     elif mutation == "checkpoint_score":
-        source["snapshot"]["committed"]["trials"][0]["evidence"]["score"] = -999
+        committed = json.loads(source["snapshot"]["committed_json"])
+        committed["trials"][0]["evidence"]["score"] = -999
+        source["snapshot"]["committed_json"] = json.dumps(committed)
+    elif mutation == "snapshot_version":
+        source["snapshot"]["schema"] = "dagml.n4m.wasm-hpo.v1"
+    elif mutation == "prepared_journal":
+        source["snapshot"]["prepared_json"] = "{}"
     else:
         source["snapshot"]["n4mopt"][0] ^= 1
     from dag_ml import DagMlRuntimeError
