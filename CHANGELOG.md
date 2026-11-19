@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.2
+
+- `createMlJsEstimator` random-forest classifiers gain `predictProba(X, classes)`:
+  tree-vote shares in the order of the caller's declared class labels (rows sum
+  to 1). ml.js `predictProbability()` is not used because its vote reduction
+  drops the first tree. Additive; existing outputs and artifacts are unchanged.
+
 ## 0.5.1
 
 - Compile the Rust, Python-native and WASM-native aggregate with the published
