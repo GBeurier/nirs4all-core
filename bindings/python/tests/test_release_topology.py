@@ -581,7 +581,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             "dag-ml-wasm": "^0.5.0",
             "dag-ml-data-wasm": "^0.2.0",
             "@nirs4all/formats-wasm": "^0.2.0",
-            "@nirs4all/io-wasm": "^0.3.0",
+            "@nirs4all/io-wasm": "^0.3.8",
             "@nirs4all/datasets-wasm": "^0.3.0",
         }
         for peer in upstream_peers:
@@ -597,7 +597,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             self.assertEqual(package["devDependencies"][peer], version)
         self.assertEqual(package["devDependencies"]["dag-ml-wasm"], "^0.5.0")
         # The IO facade tests run the published owner module; it stays an optional peer for consumers.
-        self.assertEqual(package["devDependencies"]["@nirs4all/io-wasm"], "^0.3.0")
+        self.assertEqual(package["devDependencies"]["@nirs4all/io-wasm"], "^0.3.8")
 
         typescript = lock["packages"]["node_modules/typescript"]
         self.assertEqual(typescript["version"], package["devDependencies"]["typescript"])
@@ -779,4 +779,6 @@ class CrossRepositoryRangeTests(unittest.TestCase):
                         if version.startswith("~"):
                             self.assertRegex(version, r"^~[1-9]\d*\.\d+\.\d+$")
                         else:
-                            self.assertRegex(version, r"^\^0\.\d+\.0$")
+                            # An additive owner entry may require a patch floor
+                            # while remaining within one tested 0.x minor series.
+                            self.assertRegex(version, r"^\^0\.\d+\.\d+$")

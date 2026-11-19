@@ -22,6 +22,7 @@ import {
   loadDatasetsWasm,
   loadFormats,
   loadIo,
+  loadIoAssembledWire,
   localImplementationRegistry,
   loadMethods,
   loadMethodsWasm,
@@ -119,6 +120,7 @@ test('public V1 WASM surface exports expected names', () => {
       'loadDatasetsWasm',
       'loadFormats',
       'loadIo',
+      'loadIoAssembledWire',
       'localImplementationRegistry',
       'loadMethods',
       'loadMethodsWasm',
@@ -160,6 +162,13 @@ test('expected upstreams are registered', () => {
     upstreams.map((item) => item.key),
     ['dag_ml', 'dag_ml_data', 'formats', 'io', 'datasets', 'methods'],
   );
+});
+
+test('native assembled-record decoding loads the IO owner without a local adapter', async () => {
+  const module = await loadIoAssembledWire();
+  const owner = await import('@nirs4all/io-wasm/assembled-wire');
+  assert.equal(module.decodeAssembledFull, owner.decodeAssembledFull);
+  assert.throws(() => module.decodeAssembledFull({ assembled_schema_version: 2 }), TypeError);
 });
 
 test('upstream lookup returns metadata', () => {
