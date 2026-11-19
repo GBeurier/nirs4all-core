@@ -83,6 +83,30 @@ test('ml.js random forest regression and classification survive JSON round trips
   }
 });
 
+test('ml.js random-forest probabilities are tree-vote shares in declared class order', async () => {
+  const ml = await loadMlJs();
+  const labels = y.map((value) => (value > 14 ? 2 : value > 8 ? 1 : 0));
+  const model = createMlJsEstimator({ ml, estimatorName: 'RandomForestClassifier',
+    params: { nEstimators: 9, seed: 19, noOOB: true } }).fit(X, labels);
+  const proba = model.predictProba(X, [0, 1, 2]);
+  assert.equal(proba.length, X.length);
+  for (const row of proba) {
+    assert.equal(row.length, 3);
+    assert.ok(row.every((value) => value >= 0 && value <= 1));
+    assert.ok(Math.abs(row.reduce((sum, value) => sum + value, 0) - 1) < 1e-12);
+    assert.ok(row.every((value) => Number.isInteger(Math.round(value * 9)) && Math.abs(value * 9 - Math.round(value * 9)) < 1e-9));
+  }
+  // The declared order permutes the columns; the restored model gives the same shares.
+  const reversed = model.predictProba(X, [2, 1, 0]);
+  assert.deepEqual(reversed, proba.map((row) => [...row].reverse()));
+  const restored = createMlJsEstimator({ ml, estimatorName: 'RandomForestClassifier' })
+    .load(JSON.parse(JSON.stringify(model.toJSON())));
+  assert.deepEqual(restored.predictProba(X, [0, 1, 2]), proba);
+  assert.throws(() => model.predictProba(X, [0, 1]), /undeclared class/);
+  assert.throws(() => model.predictProba(X, [0, 0, 1]), /distinct/);
+  assert.throws(() => createMlJsEstimator({ ml, estimatorName: 'RandomForestRegressor' }).fit(X, y).predictProba(X, [0, 1]), /RandomForestClassifier/);
+});
+
 test('ml.js classifiers survive worker structuredClone before new-sample prediction', async () => {
   const ml = await loadMlJs();
   const future = [[-1, 0], [13, 1]];
