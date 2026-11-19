@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.1
+
+- Add the lazy JavaScript `loadIoAssembledWire()` loader for IO's
+  `@nirs4all/io-wasm/assembled-wire` entry. The owner performs native assembled
+  schema 3 decoding; Core adds no parser or numerical code and does not initialize
+  WASM for this operation. The optional npm IO peer now requires `^0.3.8`.
+- Existing APIs, numerical outputs, schemas and byte contracts are unchanged.
+  Rust/Python IO requirements and the qualified native owner lock remain on their
+  existing 0.3 series because this additive entry is JavaScript-only.
+
 ## 0.6.0
 
 - Adopt the Methods 1.5 package series (`>=1.5.0,<1.6`, npm `~1.5.0`)
