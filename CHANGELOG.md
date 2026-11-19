@@ -23,6 +23,9 @@
   and their verifier as historical evidence.
 - Export the native uncalibrated robustness report from the workflow fixture
   generator, as required by the existing cross-language audit tests.
+- Adapt browser-to-CPU tuning transport to the selected DAG owner's V2 HPO
+  checkpoint wrapper, preserving exact journal validation and Methods optimizer
+  configuration/history checks. Uncommitted journals and V1 wrappers are refused.
 
 ## 0.5.2
 
