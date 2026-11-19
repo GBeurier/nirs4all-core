@@ -1,6 +1,6 @@
 """Python surface for the nirs4all-core aggregate distribution."""
 
-__version__ = "0.5.2"
+__version__ = "0.6.0"
 
 from ._archive import (
     NativeArchiveUnavailableError,

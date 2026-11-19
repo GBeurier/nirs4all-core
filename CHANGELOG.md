@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.6.0
+
+- Adopt the Methods 1.5 package series (`>=1.5.0,<1.6`, npm `~1.5.0`)
+  and its n4m 0.5 Rust binding, which requires native Methods ABI >= 2.24
+  (previously >= 2.22).
+- **Numeric change:** moving from the previously selected Methods 1.3.18
+  cohort includes the Methods 1.4 autoscaling correction. Standard deviations
+  below `10 * DBL_EPSILON` are treated as 1, and mirror-mode Savitzky-Golay
+  odd derivatives have exact-zero endpoints. Core's existing standardization,
+  Ridge and PLS paths can consequently produce different fitted predictions
+  on rounding-noise columns. This requires a Core minor release. The additional
+  Methods 1.5 Preflight PCA score correction belongs to the upstream release;
+  Core's execution paths do not call that PCA operation. Core schemas
+  and container byte contracts are unchanged.
+- Adopt DAG-ML 0.5 (`>=0.5,<0.6` in Python, `^0.5.0` in npm) as the
+  owner execution cohort, and refresh parity source refs. Topology checks
+  accept a required patch floor within one tested series and refuse broad
+  1.x npm carets.
+- Align release documentation with the Core 0.5.0 retirement of historical
+  machine-specific publication receipts; preserve those original receipts
+  and their verifier as historical evidence.
+- Export the native uncalibrated robustness report from the workflow fixture
+  generator, as required by the existing cross-language audit tests.
+
 ## 0.5.2
 
 - `createMlJsEstimator` random-forest classifiers gain `predictProba(X, classes)`:
