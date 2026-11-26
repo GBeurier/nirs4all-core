@@ -40,7 +40,7 @@ MATLAB/Octave execution support.
 - `nirs4all.calibrate()`, `predictCalibrated()`, `conformalMetrics()` and
   `robustness()` expose held-out calibration and frozen native audits.
 
-These native workflows target `nirs4all-core-archive` 0.6.0 and a Methods
+These native workflows target `nirs4all-core-archive` 0.7.0 and a Methods
 ABI 2.24 or compatible later 2.x library. The retained Core 0.4.7 qualification
 used Methods 1.3.13 (ABI 2.20) and does not qualify this new cohort. Current
 release evidence records the checks actually executed and their limits. Supply the
