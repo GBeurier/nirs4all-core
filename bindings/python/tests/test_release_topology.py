@@ -497,6 +497,12 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertIn("repo = nirs4all-core", workflow_text)
         self.assertNotIn("repo = nirs4all-lite", workflow_text)
 
+        uploads = [step for step in publish["steps"] if step.get("uses", "").startswith("pypa/gh-action-pypi-publish@")]
+        self.assertEqual([step["with"]["packages-dir"] for step in uploads], ["windows-dist", "dist"])
+        stage = _step_by_name(publish, "Stage the Windows wheels for first publication")
+        self.assertIn("mv dist/*-win_amd64.whl windows-dist/", stage["run"])
+        self.assertLess(publish["steps"].index(stage), publish["steps"].index(uploads[0]))
+
         preflight = _step_by_name(publish, "Validate Trusted Publisher release tuple")
         self.assertIn('expected_repo="GBeurier/nirs4all-core"', preflight["run"])
         self.assertIn("GITHUB_REPOSITORY", preflight["run"])

@@ -120,13 +120,13 @@ new minor is an explicit, tested consumer decision. Core's owner requirements ar
 declared in
 `bindings/rust/nirs4all/Cargo.toml` and `bindings/wasm-native/Cargo.toml`
 (`dag-ml*` `"0.5"`, `dag-ml-data*` `"0.2"`, `n4m` `"0.5"`, `nirs4all-formats`
-`"0.2"`, `nirs4all-io*` `"0.3"`), the Python extras (`dag-ml>=0.5,<0.6`,
-`dag-ml-data>=0.2,<0.3`, `nirs4all-formats>=0.2,<0.3`, `nirs4all-io>=0.3,<0.4`,
-`nirs4all-datasets>=0.3,<0.4`, `nirs4all-methods`/`pls4all>=1.5.0,<1.6`) and the npm
-peers (`^0.2.0`, `^0.3.0`, `^0.5.0`, Methods `~1.5.0`). Exact, reproducible versions live
+`"0.3"`, `nirs4all-io*` `"0.4"`), the Python extras (`dag-ml>=0.5,<0.6`,
+`dag-ml-data>=0.2,<0.3`, `nirs4all-formats>=0.3,<0.4`, `nirs4all-io>=0.4,<0.5`,
+`nirs4all-datasets>=0.4,<0.5`, `nirs4all-methods`/`pls4all>=1.5.0,<1.6`) and the npm
+peers (DMD `^0.2.0`, Formats `^0.3.0`, IO and Datasets `^0.4.0`, DAG `^0.5.0`, Methods `~1.5.0`). Exact, reproducible versions live
 only in `Cargo.lock`, `bindings/wasm/package-lock.json`, the `compat/upstreams.toml`
 parity refs and the release order, so an owner patch within its selected
-series (for example IO 0.3.6) needs no Core release. The crates and bindings of this repository
+series (for example a compatible IO 0.4 patch) needs no Core release. The crates and bindings of this repository
 stay in lockstep through `scripts/bump_version.sh`.
 
 Native Methods libraries
