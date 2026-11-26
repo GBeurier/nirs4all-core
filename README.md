@@ -210,7 +210,7 @@ See [`LICENSING.md`](LICENSING.md), [`LICENSES/`](LICENSES/), and [`THIRD_PARTY_
 
 ## Dependency cohort
 
-Core 0.6.0 targets DAG-ML 0.5.0, Data 0.2.17, Formats 0.2.17, IO 0.3.6
+Core 0.7.0 targets DAG-ML 0.5.0, Data 0.2.17, Formats 0.3.1, IO 0.4.0
 and n4m Rust 0.5.0 crates with Rust 1.88. Qualification and publication of this
 source cohort remain release gates. The Python and JavaScript hosts require
 Methods 1.5.x (ABI 2.24 for the 1.5.0 candidate); Rust native loading

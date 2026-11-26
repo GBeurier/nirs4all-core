@@ -226,6 +226,15 @@ jobs:
             echo "::error::Tag ${release_tag} is not a production release version (vX.Y.Z); pre-releases are not auto-published to PyPI" >&2
             exit 1
           fi
+      - name: Stage the Windows wheels for first publication
+        run: |
+          mkdir windows-dist
+          mv dist/*-win_amd64.whl windows-dist/
+      - name: Publish Windows wheels to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: windows-dist
+          skip-existing: true
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist

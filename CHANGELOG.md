@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.0
+
+- Admit Formats 0.3, IO 0.4 and the optional Datasets 0.4 integration. The reader treats zero-coded WinISI and ISIscan constituents as missing and correctly rounds numbers in supported JSON readers (Siware API and Allotrope ASM). The container schema and the Methods ABI retain their current versions.
+
 ## 0.6.1
 
 - Add the lazy JavaScript `loadIoAssembledWire()` loader for IO's

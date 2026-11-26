@@ -497,6 +497,12 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertIn("repo = nirs4all-core", workflow_text)
         self.assertNotIn("repo = nirs4all-lite", workflow_text)
 
+        uploads = [step for step in publish["steps"] if step.get("uses", "").startswith("pypa/gh-action-pypi-publish@")]
+        self.assertEqual([step["with"]["packages-dir"] for step in uploads], ["windows-dist", "dist"])
+        stage = _step_by_name(publish, "Stage the Windows wheels for first publication")
+        self.assertIn("mv dist/*-win_amd64.whl windows-dist/", stage["run"])
+        self.assertLess(publish["steps"].index(stage), publish["steps"].index(uploads[0]))
+
         preflight = _step_by_name(publish, "Validate Trusted Publisher release tuple")
         self.assertIn('expected_repo="GBeurier/nirs4all-core"', preflight["run"])
         self.assertIn("GITHUB_REPOSITORY", preflight["run"])
@@ -580,9 +586,9 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             "@nirs4all/methods": "~1.5.0",
             "dag-ml-wasm": "^0.5.0",
             "dag-ml-data-wasm": "^0.2.0",
-            "@nirs4all/formats-wasm": "^0.2.0",
-            "@nirs4all/io-wasm": "^0.3.8",
-            "@nirs4all/datasets-wasm": "^0.3.0",
+            "@nirs4all/formats-wasm": "^0.3.0",
+            "@nirs4all/io-wasm": "^0.4.0",
+            "@nirs4all/datasets-wasm": "^0.4.0",
         }
         for peer in upstream_peers:
             self.assertEqual(package["peerDependencies"][peer], pinned_peers.get(peer, "*"))
@@ -597,7 +603,7 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
             self.assertEqual(package["devDependencies"][peer], version)
         self.assertEqual(package["devDependencies"]["dag-ml-wasm"], "^0.5.0")
         # The IO facade tests run the published owner module; it stays an optional peer for consumers.
-        self.assertEqual(package["devDependencies"]["@nirs4all/io-wasm"], "^0.3.8")
+        self.assertEqual(package["devDependencies"]["@nirs4all/io-wasm"], "^0.4.0")
 
         typescript = lock["packages"]["node_modules/typescript"]
         self.assertEqual(typescript["version"], package["devDependencies"]["typescript"])
@@ -648,13 +654,13 @@ class ReleaseTopologyManifestTests(unittest.TestCase):
         self.assertFalse(
             any(dependency.startswith("nirs4all-datasets") for dependency in all_extra)
         )
-        self.assertEqual(extras["datasets"], ["nirs4all-datasets>=0.3,<0.4"])
+        self.assertEqual(extras["datasets"], ["nirs4all-datasets>=0.4,<0.5"])
         self.assertEqual(extras["dag-ml"], ["dag-ml>=0.5,<0.6"])
         self.assertIn("nirs4all-methods>=1.5.0,<1.6", extras["methods"])
         self.assertIn("pls4all>=1.5.0,<1.6", extras["methods"])
         self.assertIn("scikit-learn>=1.3", extras["methods"])
-        self.assertIn("nirs4all-formats>=0.2,<0.3", all_extra)
-        self.assertIn("nirs4all-io>=0.3,<0.4", all_extra)
+        self.assertIn("nirs4all-formats>=0.3,<0.4", all_extra)
+        self.assertIn("nirs4all-io>=0.4,<0.5", all_extra)
         self.assertIn("dag-ml>=0.5,<0.6", all_extra)
         self.assertIn("dag-ml-data>=0.2,<0.3", all_extra)
         self.assertIn("nirs4all-methods>=1.5.0,<1.6", all_extra)
